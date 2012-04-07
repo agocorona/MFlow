@@ -1,0 +1,5 @@
+Stat "admin/admin" 0 0 False [ v193] 0 (Nothing )
+where{
+ v193= Dyn 12 Token admin  ;
+ 
+}

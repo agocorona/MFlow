@@ -1,0 +1,164 @@
+﻿Democracia sin rozamiento 
+Alberto Gómez Corona. Junio 2006
+
+Este material puede ser utilizado bajo licencia Creative Commons de tipo: 
+ Reconocimiento 
+Reconocimiento (Attribution): Este material  puede ser distribuido,
+copiado y exhibido por terceras personas si se muestra el nombre del autor en los créditos.
+Además:  se deberá incluir el link a la última versión de este documento, que  figura a continuación:
+
+
+Este es un trabajo en progreso online; Por favor acceda a la última versión aqui 
+
+
+Introducción 
+Se presenta aqui un sistema completamente electrónico de voto con representación opcional por temas (un votante puede nombrar un representante que votará por él en determinados temas que es revocable (un votante puede cambiar de representante o revocar con su voto, el voto de su representante), opcional  en cascada  (un representante puede nombrar representantes)  distribuido y con trazabilidad de voto, por lo que se pueden hacer recuentos. Con facilidad para elaborar y votar enmiendas como parte del flujo de toma de decisiones colectivas. Con control de presupuesto y ejecución de lo votado, minorias de bloqueo opcionales, definición de flujos de aprobación , para la formalización de estatutos y constituciones. A a su vez, estos flujos son votables y enmendables. 
+
+El sistema fisico es distribuido y similar a los sistemas manuales. Cualquiera puede cargar el software en su ordenador y realizar la votación o realizar un recuento para la verificación posterior a través de él o de un software independiente.  
+
+ En defininitiva, un sistema que permite retener un gran control por parte del votante de la toma de decisiones colectivas si éste quiere, pero al mismo tiempo se puede limitar para emular los sistemas de votación clásicos para cualquier institución formal o informal. 
+
+Prefacio 
+Normalmente la utilización de tecnología en cuestiones de democracia electrónica se centra en certificar la autenticidad de los votantes y en facilitar las votaciones. O bien se centra en la comunicación entre votantes y representantes utilizando Internet por medio de los servicios al uso: foros, email. weblogs etc. Todo ello sin tocar para nada ni el método ni las instituciones de la democracia. Esto es el reverso de una resaca; Internet en principio se pensaba que iba  a revolucionar la Democracia y a permitir el utópico "todos-votan-todo" carácterístico  de los gurús de Internet 1.0. Pero está claro que la gente tiene cosas mas interesantes que hacer para su vida que el decidir sobre todos y cada uno de los asuntos peregrinos que hasta la comunidad mas pequeña puede tener.
+
+
+
+Pero ¿Que pasaría si, aun siendo realistas, revisáramos la democracia y el sistema constitucional y lo adaptamos a Internet al límite, y no al contrario, teniendo en cuenta que la mayoría de las personas tienen poco tiempo para dedicar a los asuntos públicos, por tanto sus representantes son insatisfactorios pero necesarios y, como consecuencia, sigue siendo necesario un sistema representativo. Por otra parte, para evitar el abuso de las mayorías y la corrupción de los representantes, sigue siendo necesario un sistema constitucional de chequeos y balances.
+
+
+Algunas de las instituciones de la democracia y el Estado de derecho existen debido a limitaciones de espacio y de tiempo: Hasta hace poco, no se podía tomar una decisión por mayoría cualificada sin juntar a un pequeño numero de representantes en un reducido espacio durante un tiempo limitado (y de hecho en ciertas circunstancias eso seguirá siendo imprescindible).  Las cámaras de representantes cumplen esa mision. Podría ser que los electores quieran distintos representantes según el tema a tratar y en teoría sería posible nombrar distintos representantes para cada tema y para cada situación, pero no se puede renovar una cámara electa para cada asunto, porque una elección general es algo muy costoso en todos los términos. Una elección general exige una movilización de todo el país y es por ello por lo que se debe realizar en el espacio de tiempo mas corto posible para que interfiera lo mas minimo con otras actividades o en caso contrario puede hacer un gran daño a la economía. (Aunque hay actividades, como rellenar la Declaración de la Renta que en conjunto causan un pérdida mayor de horas productivas).
+
+  
+Por otro lado, no se puede ejecutar las disposiciones votadas en las cámaras sin un reducido número de personas elegidas para que ejecuten y supervisen todas esas disposiciones, nombrados por los representantes o directamente. Eso es lo que llamamos  Gobierno. En teoría podría elegirse a un ejecutor  o comisión ejecutiva por cada tarea a llevar a cabo, pero en la realidad no se puede nombrar un ejecutor o comision ejecutiva para cada disposición porque una elección general es algo costoso. Adicionalmente, la aplicación de la ley y el control de la primera cámara y el gobierno necesita cámaras adicionales, tribunales constitucionales, organos judiciales, jueces  y policías que raramente son elejidos de forma directa porque las elecciones son costosas. Alguien dirá que el poder político quiere que las cosas sigan así y que todo dependa de un reducido numero de representantes, pero si las elecciones no fueran costosas, que lo son, el poder político no tendría excusas para evitar una elección para cada uno de esos cuerpos, disposiciones y tareas. Pero, estarían todos los electores dispuestos?. 
+
+
+
+
+
+Internet permite ahora mismo un cambio radical de la democracia liberal para conseguir mejor sus objetivos: Propongo
+
+
+
+* La  representación en cascada, revocable en todo momento
+
+* El voto directo si el votante lo desea
+
+* La obligación de que toda medida tenga un presupuesto con el objeto de que que el votante vea la parte alicuota que le toca pagar si la medida es aprobada
+
+* Como consecuenca, la fiscalidad automática y el control online de presupuestos.
+
+* La institución de un porcentaje minoritario de votos de bloqueo, que hace innecesario un Tribunal Constitucional
+
+* La votación abierta durante todo el periodo hasta la fecha de cierre, visualización en tiempo real de resultados parciales durante ese periodo
+
+* Posibilidad de cambio de voto durante ese periodo.
+
+* La presentiación de propuestas o enmiendas por parte de cualquier votante 
+* Como consecuencia, la eliminación del parlamento y
+
+* La transformación de parte del Ejecutivo en comisiones ejecutivas elejidas para cada medida tomada.
+
+
+
+La Constitución,  aparte del preámbulo y la declaración de derechos y deberes y otros apartados declarativos muy importantes, contendrá una serie de parámetros sobre tipo de medidas, porcentajes, duraciones que asimismo puede ser enmendado y votado con su necesaria mayoría cualificada correspondiente.
+
+  
+El objetivo es dar a cada elector el maximo valor al tiempo y a la información de que disponen para dedicar a los asuntos púbicos mediante un sisntema online  que permita en todo momento que el elector elija su forma de de involucración en los asuntos públicos y, al mismo tiempo que la división entre la clase política y los representados desaparezca, un sistema en el que el voto del elector no sea secuestrado por los representantes durante todo el periodo entre elecciones, sino que los electores sean en todo momento dueños de su voto, además de conservar mecanismos que eviten la conculcación de los derechos individuales por parte de la mayoría. Adicionalmente, el objetivo es mejorar algunos problemas clásicos de los sistemas de votación, como el déficit de representación de las minorías, la democracia directa, la participación ágil de los electores en la creación de propuestas, el control del ejecutivo y la profundización hasta el limite en la división de poderes para evitar los abusos de los politicos y la corrupción. 
+
+El término democracia sin rozamiento, análogamente al capitalismo sin rozamiento (friction-free capitalism) que existe en un mercado donde los costes de información han sido drásticamente reducidos con la utilización de Internet. Por ejemplo, el volumen de transacciones de la bolsa tradicional van pareciendo residuales en comparación con las operaciones electrónicas, que han modificando de paso los roles y las prácticas del mercado. Los mercados y las empresas transforma toda su estructura para aprovechar al máximo la tecnología disponible debido a la competencia. Es posible ya que el sistema de elección pública  y las instituciones del estado, que mueven información igualemente, se empiecen a rediseñar de forma que utilicen al máximo las nuevas herramientas hasta constituir su núcleo y no unos meras adiciones a los mecanismos tradicionales. El problema de los sistemas de elección tradiconales y sus instituciones asociadas es que, al contrario que las bolsas y en general cualquier mercado, en el caso de los asuntos públicos no existe competencia, lo cual impide la innovación hasta el punto de mover las estructuras y redefinir los roles y relaciones dentro del grupo de que se trate. 
+  
+De cualquier forma, hay que decir que no hay sistema de gobierno que convierta un sociedad de , por ejemplo, fanáticos o estupidos en una sociedad mejor. El sistema propuestos solo es una herramienta y el objetivo es transferir a los individuos conservar su poder de decisión y obtener tanta información como ellos deseen.
+
+Democracia directa y representativa simultaneamente 
+Internet hace posible la elección directa y frecuente por medios electronicos, pero todavia hay un cuello de botella insalvable en cada uno de los extremos de la red Internet: el cerebro humano. Nadie sabe de todo y nadie puede prever el como afecta a sus intereses a corto y largo plazo cada disposición que se puede votar. Además, los asuntos públicos son una pequeña parte de los problemas que tiene que resolver el elector medio. La representación sigue siendo algo necesario, pero los representantes tienden a la demagogia, al engaño y a representarse a si mismos, por lo que el elector necesita un esfuerzo adicional para controlar a sus representantes. 
+  
+Aunque para cada elector, la representación es necesaria en la mayoría de los temas que se debaten, en algunos casos el elector quizá conoce lo suficiente y/o tiene tiempo para dedicarse a informarse y/o tiene una opinión formada a pesar de su falta información. Estaría bien que el elector pudiera tomar directamente las riendas de su voto en esos asuntos. 
+  
+Por otro lado, puede ocurrir que, aunque prefiera elegir representantes, puede  que quiera un representante distinto para cada tiema o grupo de temas. Además puede que no tenga ninguna informacion o no se siente representado por  los políticos profesionales, pero conoce a alguien que tiene sus mismos intereses y/o su misma forma de pensar, sea este su pareja, un amigo o un politico profesional.  Estaría bien que el votante pudiera delegar su voto en otros votantes de su confianza segun temas o asuntos. Estos a su vez, en cascada podrían delegar en otros. Estaría bien que además, el votante pueda revocar para si o cambiar de representante en cualquier momento. 
+  
+Si fuera posible combinar en un solo acto la votación directa y la delegación revocable y en cascada, entonces cada votante podra regular el nivel de esfuerzo e implicación en la decisión pública controlando en todo momento su poder de decisión y conservándolo para si, lo cual evitará la perdida de calidad de su representación que se produce a medida que se aleja del periodo electoral convencional. Además, la "granularidad" potencial de su elección de representantes puede ser infinitamente mayor que en el sistema electoral convencional. 
+  
+Esto es posible por medios electronicos. A cada votante se le da a elegir el votar cada asunto particular o delegar el voto para ese asunto, para todos los asuntos presentes y futuros de ese tema o bien para todos los temas. La ultima opcion exige un solo acto de votación que será válido mientras no cambie ese criterio y es equivalente a las elecciones clásicas, aunque la eleccion en este caso sería continua y asíncrona con respecto a los demás votantes. El primer caso -votar directamente cada asunto particular- sería equivalente a un democracia directa. En el caso de alguien con cientos de miles de personas que lo han elegido como representante ( un politico profesional por ejemplo) el tratar los asuntos públicos Sería su actividad diaria., aunque no diferirían sus prerogativas y opciones con las de cualquier otro votante. (Quizá aun este último puede delegar en el líder de su partido, pero con la diferencia de que, con este sistema de votación, no podrá haber disciplina de partido). 
+  
+Si bien el poder de los representantes politicos disminuirá mucho con estas modificaciones -lo cual es muy positivo en sí, segun los padres de la democracia liberal- en cambio la responsabilidad de los electores qedará intacta en sus manos en todo momento y por tanto, no habrá excusa para la culpabilización de la clase política cada vez que una decisión publica lleva a consecuencias desgraciadas. 
+Elección contínua 
+Otro de los problemas de la limitación  de los sistemas de votación clásicos a la hora de elegir entre tres o mas opciones es el problema de la representación de aquellos que han elegido opciones minoritarias que se han quedado sin representación y la cuestión del voto útil. Este problema aumenta cuando aumenta el número de opciones; El votante se ve en el dilema de elegir entre la opción posiblemente minoritaria que prefiere y la opción mayoritaria que mas le conviene de entre las que vayan a ganar. Para que la opción que gane la votación acumule una mayor cantidad de votos útiles y por tanto la opción ganadora cuente con la mayor legitimidad, a menudo se utiliza el sistema de elimatoria a varias vueltas, en cada vuelta se hace un corte y se seleccionan las opciones con mas votos. El sistema mas usual es a dos vueltas en el que en la segunda vuelta se elege entre dos opciones finales. A cada vuelta se publican los votos obtenidos por cada opción para que los votantes acumulen su voto en su opción útil dentro de las que pasan el corte. Este sistema es típico en las elecciones presidenciales. Se puede comprobar que cuando el numero de vueltas se incrementa y el periodo de tiempo entre vueltas se estrecha, entonces, en el límite, esto es equivalente a una elección contínua con publicación en tiempo real de resultados parciales con posibilidad de cambio de voto hasta el momento final de la votación. 
+  
+Una aplicación internet puede implementar este sistema de votación, que sustituye con ventaja al sistema de varias vueltas. la votación puede estar abierta incluso durante la campaña electoral, por lo que el mismo sistema de votación sirve como sistema de encuestas. Los votantes van eligiendo su opción preferida. A medida que algunas opciones van recibiendo mas votos, el votante puede optar por cambiar su voto a una de las mayoritarias con el objeto de que gane la opción menos mala para él. Al final de la votación la acumulación de votos de cada una de las opciones mostrará las opción o las opiciones ganadoras. Por supuesto en este caso estará disponible el mismo sistema de voto directo o por delegación en cascada descrito anteriormente, de manera que la(s) opcion(es) ganador(as) lo serán por medio de una mezcla de voto directo y voto de representantes. 
+  
+En realidad siempre hay tres o mas opciones, si tenemos en cuenta que el votante ademas de un minimo de dos opciones, tiene ademas las opciones adicionales de votar en blanco o abstenerse. Un sistema con votación prolongada y resultados en tiempo real permitirá a los votantes una elección mas precisa que evite las limitaciones clásicas: falta de tiempo, falta de información sobre la intención de voto de los demás "Si hubiera sabido esto hubiera votado...." etc. 
+  
+Gobierno y Comisiones ejecutivas 
+Este tipo de elección anterior, con múltiples opciones es ideal para la elección de comisiones ejecutivas y de control que lleven a cabo disposiciones aceptadas previamente. Las comisiones ejecutivas podrán tener la duración que haya estipulado la disposición que se votó. Cada asunto votado podrá tener su propia comisión ejecutiva o se puede adscribir a una comisión ya existente. La comisión ejecutiva puede ser única, ser de larga duración y llamarse "Gobierno" o puede ser un numero variable de comisiones que se crean y desaparecen ségun se crean y se completan las acciones encomendadas a ellas. Eso depende de su Consitutución y de las decisiones de los electores. 
+  
+Para ciertas situaciones, como la politica exterior, catástrofes naturales o humanas, con información cambiante en el que hay que tomar decisiones rápidas con coordinación, un numero reducido de personas reunidas dirigidas por un lider es la unica solución posible. No hay sistema de decisión colectiva que sustituya a la rapidez de una cabeza pensante asesorada por otros cuando eso es necesario por cuestiones de premura. Situaciones imprevisibles en las que es imposible transmitir la información a la población, ni siquiera incluso a sus representantes, desde una declaración de guerra hasta asistir a un reunión internacional o sofocar un problema grave de orden interno.  Debido a la inevitabilidad de cosas como estas, puede que un gobierno sea algo imprescindible. o al menos, una comisión permanente para este tipo de problemas. 
+  
+Pero, en un sistema como este, sin cámara y posiblemente sin gobierno permanente, ¿Quien hace las propuestas? sería posible que cualquiera pudiera hacer una propuesta a todo el cuerpo electoral para someterla a votación?. ¿Que ocurre con las enmiendas? Que hay de la Constitucion? Quien o como se determina si una proposicion es anticonstitucional?.   
+  
+Sistema abierto y contínuo de proposiciones y enmiendas 
+Las proposiciones a votar, ya sean leyes de rango inferior o constitucionales, disposiciones transitorias o lo que sean, podran ser enviadas por cualquier elector, ya que no hay una cámara de representantes ni, en principio, un gobierno permanente que tenga la atribución de proponerlas. Las propisiciones pueden ser sometidas a enmiendas que también se votarán. Cualquier elector podrá crear una enmienda. se visualizará, ante el elector el contenido de la propuesta y de los cambios de las enmiendas claramente resaltados. El elector podrá votar una de las opciones o delegar. La enmienda con mas votos pasará a ser la propuesta y la propuesta original se convertirá en una enmienda de esta. Esto es fácil de conseguir mediante aplocaciones  electrónicas, Por ejemplo los editores de texto pueden mostrar los cambios efectuados a un documento. El objetivo es que no importa quien hizo la primera propuesta, la enmienda mas votada al final del periodo sea la propuesta que resulte aceptada, si consigue la mayoría suficiente para su rango. El sistema de acumulación de votos entre enmiendas ganadoras puede ser similar al descrito anteriormente para elegir entre varias opciones. 
+  
+  
+  
+Representantes en cascada por áreas o temas 
+Cada propuesta podrá referirse a uno o varios temas admitidos en la comunidad para ser sometidos a votación; En el caso de una nación, pueden ser temas como "Defensa", "Justicia", "Interior" etc En el caso de un ayuntamiento: "Urbanismo", "Limpieza"  etc. El objetivo es que cada propuesta este etiquetada por una o varias de estos temas, de manera que cada elector podrá nombrar delegados por tema, de forma que todas las propuestas con etiqueta "Defensa" futuras por ejemplo, sean votadas por su representante nombrado para ese tema. Para algunas propuestas, el elector podrá tambien nombrar un delegado especifico para esa propuesta, ademas de votar el directamente, cosa que podrá hacer siempre. 
+  
+Las enmiendas podrán cambiar los temas de una propuesta de manera que se re-etiquete correctamente la propuesta si esta no lo ha estado desde el principio. 
+  
+Prioridades de voto segun tipo de representación 
+Cuando se vota una propuesta, el voto directo tendrá prioridad sobre el delegado para la propuesta y éste sobre el voto del delegado del tema de la propuesta, y este sobre el delegado total por defecto si lo hubiera. El orden del voto de cada uno no importa. Siempre el voto directo del elector tiene prioridad. También debería haber la posibilidad de "desvotar" es decir, anular su voto para volver a ceder su representación a sus delegados. Esto es importante en las votaciones de larga duración con varias opciones.
+
+  
+Rango de las propuestas 
+Además las propuestas tendrán distintos rangos: Constitucional y ordinario como minimo. El elector proponente puede elegir el rango de su propuesta, sin embargo, una propuesta ordinaria puede ser elevada a constitucional por medio de una enmienda y viceversa, por lo cual la mayoría de voto necesaria será distinta  para su aprobación en el caso de que triunfe esa enmienda. 
+  
+Constitución 
+Una Constitución básicamente establece las instituciones y sus reglas de funcionamiento además de unos principios básicos: el motivo fundacional de la comunidad, los derechos y las obligaciónes de los individuos. Gran parte de lo primero son parametros numéricos que establecen porcentajes de mayorías necesarios para cada tipo de votación, la vigencia de las disposiciones segun tipo y categoria, las duraciones de los mandatos. En definitiva, estos parámetros pasarían a ser los parámetros por los cuales una aplicación Internet que contabiliza las votaciones decide el resultado de cada votación, según  los rangos de las disposiciones y las mayorias necesarias. 
+  
+Control constitucional 
+En cuanto a los segundo, que incluye los temas que pueden estar sujetos a elección y los que corresponden a la esfera individual etc. Esta parte no son parámetros numéricos y en el modelo clásico un tribunal especial decide si una norma concreta se atiene o no a la letra o el espiritu de la Constitución.   Pero este tribunal puede ser sustituido con ventaja por una opción adicional de rechazo en cada ley o disposición a votar, de manera que ésta se retirará cuando un porcentaje de los votantes relativamente pequeño decida que se debe rechazar. Esta opcion adicional se añadirá al formulario electrónico de cada votación. El sistema tiene defectos pero tiene ventajas iguales o mayores que el tribunal convencional, con la ventaja de que el nuevo sistema proteje las minorías. Entre los defectos está el que puede crear una minoría de bloqueo si por sistema una minoría rechaza propuestas que la perjudican por medio de esta opción. para equilibrar esta posibilidad quizá habrá que habilitar una opción de expulsión de la comunidad. 
+  
+Toda la Constitución puede estar incluido en una o varias proposiciones que tienen una vigencia de tiempo determinada y que se somete a votacion por mayoría cualificada al final de ese periodo y por medio de los mecanismos anteriores de enmiendas, representación etc. 
+  
+ Presupuestos 
+Un aspecto del sistema clásico de democracia es que los electores no perciben el coste de las decisiones de sus representantes. Si las propuestas son decididas por los electores es fundamental que estos adjunten un presupuesto a cada propuesta, que puede ser enmendado a la baja o a la alta. Cada elector podrá el coste de votar favorablemente a esa propuesta y la parte alicuota que le corresponde pagar a cada uno. La gestión del presupuesto entonces no proviene de una suma detraida de los electores que pasa a una caja común y luego se distribuye por apartados como en los sistemas de recaudación clásicos donde el gobierno asigna presupuestos y es votado segun su ejecución global, sino que la asignación del dinero a cada partida se realiza en el mismo momento de la recaudación.
+
+
+Una vez el proponente ha creado el presupuesto de la prupuesta y lo añade a esta, entonces por medios electrónicos el elector puede saber que cantidad de dinero le corresponde pagar si esa propuesta resulta aprobada. El elector puede tener un control detallado sobre como se gasta el dinero de su comunidad. No hay desacoplamientos entre gastos e ingresos y la posibilidad de corrupción queda muy reducida. Aunque la mayoría puede forzar medidas con mayor beneficio que costes para ellos pero costosas y con poco beneficio para una minoria, el mecanismo de minorías de bloqueo descrito anteriormente puede impedirlo.
+
+
+Se admitirán pagos voluntarios adicionales para cada propuesta. Los partidarios podrán crear algun sistema de incentivos.
+
+
+Control del Ejecutivo 
+Una vez se ha aprobado una propuesta con un presupuesto y se ha nombrado una comisión ejecutiva para llevarla a cabo, es importante controlar a esa ejecutiva para que no se desvíe sin razon de los objetivos. Hay varios mecanismos posibles para ejercer un control de ese tipo:
+
+   * La elección de ejecutiva: se puede hacer por concurso donde varios candidatos a liderar un grupo de trabajo proponen sus planes de acción. Los electores elegirán a uno de ellos. 
+      * el elegido creará un grupo de trabajo cuyos roles y numero pueden estar ya definidos en su propuesta. 
+      * la ejecutiva elabora informes periodicos que serán accesibles por parte de los electores 
+   * Se podrá establecer algun sistema de votación para medir la satisfacción con el trabajo realzado 
+   * Se podrá proponer cambios en la ejecutiva si una mayoría cualificada vota a favor de ello 
+
+
+Fuentes de corrupción en la Democracia y soluciones 
+
+Presupuestos opacos 	
+   * Presupuesto para cada medida 
+   * Calculo de contribución por votante para cada medida
+
+   * Imposición online
+
+	
+Separación entre votantes y representantes 	
+      * Representación en cascada 
+      * Votación contínua 
+      * Eliminación de los partidos y grupos como instituciones formales
+
+	Concentración de poder en el ejecutivo, legislativo	
+         * Un ejecutivo para cada medida 
+         * El legislativo es el conjunto de los votantes
+
+	Medidas demagogicas y populismo 	
+            * Presupuesto adjuntando a cada propuesta, reflejando coste por votante. 
+	Medidas inconstitucionales o que atentan contra una minoria	
+            * Derecho de veto de una minoría en porcentaje

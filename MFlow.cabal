@@ -1,0 +1,107 @@
+name: MFlow
+version: 0.0.5
+cabal-version: -any
+build-type: Simple
+license: BSD3
+license-file: LICENSE
+copyright:
+maintainer: agocorona@gmail.com
+build-depends: Workflow >=0.6.0.0 && <0.6.1, transformers -any,
+               mtl -any, extensible-exceptions -any, xhtml -any,
+               base >4.0 && <4.6, hack -any, hack-handler-simpleserver -any,
+               bytestring -any, containers -any, RefSerialize >=0.2.8.1 && <0.2.9,
+               TCache >=0.9.0.2 && <0.9.1, stm >2, old-time -any, vector -any,
+               hsp -any,
+               directory -any,
+               utf8-string
+stability: experimental
+homepage:
+package-url:
+bug-reports:
+synopsis: Web application server with stateful, type safe user interactions and widget combinators.
+
+description: Simple application server with stateful request-response flows, persistent
+             and transparent session handling. server process management, combinators for the definition of widgets
+             and formlets that can be mixed freely with HTML formatting and produce statically
+             typed web applications. Adopt and extend the best formlet/applicative Haskell traditions
+             Console and window oriented apps are possible.
+             .
+             MFlow (MessageFlow) was created initially as the user interface for the Workflow package
+             Currently is an alpha version. It has only basic authentication but I plan to inprove it for serious applications.
+             .
+             It includes Application Server features such is resource an process management
+             and automatic recovery
+             .
+             Resource management: The user can define process and session timeout. The
+             process is automatically rerun after timeout if a new request arrive with transparent
+             recovery of state, at the point of the interrupted dialog  even after server crash.
+             .
+             The backend operation relies on the Workflow package ("http:\/\/hackage.haskell.org\/package\/Workflow/index"),
+             this gives transparent sessión persistence and recovery, all of this
+             is supported by
+             TCache ("http:\/\/hackage.haskell.org\/package\/TCache/index"), that gives backend-independent transactions and can be used
+             directly by the programmer. Persistence in files  for session and data out of the box enables
+             very fast prototyping.
+             .
+             All the plumbing is hidden to the programmer, There are no methods for
+             session management, database query, recovery and so on. All of this is
+             transparent So the surface exposed to the programmer is minimal.
+             .
+             Includes generalized formlets that permits the mix of active widgets
+             in the same page while remaining statically typed and, thus the programs
+             can verify correctness at compilation time.
+             .
+             Includes combinators for seamless inclusion of these widgets within
+             user defined HTML formatting. Bindings for Text.XHtml. The widget generation may be easy
+             for user with familiarity with formlets/digestive functors and Text.XHtml formatting.
+             .
+             Currently it has bindings for the Hack  interface
+             .
+             Streaming facilities.
+             .
+             To do:
+             .
+             Bindings for HSP
+             .
+             Clustering
+             .
+             Other bindigs for Hack alternatives
+category: Web, Application Server
+author: Alberto Gómez Corona
+tested-with:
+data-files:
+data-dir: ""
+extra-source-files: Demos/ShoppingCart1.hs
+extra-tmp-files:
+Hs-Source-Dirs:  src
+exposed-modules: MFlow.Forms MFlow.Hack MFlow.Forms.XHtml
+                 MFlow.Hack.XHtml MFlow.Hack.XHtml.All
+                 MFlow.Forms.HSP
+exposed: True
+buildable: True
+build-tools:
+cpp-options:
+cc-options:
+ld-options:
+pkgconfig-depends:
+frameworks:
+c-sources:
+default-language:
+other-languages:
+default-extensions:
+other-extensions:
+extensions:
+extra-libraries:
+extra-lib-dirs:
+includes:
+install-includes:
+include-dirs:
+hs-source-dirs: .
+other-modules:  MFlow MFlow.Cookies
+               MFlow.Hack.Response
+ghc-prof-options:
+ghc-shared-options:
+ghc-options:
+hugs-options:
+nhc98-options:
+jhc-options:
