@@ -1,18 +1,10 @@
-[ v21, v23, v25, v27, v29, v31, v33] 
+[ ( v38 , v38 )  , ( v40 , v40 )  , ( v42 , v42 )  , ( v44 , v44 )  , ( v46 , v46 )  , ( v48 , v48 )  ] 
 where{
- v21= (  v22,  v22) ;
- v22= "Confie en mi soy cient\237fico.txt" ;
- v23= (  v24,  v24) ;
- v24= "Democracia sin rozamiento.txt" ;
- v25= (  v26,  v26) ;
- v26= "El papel del Rey.txt" ;
- v27= (  v28,  v28) ;
- v28= "Padres, hijos e impotencia sexual.txt" ;
- v29= (  v30,  v30) ;
- v30= "Posches y crisis.txt" ;
- v31= (  v32,  v32) ;
- v32= "Social Capital psychology.txt" ;
- v33= (  v34,  v34) ;
- v34= "\241\241\241\241" ;
+ v38= "Confie en mi soy cient\237fico.txt"  ;
+ v40= "Democracia sin rozamiento.txt"  ;
+ v42= "El papel del Rey.txt"  ;
+ v44= "Padres, hijos e impotencia sexual.txt"  ;
+ v46= "Posches y crisis.txt"  ;
+ v48= "Social Capital psychology.txt"  ;
  
 }

@@ -46,7 +46,7 @@ instance Processable Env  where
    puser env = fromMaybe anonymous $ lookup cookieuser $ http env
                     
    pind env= fromMaybe (error ": No FlowID") $ lookup flow $ http env
-
+   getParams= http
 --   getServer env= serverName env
 --   getPath env= pathInfo env
 --   getPort env= serverPort env
@@ -141,7 +141,7 @@ splitPath str=
 hackWorkflow  ::  Env ->  IO Response
 hackWorkflow req1=   do
      let httpreq1= http  req1                  -- !> (show req1)
-     let cookies= getCookies httpreq1
+     let cookies= {-# SCC "getCookies" #-} getCookies httpreq1
 
      (flowval , retcookies) <-  case lookup flow cookies of
               Just fl -> return  (fl, [])

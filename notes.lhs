@@ -1,17 +1,56 @@
-mezclar views en la misma pantalla
+añadir gestion usuarios storyreader
+relato tendria un grafico
 
-instance (Monoid v,ConvertTo view1 v, ConvertTo view2 v) => View wiew1 m a -> View view2 m b
-
-
-
-after login other user blocked:
- DeleteFile "TCacheData/Workflow/Stat#admin#anon#@admin": does not exist (El sistema no puede encontrar el archivo especificado.)
+manejo de versiones en Serializable
 
 
-meter MFlow en github
+instance Serialize a => Serialize (Version a) where
+  showp (Version x)= showp x
+  readp = choice[ readp >>= return . Version
+                , readp >>= return . Version . conv]
+
+instance Serializable a => Serializable (Version a) where
+  serialize (Version x)= serialize x
+  deserialize str=
+      Version $ deserialize  str
+      `catch` $ \_ -> Version . conv $ deserialize str
+
+
+class Serialize a => Version a where
+  data Prev a
+  conv :: Prev a -> a
+
+
+
+
+ghc -prof -auto-all -rtsopts demos\StoryReader2.hs
+
+Demos\StoryReader +RTS -p
+
+abre mal los ficheros con acentos. corregido en ghc 7.4
+
+formas de mezclar dons views:
+  poniendo mfHeader de distinto tipo
+      no se pueden insertar views heterogéneos en medio
+
+  quitando header y creando dos operadores de suma ++> homogenea y
+  +++> heterogenea
+
+como convertir v -> v
+
+chekear que presentq bien los formularios en validación
+pagina web de administracion sync flush debug user errores etc
+app para compilar y ejecutar repositorios GIT
+   git pull
+   cabal install
+
+flag writedebuginfo recoverInDebugMode, unificar step y stepDebug
+
+link powered by haskell
+
+
+
 factorizar ask
-
-instances de FormView para test load
 
 
 add nsquence to serialization
@@ -27,13 +66,7 @@ caching
 if th user is admin or it run in localhost, show errors in pages. if not, log them
 no valida si se hace enter en un campo
 Serialize stat evitar salvar cuando esta em modo recovery
-no pone acentos. usar Text en StoryReader
-nombres unicode y getDirectoryContents
-manejo de errores en worflows
-  si se borra on error, desaparece todo el estado de usuario
-  si se cambia el flujo en recovery, errror de serializacion
-  si no se cambia nada, reproduce el errror.
-loopStep que guarde el log, pero que sea un paso en el log.
+
 
 
 > newtype BackT m a = BackT { runBackT :: m (FailBack a ) }

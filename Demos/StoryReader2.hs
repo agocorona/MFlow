@@ -1,8 +1,7 @@
 {-# OPTIONS -XDeriveDataTypeable
-            -XMultiParamTypeClasses
             -XTypeSynonymInstances
             -XScopedTypeVariables
-            -XNoMonomorphismRestriction
+
             #-}
 module Main where
 import MFlow.Hack.XHtml.All
@@ -17,7 +16,7 @@ import System.IO.UTF8(openBinaryFile,hGetLine, hPutStr)
 import System.IO.Unsafe
 import System.IO.Error(isEOFError,catch)
 import Control.Exception hiding (catch)
-
+import Control.Concurrent(forkIO)
 import qualified Codec.Binary.UTF8.String as UTF8
 
 
@@ -41,19 +40,42 @@ import Control.Monad.State
 
 adminUser= "admin"
 main= do
-   maybeColdRebuildStories
+   index userName
    userRegister adminUser adminUser
+   syncWrite SyncManual
+   maybeColdRebuildStories
+
    putStrLn $ "in the browser go to: http://localhost"
-   run 80 $ hackMessageFlow  messageFlows
+   forkIO $ run 80 $ hackMessageFlow  messageFlows
+   loop
    where
+   loop= do
+       op <- getLine
+       case op of
+        "sync" -> syncCache >> putStrLn "syncronized cache" >> loop
+        "flush" -> atomically flushAll >> print "flushed cache" >> loop
+        "end"  -> syncCache >> print "bye" >> return()
+        "abrt" -> return()
+        _ -> loop
+
    messageFlows=  [("noscript",  runFlow showStories)
                   ,("admin", transient $ runFlow admin)
                   ,("info", stateless opts)]
 
    opts :: Env -> IO Html
    opts _=  return $ p <<  concatHtml (p <<"options: " : options)
-
    options=   [ p << hotlink i (bold << i) | (i,_) <- tail $ reverse messageFlows]
+
+
+type Name= String
+type FileName= String
+type Seek= Integer
+
+
+
+type Stories= M.Map Name (FileName, Handle)
+
+
 
 maybeColdRebuildStories=   do
    strs <- atomically $ readDBRef rstories
@@ -64,14 +86,6 @@ maybeColdRebuildStories=   do
        let l'= l \\ [keyObjDBRef rstories,"..","."]
        hs <- mapM ( \f -> openBinaryFile f ReadWriteMode) $ map (storiesPath++) l'
        atomically $  writeDBRef rstories . M.fromList . zip l' $ zip l' hs
-
-type Name= String
-type FileName= String
-type Seek= Integer
-
-
-
-type Stories= M.Map Name (FileName, Handle)
 
 
 instance Serialize Stories where
@@ -96,16 +110,9 @@ keyStories= "Stories"
 rstories :: DBRef Stories
 rstories= getDBRef keyStories
 
-
-
 chunkSize= 2000 :: Integer
 
---data Navigation= Seek Integer | Home deriving (Read, Show, Typeable)
-
-
-
-appheader c =
-   thehtml <<  body <<  c
+appheader c =  thehtml <<  body <<  c
 
 
 formUser=
@@ -144,7 +151,7 @@ admin= do
          stories <- liftIO (atomically ( readDBRef rstories))
                       >>= return . (fromMaybe M.empty)
          let nstories = M.keys stories
-         r <- ask $ homelink |+| h3 ! [align "center"] << adcontstr ++>  showHistoriesPage  nstories
+         r <- ask $ homelink |+| h3 ! [align "center"] << adcontstr ++>  listStories  nstories
          case r of
           (Just _,_)  -> admin
           (_,Just hist)-> do
@@ -180,7 +187,7 @@ admin= do
       "d" -> do
            Just stories <- liftIO $ atomically $ readDBRef rstories
 
-           hist <- ask . showHistoriesPage $  M.keys stories
+           hist <- ask . listStories $  M.keys stories
            liftIO $ do
              atomically $ writeDBRef rstories $ del hist stories
              removeFile hist
@@ -204,35 +211,18 @@ admin= do
 
 
 
-showHistoriesPage :: [FileName] -> View Html IO  String
-showHistoriesPage  stories=
-   h2 << "Choose an story"
-   ++>
-   widget [p <<< wlink s (bold << s) | s <- stories]
-
--- do
--- n <- getNewName
--- br
---  ++>
---  wform (
---   table ! [thestyle "align:center;width:80%"] <<< (
---    caption << h2 << "Choose an story"  ++>
---    th ! [align "left"] << bold << "Title"  ++>
---      widget[tr <<< (td << story  ++> td <<< getRadioActive n story) | story <- stories] 
---    ))
-
 other= -1000  --fake seek to signal back to main
 
 --showStories ::  FlowM Html (Workflow IO) ()
 showStories   = do
-   setTimeouts (60) 0
+   setTimeouts (5*60) 0
    Just stor <- liftIO . atomically $ readDBRef rstories
 
    showStories1 $ M.fromList [  (n,0) | n <- M.keys stor]
    where
 
    showStories1  usercontext =  do
-     story <- step . ask  $  userFormOrName **>  showHistoriesPage (M.keys usercontext)
+     story <- step $  ask  $  userFormOrName **>  listStories (M.keys usercontext)
      showStory usercontext story
 
 
@@ -241,10 +231,10 @@ showStories   = do
      showStory usercontext  story = do
 
        seek <- step $ do
-                (chunk,sizelastChunk,seekit,size)  <- getChunk story
-                ask $  topForm story seekit size
+                (chunk,seekit,size)  <- getChunk story
+                ask $ topForm story seekit size
                        **>
-                       showBuffer seekit sizelastChunk chunk
+                       showBuffer seekit size chunk
 
 
        case seek of
@@ -260,14 +250,14 @@ showStories   = do
           <<< tr
             <<< (td <<< userFormOrName
                 <++ concatHtml
-                  [td  ! [align "center"] << (show (seek * 100 `div` size) ++ "%")
+                  [td  ! [align "center"] << (if size==0 then "0" else show ((seek + chunkSize) * 100 `div` size) ++ "%")
                   ,td  ! [align "right"] << title])
 
        getChunk  story  = liftIO $ do
           Just stories <- atomically $ readDBRef rstories
           let mh =  M.lookup story stories
           case mh of
-            Nothing -> return (["This Story not longer exist"],0,0,0)
+            Nothing -> return (["This Story not longer exist"],0,0)
             Just (_,h) ->
                 case M.lookup story  usercontext of
                   Nothing -> do
@@ -279,14 +269,20 @@ showStories   = do
                       readLines h seek
 
 
+listStories :: [FileName] -> View Html IO  String
+listStories  stories=
+   h2 << "Choose an story"
+   ++>
+   widget [p <<< wlink s (bold << s) | s <- stories]
 
-readLines h seek= readLines1 [] 0
+
+readLines h seek= readLines1     [] 0
   where
   readLines1 buf len =do
     mr <- hGetLineExc h
     size<- hFileSize h
     case mr of
-       Nothing -> return (buf, len,seek,size)
+       Nothing -> return (buf,seek,size)
        Just line  -> do
         let len'= len + length line
             buf'= buf++ [line]
@@ -294,7 +290,7 @@ readLines h seek= readLines1 [] 0
            then do
              let buf''= if seek >0 then dropWhile(not . isSpace) (head buf'):tail buf'
                                    else buf'
-             return (buf'',len',seek, size)
+             return (buf'',seek, size)
            else readLines1 buf' len'
 
 hGetLineExc h= (do
@@ -308,44 +304,44 @@ hGetLineExc h= (do
 --showBuffer :: (MonadIO m, Functor m)
 --           =>  Integer ->  Int
 --           -> [String] -> View Html m Integer
-showBuffer seekit sizelastChunk buf =
+showBuffer seekit size buf =
    let
-     disableAttrs= [("style","visibility:hidden")]
-     bf= bold << ">>>>"
-     bb= bold << "<<<<"
+     disableAttrs = [("style","visibility:hidden")]
 
      seekbn   = let x= seekit - chunkSize
-                in if x  >= 0
-                       then seekit - chunkSize
-                       else seekit
-     seekfw   = if sizelastChunk < fromIntegral chunkSize
-                       then seekit + chunkSize
-                       else seekit
+                in if x  >= 0 then x else seekit
+
+     seekfw   = let x= seekit + chunkSize
+                in if x < size then x else seekit
 
 
+     fwlink= let link= wlink seekfw $ bold << ">>>>"
+             in if seekfw== seekit
+               then link <! disableAttrs
+               else link
 
-     fwlink= if seekfw== seekit
-               then wlink seekfw bf <! disableAttrs
-               else wlink fw bf
 
-
-     bwlink= if seekbn == seekit
-               then wlink seekbn bb <! disableAttrs
-               else wlink bw bb
+     bwlink= let link= wlink seekbn $ bold << "<<<<"
+             in if seekbn == seekit
+               then link <! disableAttrs
+               else link
 
 
      otherLink = wlink other ( bold <<"Other stories")
+     byMail    = hotlink "bymail" << (thespan << "receive it by mail")
+     centered  = [align "center"]
+     links     = table ! [thestyle "width:100%"]
+                 <<< tr  <<<(td <<<  bwlink
+                         <|> td ! centered <<< otherLink
+                         <|> td ! centered << byMail
+                         ++> td ! centered <<< fwlink)
 
-     links = table ! [thestyle "width:100%"]
-             <<< tr  <<<(td <<<  bwlink
-                     <|> td ! [align "center"] <<< otherLink
-                     <|> td ! [align "right"]  <<< fwlink)
 
-
-     lenbuf2= length bufconcat `div` 2
-     (buf1,buf2)= splitAt lenbuf2  bufconcat
-     bufLink1 = wlink  bw (linesToHtml buf1]) <! [("style","text-decoration: none;color:black")]
-     bufLink2 = wlink  fw (linesToHtml buf2]) <! [("style","text-decoration: none;color:black")]
+     lenbuf2    = length buf `div` 2
+     (buf1,buf2)= splitAt lenbuf2  buf
+     wrap       = thespan ! [thestyle "width:100%;word-wrap:break-word"]
+     bufLink1   = wlink  seekbn (wrap << linesToHtml buf1) <! [("style","text-decoration: none;color:black")]
+     bufLink2   = wlink  seekfw (wrap << linesToHtml buf2) <! [("style","text-decoration: none;color:black")]
    in
      links <|> bufLink1 <|> bufLink2 <|> links
 

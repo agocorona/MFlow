@@ -15,7 +15,7 @@ type Cookie=  (String,String,String,Maybe String)
 cookieuser= "cookieuser"
 getCookies httpreq=
      case  lookup "Cookie" $ httpreq of
-             Just str  -> splitCookies str
+             Just str  -> {-# SCC "splitCookies" #-}splitCookies str
              Nothing   -> []
 
 cookieHeaders cs =  map (\c-> ("Set-Cookie", showCookie c)) cs

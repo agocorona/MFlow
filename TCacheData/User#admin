@@ -1,1 +1,5 @@
-User {userName = "admin", upassword = "admin"} 
+User {userName = "admin", upassword = "admin"}  
+where{
+ v43= G ;
+ 
+}

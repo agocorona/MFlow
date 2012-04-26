@@ -13,7 +13,7 @@
 -----------------------------------------------------------------------------
 
 module MFlow.Hack.XHtml.All (
- module Control.Workflow
+ module Data.TCache
 ,module MFlow.Hack
 ,module MFlow.Forms
 ,module MFlow.Forms.XHtml
@@ -32,7 +32,7 @@ import MFlow.Hack.XHtml
 
 import Hack(Env)
 import Hack.Handler.SimpleServer
-import Control.Workflow(syncWrite,SyncMode(..))
+import Data.TCache(syncWrite,SyncMode(..))
 
 
 import Text.XHtml.Strict hiding (widget)

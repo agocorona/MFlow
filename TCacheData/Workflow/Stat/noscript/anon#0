@@ -1,0 +1,5 @@
+Stat "noscript/anon#0"  21  0  False  [ Dyn 18  ( B 0   , 207   )   , Dyn 39  ( B "Posches y crisis.txt"   , 194   )   , Dyn 22  ( B -1000   , 183   )   , Dyn 53  ( B "Confie en mi soy cient\237fico.txt"   , 170   )   , Dyn 22  ( B -1000   , 159   )   , Dyn 21  ( B 2000   , 146   )   , Dyn 16  ( v43 , 133   )   , Dyn 16  ( v43 , 146   )   , Dyn 18  ( B 0   , 159   )   , Dyn 21  ( B 2000   , 146   )   , Dyn 39  ( B "El papel del Rey.txt"   , 133   )   , Dyn 22  ( B -1000   , 122   )   , Dyn 48  ( B "Democracia sin rozamiento.txt"   , 109   )   , Dyn 21  ( B -1000   , 98   )   , Dyn 47  ( B "Social Capital psychology.txt"   , 85   )   , Dyn 21  ( B -1000   , 74   )   , Dyn 20  ( B 2000   , 61   )   , Dyn 38  ( B "Posches y crisis.txt"   , 48   )   , Dyn 21  ( B -1000   , 37   )   , Dyn 20  ( B 2000   , 24   )   , Dyn 47  ( B "Democracia sin rozamiento.txt"   , 11   )   , Dyn 14  Token anon#0    ] 0  ( Nothing ) 
+where{
+ v43= G ;
+ 
+}

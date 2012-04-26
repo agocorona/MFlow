@@ -34,7 +34,7 @@ module MFlow (
 Params, Req(..), Resp(..), Workflow, HttpData(..),Processable(..), ConvertTo(..), Token(..), getToken, Error(..), ProcList
 ,flushRec, receive, receiveReq, receiveReqTimeout, send, sendFlush, sendFragment, sendEndFragment
 ,msgScheduler, addMessageFlows,getMessageFlows, transient, stateless,anonymous
-,noScript)
+,noScript,logFileName)
 
 where
 import Control.Concurrent.STM
@@ -57,7 +57,7 @@ import Data.TCache.DefaultPersistence
 import Data.ByteString.Lazy.Char8(pack, unpack)
 
 import qualified Data.Map as M
-
+import System.IO
 import Control.Workflow
 
 import MFlow.Cookies
@@ -198,43 +198,6 @@ receiveReqTimeout 0 0 t= receiveReq t
 receiveReqTimeout time time2 t=
   let id= twfname t ++ "#" ++key t in withKillTimeout id time time2 (receiveReqSTM t)
 
---
---timeout id time time2 f = do
-----  let id= twfname t ++ "#" ++key t
---  flag <- transientTimeout time
---  r    <- atomically $ (f >>=  return  .  Just )
---                    `orElse`
---                    (waitUntilSTM flag  >> return  Nothing)
---  case r of
---        Just r@(Req v) -> return   r
---        Nothing        -> do
---          clearRunningFlag id  !> "killed"
-----          forkIO $ sessionTimeout (fromIntegral time2-  time) id
---          tnow <- getTimeSeconds
---          withResource stat0{wfname=id} $ \ms -> do
---            case ms of
---              Just s -> s{lastActive= tnow,timeout= Just time2}
---              Nothing -> error $ "timeout: Workflow not found: "++ id
---          throw Timeout
---  where
---  sessionTimeout  t id= do
---
---      --this thread becomes now dedicated to keep the second timeout before deleting the state
---      flag  <- transientTimeout t
---
---
---
---      r <- atomically $ (waitWFActive id >> return True)
---                        `orElse`
---                        (waitUntilSTM flag  >> return False )  -- or timeout
---                         
---      case r of
---            False -> delWF1 id !> "state deleted"
---            True  ->  return ()    -- thread has been reactivated 
---
-
-
-
 
 delMsgHistory t = do
       let qnme=key t
@@ -324,15 +287,25 @@ msgScheduler x wfs = do
   
   startMessageFlow wfname token wfs= 
    forkIO $ do
-        r <- startWF wfname  token   wfs                    -- `debug`( "init wf " ++ wfname)
+        r <- startWF wfname  token   wfs                     -- !>( "init wf " ++ wfname)
         case r of
-          Left NotFound -> error ( "procedure not found: "++ wfname)
-          Left AlreadyRunning -> return ()                  -- `debug` ("already Running " ++ wfname)
-          Left Timeout -> return()    -- `debug` "Timeout in msgScheduler"
-          Left (Exception e)->  send token $ Error (show e)  -- `debug` ("WF error: "++ show e)
-          Right _   -> do  delMsgHistory token; return ()   -- `debug` ("finished " ++ wfname)
+          Left NotFound -> error ( "Not found: "++ wfname)
+          Left AlreadyRunning -> return ()                  -- !> ("already Running " ++ wfname)
+          Left Timeout -> return()                          -- !>  "Timeout in msgScheduler"
+          Left (Exception e)-> do
+               let user= key token
+               logError user e
+               case user of
+                 "admin" -> send token $ Error (show e)     -- !> ("WF error: "++ show e)
+                 _       -> send token $ Error "An Error has ocurred"
 
+               moveState wfname token token{tuser= "error/"++tuser token}
 
+          Right _ -> do  delMsgHistory token; return ()   -- !> ("finished " ++ wfname)
+  logError u e= hPutStrLn hlog (show (u,e))  >> hFlush hlog
+
+logFileName= "errlog"
+hlog= unsafePerformIO $ openFile logFileName WriteMode
 
 
 

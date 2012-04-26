@@ -167,9 +167,9 @@ getRadio, getRadioActive,
 submitButton,resetButton,
 validate,
 -- * formatting and combining widgets
-(<<<),(<++),(++>),(<+>), (<!),(|*>),(|+|), (**>),(<**), flatten
+(<<<),(<++),(++>),(<+>), (<!),(|*>),(|+|), (**>),(<**),flatten
 -- * running the flow monad
-,FlowM,runFlow,MFlow.Forms.step
+,FlowM,runFlow,MFlow.Forms.step, MFlow.Forms.stepDebug
 -- * setting parameters
 ,setHeader
 ,setTimeouts
@@ -178,7 +178,6 @@ validate,
 )
 where
 import Data.TCache
---import Data.Persistent.Queue
 import MFlow
 import MFlow.Cookies
 import Data.RefSerialize hiding((<|>))
@@ -197,15 +196,15 @@ import Data.List(intersperse)
 
 
 import System.IO.Unsafe
---
---import Debug.Trace
---(!>)= flip trace
+
+import Debug.Trace
+(!>)= flip trace
 
 
-type UserName=  String
+
 
 data User= User
-            { userName :: UserName
+            { userName :: String
             , upassword :: String
             } deriving (Read, Show, Typeable)
 
@@ -269,7 +268,7 @@ userValidate user@User{..} = liftIO $ atomically
 --                  else lift $ print  $ n2++n3
 
 
-data FailBack a = BackPoint a | NoBack a | GoBack  deriving Typeable
+data FailBack a = BackPoint a | NoBack a | GoBack  deriving (Show,Typeable)
 
 fromFailBack :: Monad m => m (FailBack b) -> m b
 fromFailBack f= f >>= \mr -> case mr of
@@ -282,18 +281,17 @@ instance (Serialize a) => Serialize (FailBack a ) where
    showp (NoBack x)= insertString (pack noFailBack) >> showp x
    showp GoBack  = insertString (pack repeatPlease)
 
-   readp = choice [noFailBackp,icanFailBackp, repeatPleasep]
+   readp = choice [icanFailBackp,repeatPleasep,noFailBackp]
     where
-    noFailBackp= symbol noFailBack >> readp >>= return . NoBack
-    icanFailBackp= symbol iCanFailBack >> readp >>= return . BackPoint
-    repeatPleasep= symbol repeatPlease >> return  GoBack
+    noFailBackp   = {-# SCC "deserialNoBack" #-} symbol noFailBack >> readp >>= return . NoBack
+    icanFailBackp = {-# SCC "deserialBackPoint" #-} symbol iCanFailBack >> readp >>= return . BackPoint
+    repeatPleasep = {-# SCC "deserialbackPlease" #-} symbol repeatPlease >> return  GoBack
 
-iCanFailBack= "BackPoint"
-repeatPlease= "GoBack"
-noFailBack= "NoBack"
+iCanFailBack= "B"
+repeatPlease= "G"
+noFailBack= "N"
 
 newtype BackT m a = BackT { runBackT :: m (FailBack a ) }
-
 
 instance Monad m => Monad (BackT  m) where
     fail   _ = BackT $ return GoBack
@@ -337,22 +335,21 @@ instance MonadState s m => MonadState s (BackT m) where
 
 type  WState view m = StateT (MFlowState view) m
 type FlowM view m=  BackT (WState view m)
-
-
-
-instance (Serialize a,FormInput v, Monoid v)
-   => Serialize (a, MFlowState v) where
-  showp (x,_ )= showp x
-  readp= readp >>= \x -> return (x, mFlowState0) 
-
-
 data FormElm view a = FormElm [view] (Maybe a)
+newtype View v m a = View { runView :: WState v m (FormElm v a) }
 
-newtype View view m a = View { runView :: WState view m (FormElm view a) }
---newtype View view m a = View { runView :: FlowM view m (FormElm view a) }
+instance (FormInput v, Monoid v,Serialize a)
+   => Serialize (a,MFlowState v) where
+  showp (x,s)= case mfDebug s of
+      False -> showp x
+      True  -> showp(x, mfEnv s)
+  readp= choice[nodebug, debug]
+   where
+   nodebug= readp  >>= \x -> return  (x,mFlowState0)
+   debug=  do
+    (x,env) <- readp
+    return  (x,mFlowState0{mfEnv= env})
 
-
---type View view m a= View view m a -- (WState view m)  a
 
 
 instance Functor (FormElm view ) where
@@ -448,19 +445,28 @@ step f= do
     when( mfSequence s' >0) $ put s'
     return r
 
-stepDebug  f= do
-   s <- get
-   BackT $ do
-    WState(r,s') <-  lift . step1 $ runStateT (runBackT f) s
-
-    when( mfSequence s' >0) $ put s'
-    return r
-    where
-    step1 f=do
-        (rec,v) <- WF(\st -> return(st, (recover st, fromIDyn $ versions s'' !! (stat - ind-1) )))
-        case rec of
-            True  -> modify (s ->st{mfEnv= v}) >> f
-            False -> WF.step (f >>= return . WState
+stepDebug
+  :: (Serialize a,
+      Typeable view,
+      FormInput view,
+      Monoid view,
+      MonadIO m,
+      Typeable a) =>
+      FlowM view m a
+      -> FlowM view (Workflow m) a
+stepDebug f= BackT  $ do
+     s <- get
+     (r, s') <- lift $ do
+              (r',stat)<- do
+                     rec <- isInRecover
+                     case rec of
+                          True ->do (r',  s'') <- getStep 0
+                                    return (r',s{mfEnv= mfEnv (s'' `asTypeOf`s)})
+                          False -> return (undefined,s)
+              (r'', s''') <- WF.stepDebug  $ runStateT  (runBackT f) stat >>= \(r,s)-> return (r, s)
+              return $ (r'' `asTypeOf` r', s''' )
+     put s'
+     return r
 
 
 
@@ -656,11 +662,11 @@ getOption mv strings = View $ do
 
 -- | encloses instances of `Widget` or `FormLet` in formating
 -- view is intended to be instantiated to a particular format
-(<<<), wrap :: (Monad m, FormInput view, Monoid view)
+(<<<) :: (Monad m,  Monoid view)
           => (view ->view)
          -> View view m a
          -> View view m a
-wrap v form= View $ do
+(<<<) v form= View $ do
   FormElm f mx <- runView form 
   return $ FormElm [v $ mconcat f] mx
 
@@ -670,56 +676,52 @@ wrap v form= View $ do
 --      tr <<< (td << widget widget1)
 --      tr <<< (td << widget widget2))@
 
-(<<<)= wrap
+
 infixr 6 <<<
 
 
--- | append formatting to  `Widget` or `FormLet` instances
--- view is intended to be instantiated to a particular format
-(<++) , addToForm :: (Monad m, FormInput view, Monoid view)
-          => View view m a
-          -> view
-         -> View view m a
-addToForm form v= View $ do
-  FormElm f mx <- runView form 
-  return $ FormElm (f++[v]) mx
+
+-- | useful for the creation of pages using two or more views.
+-- For example 'HSP' and 'Html'.
+-- Because both as ConvertTo instances to ByteString, then it is possible
+-- to mix them via 'convert':
+--
+-- @ convert <H1> hi in HSP </H1>  ++> convert getString
+instance (Monad m, ConvertTo v' v)
+      => ConvertTo (View v' m a) (View v m a) where
+   convert f=  View $ StateT $ \s ->do
+       (FormElm fs mx, s') <-  runStateT  (runView f) $ unsafeCoerce s
+       -- the only diference between the states of the two views is mfHeader
+       -- which don't affect to runState 
+       return  $ (FormElm (map convert fs ) mx,unsafeCoerce s')
+
+
+     
+-- | append formatting code to a widget
+--
+-- @ getString "hi" <++ H1 << "hi there"@
+(<++) :: (Monad m)
+          => View v m a
+          -> v
+          -> View v m a 
+(<++) form v= View $ do
+  FormElm f mx <-  runView  form 
+  return $ FormElm ( f ++ [ v]) mx 
 
 infix 5 <++
--- | append Html to a widget
---
--- @widget widget1
--- ++>
--- H1 << "hi there"@
-
-(<++)  = addToForm
 
 
 infixr 5 ++>
--- | prepend Html formatting to a widget
+-- | prepend formatting code to a widget
 --
--- @bold << "hi there"
---  <++
---  widget widget1@
+-- @bold << "enter name" ++> getString Nothing @
 
-(++>) :: (Monad m, FormInput view, Monoid view)
+(++>) :: (Monad m,  Monoid view)
        => view -> View view m a -> View view m a
 html ++> digest =  (html `mappend`) <<< digest
 
--- | join two widgets in the same page
--- the resulting widget, when `ask`ed with it, returns a either one or the other
---
---  @r <- ask widget widget1 <+> widget widget2@
---
 
 
-
---instance(b ~ b') => Mix () b m b'  view where
---  (<+>) v w = widget $ v :<+> w
---instance(b ~ b') => Mix  b () m b'  view where
---  (<+>) v w = widget $ w :<+> v
---instance Mix a b n (Either a b) view where
---  (<+>) v w = widget $ v :<+> w
---
 
 type Name= String
 type Type= String
@@ -784,19 +786,21 @@ data MFlowState view= MFlowState{
    mfkillTime :: Int,
    mfSessionTime :: Integer,
    mfCookies   :: [Cookie],
-   mfHeader :: view -> view}
+   mfHeader ::  view -> view,
+   mfDebug  :: Bool
+   }
 
    deriving Typeable
 
 
 
-stdHeader v= v
+stdHeader v = v
 
 
 --rAnonUser= getDBRef . key $ eUser{userName=anonymous} :: DBRef User
 
 mFlowState0 :: (FormInput view, Monoid view) => MFlowState view
-mFlowState0= MFlowState 0 [] False  (Lang "en") [] False False (error "token of mFlowState0 used") 0 0 [] stdHeader
+mFlowState0= MFlowState 0 [] False  (Lang "en") [] False False (error "token of mFlowState0 used") 0 0 [] stdHeader False
 
 setHeader :: Monad m => (view -> view) -> FlowM view m ()
 setHeader header= do
@@ -933,8 +937,11 @@ instance   (MonadIO m, Functor m, m1 ~ m, b ~ a)
            => Widget(View view m1 b) a m view where
     widget =  id
 
--- | join two widgets in the same pages
+-- | join two widgets in the same page
 -- the resulting widget, when `ask`ed with it, returns a either one or the other
+--
+--  @r <- ask widget widget1 <+> widget widget2@
+--
 (<+>) , mix ::  ( FormInput view , Monad m)
       => View view m a'
       -> View view m b'
@@ -1015,7 +1022,7 @@ ask x = do
                  t= mfToken st1
                  cont = case (needForm st', hasForm st') of
                    (True, False) -> header $ formAction (twfname t) $ mconcat forms
-                   _    -> header $ mconcat forms 
+                   _    ->  header $ mconcat  forms 
              liftIO . sendFlush t $ HttpData (mfCookies st') cont
              put st{mfCookies=[]}                   -- !> ("after "++show ( mfSequence st'))
              receiveWithTimeouts
