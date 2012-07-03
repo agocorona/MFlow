@@ -31,7 +31,7 @@ are only provided at this level.
               ,FlexibleInstances
               ,FlexibleContexts #-}  
 module MFlow (
-Params, Req(..), Resp(..), Workflow, HttpData(..),Processable(..), ToHttpData(..), Token(..), getToken, ProcList
+Params, Req(..), Resp(..), Workflow, HttpData(..),Processable(..), ConvertTo(..), Token(..), getToken, Error(..), ProcList
 ,flushRec, receive, receiveReq, receiveReqTimeout, send, sendFlush, sendFragment, sendEndFragment
 ,msgScheduler, addMessageFlows,getMessageFlows, transient, stateless,anonymous
 ,noScript,logFileName)
@@ -52,9 +52,9 @@ import Control.Concurrent.MVar
 
 import Unsafe.Coerce
 import System.IO.Unsafe
-import Data.TCache.DefaultPersistence  
+import Data.TCache.DefaultPersistence
 
-import Data.ByteString.Lazy.Char8(ByteString, pack, unpack,empty)
+import Data.ByteString.Lazy.Char8(pack, unpack)
 
 import qualified Data.Map as M
 import System.IO
@@ -66,17 +66,7 @@ import Debug.Trace
 
 (!>)= flip trace
 
-data HttpData = HttpData [Cookie] ByteString deriving Typeable
-
-instance ToHttpData HttpData where
- toHttpData= id
-
-instance ToHttpData ByteString where
- toHttpData bs= HttpData [] bs
-
-instance Monoid HttpData where
- mempty= HttpData [] empty
- mappend (HttpData c s) (HttpData c' s')= HttpData (c++ c') $ mappend s s'
+data HttpData a= HttpData [Cookie] a deriving Typeable
 
 -- | List of (wfname, workflow) pairs, to be scheduled depending on the message's pwfname
 type ProcList = WorkflowList IO Token ()
@@ -105,9 +95,9 @@ instance Processable  Req   where
 --    getPath (Req x)= getPath  x
 --    getPort (Req x)= getPort  x
 
-data Resp  = Fragm HttpData
-           | EndFragm HttpData
-           | Resp HttpData
+data Resp  = forall  a c.( Typeable a,Typeable c, Monoid c, ConvertTo a c)=> Fragm a
+            | forall a c.( Typeable a,Typeable c,  Monoid c,  ConvertTo a c)=> EndFragm a
+            | forall a c.(  Typeable a,Typeable c, ConvertTo a c) => Resp a
 
 
 anonymous= "anon#"
@@ -165,21 +155,21 @@ instance  (Monad m, Show a) => Traceable (Workflow m a) where
               return $ debug x (str++" => Workflow "++ show x)
 -}
 -- | send a complete response 
-send ::  ToHttpData a => Token  -> a -> IO()
+send ::  (Typeable a, Typeable b, ConvertTo a b) => Token  -> a -> IO()
 send  (Token _ _ _ queue qresp) msg= atomically $ do
-       writeTChan qresp  . Resp $ toHttpData msg
+       writeTChan qresp  $ Resp msg
 
 sendFlush t msg= flushRec t >> send t msg
 
 -- | send a response fragment. Useful for streaming. the last packet must sent trough 'send'
-sendFragment ::  ToHttpData a => Token  -> a -> IO()
-sendFragment (Token _ _ _ _ qresp) msg=  atomically $ writeTChan qresp  . Fragm $ toHttpData msg
+sendFragment ::  ( Typeable a, Typeable b, Monoid b, ConvertTo a b) => Token  -> a -> IO()
+sendFragment (Token _ _ _ _ qresp) msg=  atomically $ writeTChan qresp  $ Fragm msg
 
-sendEndFragment :: ToHttpData a =>  Token  -> a -> IO()
-sendEndFragment (Token _ _ _ _ qresp  ) msg=  atomically $ writeTChan qresp  . EndFragm  $ toHttpData msg
+sendEndFragment ::  ( Typeable a, Typeable b, Monoid b, ConvertTo a b) => Token  -> a -> IO()
+sendEndFragment (Token _ _ _ _ qresp  ) msg=  atomically $ writeTChan qresp  $ EndFragm msg
 
 --emptyReceive (Token  queue _  _)= emptyQueue queue
-receive ::  Typeable a => Token -> IO a
+receive :: (Processable a, Typeable a) => Token -> IO a
 receive t= receiveReq t >>= return  . fromReq
 
 flushRec t@(Token _ _ _ queue _)=   do
@@ -192,7 +182,7 @@ receiveReq = atomically . receiveReqSTM
 receiveReqSTM :: Token -> STM Req
 receiveReqSTM (Token _ _ _ queue _)=   readTChan queue
 
-fromReq :: Typeable a => Req -> a
+fromReq :: (Processable a, Typeable a) => Req -> a
 fromReq  (Req x) = x' where
       x'= case cast x of
            Nothing -> error $ "receive: received type: "++ show (typeOf x) ++ " does not match the desired type:" ++ show (typeOf  x')
@@ -218,7 +208,9 @@ delMsgHistory t = do
 
 -- ! to add a simple monadic computation of type (a -> IO b)  to the list
 -- of the scheduler
-stateless ::  (Typeable a, ToHttpData b) => (a -> IO b) -> (Token -> Workflow IO ())
+stateless :: ( Typeable a, Processable a, Typeable b
+             , ConvertTo b c, Typeable c)
+           =>  (a -> IO b) -> (Token -> Workflow IO ())
 stateless f = transient $ \tk -> receive tk >>= f >>= send tk
 
 -- | to add a monadic computation that send and receive messages, but does
@@ -235,8 +227,8 @@ addMessageFlows wfs=  modifyMVar_ _messageFlows(\ms ->  return $ ms ++ wfs)
 
 getMessageFlows = readMVar _messageFlows
 
-class ToHttpData a  where
-    toHttpData :: a -> HttpData 
+class ConvertTo a b |  a -> b where
+    convert :: a -> b
 
 
 
@@ -245,39 +237,46 @@ tellToWF (Token _ _ _ queue qresp ) msg = do
     atomically $ writeTChan queue $ Req msg                              -- `debug`  ("tell wf="++wf)
     m <- atomically $ readTChan qresp
     case m  of
-        Resp r  ->  return  r
+        Resp r  ->  return . cast1 $ convert r
         Fragm r -> do
-                   result <- getStream   r
-                   return  result
+                   result <- getStream  $ convert r
+                   return $ cast1 result
 
                     
     where
 
+
+    cast1 :: (Typeable a, Typeable b) => a -> b
+    cast1 x= y where
+       y= case cast x of
+            Nothing ->  error $ "cast error: " ++  show (typeOf x) ++ " to " ++ show (typeOf y)
+            Just y -> y
+    getStream :: (Typeable a, Monoid a) => a -> IO  a
     getStream r =  do
          mr <- atomically $ readTChan qresp 
          case mr of
             Resp _ -> error "\"send\" used instead of \"sendFragment\" or \"sendEndFragment\""
             Fragm h -> do
-                 rest <- unsafeInterleaveIO $  getStream  h
-                 let result=  mappend  r   rest
-                 return  result 
+                 rest <- unsafeInterleaveIO $  getStream ( convert h)
+                 let result=  mappend  r  (cast1 rest)
+                 return (cast1 result )
             EndFragm h -> do
-                 let result=  mappend r   h
-                 return  result
+                 let result=  mappend r  $ cast1 (convert h)
+                 return  (cast1 result)
 
 
 
 
 
 
---data Error= Error String deriving (Read, Show, Typeable)
+data Error= Error String deriving (Read, Show, Typeable)
 
-instance ToHttpData String where
-  toHttpData= HttpData [] . pack
+instance Indexable Error where
+    key _= error "Idexablew instance for Error"
 
 msgScheduler
-  :: (Typeable a,Processable a)
-  => a -> ProcList -> IO (HttpData, ThreadId)
+  :: (Processable a, Typeable a, ConvertTo  Error c, Typeable c)
+  => a -> ProcList -> IO (c, ThreadId)
 msgScheduler x wfs = do
   token <- getToken x
 
@@ -293,12 +292,12 @@ msgScheduler x wfs = do
           Left NotFound -> error ( "Not found: "++ wfname)
           Left AlreadyRunning -> return ()                  -- !> ("already Running " ++ wfname)
           Left Timeout -> return()                          -- !>  "Timeout in msgScheduler"
-          Left (WFException e)-> do
+          Left (Exception e)-> do
                let user= key token
                logError user e
                case user of
-                 "admin" -> send token   (show e)     -- !> ("WF error: "++ show e)
-                 _       -> send token   "An Error has ocurred"
+                 "admin" -> send token $ Error (show e)     -- !> ("WF error: "++ show e)
+                 _       -> send token $ Error "An Error has ocurred"
 
                moveState wfname token token{tuser= "error/"++tuser token}
 

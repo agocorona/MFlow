@@ -1,6 +1,62 @@
 añadir gestion usuarios storyreader
 relato tendria un grafico
 
+
+FlowM view IO b
+
+atomic  :: (Serialize a,
+      Typeable view,
+      FormInput view,
+      Monoid view,
+      MonadIO m,
+      Typeable a) =>
+      FlowM view m a
+      -> FlowM view  m a
+atomic f= atomically $ do
+   s <- get
+   BackT $ do
+    (r,s') <-  lift . unsafeIOToSTM $ runStateT (runBackT f) s
+    -- when recovery of a workflow, the MFlow state is not considered
+    return r
+
+meter transacciones en bloques atomicos
+
+
+unsafeMFLowToSTM :: MFlowState view -> FlowM view IO a -> IO a
+unsafeMFlowToSTM s f=
+     (r,s') <-  lift . unsafeIOToSTM $ runStateT (runBackT f) s
+
+atomic :: FlowM view
+atomic f= do
+  s <- get
+  (r,s') <- atomically $ runStateT (runBackT f) s
+  put s'
+  return r
+
+como notificar a workflow que ha sido salvado el estado?
+
+modo sincrono siempre -> facil
+
+evitarlo
+
+crear una copia y salvarla
+problema general
+ transactional stream
+   se lee progresivamente
+   se escribe progresivamente
+
+ puede haber solapamiento entre lo que hay en disco y memoria
+
+ onsave (limpia buffer)
+ writeDBRef tiene que leerlo enterio
+
+ guardar por un lado header
+ y por otro versions
+
+data Buffer a= Buffer [a] Int (DBRef(Buffer a))
+
+writeResource (Buffer a)=
+
 manejo de versiones en Serializable
 
 
@@ -16,11 +72,18 @@ instance Serializable a => Serializable (Version a) where
       `catch` $ \_ -> Version . conv $ deserialize str
 
 
-class Serialize a => Version a where
+class Serialize a => Versioned a where
   data Prev a
   conv :: Prev a -> a
 
 
+como liberar memoria del log de estado de workflow
+
+leer del fichero: formato (cabecera, sequencer)
+
+sequencer= offset
+
+read sequencer= fseek file
 
 
 ghc -prof -auto-all -rtsopts demos\StoryReader2.hs
@@ -29,14 +92,6 @@ Demos\StoryReader +RTS -p
 
 abre mal los ficheros con acentos. corregido en ghc 7.4
 
-formas de mezclar dons views:
-  poniendo mfHeader de distinto tipo
-      no se pueden insertar views heterogéneos en medio
-
-  quitando header y creando dos operadores de suma ++> homogenea y
-  +++> heterogenea
-
-como convertir v -> v
 
 chekear que presentq bien los formularios en validación
 pagina web de administracion sync flush debug user errores etc

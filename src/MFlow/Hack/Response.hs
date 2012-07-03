@@ -53,7 +53,7 @@ instance ToResponse String  where
 
 
 
-instance ToResponse a => ToResponse (HttpData a)  where
+instance  ToResponse HttpData  where
   toResponse (HttpData cookies x)=   (toResponse x) {headers= cookieHeaders cookies}
 
 

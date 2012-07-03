@@ -25,7 +25,7 @@ import Control.Exception
 import qualified Data.Map as M
 import Data.Maybe 
 import Data.TCache
-
+import Data.TCache.DefaultPersistence
 import Control.Workflow
 
 import MFlow
@@ -53,22 +53,28 @@ instance Processable Env  where
    
 data Flow= Flow !Int deriving (Read, Show, Typeable)
 
+instance Serializable Flow where
+  serialize= pack . show
+  deserialize= read . unpack
 
 instance Indexable Flow where
   key _= "Flow"
 
 
-
+rflow= getDBRef . key $ Flow undefined
 
 newFlow= do
         fl <- atomically $ do
-                    withSTMResources [Flow undefined] $
-                       \m -> 
-                           let
-                               (add, ret)= case m of
-                                  [Just (Flow n)] -> ([Flow $ n+1],n)
-                                  [Nothing]  -> ([Flow 1],0)
-                           in resources{toAdd=add, toReturn= ret}
+                    m <- readDBRef rflow
+                    case m of
+                     Just (Flow n) -> do
+                             writeDBRef rflow . Flow $ n+1
+                             return n
+                             
+                     Nothing -> do
+                             writeDBRef rflow $ Flow 1
+                             return 0 
+                           
 
         return $ show fl
 
@@ -76,24 +82,24 @@ newFlow= do
 
 
 
+--
+--instance ConvertTo String TResp  where
+--      convert = TResp . pack
+--
+--instance ConvertTo ByteString TResp  where
+--      convert = TResp
+--
+--
+--instance ConvertTo Error TResp where
+--     convert (Error e)= TResp . pack  $ errorResponse e
+--
+--instance ToResponse v =>ConvertTo (HttpData v) TResp where
+--    convert= TRespR
 
-instance ConvertTo String TResp  where
-      convert = TResp . pack
 
-instance ConvertTo ByteString TResp  where
-      convert = TResp
-
-
-instance ConvertTo Error TResp where
-     convert (Error e)= TResp . pack  $ errorResponse e
-
-instance ToResponse v =>ConvertTo (HttpData v) TResp where
-    convert= TRespR
-
-
-webScheduler   :: Env
-               -> ProcList
-               -> IO (TResp, ThreadId)
+--webScheduler   :: Env
+--               -> ProcList
+--               -> IO (TResp, ThreadId)
 webScheduler = msgScheduler 
 
 --theDir= unsafePerformIO getCurrentDirectory

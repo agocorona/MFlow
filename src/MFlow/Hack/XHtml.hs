@@ -34,7 +34,7 @@ instance ToResponse Html where
 
 instance Typeable Html where
      typeOf =  \_ -> mkTyConApp (mkTyCon "Text.XHtml.Strict.Html") []
-
-instance ConvertTo Html TResp where
-     convert = TResp
+--
+--instance ConvertTo Html TResp where
+--     convert = TResp
 

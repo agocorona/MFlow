@@ -3,8 +3,13 @@
 
             #-}
 module MFlow.Forms.Admin where
-import MFlow.Hack.XHtml.All hiding (select)
+import MFlow.Hack
+import MFlow.Forms
+import MFlow.Forms.XHtml
+import MFlow.Hack.XHtml
 import MFlow
+import Text.XHtml.Strict hiding (widget)
+import Control.Applicative
 import Control.Workflow
 import Control.Monad.Trans
 import Data.TCache
@@ -14,8 +19,8 @@ import System.IO
 import System.IO.Unsafe
 import Data.ByteString.Lazy.Char8(unpack)
 
-admin ::  FlowM Html (Workflow IO) ()
-admin= do
+adminMFlow ::  FlowM Html  IO ()
+adminMFlow= do
    op <- ask  $  wlink "sync"  (bold << "sync")
              <|> wlink "flush" (bold << "flush")
              <|> wlink "errors"(bold << "errors")
@@ -31,7 +36,7 @@ admin= do
     "end"  -> liftIO $ syncCache >> print "bye" >> exitWith(ExitSuccess)
     "abrt" -> liftIO $ exitWith(ExitSuccess)
     _ -> return()
-   admin
+   adminMFlow
 
 hlog= unsafePerformIO $ openFile logFileName ReadMode
 errors= do
@@ -61,6 +66,7 @@ showFormList (ls :: [[String]]) n l= do
   updown n l= wlink ( n +l) (p << "up") <|> wlink ( n -l) (p << "down")
 
 optionsUser us err= do
+-- add put in debug mode
     wfs <- liftIO $ return . map fst =<<  getMessageFlows
     wf <- ask  $ thespan << err ++> widget [ wlink wf (thespan << wf)| wf <- wfs]
     mstat <- liftIO $  getWFHistory  wf Token{twfname= wf,tuser=us}

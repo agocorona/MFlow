@@ -19,10 +19,13 @@ import Control.Exception hiding (catch)
 import Control.Concurrent(forkIO)
 import qualified Codec.Binary.UTF8.String as UTF8
 
+import Data.Email
+import Network.EmailSend.SMTP
 
 import Data.Monoid
 
 import Data.TCache
+import Data.TCache.IndexQuery
 import Data.RefSerialize hiding((<|>))
 import Data.TCache.DefaultPersistence
 import System.Directory
@@ -304,7 +307,8 @@ hGetLineExc h= (do
 --showBuffer :: (MonadIO m, Functor m)
 --           =>  Integer ->  Int
 --           -> [String] -> View Html m Integer
-showBuffer seekit size buf =
+showBuffer seekit size buf = do
+   logged <- isLogged
    let
      disableAttrs = [("style","visibility:hidden")]
 
@@ -328,8 +332,9 @@ showBuffer seekit size buf =
 
 
      otherLink = wlink other ( bold <<"Other stories")
-     byMail    = hotlink "bymail" << (thespan << "receive it by mail")
+     byMail    = hotlink "bymail" << (thespan << "receive it by mail") ! [thestyle "visibility:hidden"]
      centered  = [align "center"]
+
      links     = table ! [thestyle "width:100%"]
                  <<< tr  <<<(td <<<  bwlink
                          <|> td ! centered <<< otherLink
@@ -339,10 +344,20 @@ showBuffer seekit size buf =
 
      lenbuf2    = length buf `div` 2
      (buf1,buf2)= splitAt lenbuf2  buf
+     disablemail= if logged then [("style","text-decoration: none;color:black")] else []
      wrap       = thespan ! [thestyle "width:100%;word-wrap:break-word"]
-     bufLink1   = wlink  seekbn (wrap << linesToHtml buf1) <! [("style","text-decoration: none;color:black")]
+     bufLink1   = wlink  seekbn (wrap << linesToHtml buf1) <! disabled
      bufLink2   = wlink  seekfw (wrap << linesToHtml buf2) <! [("style","text-decoration: none;color:black")]
-   in
-     links <|> bufLink1 <|> bufLink2 <|> links
 
+   links <|> bufLink1 <|> bufLink2 <|> links
+
+hostname= "parpendicularuniverses.com"
+server= "server.com"
+byMail= do
+  mail <- ask . getString $ Just "Enter your mail"
+  let message = showBuffer
+  sendSimpleEmail ( SMTPBackend server hostname)
+         "noreply@"++hostname
+         mail message
+  ask $ thespan << "The mail has been sent to you"
 

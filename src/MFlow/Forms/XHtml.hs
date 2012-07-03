@@ -28,6 +28,7 @@ module MFlow.Forms.XHtml where
 
 
 import MFlow.Forms
+import Data.ByteString.Lazy.Char8(pack)
 import Text.XHtml as X
 import Control.Monad.Trans
 import Data.Typeable
@@ -37,6 +38,8 @@ instance Monad m => ADDATTRS (View Html m a) where
       FormElm fs  mx <- runView widget
       return $ FormElm  [head fs ! atrs] mx
 
+instance ToByteString Html where
+  toByteString  =  pack. showHtml
 
 instance FormInput  Html  where
 

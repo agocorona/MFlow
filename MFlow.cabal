@@ -6,11 +6,11 @@ license: BSD3
 license-file: LICENSE
 copyright:
 maintainer: agocorona@gmail.com
-build-depends: Workflow >=0.6.0.0 && <0.6.1, transformers -any,
+build-depends: Workflow -any, transformers -any,
                mtl -any, extensible-exceptions -any, xhtml -any,
                base >4.0 && <4.6, hack -any, hack-handler-simpleserver -any,
-               bytestring -any, containers -any, RefSerialize >=0.2.8.1 && <0.2.9,
-               TCache >=0.9.0.2 && <0.9.1, stm >2, old-time -any, vector -any,
+               bytestring -any, containers -any, RefSerialize -any,
+               TCache -any, stm >2, old-time -any, vector -any,
                hsp -any,
                directory -any,
                utf8-string
@@ -78,6 +78,7 @@ exposed-modules: MFlow.Forms MFlow.Hack MFlow.Forms.XHtml
                  MFlow.Hack.XHtml MFlow.Hack.XHtml.All
                  MFlow.Forms.HSP
                  MFlow.Forms.Admin
+                 MFlow
 exposed: True
 buildable: True
 build-tools:
@@ -98,7 +99,7 @@ includes:
 install-includes:
 include-dirs:
 hs-source-dirs: .
-other-modules:  MFlow MFlow.Cookies
+other-modules: MFlow.Cookies
                MFlow.Hack.Response
 ghc-prof-options:
 ghc-shared-options:

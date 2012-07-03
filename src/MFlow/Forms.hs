@@ -148,17 +148,16 @@ mainProds   = do
 module MFlow.Forms(
 
 {- basic definitions -}
-Widget(..),FormLet(..)
-,View(..), FormInput(..),FormElm(..), wlink, wform,
-getWFName,getNewName
-{- widget instances -}
-,Selection(..)
+Widget(..), FormLet(..),
+FlowM(..),View(..), FormInput(..),FormElm(..), wlink, wform,
+getWFName,getNewName , getEnv
+
 
 {- users -}
-,userRegister, userValidate, User(..)
-,getCurrentUser, getUser, formUserLine, userWidget,
+,userRegister, userValidate, isLogged, User(..)
+,getCurrentUser,getUserSimple, getUser, formUserLine, userWidget,
 -- * user interaction
-ask, clearEnv,
+ask, clearEnv, 
 -- * getters to be used in instances of `FormLet` and `Widget` in the Applicative style.
 
 getString,getInt,getInteger
@@ -166,10 +165,11 @@ getString,getInt,getInteger
 getRadio, getRadioActive,
 submitButton,resetButton,
 validate,
--- * formatting and combining widgets
-(<<<),(<++),(++>),(<+>), (<!),(|*>),(|+|), (**>),(<**),flatten
+-- * widgets combinators and formatting
+(<<<),(<++),(++>),(<+>), (<!),(|*>),(|+|), (**>),(<**),wconcat
+, flatten, normalize, ToByteString(..)
 -- * running the flow monad
-,FlowM,runFlow,MFlow.Forms.step, MFlow.Forms.stepDebug
+,runFlow,MFlow.Forms.step-- , MFlow.Forms.stepDebug
 -- * setting parameters
 ,setHeader
 ,setTimeouts
@@ -178,6 +178,7 @@ validate,
 )
 where
 import Data.TCache
+import Data.TCache.DefaultPersistence
 import MFlow
 import MFlow.Cookies
 import Data.RefSerialize hiding((<|>))
@@ -202,6 +203,9 @@ import Debug.Trace
 
 
 
+instance Serialize a => Serializable a where
+  serialize=  runW . showp
+  deserialize=   runR readp
 
 data User= User
             { userName :: String
@@ -217,27 +221,22 @@ userPrefix= "User#"
 instance Indexable User where
    key User{userName=   user}= keyUserName user
 
+
+
+
 keyUserName n= userPrefix++n
 
 
-
-
-
-maybeError  err iox = runMaybeT iox >>= \x ->
-  case x of
-    Nothing -> error err
-    Just x -> return x
-
 -- | register an user/password 
-userRegister :: MonadIO m => String -> String  -> m()
+userRegister :: MonadIO m => String -> String  -> m (DBRef User)
 userRegister user password  = userRegister' $ User user password
 
-userRegister' :: MonadIO m => User  -> m()
-userRegister' us= liftIO $
-        withResources [us] $ \mus -> do
-                       case mus of
-                         [Nothing] -> [us]
-                         [Just us] -> []
+userRegister' :: MonadIO m => User  -> m (DBRef User)
+userRegister' us= liftIO . atomically $ newDBRef us
+--        withResources [us] $ \mus -> do
+--                       case mus of
+--                         [Nothing] -> [us]
+--                         [Just us] -> []
 
 
 
@@ -335,8 +334,10 @@ instance MonadState s m => MonadState s (BackT m) where
 
 type  WState view m = StateT (MFlowState view) m
 type FlowM view m=  BackT (WState view m)
+
 data FormElm view a = FormElm [view] (Maybe a)
 newtype View v m a = View { runView :: WState v m (FormElm v a) }
+
 
 instance (FormInput v, Monoid v,Serialize a)
    => Serialize (a,MFlowState v) where
@@ -445,28 +446,30 @@ step f= do
     when( mfSequence s' >0) $ put s'
     return r
 
-stepDebug
-  :: (Serialize a,
-      Typeable view,
-      FormInput view,
-      Monoid view,
-      MonadIO m,
-      Typeable a) =>
-      FlowM view m a
-      -> FlowM view (Workflow m) a
-stepDebug f= BackT  $ do
-     s <- get
-     (r, s') <- lift $ do
-              (r',stat)<- do
-                     rec <- isInRecover
-                     case rec of
-                          True ->do (r',  s'') <- getStep 0
-                                    return (r',s{mfEnv= mfEnv (s'' `asTypeOf`s)})
-                          False -> return (undefined,s)
-              (r'', s''') <- WF.stepDebug  $ runStateT  (runBackT f) stat >>= \(r,s)-> return (r, s)
-              return $ (r'' `asTypeOf` r', s''' )
-     put s'
-     return r
+
+
+--stepDebug
+--  :: (Serialize a,
+--      Typeable view,
+--      FormInput view,
+--      Monoid view,
+--      MonadIO m,
+--      Typeable a) =>
+--      FlowM view m a
+--      -> FlowM view (Workflow m) a
+--stepDebug f= BackT  $ do
+--     s <- get
+--     (r, s') <- lift $ do
+--              (r',stat)<- do
+--                     rec <- isInRecover
+--                     case rec of
+--                          True ->do (r',  s'') <- getStep 0
+--                                    return (r',s{mfEnv= mfEnv (s'' `asTypeOf`s)})
+--                          False -> return (undefined,s)
+--              (r'', s''') <- WF.stepDebug  $ runStateT  (runBackT f) stat >>= \(r,s)-> return (r, s)
+--              return $ (r'' `asTypeOf` r', s''' )
+--     put s'
+--     return r
 
 
 
@@ -568,6 +571,10 @@ getRadio n v= View $ do
       [finput n "radio" v
           ( isJust mn  && v== fromJust mn) Nothing]
       mn
+
+-- get a parameter form the las received response
+getEnv ::  MonadState (MFlowState view) m => String -> m(Maybe String)
+getEnv n= gets mfEnv >>= return . lookup n
      
 getElem
   :: (FormInput view,
@@ -673,45 +680,49 @@ getOption mv strings = View $ do
 -- | encloses a widget in Html formatting
 --
 -- @table <<< (
---      tr <<< (td << widget widget1)
---      tr <<< (td << widget widget2))@
+--      tr <<< (td <<< widget widget1)
+--      tr <<< (td <<< widget widget2))@
 
 
-infixr 6 <<<
+infixr 5 <<<
 
 
 
 -- | useful for the creation of pages using two or more views.
 -- For example 'HSP' and 'Html'.
 -- Because both as ConvertTo instances to ByteString, then it is possible
--- to mix them via 'convert':
+-- to mix them via 'normalize':
 --
--- @ convert <H1> hi in HSP </H1>  ++> convert getString
-instance (Monad m, ConvertTo v' v)
-      => ConvertTo (View v' m a) (View v m a) where
-   convert f=  View $ StateT $ \s ->do
+-- @ normalize <H1> hi in HSP </H1>  ++> normalize getString
+
+normalize ::(Monad m, ToByteString v) => View v m a -> View ByteString m a
+normalize f=  View $ StateT $ \s ->do
        (FormElm fs mx, s') <-  runStateT  (runView f) $ unsafeCoerce s
        -- the only diference between the states of the two views is mfHeader
        -- which don't affect to runState 
-       return  $ (FormElm (map convert fs ) mx,unsafeCoerce s')
+       return  $ (FormElm (map toByteString fs ) mx,unsafeCoerce s')
 
+class ToByteString a where
+  toByteString :: a -> ByteString
 
-     
+instance ToByteString a => ToHttpData a where
+  toHttpData = toHttpData . toByteString
+
 -- | append formatting code to a widget
 --
 -- @ getString "hi" <++ H1 << "hi there"@
 (<++) :: (Monad m)
-          => View v m a
-          -> v
-          -> View v m a 
+      => View v m a
+      -> v
+      -> View v m a 
 (<++) form v= View $ do
   FormElm f mx <-  runView  form 
   return $ FormElm ( f ++ [ v]) mx 
 
-infix 5 <++
+infix 6 <++ 
 
 
-infixr 5 ++>
+infixr 6 ++>
 -- | prepend formatting code to a widget
 --
 -- @bold << "enter name" ++> getString Nothing @
@@ -833,8 +844,8 @@ getCurrentUser = return . tuser =<< gets mfToken
 
 
 
--- | Is an example of login\/register validation form needed by getUserWidget. In this case
--- the form field appears in a single line. it shows, in sequence, entries form user,
+-- | Is an example of login\/register validation form needed by 'userWidget'. In this case
+-- the form field appears in a single line. it shows, in sequence, entries for the username,
 -- password, a button for loging, a entry to repeat password necesary for registering
 -- and a button for registering.
 -- The user can build its own user login\/validation forms by modifying this example
@@ -846,11 +857,16 @@ getCurrentUser = return . tuser =<< gets mfToken
 formUserLine :: (FormInput view, Monoid view, Functor m, Monad m)
             => View view m (Maybe(Maybe User, Maybe String), Maybe String)
 formUserLine=
-       (User <$> getString (Just "enter user")
-             <*> getPassword <+> submitButton "login")
-       <+> fromString "  password again" ++> getPassword
-           <*  submitButton "register"
+       (User <$> getString (Just "enter user")                  <! [("size","5")]
+             <*> getPassword <+> submitButton "login")          <! [("size","5")]
+             <+> fromString "  password again" ++> getPassword  <! [("size","5")]
+             <*  submitButton "register"
 
+-- | wether the user is logged or is anonymous
+isLogged :: MonadState (MFlowState v) m => m Bool
+isLogged= do
+   rus <-  return . tuser =<< gets mfToken
+   return $ rus ==  anonymous
 
 -- | It creates a widget for user login\/registering. If a user name is specified
 -- in the first parameter, it is forced to login\/password as this specific user
@@ -918,6 +934,12 @@ userWidget muser formuser= View $ do
 
        just -> return  just
 
+-- | if not logged, perform login. otherwise return the user
+getUserSimple :: ( FormInput view, Monoid view, Typeable view
+                 , ToHttpData view
+                 , MonadIO m, Functor m)
+              => FlowM view m String
+getUserSimple= getUser Nothing formUserLine
 
 -- | Very basic user authentication. The user is stored in a cookie.
 -- it looks for the cookie. If no cookie, it ask to the user for a `userRegister`ed
@@ -925,7 +947,7 @@ userWidget muser formuser= View $ do
 -- The user-password combination is only asked if the user has not logged already
 -- otherwise, the stored username is returned.
 getUser :: ( FormInput view, Monoid view, Typeable view
-           , ConvertTo (HttpData view) display, Typeable display
+           , ToHttpData view
            , MonadIO m, Functor m)
           => Maybe String
           -> View view m (Maybe(Maybe User, Maybe String), Maybe String)
@@ -992,11 +1014,10 @@ valid form= View $ do
 -- in the FlowM monad
 ask
   :: (Widget a b  m view,
-      ConvertTo (HttpData view) display,
+      ToHttpData view,
       FormInput view,
       Monoid view,
-      Typeable view,
-      Typeable display) =>
+      Typeable view) =>
       a -> FlowM view m b
 ask x = do
      st1 <-  get
@@ -1022,8 +1043,9 @@ ask x = do
                  t= mfToken st1
                  cont = case (needForm st', hasForm st') of
                    (True, False) -> header $ formAction (twfname t) $ mconcat forms
-                   _    ->  header $ mconcat  forms 
-             liftIO . sendFlush t $ HttpData (mfCookies st') cont
+                   _    ->  header $ mconcat  forms
+             let HttpData c s= toHttpData cont
+             liftIO . sendFlush t $ HttpData (mfCookies st' ++ c) s
              put st{mfCookies=[]}                   -- !> ("after "++show ( mfSequence st'))
              receiveWithTimeouts
              st'' <- get
@@ -1079,7 +1101,7 @@ receiveWithTimeouts= do
          put st{mfEnv= req}
 
 
-data Selection a view= Selection{stitle:: view, sheader :: [view] , sbody :: [([view],a)]}
+--data Selection a view= Selection{stitle:: view, sheader :: [view] , sbody :: [([view],a)]}
 
 
 wform ::  (FormInput view, Monoid view, Widget a b m view)
@@ -1112,7 +1134,7 @@ submitButton label= getParam Nothing "submit" $ Just label
 
 --data Link a view  = Link a view
 
-wlink :: (Show a, Read a, Typeable a, MonadIO m, Functor m, FormInput view)
+wlink :: (Typeable a, Read a, Show a, MonadIO m, Functor m, FormInput view) 
          => a -> view -> View  view m a
 wlink x v= View $ do
       verb <- getWFName
@@ -1132,9 +1154,11 @@ instance Widget a b m view => Widget [a] b m view where
       let vs= concatMap (\(FormElm v _) -> v) forms
           res=  filter isJust $ map (\(FormElm _ r) -> r) forms
           res1= if null res then Nothing else head res
-      return $ FormElm vs res1 
+      return $ FormElm vs res1
 
-
+-- | concat a list of widgets of the same type
+wconcat :: (MonadIO m, Functor m)=> [View view m a]  -> View view m a
+wconcat xs= widget xs
 
 
 (|*>),wintersperse :: (MonadIO m, Functor m,Monoid view)
