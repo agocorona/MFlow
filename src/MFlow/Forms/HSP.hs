@@ -15,7 +15,7 @@ import Data.Typeable
 import HSP
 import Data.Monoid
 import Control.Monad(when)
-
+import Data.ByteString.Lazy.Char8(unpack)
 
 
 
@@ -35,6 +35,7 @@ instance FormInput (HSP XML)   where
              value=(value)
              checked=(checked)
              onclick=(case onclick of Just s -> s ; _ -> "")/>
+
     ftextarea  name text= <textarea name=(name) > <% text %> </textarea>
 
 

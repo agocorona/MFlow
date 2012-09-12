@@ -1,17 +1,23 @@
 {-# OPTIONS -XExistentialQuantification  -XTypeSynonymInstances
-            -XFlexibleInstances -XDeriveDataTypeable #-}
+            -XFlexibleInstances -XDeriveDataTypeable -XOverloadedStrings #-}
 module MFlow.Hack.Response where
 
 import Hack
 import MFlow.Cookies
-import Data.ByteString.Lazy.Char8
-import MFlow(HttpData(..))
+import Data.ByteString.Lazy.Char8 as B
+
+import MFlow
 import Data.Typeable
 import Data.Monoid
+import System.IO.Unsafe
+import Data.Map as M
+import Control.Workflow (WFErrors(..))
 
 --import Debug.Trace
 --
 --(!>)= flip trace
+
+
 
 class ToResponse a where
       toResponse :: a -> Response
@@ -27,14 +33,19 @@ instance Monoid TResp where
               Just y' -> TResp $ mappend x y'
               Nothing -> error $ "fragment of type " ++ show ( typeOf  y)  ++ " after fragment of type " ++ show ( typeOf x)
 
-
-
 defaultResponse :: String ->  IO Response
 defaultResponse  msg=  return  . toResponse $ "<p>Page not found or error ocurred:<br/>" ++ msg ++  "<br/><a href=\"/\" >home</a> </p>"
 
 errorResponse msg=
-   "<h4>Page not found or error ocurred:<h4/></h4><h3>" ++ msg ++
-   "</h3><br/> <a href=\"/\" >press here to go home</a> </p>"
+   "<h4>Page not found or error ocurred:</h4><h3>" <> msg <>
+   "</h3><br/>" <> opts <> "<br/><a href=\"/\" >press here to go home</a>"
+
+  where
+  paths= Prelude.map B.pack . M.keys $ unsafePerformIO getMessageFlows
+
+  opts=  "options: " <> B.concat (Prelude.map  (\s ->
+
+                          "<a href=\""<>  s <>"\">"<> s <>"</a>, ") paths)
 
 
 instance ToResponse TResp where
@@ -48,15 +59,11 @@ instance ToResponse ByteString  where
       toResponse x= Response{status=200, headers=[ctype {-,("Content-Length",show $ B.length x) -}], body= x}
 
 instance ToResponse String  where
-      toResponse x= Response{status=200, headers=[ctype{-,("Content-Length",show $ B.length x) -}], body= pack x}
-
-
-
+      toResponse x= Response{status=200, headers=[ctype{-,("Content-Length",show $ B.length x) -}], body= B.pack x}
 
 instance  ToResponse HttpData  where
-  toResponse (HttpData cookies x)=   (toResponse x) {headers= cookieHeaders cookies}
-
-
+  toResponse (HttpData hs cookies x)=   (toResponse x) {headers=  hs++ cookieHeaders cookies}
+  toResponse (Error NotFound str)= Response{status=404, headers=[], body=   errorResponse str}
 
 instance Typeable Env where
      typeOf = \_-> mkTyConApp (mkTyCon "Hack.Env") []

@@ -7,50 +7,64 @@
   (major1) == 0 && (major2) <  2 || \
   (major1) == 0 && (major2) == 2 && (minor) <= 8)
 
-/* package TCache-0.9.0.4 */
-#define VERSION_TCache "0.9.0.4"
+/* package TCache-0.10.0.1 */
+#define VERSION_TCache "0.10.0.1"
 #define MIN_VERSION_TCache(major1,major2,minor) (\
   (major1) <  0 || \
-  (major1) == 0 && (major2) <  9 || \
-  (major1) == 0 && (major2) == 9 && (minor) <= 0)
+  (major1) == 0 && (major2) <  10 || \
+  (major1) == 0 && (major2) == 10 && (minor) <= 0)
 
-/* package Workflow-0.6.0.0 */
-#define VERSION_Workflow "0.6.0.0"
+/* package Workflow-0.7.0.0 */
+#define VERSION_Workflow "0.7.0.0"
 #define MIN_VERSION_Workflow(major1,major2,minor) (\
   (major1) <  0 || \
-  (major1) == 0 && (major2) <  6 || \
-  (major1) == 0 && (major2) == 6 && (minor) <= 0)
+  (major1) == 0 && (major2) <  7 || \
+  (major1) == 0 && (major2) == 7 && (minor) <= 0)
 
-/* package base-4.3.1.0 */
-#define VERSION_base "4.3.1.0"
+/* package base-4.5.0.0 */
+#define VERSION_base "4.5.0.0"
 #define MIN_VERSION_base(major1,major2,minor) (\
   (major1) <  4 || \
-  (major1) == 4 && (major2) <  3 || \
-  (major1) == 4 && (major2) == 3 && (minor) <= 1)
+  (major1) == 4 && (major2) <  5 || \
+  (major1) == 4 && (major2) == 5 && (minor) <= 0)
 
-/* package bytestring-0.9.1.10 */
-#define VERSION_bytestring "0.9.1.10"
+/* package bytestring-0.9.2.1 */
+#define VERSION_bytestring "0.9.2.1"
 #define MIN_VERSION_bytestring(major1,major2,minor) (\
   (major1) <  0 || \
   (major1) == 0 && (major2) <  9 || \
-  (major1) == 0 && (major2) == 9 && (minor) <= 1)
+  (major1) == 0 && (major2) == 9 && (minor) <= 2)
 
-/* package containers-0.4.0.0 */
-#define VERSION_containers "0.4.0.0"
-#define MIN_VERSION_containers(major1,major2,minor) (\
+/* package case-insensitive-0.4.0.3 */
+#define VERSION_case_insensitive "0.4.0.3"
+#define MIN_VERSION_case_insensitive(major1,major2,minor) (\
   (major1) <  0 || \
   (major1) == 0 && (major2) <  4 || \
   (major1) == 0 && (major2) == 4 && (minor) <= 0)
 
-/* package directory-1.1.0.0 */
-#define VERSION_directory "1.1.0.0"
+/* package conduit-0.5.2.3 */
+#define VERSION_conduit "0.5.2.3"
+#define MIN_VERSION_conduit(major1,major2,minor) (\
+  (major1) <  0 || \
+  (major1) == 0 && (major2) <  5 || \
+  (major1) == 0 && (major2) == 5 && (minor) <= 2)
+
+/* package containers-0.4.2.1 */
+#define VERSION_containers "0.4.2.1"
+#define MIN_VERSION_containers(major1,major2,minor) (\
+  (major1) <  0 || \
+  (major1) == 0 && (major2) <  4 || \
+  (major1) == 0 && (major2) == 4 && (minor) <= 2)
+
+/* package directory-1.1.0.2 */
+#define VERSION_directory "1.1.0.2"
 #define MIN_VERSION_directory(major1,major2,minor) (\
   (major1) <  1 || \
   (major1) == 1 && (major2) <  1 || \
   (major1) == 1 && (major2) == 1 && (minor) <= 0)
 
-/* package extensible-exceptions-0.1.1.2 */
-#define VERSION_extensible_exceptions "0.1.1.2"
+/* package extensible-exceptions-0.1.1.4 */
+#define VERSION_extensible_exceptions "0.1.1.4"
 #define MIN_VERSION_extensible_exceptions(major1,major2,minor) (\
   (major1) <  0 || \
   (major1) == 0 && (major2) <  1 || \
@@ -70,40 +84,61 @@
   (major1) == 0 && (major2) <  2 || \
   (major1) == 0 && (major2) == 2 && (minor) <= 2)
 
-/* package hsp-0.6.1 */
-#define VERSION_hsp "0.6.1"
+/* package hsp-0.7.1 */
+#define VERSION_hsp "0.7.1"
 #define MIN_VERSION_hsp(major1,major2,minor) (\
   (major1) <  0 || \
-  (major1) == 0 && (major2) <  6 || \
-  (major1) == 0 && (major2) == 6 && (minor) <= 1)
+  (major1) == 0 && (major2) <  7 || \
+  (major1) == 0 && (major2) == 7 && (minor) <= 1)
 
-/* package mtl-2.0.1.0 */
-#define VERSION_mtl "2.0.1.0"
+/* package http-types-0.7.3 */
+#define VERSION_http_types "0.7.3"
+#define MIN_VERSION_http_types(major1,major2,minor) (\
+  (major1) <  0 || \
+  (major1) == 0 && (major2) <  7 || \
+  (major1) == 0 && (major2) == 7 && (minor) <= 3)
+
+/* package mtl-2.1.1 */
+#define VERSION_mtl "2.1.1"
 #define MIN_VERSION_mtl(major1,major2,minor) (\
   (major1) <  2 || \
-  (major1) == 2 && (major2) <  0 || \
-  (major1) == 2 && (major2) == 0 && (minor) <= 1)
+  (major1) == 2 && (major2) <  1 || \
+  (major1) == 2 && (major2) == 1 && (minor) <= 1)
 
-/* package old-time-1.0.0.6 */
-#define VERSION_old_time "1.0.0.6"
+/* package old-time-1.1.0.0 */
+#define VERSION_old_time "1.1.0.0"
 #define MIN_VERSION_old_time(major1,major2,minor) (\
   (major1) <  1 || \
-  (major1) == 1 && (major2) <  0 || \
-  (major1) == 1 && (major2) == 0 && (minor) <= 0)
+  (major1) == 1 && (major2) <  1 || \
+  (major1) == 1 && (major2) == 1 && (minor) <= 0)
 
-/* package stm-2.2.0.1 */
-#define VERSION_stm "2.2.0.1"
+/* package parsec-3.1.2 */
+#define VERSION_parsec "3.1.2"
+#define MIN_VERSION_parsec(major1,major2,minor) (\
+  (major1) <  3 || \
+  (major1) == 3 && (major2) <  1 || \
+  (major1) == 3 && (major2) == 1 && (minor) <= 2)
+
+/* package stm-2.3 */
+#define VERSION_stm "2.3"
 #define MIN_VERSION_stm(major1,major2,minor) (\
   (major1) <  2 || \
-  (major1) == 2 && (major2) <  2 || \
-  (major1) == 2 && (major2) == 2 && (minor) <= 0)
+  (major1) == 2 && (major2) <  3 || \
+  (major1) == 2 && (major2) == 3 && (minor) <= 0)
 
-/* package transformers-0.2.2.0 */
-#define VERSION_transformers "0.2.2.0"
+/* package text-0.11.2.0 */
+#define VERSION_text "0.11.2.0"
+#define MIN_VERSION_text(major1,major2,minor) (\
+  (major1) <  0 || \
+  (major1) == 0 && (major2) <  11 || \
+  (major1) == 0 && (major2) == 11 && (minor) <= 2)
+
+/* package transformers-0.3.0.0 */
+#define VERSION_transformers "0.3.0.0"
 #define MIN_VERSION_transformers(major1,major2,minor) (\
   (major1) <  0 || \
-  (major1) == 0 && (major2) <  2 || \
-  (major1) == 0 && (major2) == 2 && (minor) <= 2)
+  (major1) == 0 && (major2) <  3 || \
+  (major1) == 0 && (major2) == 3 && (minor) <= 0)
 
 /* package utf8-string-0.3.7 */
 #define VERSION_utf8_string "0.3.7"
@@ -119,10 +154,24 @@
   (major1) == 0 && (major2) <  9 || \
   (major1) == 0 && (major2) == 9 && (minor) <= 1)
 
-/* package xhtml-3000.2.0.1 */
-#define VERSION_xhtml "3000.2.0.1"
+/* package wai-1.3.0 */
+#define VERSION_wai "1.3.0"
+#define MIN_VERSION_wai(major1,major2,minor) (\
+  (major1) <  1 || \
+  (major1) == 1 && (major2) <  3 || \
+  (major1) == 1 && (major2) == 3 && (minor) <= 0)
+
+/* package warp-1.3.0.1 */
+#define VERSION_warp "1.3.0.1"
+#define MIN_VERSION_warp(major1,major2,minor) (\
+  (major1) <  1 || \
+  (major1) == 1 && (major2) <  3 || \
+  (major1) == 1 && (major2) == 3 && (minor) <= 0)
+
+/* package xhtml-3000.2.1 */
+#define VERSION_xhtml "3000.2.1"
 #define MIN_VERSION_xhtml(major1,major2,minor) (\
   (major1) <  3000 || \
   (major1) == 3000 && (major2) <  2 || \
-  (major1) == 3000 && (major2) == 2 && (minor) <= 0)
+  (major1) == 3000 && (major2) == 2 && (minor) <= 1)
 

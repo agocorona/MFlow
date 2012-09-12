@@ -1,3 +1,160 @@
+data ReadShow v a= ReadShow v Maybe a
+
+instance Monoid v => Applicative( ReadShow v) where
+  pure a  = ReadShow mempty a
+  ReadShow v x <*> ReadShow v' y= 
+                   ReadShow (mconcat v v') (x <*> y)
+
+class ReadShow v a where
+  doRead v -> Maybe a
+  doWrite a -> v
+
+doRead :: v -> ReadShow v a -> Maybe a
+
+doWrite a  -> ReadShow v a -> v
+
+transactional loopback
+  con reserva de datos en una request
+    en vez de reservar manualmente, en espera de respuesta
+    se puede hacer automaticamente?
+    por ejemplo:
+
+      r <- reserve data
+      c <- ask confirm r
+      case c of
+        True ->adquire r
+        False ->
+          cancel r
+
+    simplificado:
+
+         mr <- ask takeOne data
+         case mr of
+          Just..
+          Nothing..
+
+takeOne widget data= reserve data >>= widget `action` adquireReject `modify` ...
+
+class Reservable a where
+  reserve ::  x -> a x -> STM ( Reserve x a)
+  adquire ::  Reserve x a -> STM x
+  cancel  ::  Reserve x a -> STM ()
+
+test x= do
+ r <- reserve x
+ cancel r
+ == x
+
+reserve may be a weaker (or more general) locking .
+locking may be a particular case when the locked resource is the whole structure.
+hay algo parecido equivalente en STM?
+  Es mas optimista acceder al objeto despues de elegido si no existe, reintentar si posible.
+
+
+
+ajax:
+ otra opction para que un widget interactue con el servidor con codigo dentro de ese widget:%
+   onClick doserver "verb?parm=ajaxstring
+
+   el widget lee
+
+ invoque action in the server:
+ onAction=doServer act
+
+ doServer str =
+   xmlhttp.open("GET",str,true);
+   xmlhttp.send();
+
+xmlhttp.onreadystatechange=function()
+  {
+  if (xmlhttp.readyState==4 && xmlhttp.status==200)
+    {
+    eval(xmlhttp.responseText);
+    }
+  }
+
+ ajaxHead=
+
+
+
+ invocaciones con parametro ajax:
+
+<html>
+<head>
+<script type="text/javascript">
+function loadXMLObj()
+{
+var xmlhttp;
+if (window.XMLHttpRequest)
+  {// code for IE7+, Firefox, Chrome, Opera, Safari
+  xmlhttp=new XMLHttpRequest();
+  }
+else
+  {// code for IE6, IE5
+  xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+  }
+return xmlhttp
+}
+
+xmlhttp= loadXMLObj()
+
+function loadXMLDoc(){
+xmlhttp.open("GET","ajax_info.txt",true);
+xmlhttp.send();
+
+xmlhttp.onreadystatechange=function()
+  {
+  if (xmlhttp.readyState==4 && xmlhttp.status==200)
+    {
+    document.getElementById("myDiv").innerHTML=xmlhttp.responseText;
+    }
+  }
+
+}
+</script>
+</head>
+<body>
+
+<div id="myDiv"><h2>Let AJAX change this text</h2></div>
+<button type="button" onclick="loadXMLDoc()">Change Content</button>
+</body>
+</html>
+
+
+(<+>),wintersperse,(|*>),(|+|), (**>),(<**),wconcat,(<|>),(<*),(<$>),(<*>),
+-- * formatting combinators
+(<<<),(<++),(++>),(<!)
+
+(.<+>.),(.|*>.),(.|+|.), (.**>.),(.<**.),(.<|>.), .<<.
+-- * formatting combinators
+(.<<<.),(.<++.),(.++>.),(.<!.)
+
+bhtml bbody
+
+como hacer que cada elemento tenga su propio numero una vez creado.
+ la segunda  vez que pase el proceso.
+ porque algunos widgets monadicos puede que no recorran todo el espacio de nombres
+   el el state identificar nombres de widgets
+    w1 <*> w2=> (n1,n2)
+    y el codigo lo utiliza
+    prevSeq sería una array de esas estructuras
+ prohibir monadas en widgets
+   como seria login?
+
+que pasa con los form cacheados?
+   si pincho back, la secuencia en el servidor se tiene que resetear al valor previo
+   si no, nunca encajarán
+   cuando se mete un widget cacheado, no hay que recordar la secuencia actual, sino la del widget
+   pero una pagina puede contener widgets cacheados o no
+        por lo que los numeros de secuencia no valen para hacer matching
+        porque la secuencialidad en la página se pierde
+        habria que guardar numero secuencia de cada widget de la página
+
+   opción: un numero de secuencia de página en cookie
+      con secuencia de numeros de campos.
+
+
+
 añadir gestion usuarios storyreader
 relato tendria un grafico
 

@@ -21,41 +21,44 @@ import Data.ByteString.Lazy.Char8 as B(pack, unpack, length, ByteString)
 import Control.Concurrent(ThreadId(..))
 import System.IO.Unsafe
 import Control.Concurrent.MVar
+import Control.Concurrent
 import Control.Exception
 import qualified Data.Map as M
 import Data.Maybe 
 import Data.TCache
 import Data.TCache.DefaultPersistence
-import Control.Workflow
+import Control.Workflow hiding (Indexable(..))
 
 import MFlow
 import MFlow.Cookies
 
 import MFlow.Hack.Response
 import Data.Monoid
+import Data.CaseInsensitive
 
---import Debug.Trace
---(!>)= flip trace
+import Debug.Trace
+(!>)= flip trace
 
-flow= "flow"
+flow=  "flow"
 
 instance Processable Env  where
    pwfname  env=  if null sc then noScript else sc
       where
       sc=  tail $ pathInfo env
-   puser env = fromMaybe anonymous $ lookup cookieuser $ http env
+   puser env = fromMaybe anonymous $ lookup  cookieuser $ http env
                     
    pind env= fromMaybe (error ": No FlowID") $ lookup flow $ http env
-   getParams= http
+   getParams=  http
 --   getServer env= serverName env
 --   getPath env= pathInfo env
 --   getPort env= serverPort env
+
    
 data Flow= Flow !Int deriving (Read, Show, Typeable)
 
 instance Serializable Flow where
-  serialize= pack . show
-  deserialize= read . unpack
+  serialize= B.pack . show
+  deserialize= read . B.unpack
 
 instance Indexable Flow where
   key _= "Flow"
@@ -100,12 +103,12 @@ newFlow= do
 --webScheduler   :: Env
 --               -> ProcList
 --               -> IO (TResp, ThreadId)
-webScheduler = msgScheduler 
+--webScheduler = msgScheduler 
 
 --theDir= unsafePerformIO getCurrentDirectory
 
 wFMiddleware :: (Env -> Bool) -> (Env-> IO Response) ->   (Env -> IO Response)
-wFMiddleware filter f = \ env ->  if filter env then hackWorkflow env    else f env
+wFMiddleware filter f = \ env ->  if filter env then hackWorkflow env    else f env -- !> "new message"
 
 -- | An instance of the abstract "MFlow" scheduler to the Hack interface
 -- it accept the list of processes being scheduled and return a hack handler
@@ -123,15 +126,19 @@ wFMiddleware filter f = \ env ->  if filter env then hackWorkflow env    else f 
 --   options msgs= \"in the browser choose\\n\\n\" ++
 --     concat [ "http:\/\/server\/"++ i ++ "\n" | (i,_) \<- msgs]
 -- @
-hackMessageFlow :: ProcList
+hackMessageFlow :: [(String, (Token -> Workflow IO ()))]
                 -> (Env -> IO Response)
 hackMessageFlow  messageFlows = 
  unsafePerformIO (addMessageFlows messageFlows) `seq`
- wFMiddleware (\env ->  (pwfname env) `elem` paths)  other
- where
- other= (\env -> defaultResponse $  "options: " ++ opts)
- (paths,_)= unzip messageFlows
- opts= concatMap  (\s -> "<a href=\""++ s ++"\">"++s ++"</a>, ") paths
+ hackWorkflow -- wFMiddleware f   other
+-- where
+-- f env = unsafePerformIO $ do
+--    paths <- getMessageFlows >>=
+--    return (pwfname env `elem` paths)
+
+-- other= (\env -> defaultResponse $  "options: " ++ opts)
+-- (paths,_)= unzip messageFlows
+-- opts= concatMap  (\s -> "<a href=\""++ s ++"\">"++s ++"</a>, ") paths
 
 
 splitPath ""= ("","","")
@@ -146,14 +153,14 @@ splitPath str=
 
 hackWorkflow  ::  Env ->  IO Response
 hackWorkflow req1=   do
-     let httpreq1= http  req1                  -- !> (show req1)
-     let cookies= {-# SCC "getCookies" #-} getCookies httpreq1
+     let httpreq1= http  req1  
+     let cookies= {-# SCC "getCookies" #-} getCookies  httpreq1
 
-     (flowval , retcookies) <-  case lookup flow cookies of
+     (flowval , retcookies) <-  case lookup ( flow) cookies of
               Just fl -> return  (fl, [])
               Nothing  -> do
                      fl <- newFlow
-                     return (fl,  [(flow,  fl, "/",Nothing)])
+                     return ( fl,  [( flow,  fl,  "/",Nothing)])
                      
 {-  for state persistence in cookies 
      putStateCookie req1 cookies
@@ -162,26 +169,24 @@ hackWorkflow req1=   do
                                 Just ck -> ck:retcookies1
 -}
 
-     let [(input, str)]=
+     let input=
            case  ( requestMethod req1, lookup  "Content-Type" httpreq1 )  of
-              (POST,Just "application/x-www-form-urlencoded") -> urlDecode  .  unpack  .  hackInput $ req1 
-              (GET, _) ->   urlDecode  .  queryString $ req1
-              _ -> [([],"")]
-
+              (POST,Just "application/x-www-form-urlencoded") -> urlDecode . unpack $ hackInput  req1 
+              (GET, _) -> urlDecode . queryString $ req1
+              _ -> []
 
      let req = case retcookies of
-          [] -> req1{http= input ++ cookies ++ http req1}   -- !> "REQ"
-          _  -> req1{http= (flow, flowval): input ++ cookies ++ http req1}   -- !> "REQ"
+          [] -> req1{http=  (input ++ cookies) ++ http req1}   -- !> "REQ"
+          _  -> req1{http=(flow, flowval): ( input ++ cookies ) ++ http req1}   -- !> "REQ"
 
-     wfs <- getMessageFlows  
-     (resp',th) <- webScheduler  req  wfs
+
+     (resp',th) <- msgScheduler  req
 
 
      let resp''= toResponse resp'
-     let headers1= case retcookies of [] -> headers resp''; _ -> ctype : cookieHeaders retcookies
+     let headers1= case retcookies of [] -> headers resp''; _ -> ctype :   (cookieHeaders retcookies)
      let resp =   resp''{status=200, headers= headers1 {-,("Content-Length",show $ B.length x) -}}
 
- 
      return resp
 
 
