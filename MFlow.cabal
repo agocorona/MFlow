@@ -1,5 +1,5 @@
 name: MFlow
-version: 0.0.5.2
+version: 0.1.5.3
 cabal-version: >= 1.6
 build-type: Simple
 license: BSD3
@@ -8,29 +8,35 @@ maintainer: agocorona@gmail.com
 stability: experimental
 synopsis: Web app server for stateful processes with safe, composable user interfaces.
 
-description: It is a Web framework with some unique features thanks to the power of the Haskell language.
-             MFlow run stateful server processes. Because flows are stateful, not event driven, the code is more
-             understandable, because all the flow of request and responses is coded by the programmer in a single function.
-             Allthoug single request-response flows and callbacks are possible.
+description: A Web framework with some unique features thanks to the power of the Haskell language.
+             MFlow run stateful server processes; All the flow of request and responses are coded by the programmer in a single function.
+             Allthoug single request-response flows and callbacks are possible. Therefore, the code is
+             more understandable.
              .
-             Technically it is a Web application server for stateful processes (flows) that are optionally persistent.
-             These processes interact with the user trough interfaces made of widgets that return back statically typed responses to
-             the calling process. All is coded in pure haskell (with optional XML from Haskell Server Pages).
-             It adopt and extend the formlet/applicative approach. It has bindings for HSP and Text.XHtml
+             These processes are stopped and restarted by the
+             application server on demand, including its execution state. Therefore session management
+             is automatic. State consistence and transactions are given by the TCache package.
              .
-             It includes Application Server features such is process and session timeouts
-             and automatic recovery of flow execution state.
+             The processes interact trough widgets, that are an extension of formlets with
+             additional combinators, formatting, link management, callbacks, modifiers, caching,
+             byteString conversion and AJAX. All is coded in pure haskell.
              .
-             This release add transparent back button management, cached widgets, callbacks, modifiers, heterogeneous formatting AJAX,
+             The interfaces and communications are abstract, but there are bindings for HSP, Text.XHtml and byteString
+             , Hack and WAI but it can be extended to non Web based architectures.
+             .
+             This release add transparent back button management, cached widgets, callbacks, modifiers, heterogeneous formatting, AJAX,
              and WAI integration.
              .
-             It is designed for coding an entire application in a single file to be run with runghc in order
-             to speed up the prototyping process.
+             It is designed for applications that can be run with no deployment with runghc in order
+             to speed up the development process.
              .
              See "MFlow.Forms" for details
              .
-             Altroug still it is experimental, it is used in at least one future commercial project. So I have te commitment to
+             Altroug still it is experimental, it is being used in at least one future commercial project. So I have te commitment to
              continue its development. There are many examples in the documentation and in the package.
+             .
+             Due to compilation problems in Hackage, this release has the bindings for Hack and HSP not exposed,
+             but they can be found in the source files.
              .
              To do:
              .
@@ -40,25 +46,27 @@ description: It is a Web framework with some unique features thanks to the power
 category: Web, Application Server
 author: Alberto Gómez Corona
 data-dir: ""
-extra-source-files: Demos/ShoppingCart.hs, Demos/ShoppingCart.Wai.hs, Demos/demos.hs
+extra-source-files:   src/MFlow/Forms/HSP.hs
+                    , src/MFlow/Hack/Response.hs, src/MFlow/Hack.hs
+                    , src/MFlow/Hack/XHtml.hs, src/MFlow/Hack/XHtml/All.hs
+                    , Demos/ShoppingCart.hs, Demos/ShoppingCart.Wai.hs
+                    , Demos/demos.hs
 
 library
     build-depends: Workflow -any, transformers -any, mtl -any,
-                   extensible-exceptions -any, xhtml -any, base >4.0 && <4.6,
-                   hack -any, hack-handler-simpleserver -any, bytestring -any,
+                   extensible-exceptions -any, xhtml -any, base >4.0 && < 5,
+                   bytestring -any,
                    containers -any, RefSerialize -any, TCache -any, stm >2,
-                   old-time -any, vector -any, hsp -any, directory -any,
+                   old-time -any, vector -any,  directory -any,
                    utf8-string -any, wai -any, case-insensitive -any, http-types -any, conduit -any
                    ,text -any, parsec -any,warp -any
 
     exposed-modules: MFlow.Forms
-
                      MFlow.Forms.Admin MFlow MFlow.FileServer
                      MFlow.Forms.Ajax MFlow.Cookies
-                     MFlow.Hack.Response, MFlow.Hack MFlow.Hack.XHtml MFlow.Hack.XHtml.All
                      MFlow.Wai.Response, MFlow.Wai, MFlow.Wai.XHtml.All
                      MFlow.Forms.XHtml
-                     MFlow.Forms.HSP
+
     exposed: True
     buildable: True
     hs-source-dirs: src .

@@ -3,10 +3,8 @@
 
             #-}
 module MFlow.Forms.Admin(adminLoop,addAdminWF) where
-import MFlow.Hack
 import MFlow.Forms
 import MFlow.Forms.XHtml
-import MFlow.Hack.XHtml
 import MFlow
 import Text.XHtml.Strict hiding (widget)
 import Control.Applicative
@@ -27,6 +25,8 @@ import Data.Map as M (keys)
 import System.Exit
 import Control.Exception as E
 
+
+
 ssyncCache= putStr "sync..." >> syncCache >> putStrLn "done"
 
 -- | A small console interpreter with some commands:
@@ -43,6 +43,16 @@ ssyncCache= putStr "sync..." >> syncCache >> putStrLn "done"
 -- It must be used as the last statement of the main procedure.
 adminLoop :: IO ()
 adminLoop= do
+  msgs <- getMessageFlows
+  putStrLn ""
+  putStrLn $  "Served:"
+  mapM putStrLn  [ "     http://server:port/"++ i  | i <- M.keys msgs]
+  putStrLn ""
+  putStrLn "Commands: sync, flush, end, abort"
+  adminLoop1
+
+adminLoop1= do
+       putStr ">"; hFlush stdout
        op <- getLine
        case op of
         "sync" -> ssyncCache
@@ -50,7 +60,7 @@ adminLoop= do
         "end"  -> ssyncCache >> putStrLn "bye" >> exitWith ExitSuccess
         "abort" -> exitWith ExitSuccess
         _      -> return()
-       adminLoop
+       adminLoop1
 
       `E.catch` (\(e:: E.SomeException) ->do
                       ssyncCache
@@ -60,7 +70,7 @@ adminLoop= do
 -- this gives access to an administrator page. It is necessary to
 -- create an admin user with `setAdminUser`.
 --
--- The administration page is reached with the path @"adminserv"@
+-- The administration page is reached with the path \"adminserv"\
 addAdminWF= addMessageFlows[("adminserv",transient $ runFlow adminMFlow)]
 
 

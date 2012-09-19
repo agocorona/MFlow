@@ -1,25 +1,34 @@
 {- | Non monadic low level support stuff for the MFlow application server.
+(See "MFlow.Form" for the higher level interfaces)
 it implements an scheduler of queued 'Processable'  messages that are served according with
 the source identification and the verb invoked.
-Ths scheduler executed the appropriate workflow (using the workflow package)
-the workflow may send additional messages to the source, identified by a 'Token'
-. The computation state is logged and can be recovered.
+The scheduler executed the appropriate workflow (using the workflow package).
+The workflow may send additional messages to the source, identified by a 'Token'
+. The computation state is optionally logged and recovered.
 
 The message communication is trough  polimorphic, monoidal queues.
 There is no asumption about message codification, so instantiations
-of this scheduler for many different infrastructures is possible.
+of this scheduler for different infrastructures is possible,
+including non-Web based ones as long as they support or emulate cookies.
+
 "MFlow.Hack" is an instantiation for the Hack interface in a Web context.
 
 "MFlow.Wai" is a instantiation for the WAI interface.
 
+"MFlow.Forms" implements a monadic type safe interface with composabe widgets and a
+higher comunication interface.
+
+"MFlow.Forms.XHtml" is an instantiation for the Text.XHtml format
+
+"MFlow.Forms.HSP"  is an instantiation for the Haskell Server Pages  format
+
 In order to manage resources, there are primitives that kill the process and its state after a timeout.
 
-All these details are hidden in the monad of "MFlow.Forms" that provides
-an higuer level interface.
+All these details are hidden in the monad of "MFlow.Forms" that provides an higher level interface.
 
 Fragment based streaming 'sendFragment' 'sendEndFragment' are  provided only at this level.
 
-'stateless' and 'transient' serving processes are possible. `stateless` are request-response
+'stateless' and 'transient' server processeses are also possible. `stateless` are request-response
  with no intermediate messaging dialog. `transient` processes have no persistent
  state, so they restart anew after a timeout or a crash.
 
@@ -38,13 +47,17 @@ Fragment based streaming 'sendFragment' 'sendEndFragment' are  provided only at 
 module MFlow (
 Params,  Workflow, HttpData(..),Processable(..), ToHttpData(..)
 , Token(..), ProcList
+-- * low level comunication primitives. Use `ask` instead
 ,flushRec, receive, receiveReq, receiveReqTimeout, send, sendFlush, sendFragment
 , sendEndFragment
-,msgScheduler, addMessageFlows,getMessageFlows, transient, stateless,anonymous
-,noScript,hlog,addTokenToList,deleteTokenInList,
+-- * Flow configuration
+,addMessageFlows,getMessageFlows, transient, stateless,anonymous
+,noScript,hlog, setNotFoundResponse,getNotFoundResponse,
 -- * ByteString tags
--- | basic but efficient tag formatting
-btag, bhtml, bbody,Attribs)
+-- | very basic but efficient tag formatting
+btag, bhtml, bbody,Attribs
+-- * internal use
+,addTokenToList,deleteTokenInList, msgScheduler)
 
 where
 import Control.Concurrent.MVar 
@@ -64,14 +77,14 @@ import Unsafe.Coerce
 import System.IO.Unsafe
 import Data.TCache.DefaultPersistence  hiding(Indexable(..))
 
-import Data.ByteString.Lazy.Char8 as B(ByteString, pack, unpack,empty,append,cons,fromChunks)
+import  Data.ByteString.Lazy.Char8 as B  (ByteString, concat,pack, unpack,empty,append,cons,fromChunks)
 
 import qualified Data.Map as M
 import System.IO
 import System.Time
 import Control.Workflow
 import MFlow.Cookies
-
+import Control.Monad.Trans
 --import Debug.Trace
 --(!>)= flip trace
 
@@ -259,7 +272,9 @@ _messageFlows :: MVar (M.Map String (Token-> Workflow IO ()))
 _messageFlows= unsafePerformIO $ newMVar M.empty -- [(String,Token  -> Workflow IO ())])
 
 -- | add a list of flows to be scheduled. Each entry in the list is a pair @(path, flow)@
-addMessageFlows wfs=  modifyMVar_ _messageFlows(\ms ->  return $ M.union ms  (M.fromList wfs))
+addMessageFlows wfs=  modifyMVar_ _messageFlows(\ms ->  return $ M.union ms  (M.fromList $ map flt wfs))
+  where flt ("",f)= (noScript,f)
+        flt e= e
 
 -- | return the list of the scheduler
 getMessageFlows = readMVar _messageFlows
@@ -354,6 +369,21 @@ logFileName= "errlog"
 -- | The handler of the error log
 hlog= unsafePerformIO $ openFile logFileName ReadWriteMode
 
+
+defNotFoundResponse msg=
+   "<html><h4>Error 404: Page not found or error ocurred:</h4><h3>" <> msg <>
+   "</h3><br/>" <> opts <> "<br/><a href=\"/\" >press here to go home</a></html>"
+
+  where
+  paths= Prelude.map B.pack . M.keys $ unsafePerformIO getMessageFlows
+  opts=  "options: " <> B.concat (Prelude.map  (\s ->
+                          "<a href=\""<>  s <>"\">"<> s <>"</a>, ") paths)
+
+notFoundResponse=  unsafePerformIO $ newIORef defNotFoundResponse
+
+-- | set the  404 "not found" response
+setNotFoundResponse f= liftIO $ writeIORef notFoundResponse  f
+getNotFoundResponse= unsafePerformIO $ readIORef notFoundResponse
 
 -- basic bytestring XML tags
 type Attribs= [(String,String)]

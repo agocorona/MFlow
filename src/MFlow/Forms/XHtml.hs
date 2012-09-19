@@ -49,11 +49,10 @@ instance FormInput  Html  where
                               ++ case c of Just s ->[strAttr "onclick"  s]; _ -> [] )
     ftextarea name text= X.textarea ! [X.name  name] <<  text
 
-    foption name list msel=  select ![ X.name  name] << (concatHtml
-            $ map (\(n,v) -> X.option ! ([value  n] ++ selected msel   n) <<  v ) list)
-
+    fselect name list = select ![ X.name  name] << list
+    foption  name v msel=  X.option ! ([value  name] ++ selected msel) <<  v
             where
-            selected msel n= if Just n == msel then [X.selected] else []
+            selected msel = if  msel then [X.selected] else []
 
     addAttributes tag attrs = tag ! (map (\(n,v) -> strAttr  n  v)  attrs)
 
@@ -64,5 +63,8 @@ instance FormInput  Html  where
 
 
     flink  v str = toHtml $ hotlink  (  v) << str
+
+instance Typeable Html where
+     typeOf =  \_ -> mkTyConApp (mkTyCon "Text.XHtml.Strict.Html") []
 
 

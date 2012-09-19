@@ -138,11 +138,11 @@ newFlow= liftIO $ do
 --   options msgs= \"in the browser choose\\n\\n\" ++
 --     concat [ "http:\/\/server\/"++ i ++ "\n" | (i,_) \<- msgs]
 -- @
-waiMessageFlow :: [(String, (Token -> Workflow IO ()))]
-                -> (Request -> ResourceT IO Response)
-waiMessageFlow  messageFlows = 
- unsafePerformIO (addMessageFlows messageFlows) `seq`
- waiWorkflow -- wFMiddleware f   other
+--waiMessageFlow :: [(String, (Token -> Workflow IO ()))]
+--                -> (Request -> ResourceT IO Response)
+--waiMessageFlow  messageFlows = 
+-- unsafePerformIO (addMessageFlows messageFlows) `seq`
+-- waiWorkflow -- wFMiddleware f   other
 
 -- where
 -- f env = unsafePerformIO $ do
@@ -164,8 +164,8 @@ splitPath str=
 
 
 
-waiWorkflow  ::  Request ->  ResourceT IO Response
-waiWorkflow req1=   do
+waiMessageFlow  ::  Request ->  ResourceT IO Response
+waiMessageFlow req1=   do
      let httpreq1= getParams  req1 
 
      let cookies=getCookies  httpreq1

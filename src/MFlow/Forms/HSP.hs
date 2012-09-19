@@ -38,18 +38,14 @@ instance FormInput (HSP XML)   where
 
     ftextarea  name text= <textarea name=(name) > <% text %> </textarea>
 
-
-    foption  name list msel=
-          <select name=(name)>
-            <% map (\(n,v) ->
-                  <option value=(n) selected=(selected msel n) >
+    fselect name list=  <select name=(name)> <%list%> </select>
+    foption  n v msel=
+                  <option value=(n) selected=(selected msel ) >
                       <% v %>
-                  </option> )
-                  list
-            %>
-          </select>
+                  </option>
+
           where
-          selected msel n= if Just n == msel then "true" else  "false"
+          selected msel = if msel then "true" else  "false"
 
     flink  v str = <a href=(v)> <% str %> </a>
 

@@ -21,15 +21,12 @@ import qualified Data.Vector as V
 
 main= do
 --   syncWrite SyncManual
-   putStrLn $ options messageFlows
-   forkIO $ run   80   $ waiMessageFlow messageFlows
+   addMessageFlows messageFlows
+   forkIO $ run   80    waiMessageFlow
    adminLoop
 
 
-options msgs= "in the browser navigate to\n\n" ++
-     concat [ "http://localhost/"++ i ++ "\n" | (i,_) <- msgs]
-
-messageFlows=  [("noscript",   runFlow shopCart )
+messageFlows=  [("",   runFlow shopCart )
                ,("stateless", stateless st)]
 
 st _ = return "hi"

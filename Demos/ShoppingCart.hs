@@ -17,15 +17,13 @@ import qualified Data.Vector as V
 
 main= do
 --   syncWrite SyncManual
-   putStrLn $ options messageFlows
-   forkIO $ run   80   $ hackMessageFlow messageFlows
+   addMessageFlows messageFlows
+   forkIO $ run   80  hackMessageFlow
    adminLoop
 
 
-options msgs= "in the browser navigate to\n\n" ++
-     concat [ "http://localhost/"++ i ++ "\n" | (i,_) <- msgs]
 
-messageFlows=  [("noscript",   runFlow shopCart )]
+messageFlows=  [("",   runFlow shopCart )]
 
 
 --shopCart1 :: V.Vector Int -> FlowM (Workflow IO) b

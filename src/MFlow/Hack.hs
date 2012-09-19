@@ -108,7 +108,7 @@ newFlow= do
 --theDir= unsafePerformIO getCurrentDirectory
 
 wFMiddleware :: (Env -> Bool) -> (Env-> IO Response) ->   (Env -> IO Response)
-wFMiddleware filter f = \ env ->  if filter env then hackWorkflow env    else f env -- !> "new message"
+wFMiddleware filter f = \ env ->  if filter env then hackMessageFlow env    else f env -- !> "new message"
 
 -- | An instance of the abstract "MFlow" scheduler to the Hack interface
 -- it accept the list of processes being scheduled and return a hack handler
@@ -126,11 +126,11 @@ wFMiddleware filter f = \ env ->  if filter env then hackWorkflow env    else f 
 --   options msgs= \"in the browser choose\\n\\n\" ++
 --     concat [ "http:\/\/server\/"++ i ++ "\n" | (i,_) \<- msgs]
 -- @
-hackMessageFlow :: [(String, (Token -> Workflow IO ()))]
-                -> (Env -> IO Response)
-hackMessageFlow  messageFlows = 
- unsafePerformIO (addMessageFlows messageFlows) `seq`
- hackWorkflow -- wFMiddleware f   other
+--hackMessageFlow :: [(String, (Token -> Workflow IO ()))]
+--                -> (Env -> IO Response)
+--hackMessageFlow  messageFlows = 
+-- unsafePerformIO (addMessageFlows messageFlows) `seq`
+-- hackWorkflow -- wFMiddleware f   other
 -- where
 -- f env = unsafePerformIO $ do
 --    paths <- getMessageFlows >>=
@@ -151,8 +151,8 @@ splitPath str=
 
 
 
-hackWorkflow  ::  Env ->  IO Response
-hackWorkflow req1=   do
+hackMessageFlow  ::  Env ->  IO Response
+hackMessageFlow req1=   do
      let httpreq1= http  req1  
      let cookies= {-# SCC "getCookies" #-} getCookies  httpreq1
 

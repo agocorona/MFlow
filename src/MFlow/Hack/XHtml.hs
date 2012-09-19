@@ -31,9 +31,9 @@ import Data.ByteString.Lazy.Char8 as B(pack,unpack, length, ByteString)
 instance ToResponse Html where
   toResponse x= Response{ status=200, headers=[]
                         , Hack.body= pack $ showHtml x}
-
-instance Typeable Html where
-     typeOf =  \_ -> mkTyConApp (mkTyCon "Text.XHtml.Strict.Html") []
+--
+--instance Typeable Html where
+--     typeOf =  \_ -> mkTyConApp (mkTyCon "Text.XHtml.Strict.Html") []
 --
 --instance ConvertTo Html TResp where
 --     convert = TResp

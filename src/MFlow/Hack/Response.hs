@@ -33,20 +33,6 @@ instance Monoid TResp where
               Just y' -> TResp $ mappend x y'
               Nothing -> error $ "fragment of type " ++ show ( typeOf  y)  ++ " after fragment of type " ++ show ( typeOf x)
 
-defaultResponse :: String ->  IO Response
-defaultResponse  msg=  return  . toResponse $ "<p>Page not found or error ocurred:<br/>" ++ msg ++  "<br/><a href=\"/\" >home</a> </p>"
-
-errorResponse msg=
-   "<h4>Page not found or error ocurred:</h4><h3>" <> msg <>
-   "</h3><br/>" <> opts <> "<br/><a href=\"/\" >press here to go home</a>"
-
-  where
-  paths= Prelude.map B.pack . M.keys $ unsafePerformIO getMessageFlows
-
-  opts=  "options: " <> B.concat (Prelude.map  (\s ->
-
-                          "<a href=\""<>  s <>"\">"<> s <>"</a>, ") paths)
-
 
 instance ToResponse TResp where
   toResponse (TResp x)= toResponse x
@@ -63,7 +49,7 @@ instance ToResponse String  where
 
 instance  ToResponse HttpData  where
   toResponse (HttpData hs cookies x)=   (toResponse x) {headers=  hs++ cookieHeaders cookies}
-  toResponse (Error NotFound str)= Response{status=404, headers=[], body=   errorResponse str}
+  toResponse (Error NotFound str)= Response{status=404, headers=[], body=   getNotFoundResponse str}
 
 instance Typeable Env where
      typeOf = \_-> mkTyConApp (mkTyCon "Hack.Env") []

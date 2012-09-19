@@ -19,7 +19,7 @@ This means that they automatically store and recover his execution state. They a
 defined in the "MFlow" module.
 
 These processses interact with the user trough user interfaces made of widgets (see below) that return back statically typed responses to
-the calling process. Because flows are stateful, not event driven, the code is more understandable, because
+the calling process. Because flows are stateful, not request-response, the code is more understandable, because
 all the flow of request and responses is coded by the programmer in a single function. Allthoug
 single request-response flows and callbacks are possible.
 
@@ -93,20 +93,21 @@ Example:
 [@attributes for formLet elements@] it is not only possible to add Html formatting, but also to add atributes to a formlet element.
 This example has three formLet elements with the attribute "size" added, and a string prepended to the second password box.
 
-@
-userFormLine=
-       (User \<$> getString (Just "enter user")                  <! [("size","5")]
-             \<*> getPassword                                    <! [("size","5")]
-             \<+> submitButton "login")
-             \<+> fromString "  password again" ++> getPassword  <! [("size","5")]
-             \<*  submitButton "register"
-@
+> userFormLine=
+>        (User <$> getString (Just "enter user")                  <! [("size","5")]
+>              <*> getPassword                                    <! [("size","5")]
+>              <+> submitButton "login")
+>              <+> fromString "  password again" ++> getPassword  <! [("size","5")]
+>              <*  submitButton "register"
+
 
 [@ByteString normalization and hetereogeneous formatting@] For caching the rendering of widgets at the ByteString level, and to permit many formatring styles
 in the same page, there are operators that combine different formats which are converted to ByteStrings.
 For example the header and footer may be coded in XML, while the formlets may be formatted using Text.XHtml.
 
+
 [@AJAX@] See "MFlow.Forms.Ajax"
+
 
 [@File Server@] With file caching. See "MFlow.FileServer"
 
@@ -121,39 +122,50 @@ This is a complete example, that can be run with runghc, which show some of thes
 > import Control.Concurrent
 > import Control.Exception as E
 > import qualified Data.ByteString.Char8 as SB
+> import qualified Data.Vector as V
+> import Data.Maybe
 >
-> import Debug.Trace
-> (!>)= flip  trace
->
->
-> data Ops= Ints | Strings | Actions | Ajax deriving(Typeable,Read, Show)
+> data Ops= Ints | Strings | Actions | Ajax | Opt deriving(Typeable,Read, Show)
 > main= do
->    syncWrite SyncManual
 >    setFilesPath ""
 >    addFileServerWF
->    forkIO $ run 80 $ waiMessageFlow  [("noscript",transient $ runFlow mainf)]
+>    addMessageFlows [(""  ,transient $ runFlow mainf)
+>                    ,("shop"    ,runFlow shopCart)]
+>    forkIO $ run 80 waiMessageFlow
 >    adminLoop
->
->
 >
 > stdheader c= p << "you can press the back button to go to the menu"+++ c
 >
 > mainf=   do
 >        setHeader stdheader
->        r <- ask $   wlink Ints (bold << "Ints") <|>
->                     br ++> wlink Strings (bold << "Strings") <|>
->                     br ++> wlink Actions (bold << "Example of a string widget with an action") <|>
->                     br ++> wlink Ajax (bold << "Simple AJAX example")
+>        r <- ask $   wlink Ints (bold << "increase an Int")
+>                <|>  br ++> wlink Strings (bold << "increase a String")
+>                <|>  br ++> wlink Actions (bold << "Example of a string widget with an action")
+>                <|>  br ++> wlink Ajax (bold << "Simple AJAX example")
+>                <|>  br ++> wlink Opt (bold << "select options")
+>                <++ (br +++ linkShop) -- this is an ordinary XHtml link
+>
 >        case r of
 >          Ints    ->  clickn 0
 >          Strings ->  clicks "1"
 >          Actions ->  actions 1
 >          Ajax    ->  ajaxsample
+>          Opt     ->  options
 >        mainf
+>     where
+>     linkShop= toHtml $ hotlink  "shop" << "shopping"
+>
+> options= do
+>    r <- ask $ getSelect (setOption "blue" (bold << "blue")   <|>
+>                          setSelectedOption "Red"  (bold << "red")  ) <! dosummit
+>    ask $ p << (r ++ " selected") ++> wlink () (p<< " menu")
+>    breturn()
+>    where
+>    dosummit= [("onchange","this.form.submit()")]
 >
 > clickn (n :: Int)= do
 >    setHeader stdheader
->    r <- ask $  wlink "menu" (p << "back")
+>    r <- ask $  wlink "menu" (p << "menu")
 >            |+| getInt (Just n) <* submitButton "submit"
 >    case r of
 >     (Just _,_) -> breturn ()
@@ -172,8 +184,8 @@ This is a complete example, that can be run with runghc, which show some of thes
 >
 > ajaxsample= do
 >    setHeader ajaxheader
->    ajaxc <- ajaxCommand    "document.getElementById('text1').value"
->                            (\n ->  return $ "document.getElementById('text1').value='"++show(read  n +1)++"'")
+>    ajaxc <- ajaxCommand "document.getElementById('text1').value"
+>                         (\n ->  return $ "document.getElementById('text1').value='"++show(read  n +1)++"'")
 >    ask $ (getInt (Just 0) <! [("id","text1"),("onclick", ajaxc)])
 >    breturn()
 >
@@ -182,7 +194,30 @@ This is a complete example, that can be run with runghc, which show some of thes
 >      <**((getInt (Just (n+1)) <** submitButton "submit" ) `waction` actions )
 >   breturn ()
 >
-
+> -- A persistent flow  (uses step). The process is killed after 10 seconds of inactivity
+> -- but it is restarted automatically. if you restart the program, it remember the shopping cart
+> -- defines a table with links enclosed that return ints and a link to the menu, that abandon this flow.
+> shopCart  = do
+>    setTimeouts 10 0
+>    shopCart1 (V.fromList [0,0,0:: Int])
+>    where
+>    shopCart1 cart=  do
+>      i <- step . ask $
+>              table ! [border 1,thestyle "width:20%;margin-left:auto;margin-right:auto"]
+>              <<< caption << "choose an item"
+>              ++> thead << tr << concatHtml[ th << bold << "item", th << bold << "times chosen"]
+>              ++> (tbody
+>                   <<<  tr ! [rowspan 2] << td << linkHome
+>                   ++> (tr <<< td <<< wlink  0 (bold <<"iphone") <++  td << ( bold << show ( cart V.! 0))
+>                   <|>  tr <<< td <<< wlink  1 (bold <<"ipad")   <++  td << ( bold << show ( cart V.! 1))
+>                   <|>  tr <<< td <<< wlink  2 (bold <<"ipod")   <++  td << ( bold << show ( cart V.! 2)))
+>                   <++  tr << td << linkHome
+>                   )
+>
+>      let newCart= cart V.// [(i, cart V.! i + 1 )]
+>      shopCart1 newCart
+>     where
+>     linkHome= (toHtml $ hotlink  noScript << bold << "home")
 
 -}
 
@@ -197,14 +232,20 @@ FlowM,View, FormInput(..)
 ,getCurrentUser,getUserSimple, getUser, userFormLine, userLogin, userWidget,
 -- * User interaction
 ask, clearEnv, 
--- * Getters to be used in instances of `FormLet` and `Widget` in the Applicative style.
-
-getString,getInt,getInteger
-,getMultilineText,getBool,getOption, getPassword,
+-- * formLets 
+-- | they mimic the HTML form elements.
+-- It is possible to modify their attributes with the `<!` operator.
+-- They are combined with the widget combinators.
+-- formatting can be added with the formatting combinators.
+-- modifiers change their presentation and behaviour
+getString,getInt,getInteger, getTextBox
+,getMultilineText,getBool,getSelect, setOption,setSelectedOption, getPassword,
 getRadio, getRadioActive, getCheckBox,
-submitButton,resetButton,
-validate, noWidget, waction, wmodify,
-wlink, wform,
+submitButton,resetButton, wlink, wform,
+getCurrentName,
+-- * FormLet modifiers
+validate, noWidget, wrender, waction, wmodify,
+
 -- * Caching widgets
 cachedWidget,
 -- * Widget combinators
@@ -292,7 +333,7 @@ error1 s= error $ s ++ " undefined"
 
 userPrefix= "User#"
 instance Indexable User where
-   key User{userName=   user}= keyUserName user
+   key User{userName= user}= keyUserName user
 
 -- | return  the key name of an user
 keyUserName n= userPrefix++n
@@ -534,9 +575,10 @@ instance (MonadIO m, Functor m) => MonadIO (View view m) where
 --, permanently or for a certain time. this is very useful for complex widgets that present information. Specially it they must access to databases.
 --
 -- @
--- import Mflow.Hack.XHtm.All
+-- import MFlow.Wai.XHtm.All
 -- import Some.Time.Library
--- main= run 80 hackMessageFlow [(noscript, time)]
+-- addMessageFlows [(noscript, time)]
+-- main= run 80 waiMessageFlow
 -- time=do  ask $ cachedWidget \"time\" 5
 --            $ wlink () bold << \"the time is \" ++ show (execute giveTheTime) ++ \" click here\"
 --          time
@@ -595,7 +637,8 @@ class (Functor m, MonadIO m) => FormLet  a  m view where
 `waiMessageFlow` or `addMessageFlows`
 
 @main= do
-   forkIO $ run 80 $ waiMessageFlow  [(\"noscript\",transient $ runFlow mainf)]
+   addMessageFlows [(\"noscript\",transient $ runFlow mainf)]
+   forkIO . run 80 $ waiMessageFlow
    adminLoop
 @
 -}
@@ -754,23 +797,29 @@ instance (FormInput view, FormLet a m view , FormLet b m view,FormLet c m view )
       let (x,y,z)= case mxy of Nothing -> (Nothing, Nothing, Nothing); Just (x,y,z)-> (Just x, Just y,Just z)
       (,,) <$> digest x  <*> digest  y  <*> digest  z
 
+-- | display a text box and return a String
 getString  :: (FormInput view,Monad m) =>
      Maybe String -> View view m String
-getString = getElem
+getString = getTextBox
 
+-- | display a text box and return an Integer (if the value entered is not an Integer, fails the validation)
 getInteger :: (FormInput view, Functor m, MonadIO m) =>
      Maybe Integer -> View view m  Integer
-getInteger =  getElem
+getInteger =  getTextBox
 
+-- | display a text box and return a Int (if the value entered is not an Int, fails the validation)
 getInt :: (FormInput view, Functor m, MonadIO m) =>
      Maybe Int -> View view m Int
-getInt =  getElem
+getInt =  getTextBox
 
+-- | display a password box 
 getPassword :: (FormInput view,
      Monad m) =>
      View view m String
 getPassword = getParam Nothing "password" Nothing
 
+-- | implement a radio button that perform a submit when pressed.
+-- the parameter is the name of the radio group
 getRadioActive :: (FormInput view, Functor m, MonadIO m) =>
              String -> String -> View view m  String
 getRadioActive  n v= View $ do
@@ -784,8 +833,8 @@ getRadioActive  n v= View $ do
 
        
 
-
-
+-- | implement a radio button
+-- the parameter is the name of the radio group
 getRadio :: (FormInput view, Functor m, MonadIO m) =>
             String -> String -> View view m  String
 getRadio n v= View $ do
@@ -798,6 +847,7 @@ getRadio n v= View $ do
           ( isJust mn  && v== fromJust mn) Nothing])
       mn
 
+-- | display a text box and return the value entered if it is readable( Otherwise, fail the validation)
 getCheckBox :: (FormInput view, Functor m, MonadIO m) =>
                String -> Bool -> View view m  String
 getCheckBox  v checked= View $ do
@@ -816,14 +866,14 @@ getCheckBox  v checked= View $ do
 getEnv ::  MonadState (MFlowState view) m => String -> m(Maybe String)
 getEnv n= gets mfEnv >>= return . lookup  n
      
-getElem
+getTextBox
   :: (FormInput view,
       Monad  m,
       Typeable a,
       Show a,
       Read a) =>
      Maybe a ->  View view m a
-getElem ms  = getParam Nothing "text" ms
+getTextBox ms  = getParam Nothing "text" ms
 
 
 getParam
@@ -867,38 +917,36 @@ getCurrentName= do
      return $ if mfCached st then "c" else "p"++show parm
 
 
-
+-- | display a multiline text box and return its content
 getMultilineText :: (FormInput view,
       Monad m) =>
-      Maybe String ->  View view m String
-getMultilineText mt = View $ do
+      String ->  View view m String
+getMultilineText nvalue = View $ do
     tolook <- getNewName
-
-    let nvalue= case mt of
-           Nothing  ->  ""
-           Just v ->  v
     env <- gets mfEnv
     let form= [ftextarea tolook nvalue]
     getParam1 tolook env form
       
-instance  (MonadIO m, Functor m, FormInput view) => FormLet Bool m view where
-   digest mv =  getBool b "True" "False"
-       where
-       b= case mv of
-           Nothing -> Nothing
-           Just bool -> Just $ case bool of
-                          True ->  "True"
-                          False -> "False"
-                          
+--instance  (MonadIO m, Functor m, FormInput view) => FormLet Bool m view where
+--   digest mv =  getBool b "True" "False"
+--       where
+--       b= case mv of
+--           Nothing -> Nothing
+--           Just bool -> Just $ case bool of
+--                          True ->  "True"
+--                          False -> "False"
+
+-- | display a dropdown box with the two values (second (true) and third parameter(false))
+-- . With the value of the first parameter selected.                  
 getBool :: (FormInput view,
       Monad m) =>
-      Maybe String -> String -> String -> View view m Bool
+      Bool -> String -> String -> View view m Bool
 getBool mv truestr falsestr= View $  do
     tolook <- getNewName
     st <- get
     let env = mfEnv st
     put st{needForm= True}
-    r <- getParam1 tolook env $ [foption1 tolook [truestr,falsestr] mv]
+    r <- getParam1 tolook env $ [fselect tolook(foption1 truestr mv `mappend` foption1 falsestr (not mv))]
     return $ fmap fromstr r
 --    case mx of
 --       Nothing ->  return $ FormElm f Nothing
@@ -906,17 +954,36 @@ getBool mv truestr falsestr= View $  do
     where
     fromstr x= if x== truestr then True else False
 
-getOption :: (FormInput view,
-      Monad m) =>
-      Maybe String ->[(String, String)] ->  View view m  String
-getOption mv strings = View $ do
+-- | display a dropdown box with the options in the first parameter is optionally selected
+-- . It returns the selected option. 
+getSelect :: (FormInput view,
+      Monad m,Typeable a, Read a) =>
+      View view m (MFOption a) ->  View view m  a
+getSelect opts = View $ do
     tolook <- getNewName
     st <- get
     let env = mfEnv st
     put st{needForm= True}
-    getParam1 tolook env [foption tolook strings mv] 
+    FormElm form mr <- (runView opts)
+    getParam1 tolook env [fselect tolook $ mconcat form] 
 
+data MFOption a= MFOption
 
+-- | set the option for getSelect. Options are concatenated with `<|>`
+setOption n v = setOption1 n v False
+
+-- | set the selected option for getSelect. Options are concatenated with `<|>`
+setSelectedOption n v= setOption1 n v True
+ 
+setOption1 :: (FormInput view,
+      Monad m, Typeable a, Show a) =>
+      a -> view -> Bool ->  View view m  (MFOption a) 
+setOption1 nam  val check= View $ do
+    st <- get
+    let env = mfEnv st
+    put st{needForm= True}
+    let n= if typeOf nam== typeOf(undefined :: String) then unsafeCoerce nam else show nam
+    return . FormElm [foption n val check]  $ Just MFOption
 
 
 -- | Enclose Widgets in some formating.
@@ -1013,17 +1080,18 @@ type OnClick= Maybe String
 -- | Minimal interface for defining the basic form combinators in a concrete rendering.
 -- defined in this module. see "MFlow.Forms.XHtml" for the instance for @Text.XHtml@ and MFlow.Forms.HSP for an instance
 -- form Haskell Server Pages.
-class FormInput view where
+class Monoid view => FormInput view where
     inred   :: view -> view
     fromString :: String -> view
-    flink ::  String -> view -> view
+    flink ::  String -> view -> view 
     flink1:: String -> view
-    flink1 verb = flink verb (fromString  verb)
-    finput :: Name -> Type -> Value -> Checked -> OnClick -> view
+    flink1 verb = flink verb (fromString  verb) 
+    finput :: Name -> Type -> Value -> Checked -> OnClick -> view 
     ftextarea :: String -> String -> view
-    foption :: String -> [(String, String)] -> Maybe String -> view
-    foption1 :: String -> [String] -> Maybe String -> view
-    foption1  name list msel= foption name (zip list list) msel
+    fselect :: String ->  view -> view
+    foption :: String -> view -> Bool -> view
+    foption1 :: String -> Bool -> view
+    foption1   val msel= foption val (fromString val) msel
     formAction  :: String -> view -> view
     addAttributes :: view -> Attribs -> view
 
@@ -1051,11 +1119,10 @@ newtype Lang= Lang String
 
 data MFlowState view= MFlowState{   
    mfSequence :: Int,
-   mfCached  :: Bool,
+   mfCached   :: Bool,
    prevSeq    :: [Int],
    onInit     :: Bool,
---   mfGoingBack :: Bool,
-   validated   :: Bool,
+   validated  :: Bool,
 --   mfUser     :: String,
    mfLang     :: Lang,
    mfEnv      :: Params,
@@ -1204,7 +1271,10 @@ noWidget ::  (FormInput view,
      View view m a
 noWidget= View . return $ FormElm  [] Nothing
 
-
+-- | render the Show instance of the parameter and return it. It is useful
+-- for displaying information
+wrender :: (Monad m, Show a, FormInput view) => a -> View view m a
+wrender x= View . return $ FormElm [fromString $ show x] (Just x)
 
 -- | Wether the user is logged or is anonymous
 isLogged :: MonadState (MFlowState v) m => m Bool
@@ -1334,10 +1404,9 @@ valid form= View $ do
 
 
 -- | It is the way to interact with the user.
--- It takes a widget and return the user result
+-- It takes a widget and return the user result.
 -- If the environment has the result, ask don't ask to the user.
 -- To force asking in any case, put an `clearEnv` statement before
--- in the FlowM monad
 ask
   :: (
       ToHttpData view,
@@ -1401,8 +1470,8 @@ ask x =   do
 --                op1 -> setGoStraighTo (Just goop1) >> goop1
 --                op2 -> setGoStraighTo (Just goop2) >> goop2@
 --
--- This pseudocode would execute the ask of the menu once. But if the user press the
--- back button he will see again the menu. To let him choose other option, the code
+-- This pseudocode below would execute the ask of the menu once. But the user will never have
+-- the possibility to see the menu again. To let him choose other option, the code
 -- has to be change to
 --
 -- @menu= do
@@ -1415,7 +1484,10 @@ ask x =   do
 --               case r of
 --                op1 -> setGoStraighTo (Just goop1) >> goop1
 --                op2 -> setGoStraighTo (Just goop2) >> goop2@
-
+--
+-- However this is very specialized. normally the back button detection is not necessary.
+-- In a persistent flow (with step) even this default entry option would be completely automatic,
+-- since the process would restar at the last page visited. No setting is necessary.
 goingBack :: MonadState (MFlowState view) m => m Bool
 goingBack = do
     st <- get
@@ -1635,11 +1707,11 @@ instance FormInput  ByteString  where
                               ++ case c of Just s ->[( "onclick", s)]; _ -> [] ) ""
     ftextarea name text= btag "textarea"  [("name", name)]   $ pack text
 
-    foption name list msel=  btag "select" [("name", name)]  (mconcat
-            $ map (\(n,v) -> btag "option"  ([("value",  n)] ++ selected msel n)  (pack v)) list)
+    fselect name   options=  btag "select" [("name", name)]   options
 
+    foption value content msel= btag "option" ([("value",  value)] ++ selected msel)   content
             where
-            selected msel n= if Just n == msel then [("selected","true")] else []
+            selected msel = if  msel then [("selected","true")] else []
 
     addAttributes tag attrs = error "addAttributes not implemented for ByteString"
 

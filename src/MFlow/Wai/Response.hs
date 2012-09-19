@@ -34,21 +34,6 @@ instance Monoid TResp where
               Just y' -> TResp $ mappend x y'
               Nothing -> error $ "fragment of type " ++ show ( typeOf  y)  ++ " after fragment of type " ++ show ( typeOf x)
 
-defaultResponse :: String ->  IO Response
-defaultResponse  msg=  return  . toResponse $ "<p>Page not found or error ocurred:<br/>" ++ msg ++  "<br/><a href=\"/\" >home</a> </p>"
-
-
-errorResponse msg=
-   "<h4>Page not found or error ocurred:</h4><h3>" <> msg <>
-   "</h3><br/>" <> opts <> "<br/><a href=\"/\" >press here to go home</a>"
-
-  where
-  paths= Prelude.map B.pack . M.keys $ unsafePerformIO getMessageFlows
-
-  opts=  "options: " <> B.concat (Prelude.map  (\s ->
-
-                          "<a href=\""<>  s <>"\">"<> s <>"</a>, ") paths)
-
 
 ctype1= [mkparam ctype] -- [(mk $ SB.pack "Content-Type", SB.pack  "text/html")]
 mkParams = Prelude.map mkparam
@@ -70,6 +55,6 @@ instance ToResponse String  where
 
 instance  ToResponse HttpData  where
   toResponse (HttpData hs cookies x)= responseLBS status200 (mkParams $ hs ++ cookieHeaders cookies) x
-  toResponse (Error NotFound str)= responseLBS status404 [] $ errorResponse str
+  toResponse (Error NotFound str)= responseLBS status404 [] $ getNotFoundResponse str
 
 

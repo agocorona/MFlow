@@ -1,5 +1,7 @@
 {- | A file server for frequently accessed files, such are static web pages and image decorations, icons etc
-that are cached (memoized) in the program space, for enhanced performance.
+that are cached (memoized) according with the "Data.TCache" policies in the program space. This avoid the blocking of
+the efficient GHC threads by frequent IO calls.So it enhances the performance
+in the context of heavy concurrence.
 It uses 'Data.TCache.Memoization'.
 The caching-uncaching follows the `setPersist` criteria.
 -}
@@ -24,11 +26,11 @@ module MFlow.FileServer (addFileServerWF, linkFile,setFilesPath
 import MFlow
 import Control.Monad.State
 import Data.TCache.Memoization
-
+import MFlow.Forms.XHtml
 import System.Directory
 import Data.ByteString.Lazy.Char8 as B(readFile,concat,append,pack,empty)
 
-
+import Control.Exception as CE
 import Data.Char
 import Data.List
 import System.IO.Unsafe
@@ -75,8 +77,9 @@ fileServe  = stateless $ \env  -> do
 --   maybetail ""= "."
    maybetail xs= tail xs
  noperm= "no permissions"
+ ioerr x= \(e :: CE.IOException) ->  x
  servefile path= do
-     mr <-  cachedByKey path 0 $ (B.readFile  path >>=  return . Just) `catch` const (return Nothing)
+     mr <-  cachedByKey path 0 $ (B.readFile  path >>=  return . Just) `CE.catch` ioerr (return Nothing)
      case mr of
       Nothing -> return . pack $  "no permissions"
       Just r ->  return r
@@ -92,15 +95,17 @@ fileServe  = stateless $ \env  -> do
 -- This app includes the fileServe  flow:
 --
 -- @
+-- main= do
 --   addFileServerWF
---   run 80 $ hackMessageFlow  messageFlows
+--   addMessageFlows messageFlows
+--   run 80  hackMessageFlow
 --   adminLoop
 --   where
---   messageFlows=  [("noscript" , transient $ runFlow showStories)
---                  ,("admin"    , transient $ runFlow admin)
---                  ,("mail"     , transient $ runFlow mail)]@
+--   messageFlows=  [(\"noscript\" , transient $ runFlow showStories)
+--                  ,("\admin\"    , transient $ runFlow admin)
+--                  ,("\mail\"     , transient $ runFlow mail)]@
 --
--- | Add the fileServer to the list of server flows
+-- Add the fileServer to the list of server flows
 addFileServerWF= addMessageFlows [("file", fileServe)]
 
 
