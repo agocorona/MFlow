@@ -130,9 +130,9 @@ showFormList ls n l= do
   showFormList ls nav l
 
   where
-  list= table <<< wconcat (span1 n l [tr <<< cols  e | e <- ls ])
+  list= table <<< firstOf (span1 n l [tr <<< cols  e | e <- ls ])
 
-  cols e= wconcat[td <<< c | c <- e]
+  cols e= firstOf[td <<< c | c <- e]
   span1 n l = take l . drop n
   updown n l= wlink ( n +l) (bold << "up ") <|> wlink ( n -l) (bold << "down ") <++ br
 
@@ -144,6 +144,6 @@ optionsUser  us = do
     if null wfss
      then ask $ bold << " not logs for this user" ++> wlink () (bold << "Press here")
      else do
-      wf <-  ask $ wconcat [ wlink wf (p << wf) | (wf,_) <-  wfss]
+      wf <-  ask $ firstOf [ wlink wf (p << wf) | (wf,_) <-  wfss]
       ask $ p << unpack (showHistory . fromJust . fromJust $ lookup wf  wfss) ++>  wlink () (p << "press to menu")
 

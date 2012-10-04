@@ -1,0 +1,21 @@
+
+module Main where
+
+import MFlow.Wai.XHtml.All
+
+main= do
+ addMessageFlows ["",ops]
+ forkIO $ run 80 waiMessageFlow
+
+
+ops= do
+  i <- ask $ p >> "Enter a number" ++> getInt 1
+  res <- f i
+  ask $ p >> ("The result is:" ++ res) ++> wlink ()  "next"
+
+f=  \x -> do
+    op <- step . ask $ p << "which operation?"
+                     ++> getSelect
+                     <|>  setOption (+) "+"
+                     <|>  setOption (*) "*"
+    return x op  2

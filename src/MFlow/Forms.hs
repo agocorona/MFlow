@@ -60,27 +60,31 @@ the same definition in the same source file, in plain declarative Haskell style.
 The formatting is abstract. It has to implement the 'FormInput' class.
 There are instances for Text.XHtml ("MFlow.Forms.XHtml"), Haskell Server Pages ("MFlow.Forms.HSP")
 and ByteString. So widgets
-can use any formatting that is instance of FormInput.
+can use any formatting that is instance of `FormInput`.
 It is possible to use more than one format in the same widget.
 
 Links defined with `wlink` are treated the same way than forms. They are type safe and return values
  to the same flow of execution.
 It is posssible to combine links and forms in the same widget by using applicative combinators  but also
-additional applicative combinators like  \<+> !*> , |*|.
+additional applicative combinators like  \<+> !*> , |*|. Widgets are also monoids, so they can
+be combined as such.
 
 * NEW IN THIS RELEASE:
 
-[@Back Button@] This is probably the first implementation of an stateful Web framework that works well with the back button thanks
+[@Back Button@] This is probably the first implementation of an stateful Web framework that works well with the back button, thanks
 to monad magic. (See <http://haskell-web.blogspot.com.es/2012/03//failback-monad.html>)
+
 
 [@Cached widgets@] with `cachedWidget` it is possible to cache the rendering of a widget as a ByteString (maintaining type safety)
 , the caching can be permanent or for a certain time. this is very useful for complex widgets that present information. Specially if
 the widget content comes from a database and it is shared by all users.
 
+
 [@Callbacks@] `waction` add a callback to a widget. It is executed when its input is validated.
-The callback may initate a flow of interactions with the user or simply execute an internal computation.
+The callback may initate a flow of interactions with the user or simply executes an internal computation.
 Callbacks are necessary for the creation of abstract container
-widgets that may not know the behaviour of its content. The widget manages its content as  black boxes.
+widgets that may not know the behaviour of its content. with callbacks, the widget manages its content as  black boxes.
+
 
 [@Modifiers@] `wmodify` change the visualization and result returned by the widget. For example it may hide a
 login form and substitute it by the username if already logged.
@@ -230,7 +234,7 @@ FlowM,View, FormInput(..)
 -- * Users 
 ,userRegister, userValidate, isLogged, User(userName), setAdminUser, getAdminName
 ,getCurrentUser,getUserSimple, getUser, userFormLine, userLogin, userWidget,
--- * User interaction
+-- * User interaction 
 ask, clearEnv, 
 -- * formLets 
 -- | they mimic the HTML form elements.
@@ -240,16 +244,16 @@ ask, clearEnv,
 -- modifiers change their presentation and behaviour
 getString,getInt,getInteger, getTextBox
 ,getMultilineText,getBool,getSelect, setOption,setSelectedOption, getPassword,
-getRadio, getRadioActive, getCheckBox,
+getRadio, getRadioActive, getCheckBoxes, setCheckBox,
 submitButton,resetButton, wlink, wform,
-getCurrentName,
+ firstOf,
 -- * FormLet modifiers
 validate, noWidget, wrender, waction, wmodify,
 
 -- * Caching widgets
 cachedWidget,
 -- * Widget combinators
-(<+>),(|*>),(|+|), (**>),(<**),wconcat,(<|>),(<*),(<$>),(<*>),
+(<+>),(|*>),(|+|), (**>),(<**),(<|>),(<*),(<$>),(<*>),
 
 -- * Normalized (convert to ByteString) widget combinators
 -- | these dot operators are indentical to the non dot operators, with the addition of the conversion of the arguments to lazy byteStrings
@@ -272,7 +276,7 @@ cachedWidget,
 , flatten, normalize, ToByteString(..)
 
 -- * Running the flow monad
-,runFlow,MFlow.Forms.step, goingBack,breturn
+,runFlow,runFlowIn,MFlow.Forms.step, goingBack,breturn
 
 -- * Setting parameters
 ,setHeader
@@ -282,8 +286,6 @@ cachedWidget,
 -- * Cookies
 ,setCookie
 
--- * Internal use
-,MFlowState, getNewName
 )
 where
 import Data.TCache
@@ -303,7 +305,7 @@ import Data.Maybe
 import Control.Applicative
 import Control.Exception
 
-import Control.Workflow as WF(step,exec1,Workflow, waitUntilSTM, moveState, unsafeIOtoWF) 
+import Control.Workflow as WF 
 import Control.Monad.Identity
 import Unsafe.Coerce
 import Data.List(intersperse)
@@ -643,11 +645,29 @@ class (Functor m, MonadIO m) => FormLet  a  m view where
 @
 -}
 runFlow :: (FormInput view, Monoid view, Monad m)
-        => FlowM view m () -> Token -> m ()
-runFlow  f = \ t ->  evalStateT (runBackT $ backp >>  f)  mFlowState0{mfToken=t}  >> return ()
+        => FlowM view m a -> Token -> m a 
+runFlow  f = \ t ->  evalStateT (runBackT $ backp >>  f)  mFlowState0{mfToken=t}  >>= return . fromFailBack  -- >> return ()
   where
   -- to restart the flow in case of going back before the first page of the flow
   backp = breturn()
+  fromFailBack (NoBack x)= x
+  fromFailBack (BackPoint x)= x
+
+-- | run a persistent flow inside the current flow. It is identified by the procedure and
+-- the string identifier.
+-- unlike the normal flows, that are infinite loops, runFlowIn executes finite flows
+-- once executed, in subsequent executions the flow will return the stored result
+-- without asking again. This is useful for asking/storing/retrieving user defined configurations.
+runFlowIn
+  :: (MonadIO m,
+      FormInput view)
+  => String
+  -> FlowM  view  (Workflow IO)  b
+  -> FlowM view m b
+runFlowIn wf f= do
+  t <-  gets mfToken
+  liftIO $ WF.exec1nc wf $ runFlow f t
+
 
 
 step
@@ -700,7 +720,9 @@ getParam1 :: (Monad m, MonadState (MFlowState v) m, Typeable a, Read a, FormInpu
 getParam1 par req form=  r
  where
  r= case lookup  par req of
-    Just x -> maybeRead x
+    Just x -> do
+        modify $ \s -> s{validated= True}
+        maybeRead x                        -- !> x
     Nothing  -> return $ FormElm form Nothing
  getType ::  m (FormElm v a) -> a
  getType= undefined
@@ -712,7 +734,7 @@ getParam1 par req form=  r
          else case readsPrec 0 $ str of
               [(x,"")] ->  return . FormElm form  $ Just x
               _ -> do
-                   modify $ \s -> s{validated= True}
+
                    let err= inred . fromString $ "can't read \"" ++ str ++ "\" as type " ++  show (typeOf x)
                    return $ FormElm  (err:form) Nothing
 
@@ -757,7 +779,7 @@ waction formt act= View $ do
        GoBack -> do
                modify (\s -> s{validated= False})
                return $ FormElm form Nothing
-       NoBack r ->  return . FormElm form $ Just r
+       NoBack r    ->  return . FormElm form $ Just r
        BackPoint r ->  return . FormElm form $ Just r -- bad. no backpoints
         
     _ -> return $ FormElm form Nothing
@@ -847,19 +869,56 @@ getRadio n v= View $ do
           ( isJust mn  && v== fromJust mn) Nothing])
       mn
 
+data CheckBoxes = CheckBoxes [String]
+
+instance Monoid CheckBoxes where
+  mappend (CheckBoxes xs) (CheckBoxes ys)= CheckBoxes $ xs ++ ys
+  mempty= CheckBoxes []
+
+instance (Monad m, Functor m) => Monoid (View v m CheckBoxes) where
+  mappend x y=  mappend <$> x <*> y
+  mempty= return (CheckBoxes [])
+
+instance (Monad m, Functor m, Monoid a) => Monoid (View v m a) where
+ mappend x y = mappend <$> x <*> y
+ mempty= return mempty
+
 -- | display a text box and return the value entered if it is readable( Otherwise, fail the validation)
-getCheckBox :: (FormInput view, Functor m, MonadIO m) =>
-               String -> Bool -> View view m  String
-getCheckBox  v checked= View $ do
+setCheckBox :: (FormInput view, Functor m, MonadIO m) =>
+                Bool -> String -> View view m  CheckBoxes
+setCheckBox checked v= View $ do
   n <- getNewName
   st <- get
   put st{needForm= True}
   let env =  mfEnv st
-  FormElm f mn <- getParam1 n env []
+      strs= map snd $ filter ((==) n . fst) env
+      mn= if null strs then Nothing else Just $ head strs
+--  FormElm f mn <- getParam1 n env []
+  val <- gets validated
+  let ret= case val of
+        True ->  Just $ CheckBoxes  strs
+        False -> Nothing
   return $ FormElm
-      (f++[finput n "checkbox" v
-          ( checked || (isJust mn  && v== fromJust mn)) Nothing])
-      mn
+      ( [ finput n "checkbox" v
+        ( checked || (isJust mn  && v== fromJust mn)) Nothing])
+      ret
+
+getCheckBoxes ::(FormInput view, Monad m)=> View view m  CheckBoxes -> View view m [String]
+getCheckBoxes boxes =  View $ do
+    n <- getNewName
+    env <- gets mfEnv
+    FormElm form (mr :: Maybe String) <- getParam1 n env [finput n "hidden" "" False Nothing]
+    st <- get
+    let env = mfEnv st
+    put st{needForm= True}
+    FormElm form2 mr2 <- runView boxes
+    return $ FormElm (form ++ form2) $
+        case (mr,mr2) of
+          (Nothing,_) ->  Nothing
+          (Just _,Nothing) -> Just []
+          (Just _, Just (CheckBoxes rs))  ->  Just rs
+
+
 
 
 -- get a parameter form the las received response
@@ -968,6 +1027,10 @@ getSelect opts = View $ do
     getParam1 tolook env [fselect tolook $ mconcat form] 
 
 data MFOption a= MFOption
+
+instance (Monad m, Functor m) => Monoid (View view m (MFOption a)) where
+  mappend =  (<|>)
+  mempty = Control.Applicative.empty
 
 -- | set the option for getSelect. Options are concatenated with `<|>`
 setOption n v = setOption1 n v False
@@ -1139,13 +1202,9 @@ data MFlowState view= MFlowState{
    mfHeader ::  view -> view,
    mfDebug  :: Bool
    }
-
    deriving Typeable
 
-
-
 stdHeader v = v
-
 
 
 mFlowState0 :: (FormInput view, Monoid view) => MFlowState view
@@ -1195,6 +1254,8 @@ setHeader :: Monad m => (view -> view) -> FlowM view m ()
 setHeader header= do
   fs <- get
   put fs{mfHeader= header}
+
+
 
 -- | return the current header
 getHeader :: Monad m => FlowM view m (view -> view)
@@ -1402,7 +1463,6 @@ valid form= View $ do
    return $ FormElm form $ Just undefined
 
 
-
 -- | It is the way to interact with the user.
 -- It takes a widget and return the user result.
 -- If the environment has the result, ask don't ask to the user.
@@ -1420,7 +1480,7 @@ ask x =   do
      let st= st1{hasForm= False, needForm= False,validated= False} 
      put st
      FormElm forms mx <- lift $ runView  x  -- !> "runWidget"
-     st' <- mx `seq` get
+     st' <-  get
      case mx    of 
        Just x -> do
          put st'{prevSeq= mfSequence st: prevSeq st',onInit= True ,mfEnv=[]}
@@ -1565,14 +1625,16 @@ wlink x v= View $ do
 --          res1= if null res then Nothing else head res
 --      return $ FormElm [mconcat vs] res1
 
--- | Concat a list of widgets of the same type, to return a single result
-wconcat :: (Monoid view, MonadIO m, Functor m)=> [View view m a]  -> View view m a
-wconcat xs= View $ do 
+-- | Concat a list of widgets of the same type, return a the first validated result
+firstOf :: (Monoid view, MonadIO m, Functor m)=> [View view m a]  -> View view m a
+firstOf xs= View $ do 
       forms <- mapM(\x -> (runView   x )) xs
       let vs  = concatMap (\(FormElm v _) ->  [mconcat v]) forms
           res = filter isJust $ map (\(FormElm _ r) -> r) forms
           res1= if null res then Nothing else head res
       return $ FormElm  vs res1
+
+
 
 -- | intersperse a widget in a list of widgets. the results is a 2-tuple of both types
 (|*>) :: (MonadIO m, Functor m,Monoid view)
@@ -1580,7 +1642,7 @@ wconcat xs= View $ do
             -> [View view m r']
             -> View view m (Maybe r,Maybe r')
 (|*>) x xs= View $ do
-  FormElm fxs rxs <-  runView $ wconcat  xs
+  FormElm fxs rxs <-  runView $ firstOf  xs
   FormElm fx rx   <- runView $  x
 
   return $ FormElm (fx ++ intersperse (mconcat fx) fxs ++ fx)

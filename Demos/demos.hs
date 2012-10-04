@@ -70,10 +70,13 @@ clicks s= do
 
 ajaxheader html= thehtml << ajaxHead << p << "click the box" +++ html
 
+
+
 ajaxsample= do
    setHeader ajaxheader
-   ajaxc <- ajaxCommand "document.getElementById('text1').value"
-                        (\n ->  return $ "document.getElementById('text1').value='"++show(read  n +1)++"'")
+   let ajaxf n= return $ "document.getElementById('text1').value='"++show(read  n +1)++"'"
+   ajaxc <- ajaxCommand "document.getElementById('text1').value" ajaxf
+
    ask $ (getInt (Just 0) <! [("id","text1"),("onclick", ajaxc)])
    breturn()
 

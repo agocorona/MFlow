@@ -35,9 +35,6 @@ instance Monad m => ADDATTRS (View Html m a) where
   widget ! atrs= widget `wmodify`  \fs mx -> return ((head fs ! atrs:tail fs), mx)
 
 
---  View $ do
---      FormElm fs  mx <- runView widget
---      return $ FormElm  [head fs ! atrs] mx
 
 instance ToByteString Html where
   toByteString  =  pack. showHtml

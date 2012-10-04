@@ -43,6 +43,7 @@ Fragment based streaming 'sendFragment' 'sendEndFragment' are  provided only at 
               ,FlexibleContexts
               ,RecordWildCards
               ,OverloadedStrings
+              ,ScopedTypeVariables
                #-}  
 module MFlow (
 Params,  Workflow, HttpData(..),Processable(..), ToHttpData(..)
@@ -85,6 +86,8 @@ import System.Time
 import Control.Workflow
 import MFlow.Cookies
 import Control.Monad.Trans
+import qualified Control.Exception as CE
+
 --import Debug.Trace
 --(!>)= flip trace
 
@@ -203,8 +206,8 @@ instance  (Monad m, Show a) => Traceable (Workflow m a) where
 -}
 -- | send a complete response 
 send ::  ToHttpData a => Token  -> a -> IO()
-send  (Token _ _ _ queue qresp) msg=   do
-       putMVar qresp  . Resp $ toHttpData msg
+send  t@(Token _ _ _ _ qresp) msg=   do
+      ( putMVar qresp  . Resp $ toHttpData msg )  -- !> ("<<<<< send "++ thread t) 
 
 sendFlush t msg= flushRec t >> send t msg     -- !> "sendFlush "
 
@@ -225,7 +228,7 @@ flushRec t@(Token _ _ _ queue _)= do
 
 
 receiveReq ::  Token -> IO Req
-receiveReq (Token _ _ _ queue _)=   readMVar queue     -- !> "receiveReqSTM"
+receiveReq t@(Token _ _ _ queue _)=   readMVar queue  -- !> (">>>>>> receive "++ thread t)
 
 fromReq :: Typeable a => Req -> a
 fromReq  (Req x) = x' where
@@ -253,12 +256,19 @@ delMsgHistory t = do
 
 -- | executes a simple monadic computation that receive the params and return a response
 --
--- It is used with `addMessageFlows` `hackMessageFlow` or `waiMessageFlow`
-stateless ::  (ToHttpData b) => (Params -> IO b) -> (Token -> Workflow IO ())
-stateless f = transient $ \tk ->do
-    req <- receiveReq tk
+-- It is used with `addMessageFlows` 
+stateless :: (ToHttpData b) => (Params -> IO b) -> (Token -> Workflow IO ())
+stateless f = transient proc
+  where
+  proc t@(Token _ _ _ queue qresp) = loop t queue qresp
+  loop t queue qresp=do
+    req <- takeMVar queue  -- !> (">>>>>> stateless " ++ thread t)
     resp <- f (getParams req)
-    sendFlush tk resp
+    (putMVar qresp  . Resp $ toHttpData resp) -- !> ("<<<<<< stateless " ++thread t)
+    loop t queue qresp     -- !>  ("enviado stateless " ++ thread t)
+
+
+
 
 -- | Executes a monadic computation that send and receive messages, but does
 -- not store its state in permanent storage. The process once stopped, will restart anew 
@@ -282,14 +292,14 @@ getMessageFlows = readMVar _messageFlows
 class ToHttpData a  where
     toHttpData :: a -> HttpData 
 
-
+thread t= show(unsafePerformIO myThreadId) ++ " "++ show (twfname t)
 
 --tellToWF :: (Typeable a,  Typeable c, Processable a) => Token -> a -> IO c
-tellToWF (Token _ _ _ queue qresp ) msg = do  
-    putMVar queue $ Req msg    
-    m <-  takeMVar qresp  -- !> ("********antes de recibir" ++ show(unsafePerformIO myThreadId))
+tellToWF t@(Token _ _ _ queue qresp ) msg = do  
+    putMVar queue (Req msg)    -- !> (">>>>> telltowf"++ thread t)
+    m <-  takeMVar qresp  --  !> ("<<<<<< tellTowf"++ thread t)
     case m  of
-        Resp r  ->  return  r  -- !> ("*********** RECIBIDO"++ show(unsafePerformIO myThreadId))
+        Resp r  ->  return  r  -- !> ("recibido  tellTowf"++ thread t)
         Fragm r -> do
                    result <- getStream   r
                    return  result

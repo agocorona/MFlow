@@ -63,3 +63,4 @@
 ,["anon#1","1347840060","noscript","demos\\demos.hs:(34,8)-(38,31): Non-exhaustive patterns in case\n"]
 ,["anon#1","1347840063","noscript","demos\\demos.hs:(34,8)-(38,31): Non-exhaustive patterns in case\n"]
 ,["anon#1","1347840074","shop","fromIDyn: casting failure for data IDyns B 0    to type: ((FailBack ((Maybe ()),(Maybe Int))),(MFlowState Text.XHtml.Strict.Html))"]
+,["admin","1348317935","noscript","user interrupt"]

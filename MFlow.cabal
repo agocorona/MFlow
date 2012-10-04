@@ -1,5 +1,5 @@
 name: MFlow
-version: 0.1.5.3
+version: 0.1.5.5
 cabal-version: >= 1.6
 build-type: Simple
 license: BSD3
@@ -46,10 +46,7 @@ description: A Web framework with some unique features thanks to the power of th
 category: Web, Application Server
 author: Alberto Gómez Corona
 data-dir: ""
-extra-source-files:   src/MFlow/Forms/HSP.hs
-                    , src/MFlow/Hack/Response.hs, src/MFlow/Hack.hs
-                    , src/MFlow/Hack/XHtml.hs, src/MFlow/Hack/XHtml/All.hs
-                    , Demos/ShoppingCart.hs, Demos/ShoppingCart.Wai.hs
+extra-source-files:   Demos/ShoppingCart.hs, Demos/ShoppingCart.Wai.hs
                     , Demos/demos.hs
 
 library
@@ -59,13 +56,24 @@ library
                    containers -any, RefSerialize -any, TCache -any, stm >2,
                    old-time -any, vector -any,  directory -any,
                    utf8-string -any, wai -any, case-insensitive -any, http-types -any, conduit -any
-                   ,text -any, parsec -any,warp -any
+                   ,text -any, parsec -any,warp -any, fay -any,
+                   hsp -any, hack -any, hack-handler-simpleserver
 
     exposed-modules: MFlow.Forms
-                     MFlow.Forms.Admin MFlow MFlow.FileServer
-                     MFlow.Forms.Ajax MFlow.Cookies
-                     MFlow.Wai.Response, MFlow.Wai, MFlow.Wai.XHtml.All
+                     MFlow.Forms.Admin
+                     MFlow
+                     MFlow.FileServer
+                     MFlow.Forms.Ajax
+                     MFlow.Cookies
+                     MFlow.Wai.Response
+                     MFlow.Wai
+                     MFlow.Wai.XHtml.All
                      MFlow.Forms.XHtml
+                     MFlow.Forms.HSP
+                     MFlow.Hack.Response
+                     MFlow.Hack
+                     MFlow.Hack.XHtml
+                     MFlow.Hack.XHtml.All
 
     exposed: True
     buildable: True

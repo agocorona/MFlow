@@ -37,8 +37,6 @@ import System.IO.Unsafe
 import Data.IORef
 import Data.Monoid
 
---import Debug.Trace
---(!>)= flip trace
 
 rfilesPath= unsafePerformIO $ newIORef "files/"
 
@@ -56,20 +54,21 @@ fileServe  = stateless $ \env  -> do
      when(not(".." `isSuffixOf` path') && ".." `isInfixOf` path') $ error noperm
      filesPath <- readIORef rfilesPath
      let path= filesPath ++ path'
-     isDirectory <- doesDirectoryExist  path -- !> path
-     case isDirectory of
-       True  -> directory1 $ path ++ "/"
-       False -> do
-         isFile <- doesFileExist path
-         case isFile of
-           True  -> servefile path
-           False -> return . pack $ "path not found"
+     servefile path
+    -- isDirectory <- doesDirectoryExist  path -- !> path
+
+--     case isDirectory of
+--       True  -> do
+--          dir <-  directory1 $ path ++ "/"
+--          return $ HttpData  (setMime "text/html") []  dir
+--       False -> servefile path
+
 
  where
+ setMime x= [("Content-Type",x)]
+
  dropBack ".."= ".."
-
  dropBack path
-
      | "../" `isPrefixOf` revpath =reverse . maybetail $ dropWhile (/= '/') $ drop 3 revpath
      | otherwise= path
    where
@@ -79,15 +78,15 @@ fileServe  = stateless $ \env  -> do
  noperm= "no permissions"
  ioerr x= \(e :: CE.IOException) ->  x
  servefile path= do
-     mr <-  cachedByKey path 0 $ (B.readFile  path >>=  return . Just) `CE.catch` ioerr (return Nothing)
+     mr <-  cachedByKey path 0  $   (B.readFile  path >>=  return . Just) `CE.catch` ioerr (return Nothing)
      case mr of
-      Nothing -> return . pack $  "no permissions"
-      Just r ->  return r
---         let ext  = reverse . takeWhile (/='.') $ reverse path
---             mmime= lookup (map toLower ext) mimeTable
---             mime = case mmime of Just m -> m ;Nothing -> "application/octet-stream"
---             mimet= [("Content-Type",mime)]
---         in return r -- $ HttpData  mimet [] r
+      Nothing -> return $ HttpData  (setMime "text/plain") [] $ pack $  "not accessible"
+      Just r ->
+         let ext  = reverse . takeWhile (/='.') $ reverse path
+             mmime= lookup (map toLower ext) mimeTable
+             mime = case mmime of Just m -> m ;Nothing -> "application/octet-stream"
+
+         in return $ HttpData  (setMime mime) [] r
 
 -- | Is the flow to be added to the list in order to stream any file from the filesystem
 -- for example, images
@@ -105,7 +104,8 @@ fileServe  = stateless $ \env  -> do
 --                  ,("\admin\"    , transient $ runFlow admin)
 --                  ,("\mail\"     , transient $ runFlow mail)]@
 --
--- Add the fileServer to the list of server flows
+-- | Add the fileServer to the list of server flows
+-- it is mandatory if you want to use the file service
 addFileServerWF= addMessageFlows [("file", fileServe)]
 
 
@@ -132,7 +132,7 @@ directory1 path = do
    fs <- getDirectoryContents path
    return $ B.concat [btag "a" [("href",linkFile ( path ++  file))] (B.pack file) `append` btag "br" [] B.empty | file <- fs]
 
-{-
+
 mimeTable=[
     ("html",	"text/html"),
     ("htm",	"text/html"),
@@ -328,4 +328,4 @@ mimeTable=[
     ("z",	"application/x-compress")
 
  ]
--}
+

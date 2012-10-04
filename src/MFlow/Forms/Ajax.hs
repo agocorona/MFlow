@@ -8,11 +8,8 @@
 -- This example increase the value, from 0 on, in a text box trough AJAX:
 --
 -- @
--- import Text.XHtml
--- import MFlow.Forms
--- import MFlow.Forms.Ajax
+-- ajaxheader html= thehtml << `ajaxHead` << html
 -- ajaxsample= do
---   ajaxheader html= thehtml << `ajaxHead` << html
 --   setHeader ajaxheader
 --   ajaxc \<- `ajaxCommand` \"document.getElementById(\'text1\').value\"
 --                           (\n ->  return $ \"document.getElementById(\'text1\').value='\"++show(read n +1)++\"'\")
@@ -24,17 +21,22 @@ import MFlow
 import MFlow.Forms
 import Text.XHtml
 import Control.Monad.Trans
-import Data.ByteString.Lazy.Char8
-
+--import Data.ByteString.Lazy.Char8
+import Data.RefSerialize (newContext,addrHash)
+import Data.IORef
+import System.IO.Unsafe
 import Data.Maybe
 import Control.Monad.State
 import Data.Map (keys)
 import qualified Data.CaseInsensitive as CI
 
--- | Install the server code and return the client code for an AJAX interaction.
---
+--import Debug.Trace
+--(!>)= flip trace
 
-ajaxCommand :: (MonadIO m, MonadState (MFlowState view) m)
+context= unsafePerformIO newContext
+
+-- | Install the server code and return the client code for an AJAX interaction.
+ajaxCommand :: MonadIO m
             =>  String                -- ^ The javScript variable whose value will be sent to the server
             -> (String -> IO String)  -- ^ The server procedure to be executed with the
                                       -- variable value as parameter. It must return a string with valid
@@ -42,15 +44,22 @@ ajaxCommand :: (MonadIO m, MonadState (MFlowState view) m)
             ->  m (String)            -- ^ return the javascript of the event handler, to be inserted in
                                       --  the HTML to be sent to the client
 ajaxCommand jsparam serverProc = do
-   servname <- getNewName
-   liftIO $ addMessageFlows [( servname,  serverp)]
+   r <- liftIO $ addrHash context serverProc
+   servname <- case r of
+                Left h -> do
+                     let servname= "ajax"++ show h
+                     liftIO $ addMessageFlows [( servname,  serverp)]
+                     return servname
+                Right h -> return $ "ajax"++ show h
 --   liftIO $ getMessageFlows >>= return . keys >>=  print
    return $ "doServer("++"'" ++  servname++"',"++jsparam++")"
    where
    serverp = stateless $ \env -> do
-        let c = lookup "ajax" env  -- `justify`  (error "not found ajax command") -- :: String
-        serverProc $ fromJust  c
-   justify = flip . fromMaybe
+        let c = lookup "ajax" env   `justify`  (error "not found ajax command") -- :: String
+        serverProc c
+   justify = flip  fromMaybe
+
+
 
 
 -- | @ajaxHead@ must be used instead of `header` when using ajax(see example).
