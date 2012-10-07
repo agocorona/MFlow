@@ -56,7 +56,7 @@ Params,  Workflow, HttpData(..),Processable(..), ToHttpData(..)
 ,noScript,hlog, setNotFoundResponse,getNotFoundResponse,
 -- * ByteString tags
 -- | very basic but efficient tag formatting
-btag, bhtml, bbody,Attribs
+btag, bhtml, bbody,Attribs, addAttrs
 -- * internal use
 ,addTokenToList,deleteTokenInList, msgScheduler)
 
@@ -79,7 +79,7 @@ import System.IO.Unsafe
 import Data.TCache.DefaultPersistence  hiding(Indexable(..))
 
 import  Data.ByteString.Lazy.Char8 as B  (ByteString, concat,pack, unpack,empty,append,cons,fromChunks)
-
+import Data.ByteString.Lazy.Internal (ByteString(Chunk))
 import qualified Data.Map as M
 import System.IO
 import System.Time
@@ -274,7 +274,7 @@ stateless f = transient proc
 -- not store its state in permanent storage. The process once stopped, will restart anew 
 --
 ---- It is used with `addMessageFlows` `hackMessageFlow` or `waiMessageFlow`
-transient :: (Token -> IO ()) -> (Token -> Workflow IO ())  
+transient :: (Token -> IO ()) -> (Token -> Workflow IO ())   
 transient f=  unsafeIOtoWF . f -- WF(\s -> f t>>= \x-> return (s, x) )
 
 
@@ -405,12 +405,20 @@ btag t rs v= "<" `append` pt `append` attrs rs `append` ">" `append` v `append`"
  pt= pack t
  attrs []= B.empty
  attrs rs=  pack $ concatMap(\(n,v) -> (' ' :   n) ++ "=" ++  v ) rs
+
 -- |
 -- > bhtml ats v= btag "html" ats v
 bhtml :: Attribs -> ByteString -> ByteString
 bhtml ats v= btag "html" ats v
 
+
 -- |
 -- > bbody ats v= btag "body" ats v
 bbody :: Attribs -> ByteString -> ByteString
 bbody ats v= btag "body" ats v
+
+addAttrs :: ByteString -> Attribs -> ByteString
+addAttrs (Chunk "<" (Chunk tag(Chunk ">"  rest))) rs=
+   Chunk "<"(Chunk tag  (pack $ concatMap(\(n,v) -> (' ' :   n) ++ "=" ++  v ) rs)) <> ">" <> rest
+
+addAttrs other _ = error  $ "addAttrs: byteString is not a tag: " ++ unpack other

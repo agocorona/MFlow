@@ -43,6 +43,7 @@ import Data.Conduit
 import Data.Conduit.Lazy
 import qualified Data.Conduit.List as CList
 import Data.CaseInsensitive
+import System.Time
 
 --import Debug.Trace
 --(!>)= flip trace
@@ -67,7 +68,7 @@ instance Processable Request  where
 --   getPath env= pathInfo env
 --   getPort env= serverPort env
    
-data Flow= Flow !Int deriving (Read, Show, Typeable)
+data Flow= Flow !Integer deriving (Read, Show, Typeable)
 
 instance Serializable Flow where
   serialize= B.pack . show
@@ -80,17 +81,12 @@ instance Indexable Flow where
 rflow= getDBRef . key $ Flow undefined
 
 newFlow= liftIO $ do
-        fl <- atomically $ do
-                    m <- readDBRef rflow
-                    case m of
-                     Just (Flow n) -> do
-                             writeDBRef rflow . Flow $ n+1
-                             return n
-                             
-                     Nothing -> do
-                             writeDBRef rflow $ Flow 1
-                             return 0 
-        return $  show fl
+        TOD t _ <- getClockTime
+        atomically $ do 
+                    Flow n <- readDBRef rflow `onNothing` return (Flow 0)
+                    writeDBRef rflow . Flow $ n+1
+                    return . show $ t + n
+         
 
 ---------------------------------------------
 

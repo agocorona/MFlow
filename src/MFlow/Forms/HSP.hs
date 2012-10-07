@@ -25,7 +25,7 @@ instance Monoid (HSP XML) where
     mconcat xs= <span> <% [<% x %> | x <- xs] %> </span>
 
 instance FormInput (HSP XML)   where
-
+    ftag t = genEElement (toName t) []
     fromString s =   <span><% s %></span>
 
 

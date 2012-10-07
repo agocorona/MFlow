@@ -26,21 +26,20 @@ module MFlow.Forms.XHtml where
 import MFlow.Forms
 import Data.ByteString.Lazy.Char8(pack,unpack)
 
-import Text.XHtml as X
+import Text.XHtml.Strict as X
 import Control.Monad.Trans
 import Data.Typeable
-
 
 instance Monad m => ADDATTRS (View Html m a) where
   widget ! atrs= widget `wmodify`  \fs mx -> return ((head fs ! atrs:tail fs), mx)
 
 
-
 instance ToByteString Html where
-  toByteString  =  pack. showHtml
+  toByteString  =  pack. showHtmlFragment
+
 
 instance FormInput  Html  where
-
+    ftag t= tag t noHtml
     inred = X.bold ![X.thestyle "color:red"]
     finput n t v f c= X.input ! ([thetype t ,name  n, value  v] ++ if f then [checked]  else []
                               ++ case c of Just s ->[strAttr "onclick"  s]; _ -> [] )
