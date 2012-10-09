@@ -55,8 +55,8 @@ library
                    bytestring -any,
                    containers -any, RefSerialize -any, TCache -any, stm >2,
                    old-time -any, vector -any,  directory -any,
-                   utf8-string -any, wai -any, case-insensitive -any, http-types -any, conduit -any
-                   ,text -any, parsec -any,warp -any, fay -any,
+                   utf8-string -any, wai -any, case-insensitive -any, http-types -any, conduit -any,
+                   text -any, parsec -any,warp -any, fay -any, random,
                    hsp -any, hack -any, hack-handler-simpleserver
 
     exposed-modules: MFlow.Forms
@@ -74,6 +74,7 @@ library
                      MFlow.Hack
                      MFlow.Hack.XHtml
                      MFlow.Hack.XHtml.All
+                     MFlow.Forms.Test
 
     exposed: True
     buildable: True

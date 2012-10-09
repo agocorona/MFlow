@@ -560,7 +560,7 @@ instance (MonadIO m, Functor m) => MonadIO (View view m) where
     liftIO= lift . liftIO
 
 --instance Executable (View v m) where
---  execute  =  runView
+--  execute f =  execute $  evalStateT  f mFlowState0
 
 
 --instance (Monad m, Executable m, Monoid view, FormInput view)

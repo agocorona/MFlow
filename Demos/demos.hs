@@ -1,6 +1,9 @@
 {-# LANGUAGE ScopedTypeVariables, DeriveDataTypeable #-}
 module Main where
-import MFlow.Wai.XHtml.All
+import MFlow.Wai.XHtml.All hiding (ask,waction, wmodify)
+import MFlow.Forms.Test
+
+import Text.XHtml
 import Data.TCache
 import Control.Monad.Trans
 import Data.Typeable
@@ -10,10 +13,14 @@ import qualified Data.ByteString.Char8 as SB
 import qualified Data.Vector as V
 import Data.Maybe
 
+test= do
+   addMessageFlows [(noScript  ,transient $ runFlow mainf)
+                   ,("shop"    ,runFlow shopCart)]
 
+   runTest [(15, "shop")]
 
-data Ops= Ints | Strings | Actions | Ajax | Opt deriving(Typeable,Read, Show)
 main= do
+   syncWrite SyncManual
    setFilesPath ""
    addFileServerWF
    addMessageFlows [(""  ,transient $ runFlow mainf)
@@ -23,24 +30,27 @@ main= do
 
 stdheader c= p << "you can press the back button to go to the menu"+++ c
 
+data Options= CountI | CountS | Action | Ajax | Select deriving (Bounded, Enum,Read, Show,Typeable)
+
 mainf=   do
        setHeader stdheader
-       r <- ask $   wlink Ints (bold << "increase an Int")
-               <|>  br ++> wlink Strings (bold << "increase a String")
-               <|>  br ++> wlink Actions (bold << "Example of a string widget with an action")
+       r <- ask $   wlink CountI (bold << "increase an Int")
+               <|>  br ++> wlink CountS (bold << "increase a String")
+               <|>  br ++> wlink Action (bold << "Example of a string widget with an action")
                <|>  br ++> wlink Ajax (bold << "Simple AJAX example")
-               <|>  br ++> wlink Opt (bold << "select options")
+               <|>  br ++> wlink Select (bold << "select options")
                <++ (br +++ linkShop) -- this is an ordinary XHtml link
 
        case r of
-         Ints    ->  clickn 0
-         Strings ->  clicks "1"
-         Actions ->  actions 1
-         Ajax    ->  ajaxsample
-         Opt     ->  options
+             CountI    ->  clickn 0
+             CountS    ->  clicks "1"
+             Action    ->  actions 1
+             Ajax      ->  ajaxsample
+             Select    ->  options
        mainf
-    where
-    linkShop= toHtml $ hotlink  "shop" << "shopping"
+
+       where
+       linkShop= toHtml $ hotlink  "shop" << "shopping"
 
 options= do
    r <- ask $ getSelect (setSelectedOption "" (p <<"select a option") <|>
@@ -85,6 +95,8 @@ actions n=do
      <**((getInt (Just (n+1)) <** submitButton "submit" ) `waction` actions )
   breturn ()
 
+data ShopOptions= IPhone | IPod | IPad deriving (Bounded, Enum,Read, Show, Typeable)
+
 -- A persistent flow  (uses step). The process is killed after 10 seconds of inactivity
 -- but it is restarted automatically. if you restart the program, it remember the shopping cart
 -- defines a table with links enclosed that return ints and a link to the menu, that abandon this flow.
@@ -93,19 +105,20 @@ shopCart  = do
    shopCart1 (V.fromList [0,0,0:: Int])
    where
    shopCart1 cart=  do
-     i <- step . ask $
+     o <- step . ask $
              table ! [border 1,thestyle "width:20%;margin-left:auto;margin-right:auto"]
              <<< caption << "choose an item"
              ++> thead << tr << concatHtml[ th << bold << "item", th << bold << "times chosen"]
              ++> (tbody
                   <<<  tr ! [rowspan 2] << td << linkHome
-                  ++> (tr <<< td <<< wlink  0 (bold <<"iphone") <++  td << ( bold << show ( cart V.! 0))
-                  <|>  tr <<< td <<< wlink  1 (bold <<"ipad")   <++  td << ( bold << show ( cart V.! 1))
-                  <|>  tr <<< td <<< wlink  2 (bold <<"ipod")   <++  td << ( bold << show ( cart V.! 2)))
+                  ++> (tr <<< td <<< wlink  IPhone (bold <<"iphone") <++  td << ( bold << show ( cart V.! 0))
+                  <|>  tr <<< td <<< wlink  IPad (bold <<"ipad")   <++  td << ( bold << show ( cart V.! 1))
+                  <|>  tr <<< td <<< wlink  IPod (bold <<"ipod")   <++  td << ( bold << show ( cart V.! 2)))
                   <++  tr << td << linkHome
                   )
-
-     let newCart= cart V.// [(i, cart V.! i + 1 )]
+     let i =fromEnum o
+     let newCart= cart V.// [(i, cart V.!  i + 1 )]
      shopCart1 newCart
+
     where
     linkHome= (toHtml $ hotlink  noScript << bold << "home")
