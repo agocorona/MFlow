@@ -109,7 +109,7 @@ instance Monoid HttpData where
 type ProcList = WorkflowList IO Token ()
 
 
-data Req  = forall a.( Processable a,Typeable a)=> Req a   deriving Typeable
+data Req  = forall a.( Processable a, Typeable a)=> Req a   deriving Typeable
 
 type Params =  [(String,String)]
 
@@ -122,6 +122,11 @@ class  Processable a where
 --     getPath :: a -> String
 --     getPort :: a -> Int
 
+instance Processable Token where
+     pwfname = twfname
+     puser = tuser
+     pind = tind
+     getParams _= []
 
 instance Processable  Req   where
     pwfname (Req x)= pwfname x
@@ -144,7 +149,7 @@ noScript = "noscript"
 
 -- | a Token identifies a flow that handle messages. The scheduler compose a Token with every `Processable`
 -- message that arrives and send the mesage to the appropriate flow.
-data Token = Token{twfname,tuser, tind :: String , q :: MVar Req, qr :: MVar Resp}  deriving  Typeable
+data Token = Token{twfname,tuser, tind :: String , tsendq :: MVar Req, trecq :: MVar Resp}  deriving  Typeable
 
 instance Indexable  Token  where
      key (Token w u i  _ _  )=
@@ -266,7 +271,7 @@ stateless f = transient proc
     resp <- f (getParams req)
     (putMVar qresp  . Resp $ toHttpData resp) -- !> ("<<<<<< stateless " ++thread t)
     loop t queue qresp     -- !>  ("enviado stateless " ++ thread t)
-
+--
 
 
 
@@ -336,7 +341,7 @@ msgScheduler
   :: (Typeable a,Processable a)
   => a  -> IO (HttpData, ThreadId)
 msgScheduler x  = do
-  token <- getToken x
+  token <- getToken x 
 
   th <- startMessageFlow (pwfname x) token
   r<- tellToWF token  x
@@ -348,7 +353,9 @@ msgScheduler x  = do
         wfs <- getMessageFlows
         r <- startWF wfname  token   wfs                      -- !>( "init wf " ++ wfname)
         case r of
-          Left NotFound -> sendFlush token (Error NotFound $ "Not found: " <> pack wfname)
+          Left NotFound -> do
+               sendFlush token (Error NotFound $ "Not found: " <> pack wfname)
+               deleteTokenInList token
           Left AlreadyRunning -> return ()                    -- !> ("already Running " ++ wfname)
           Left Timeout -> return()                            -- !>  "Timeout in msgScheduler"
           Left (WFException e)-> do
@@ -404,7 +411,7 @@ btag t rs v= "<" `append` pt `append` attrs rs `append` ">" `append` v `append`"
  where
  pt= pack t
  attrs []= B.empty
- attrs rs=  pack $ concatMap(\(n,v) -> (' ' :   n) ++ "=" ++  v ) rs
+ attrs rs=  pack $ concatMap(\(n,v) -> (' ' :   n) ++ "=\"" ++ v++ "\"" ) rs
 
 -- |
 -- > bhtml ats v= btag "html" ats v

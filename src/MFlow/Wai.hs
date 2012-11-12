@@ -190,14 +190,14 @@ waiMessageFlow req1=   do
                   
               Right GET -> let tail1 s | s==SB.empty =s
                                tail1 xs= SB.tail xs
-                           in return . urlDecode $  SB.unpack   . tail1 $ rawQueryString req1 -- !> (SB.unpack $ rawQueryString req1)
+                           in return . urlDecode $  SB.unpack   . tail1 $ rawQueryString req1  -- !> (SB.unpack $ rawQueryString req1)
               x ->  return [] 
      let req = case retcookies of
-          [] -> req1{requestHeaders=  mkParams (input ++ cookies) ++ requestHeaders req1}   -- !> "REQ"
-          _  -> req1{requestHeaders=  mkParams ((flow, flowval): input ++ cookies) ++ requestHeaders req1}   -- !> "REQ"
+          [] -> req1{requestHeaders=  mkParams (input ++ cookies) ++ requestHeaders req1}  -- !> "REQ"
+          _  -> req1{requestHeaders=  mkParams ((flow, flowval): input ++ cookies) ++ requestHeaders req1}  --  !> "REQ"
 
 
-     (resp',th) <- liftIO $ msgScheduler req -- !> (show $ requestHeaders req)
+     (resp',th) <- liftIO $ msgScheduler req  -- !> (show $ requestHeaders req)
 
      let resp= case (resp',retcookies) of
             (_,[]) -> resp'

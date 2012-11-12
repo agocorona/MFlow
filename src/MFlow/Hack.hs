@@ -155,7 +155,7 @@ hackMessageFlow req1=   do
               Just fl -> return  (fl, [])
               Nothing  -> do
                      fl <- newFlow
-                     return ( fl,  [( flow,  fl,  "/",Nothing)])
+                     return ( fl,  [( flow,  fl,  "/",(Just $ show $ 365*24*60*60))])
                      
 {-  for state persistence in cookies 
      putStateCookie req1 cookies

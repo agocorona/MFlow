@@ -1,13 +1,12 @@
 name: MFlow
 version: 0.1.5.5
-cabal-version: >= 1.6
+cabal-version: >=1.6
 build-type: Simple
 license: BSD3
 license-file: LICENSE
 maintainer: agocorona@gmail.com
 stability: experimental
 synopsis: Web app server for stateful processes with safe, composable user interfaces.
-
 description: A Web framework with some unique features thanks to the power of the Haskell language.
              MFlow run stateful server processes; All the flow of request and responses are coded by the programmer in a single function.
              Allthoug single request-response flows and callbacks are possible. Therefore, the code is
@@ -42,45 +41,32 @@ description: A Web framework with some unique features thanks to the power of th
              .
              -Clustering
              .
-
 category: Web, Application Server
 author: Alberto Gómez Corona
 data-dir: ""
-extra-source-files:   Demos/ShoppingCart.hs, Demos/ShoppingCart.Wai.hs
-                    , Demos/demos.hs
-
-library
-    build-depends: Workflow -any, transformers -any, mtl -any,
-                   extensible-exceptions -any, xhtml -any, base >4.0 && < 5,
-                   bytestring -any,
-                   containers -any, RefSerialize -any, TCache -any, stm >2,
-                   old-time -any, vector -any,  directory -any,
-                   utf8-string -any, wai -any, case-insensitive -any, http-types -any, conduit -any,
-                   text -any, parsec -any,warp -any, fay -any, random,
-                   hsp -any, hack -any, hack-handler-simpleserver
-
-    exposed-modules: MFlow.Forms
-                     MFlow.Forms.Admin
-                     MFlow
-                     MFlow.FileServer
-                     MFlow.Forms.Ajax
-                     MFlow.Cookies
-                     MFlow.Wai.Response
-                     MFlow.Wai
-                     MFlow.Wai.XHtml.All
-                     MFlow.Forms.XHtml
-                     MFlow.Forms.HSP
-                     MFlow.Hack.Response
-                     MFlow.Hack
-                     MFlow.Hack.XHtml
-                     MFlow.Hack.XHtml.All
-                     MFlow.Forms.Test
-
-    exposed: True
-    buildable: True
-    hs-source-dirs: src .
-    other-modules:
+extra-source-files: Demos/ShoppingCart.hs Demos/ShoppingCart.Wai.hs
+                    Demos/demos.hs
 
 source-repository head
     type: git
     location: http://github.com/agocorona/MFlow
+
+library
+    build-depends: Workflow -any, transformers -any, mtl -any,
+                   extensible-exceptions -any, xhtml -any, base >4.0 && <5,
+                   bytestring -any, containers -any, RefSerialize -any, TCache -any,
+                   stm >2, old-time -any, vector -any, directory -any,
+                   utf8-string -any, wai -any, case-insensitive -any, http-types -any,
+                   conduit -any, text -any, parsec -any, warp -any, fay -any,
+                   random -any, hsp -any, hack -any, hack-handler-simpleserver -any,
+                   blaze-html -any, blaze-markup -any
+    exposed-modules: MFlow.Wai.Blaze.Html.All MFlow.Forms
+                     MFlow.Forms.Admin MFlow MFlow.FileServer MFlow.Forms.Ajax
+                     MFlow.Cookies MFlow.Wai.Response MFlow.Wai MFlow.Wai.XHtml.All
+                     MFlow.Forms.XHtml MFlow.Forms.HSP MFlow.Hack.Response MFlow.Hack
+                     MFlow.Hack.XHtml MFlow.Hack.XHtml.All MFlow.Forms.Blaze.Html
+                     MFlow.Forms.Test, MFlow.Forms.Widgets
+    exposed: True
+    buildable: True
+    hs-source-dirs: src .
+

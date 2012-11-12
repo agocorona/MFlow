@@ -16,11 +16,13 @@
             -XFlexibleInstances
             -XUndecidableInstances
             -XPatternGuards
+            -XRecordWildCards
             #-}
 
-module MFlow.Forms.Test (Response(..),runTest, ask, waction, wmodify) where
-import qualified MFlow.Forms (ask, waction, wmodify)
-import MFlow.Forms hiding (ask, waction, wmodify)
+module MFlow.Forms.Test (runTest,ask) where
+import MFlow.Forms hiding(ask)
+import qualified MFlow.Forms (ask)
+import MFlow.Forms(FormInput(..))
 import MFlow.Forms.Admin
 import Control.Workflow as WF
 import Control.Concurrent
@@ -31,10 +33,16 @@ import Control.Monad.Trans
 import System.IO.Unsafe
 import System.Random
 import Data.Char(chr, ord)
+import Data.List
 import Data.Typeable
-import qualified Data.ByteString.Lazy as B
+import qualified Data.ByteString.Lazy.Char8 as B
 import Control.Concurrent.MVar
 import Data.TCache.Memoization
+import Control.Monad.State
+import Data.Monoid
+import Data.Maybe
+import Data.IORef
+import MFlow.Cookies(cookieuser)
 
 
 class Response a where
@@ -58,12 +66,20 @@ instance Response Integer where
 instance (Response a, Response b) => Response (a,b) where
   response= fmap (,) response `ap` response
 
+
+instance (Response a, Response b) => Response (Maybe a,Maybe b) where
+  response= do
+       r <- response
+       case r of
+        (Nothing,Nothing) -> response
+        other -> return other
+
+
 instance (Bounded a, Enum a) => Response a where
     response= mx
      where
      mx= do
           let x= typeOfIO mx
-
           n <- randomRIO ( fromEnum $ minBound `asTypeOf` x
                          , fromEnum $ maxBound `asTypeOf` x)
           return $ toEnum n
@@ -72,21 +88,14 @@ instance (Bounded a, Enum a) => Response a where
           typeOfIO = error $ "typeOfIO not defined"
 
 
-
-
-
-runTest :: [(Int, String)] -> IO ()
+runTest :: [(Int, Token -> Workflow IO ())] -> IO ()
 runTest ps=do
   mapM_ (forkIO . run1) ps
 
   putStrLn $ "started " ++ (show . sum . fst $ unzip ps) ++ " threads"
   adminLoop
 
-run1 (nusers,  proc) = do
-  mfs <- getMessageFlows
-  case M.lookup proc mfs of
-      Just f  -> replicateM_ nusers $ randomFlow f
-      Nothing -> error $ "MFlow.Forms.Test: not found. \"" ++ proc ++ "\""
+run1 (nusers,  proc) =  replicateM_ nusers $ randomFlow proc
   where
   randomFlow f = do
     name <- response
@@ -138,7 +147,7 @@ ask w = do
 --         getPar= par $ search "name"
 --    in  getPar form
 --
-
+{-
 waction ::(Functor m, MonadIO m,Response a, FormInput view)
      => View view m a
      -> (a -> FlowM view m b)
@@ -156,4 +165,119 @@ waction w f= do
 wmodify formt act = do
     x <-  liftIO response
     formt `MFlow.Forms.wmodify` (\ f _-> return (f,x)) `MFlow.Forms.wmodify` act
+-}
 
+{-
+type Var= String
+data Test=  Test{tflink:: [(Var,String)]
+                ,selectOptions :: [(Var,[String])]
+                ,tfinput :: [(Var, String)]
+                ,tftextarea :: [(Var, String)]
+                }
+                deriving(Read,Show)
+
+type TestM =  Test -> Test
+
+instance Monoid  TestM  where
+  mempty=  id
+  mappend= (.)
+
+instance  FormInput TestM  where
+    ftag = const id
+    inred  = const id 
+    fromStr = const id 
+    flink var _= let(n,v)=break (=='=') var in  \t ->t{tflink= (n,tail v):tflink t}
+    finput n _ v _ _ = \t -> t{tfinput = (n,v):tfinput t}
+    ftextarea n v= \t -> t{tftextarea = (n,v):tftextarea t}
+    fselect n _= \t -> t{selectOptions=(n,[]):selectOptions t}
+    foption o _ _= \t ->
+         let (n,opts)= head $ selectOptions t
+         in t{selectOptions=(n,o:opts):tail (selectOptions t)}
+    formAction  _ _= id
+    addAttributes _ _= id
+
+generateResponse Test{..}= do
+  b <- response
+  case b of
+     True -> genLink
+     False -> genForm
+
+  where
+  genForm= do
+         -- one on every response is incomplete
+         n <- randomRIO(0,10) :: IO Int
+         case n of
+           0 -> do
+             genInput
+
+           _ -> do
+             r1 <- genInput
+             r2 <- genSelect
+             r3 <- genTextArea
+             return $ r1++r2++r3
+  genLink= do
+         let n = length tflink
+         if n == 0 then genForm
+          else do
+            r <- randomRIO(0,n )
+            return [tflink !! r]
+
+  genSelect=do
+   let n = length selectOptions
+   if n== 0
+    then return []
+    else mapM gen selectOptions
+    where
+    gen(s,os)= do
+     let m = length os
+     j <- randomRIO(0,m)
+     return (s, os !! j)
+
+  genInput= do
+     let n = length tftextarea
+     if n==0
+      then return []
+      else mapM gen tfinput
+      where gen(n,_)= do
+             str <- response
+             return $  (n,str)
+
+  genTextArea= do
+     let n = length tfinput
+     if n==0
+       then return []
+       else mapM gen tftextarea
+       where
+       gen(n,_)= do
+             str <- response
+             return $  (n,str)
+
+pwf= "pwf"
+ind= "ind"
+instance  Processable Params where
+     pwfname = fromMaybe noScript  . lookup pwf
+     puser= fromMaybe anonymous  . lookup cookieuser
+     pind = fromMaybe "0"  . lookup ind
+     getParams = id
+
+
+
+runTest nusers = do
+   wfs <- getMessageFlows
+   replicateM nusers $ gen wfs
+   where
+   gen wfs = do
+     u <- response
+     mapM (genTraffic u) $ M.toList wfs
+
+   genTraffic u (n,_)= forkIO $ iterateresponses  [(pwf,n),(cookieuser,u)] []
+
+   iterateresponses ident msg= iterate [] msg
+     where
+     iterate cs msg= do
+       (HttpData ps cooks test,_) <- msgScheduler $  ident ++ cs++ msg
+       let cs'= cs++ map (\(a,b,c,d)-> (a,b)) cooks
+       resp <- generateResponse . read $ B.unpack test
+       iterate cs' resp
+
+      -}

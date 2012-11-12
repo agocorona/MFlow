@@ -25,10 +25,10 @@ instance Monoid (HSP XML) where
     mconcat xs= <span> <% [<% x %> | x <- xs] %> </span>
 
 instance FormInput (HSP XML)   where
-    ftag t = genEElement (toName t) []
-    fromString s =   <span><% s %></span>
+    ftag t =  \e -> genElement (toName t) [] [asChild e]
 
-
+    fromStr s =   <span><% s %></span>
+    fromStrNoEncode s= <pcdata> pcdataToChild s </pcdata>
     finput typ name value checked onclick=
       <input type= (typ)
              name=(name)

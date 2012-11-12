@@ -39,7 +39,7 @@ instance ToByteString Html where
 
 
 instance FormInput  Html  where
-    ftag t= tag t noHtml
+    ftag t= tag t
     inred = X.bold ![X.thestyle "color:red"]
     finput n t v f c= X.input ! ([thetype t ,name  n, value  v] ++ if f then [checked]  else []
                               ++ case c of Just s ->[strAttr "onclick"  s]; _ -> [] )
@@ -55,8 +55,8 @@ instance FormInput  Html  where
 
 
     formAction action form = X.form ! [X.action  action, method "post"] << form
-    fromString = stringToHtml
-
+    fromStr = stringToHtml
+    fromStrNoEncode= primHtml
 
     flink  v str = toHtml $ hotlink  (  v) << str
 

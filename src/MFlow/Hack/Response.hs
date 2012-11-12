@@ -52,7 +52,7 @@ instance  ToResponse HttpData  where
   toResponse (Error NotFound str)= Response{status=404, headers=[], body=   getNotFoundResponse str}
 
 instance Typeable Env where
-     typeOf = \_-> mkTyConApp (mkTyCon "Hack.Env") []
+     typeOf = \_-> mkTyConApp (mkTyCon3 "hack-handler-simpleserver" "Hack" "Env") []
 
-instance Typeable Response where
-     typeOf = \_-> mkTyConApp (mkTyCon "Hack.Response")[]
+--instance Typeable Response where
+--     typeOf = \_-> mkTyConApp (mkTyCon "Hack.Response")[]

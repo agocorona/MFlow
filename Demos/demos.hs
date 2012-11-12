@@ -1,45 +1,50 @@
-{-# LANGUAGE ScopedTypeVariables, DeriveDataTypeable #-}
+{-# LANGUAGE ScopedTypeVariables, DeriveDataTypeable, NoMonomorphismRestriction #-}
 module Main where
-import MFlow.Wai.XHtml.All hiding (ask,waction, wmodify)
-import MFlow.Forms.Test
-
+import MFlow.Hack.XHtml.All  -- hiding (ask)
+--import MFlow.Forms.Test
+import MFlow
+import MFlow.FileServer
+import MFlow.Forms.Ajax
+import MFlow.Forms.Admin
+import MFlow.Forms
 import Text.XHtml
 import Data.TCache
 import Control.Monad.Trans
 import Data.Typeable
+
 import Control.Concurrent
 import Control.Exception as E
 import qualified Data.ByteString.Char8 as SB
 import qualified Data.Vector as V
 import Data.Maybe
 
-test= do
-   addMessageFlows [(noScript  ,transient $ runFlow mainf)
-                   ,("shop"    ,runFlow shopCart)]
-
-   runTest [(15, "shop")]
+--test= runTest [(15,"shop")]
 
 main= do
    syncWrite SyncManual
    setFilesPath ""
    addFileServerWF
-   addMessageFlows [(""  ,transient $ runFlow mainf)
-                   ,("shop"    ,runFlow shopCart)]
-   forkIO $ run 80 waiMessageFlow
+   addMessageFlows [(""  ,transient $ runFlow mainf),
+                    ("shop"    ,runFlow shopCart)]
+   run 80 hackMessageFlow
+
    adminLoop
 
-stdheader c= p << "you can press the back button to go to the menu"+++ c
+stdheader c= thehtml << body << (p << "you can press the back button"+++ c)
 
-data Options= CountI | CountS | Action | Ajax | Select deriving (Bounded, Enum,Read, Show,Typeable)
+data Options= CountI | CountS | TextEdit |Shop | Action | Ajax | Select deriving (Bounded, Enum,Read, Show,Typeable)
 
 mainf=   do
        setHeader stdheader
-       r <- ask $   wlink CountI (bold << "increase an Int")
+       r <- ask $   br ++> wlink TextEdit (bold << "Content Management")
+               <|>  br ++> wlink Shop (bold << "example of transfer to another flow (shopping)")
+               <|>  br ++> wlink CountI (bold << "increase an Int")
                <|>  br ++> wlink CountS (bold << "increase a String")
                <|>  br ++> wlink Action (bold << "Example of a string widget with an action")
                <|>  br ++> wlink Ajax (bold << "Simple AJAX example")
                <|>  br ++> wlink Select (bold << "select options")
                <++ (br +++ linkShop) -- this is an ordinary XHtml link
+
 
        case r of
              CountI    ->  clickn 0
@@ -47,6 +52,8 @@ mainf=   do
              Action    ->  actions 1
              Ajax      ->  ajaxsample
              Select    ->  options
+             TextEdit  ->  textEdit
+             Shop      ->  transfer "shop"
        mainf
 
        where
@@ -77,10 +84,7 @@ clicks s= do
              `validate` (\s -> return $ if length s   > 5 then Just "length must be < 5" else Nothing )
    clicks $ s'++ "1"
 
-
 ajaxheader html= thehtml << ajaxHead << p << "click the box" +++ html
-
-
 
 ajaxsample= do
    setHeader ajaxheader
@@ -112,8 +116,8 @@ shopCart  = do
              ++> (tbody
                   <<<  tr ! [rowspan 2] << td << linkHome
                   ++> (tr <<< td <<< wlink  IPhone (bold <<"iphone") <++  td << ( bold << show ( cart V.! 0))
-                  <|>  tr <<< td <<< wlink  IPad (bold <<"ipad")   <++  td << ( bold << show ( cart V.! 1))
-                  <|>  tr <<< td <<< wlink  IPod (bold <<"ipod")   <++  td << ( bold << show ( cart V.! 2)))
+                  <|>  tr <<< td <<< wlink  IPad (bold <<"ipad")     <++  td << ( bold << show ( cart V.! 1))
+                  <|>  tr <<< td <<< wlink  IPod (bold <<"ipod")     <++  td << ( bold << show ( cart V.! 2)))
                   <++  tr << td << linkHome
                   )
      let i =fromEnum o
@@ -122,3 +126,45 @@ shopCart  = do
 
     where
     linkHome= (toHtml $ hotlink  noScript << bold << "home")
+
+
+
+textEdit= do
+    setHeader $ \html -> thehtml << body << html
+    let first=  p << italics <<
+                   (thespan<< "this is a page with"
+                   +++ bold << " two " +++ thespan << "paragrapsh")
+
+        second= p << italics << "The original text is this. This is the second paragraph"
+
+        pageEditable =  (tFieldEd "first"  first)
+                    **> (tFieldEd "second" second)
+
+    ask $   first
+        ++> second
+        ++> wlink () (p << "click here to edit it")
+
+    setAdminUser "admin" "admin"
+
+    ask $ p << "Please login with admin/admin to edit it"
+            ++> userWidget (Just "admin") userLogin
+
+    ask $   p << "now you can click the field and edit them"
+        ++> p << bold << "to save the edited field, double click on it"
+        ++> pageEditable
+        **> wlink () (p << "click here to see it as a normal user")
+
+    logout
+
+    ask $ p << "the user can not edit it, it see the edited content"
+      ++> pageEditable
+      **> wlink () (p << "click to continue")
+
+    ask $   p << "When text are fixed,the edit facility and the original texts can be removed.\
+                 \ The content is indexed by the field key"
+        ++> tField "first"
+        **> tField "second"
+        **> p << "End of edit field demo" ++> wlink () (p << "click here to go to menu")
+
+    breturn ()
+

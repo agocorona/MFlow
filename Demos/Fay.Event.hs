@@ -1,4 +1,4 @@
-{-# OPTIONS -XScopedTypeVariables   #-}
+{-# OPTIONS -XScopedTypeVariables -XNoMonomorphismRestriction  #-}
 module Fay.Event where
 
 --import Language.Fay.JQuery
@@ -54,26 +54,28 @@ untilOtherFunc (x:y:xs)= x=='\n' && not (isSpace y)
 
 
 headerf html =
-   thehtml << (header
-                 << (script ![thetype "text/javascript", strAttr "src" (linkFile "jquery.js")] << noHtml
-                 +++ script ![thetype "text/javascript", strAttr "src" (linkFile "LanguageFayJQuery.js")] << noHtml
-                 +++ script ![thetype "text/javascript", strAttr "src" (linkFile "LanguageFayPrelude.js")] << noHtml
-                 +++ script ![thetype "text/javascript"] << (primHtml "function fai(){alert('fai')}")))
-           +++ tbody << html
+   thehtml <<
+      (header << script ![thetype "text/javascript", strAttr "src" (linkFile "jquery.js")] << noHtml
 
-main2= print $ comp "fai"
+              +++ script ![thetype "text/javascript", strAttr "src" (linkFile "foo.js")] << noHtml )
 
+           +++
+           body ![strAttr "id" "tag"] << html
+
+main2= print $ comp "faiexample"
+
+main3=  compileViaStr def compileExp  "alert \"hi\""
 main :: IO ()
 main = do
     addFileServerWF
     addMessageFlows[("", transient $ runFlow fl)]
     run 80 waiMessageFlow
 
-aler= alert "hola"
 
-fai=  alert "hi"
 
---    this <- getThis
+faiexample=  ffi "document.getElementById('tag').innerHTML='hi'"
+
+--    this <- getThis -- ffi "document.getElementsByTagName(%1)"
 --    text <- getText this
 --    select "<li></li>" >>= appendTo this >>= setText "hello"
 
@@ -83,8 +85,9 @@ fai=  alert "hi"
 fl :: FlowM Html IO ()
 fl= do
    setHeader headerf
-   ask $  wlink () (bold << "refresh")
-       <++ thediv ! [strAttr "id" "autocomp", strAttr "onclick" "alert('fai')"] << "asdasadhi"
+
+   ask $   wlink () (bold << "refresh")
+       <++ thediv ! [strAttr "id" "tag", strAttr "onclick" "main._(main.foo)"] << "asdasadhi"
    fl
 
 

@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------------
 --
--- Module      :  MFlow.Hack.XHtml.All
+-- Module      :  MFlow.Wai.Blaze.Html.All
 -- Copyright   :
 -- License     :  BSD3
 --
@@ -12,40 +12,45 @@
 --
 -----------------------------------------------------------------------------
 
-module MFlow.Hack.XHtml.All (
+module MFlow.Wai.Blaze.Html.All (
  module Data.TCache
-,module MFlow.Hack
+,module MFlow.Wai
 ,module MFlow.FileServer
 ,module MFlow.Forms
-,module MFlow.Forms.XHtml
+,module MFlow.Forms.Blaze.Html
+,module Text.Blaze.Html4.Strict
+,module Text.Blaze.Html4.Strict.Attributes
 ,module MFlow.Forms.Admin
 ,module MFlow.Forms.Ajax
-,module MFlow.Hack.XHtml
-,module MFlow.Forms.Widgets
-,module Hack
-,module Hack.Handler.SimpleServer
-,module Text.XHtml.Strict
+,module Network.Wai
+,module Network.Wai.Handler.Warp
 ,module Control.Applicative
+
 ) where
 
 
-import MFlow.Hack
+import MFlow.Wai
 import MFlow.FileServer
 import MFlow.Forms
 import MFlow.Forms.XHtml
 import MFlow.Forms.Admin
 import MFlow.Forms.Ajax
-import MFlow.Forms.Widgets
-import MFlow.Hack.XHtml
-
-import Hack(Env)
-import Hack.Handler.SimpleServer
+import MFlow.Forms.Blaze.Html
+import Text.Blaze.Html4.Strict
+import Text.Blaze.Html4.Strict.Attributes  hiding (label,span,style,abbr,cite,title)
+import Network.Wai
+import Network.Wai.Handler.Warp
 import Data.TCache
-
 
 import Text.XHtml.Strict hiding (widget)
 
 import Control.Applicative
+
+
+
+
+
+
 
 
 
