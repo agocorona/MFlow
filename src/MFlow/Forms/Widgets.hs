@@ -22,6 +22,7 @@ selectio ajax
 
 -}
 module MFlow.Forms.Widgets (selectAutocomplete, tField, tFieldEd, tFieldGen
+,requires, WebRequirement(..)
 
 ) where
 import MFlow
@@ -61,11 +62,6 @@ loadjsfile filename lcallbacks=
 
 
 loadjs content= content
---  "var fileref=document.createElement('script');\
---  \fileref.setAttribute('type','text/javascript');\
---  \var text= document.createTextNode(\""++content++"\");\
---  \fileref.appendChild(text);\
---  \document.getElementsByTagName('head')[0].appendChild(fileref);"
 
 
 loadcssfile filename=
@@ -91,13 +87,15 @@ jqueryCSS= "http://code.jquery.com/ui/1.9.1/themes/base/jquery-ui.css"
 
 jqueryUi= "http://code.jquery.com/ui/1.9.1/jquery-ui.js"
 
-
+type Script= String
+type OnLoadScript= String
+type File= String
 data WebRequirement= CSSFile String
-                | CSS String
-                | JScriptFile String [String]
-                | JScript String
-                | ServerProc (String, Token -> Workflow IO ())
-                deriving (Eq, Ord, Typeable)
+                   | CSS Script
+                   | JScriptFile File [OnLoadScript]
+                   | JScript Script
+                   | ServerProc (String, Token -> Workflow IO ())
+                   deriving(Eq,Typeable,Ord)
 
 instance Eq    (String, Token -> Workflow IO ()) where
    (x,_) == (y,_)= x == y
@@ -138,8 +136,25 @@ installWebRequirements rs= do
 
 selectAutocomplete :: (MonadIO m,Functor m)=> (String -> IO [String]) -> View Html m [String]
 selectAutocomplete serverproc = do
+    requires [JScript ajaxScript
+             ,JScriptFile jqueryScript [events]
+             ,CSSFile jqueryCSS
+             ,JScriptFile jqueryUi []]
 
-    let events=
+    ajaxc <- ajaxCommand "$('#text1').attr('value')"
+                         $ \u -> do
+                                 r <- serverproc u
+                                 return $ jaddtoautocomp r
+
+    getCheckBoxes
+      (thediv ! [strAttr "id" "users"] <<< noWidget )
+      <++ input ![thetype "text"
+        ,value "select users"
+        ,strAttr "id" "text1"
+        ,strAttr "oninput" ajaxc
+        ,strAttr "autocomplete" "off"]
+    where
+    events=
                  "$(document).ready(function(){   \
                  \  $('#text1').keydown(function(){ \
                  \   if(event.keyCode == 13)  \
@@ -150,27 +165,8 @@ selectAutocomplete serverproc = do
                  \    } \
                  \ }); \
                  \});"
-    addRequirements [JScript ajaxScript , JScriptFile jqueryScript [events], CSSFile jqueryCSS
-               , JScriptFile jqueryUi []]
-    let jaddtoautocomp us= "$('#text1').autocomplete({ source: " ++ show us ++ "  });"
-    ajaxc <- ajaxCommand "$('#text1').attr('value')"
-                         $ \u -> do
-                                 r <- serverproc u
-                                 return $ jaddtoautocomp r
 
-
-
-    getCheckBoxes
-              (thediv ! [strAttr "id" "users"]
-               <<< noWidget )
-
-
-     <++ input ![thetype "text"
-                ,value "select users"
-                ,strAttr "id" "text1"
-                ,strAttr "oninput" ajaxc
-                ,strAttr "autocomplete" "off"]
-
+    jaddtoautocomp us= "$('#text1').autocomplete({ source: " ++ show us ++ "  });"
 
 
 writetField    k s=  atomically $ writetFieldSTM k s
@@ -197,6 +193,17 @@ tFields =  getDBRef "texts"
 
 type Key= String
 
+-- | A widget that display the content of an  html, But if logged as administrator,
+-- it permits to edit it in place. So the editor could see the final appearance
+-- of what he write in the page.
+--
+-- When the administrator double click in the paragraph, the content is saved and
+-- identified by the key. Then, from now on the users will see the content of the saved
+-- content.
+--
+-- The content is saved in a file by default ("texts" in this versions), but there is
+-- a configurable version (`tFieldGen`). The content of the element and the formatting
+-- is cached in memory, so the display is very fast.
 tFieldEd
   :: (Functor m,  MonadIO m, Executable m,
       Typeable v, FormInput v, ToByteString v) =>
@@ -205,7 +212,7 @@ tFieldEd  k text=
    tFieldGen k  (readtField text) writetField
 
 
-
+-- tFieldEd with user-configurable storage.
 tFieldGen :: (MonadIO m,Functor m, Executable m
         , Typeable v, FormInput v,ToByteString v)
         => Key
@@ -233,7 +240,7 @@ tFieldGen  k  getcontent create =   wfreeze k 0 $ do
                           flushCached k
                           return "alert('saved');"
 
-            addRequirements
+            requires
                    [JScriptFile "http://js.nicedit.com/nicEdit-latest.js" [nikeditor, callback]
                    ,JScript ajaxScript]
 
@@ -242,10 +249,19 @@ tFieldGen  k  getcontent create =   wfreeze k 0 $ do
     wraw $  (ftag "span" content `addAttributes` attribs)
 
 tField :: (MonadIO m,Functor m, Executable m
-        , Typeable v, FormInput v,ToByteString v)
-        => Key
-        -> View v m ()
+       ,  Typeable v, FormInput v,ToByteString v)
+       => Key
+       -> View v m ()
 tField  k    =  wfreeze k 0 $ do
     content <-  liftIO $ readtField (fromStrNoEncode "not found")  k
     wraw content
 
+-- | a multilanguage version of tFieldEd. For a field with @key@ it add a suffix with the
+-- two characters of the language used.
+mFieldEd k content= do
+  lang <- getLang
+  tFieldEd (k ++ ('-':lang)) content
+
+mField k= do
+  lang <- getLang
+  tField $ k ++ ('-':lang)

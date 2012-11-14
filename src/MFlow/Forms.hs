@@ -287,7 +287,7 @@ cachedWidget, wcached, wfreeze,
 
 -- * Requirements
 ,Requirements(..)
-,addRequirements
+,requires
 -- * Utility
 ,genNewId
 )
@@ -1244,7 +1244,7 @@ getLang ::  MonadState (MFlowState view) m => m String
 getLang= gets mfLang
 
 -- | add requirements to the
-addRequirements rs =do
+requires rs =do
     st <- get
     let l = mfRequirements st
 --    let rs'= map Requirement rs \\ l
@@ -1779,6 +1779,9 @@ returning expr=View $ do
             in (verb ++ "?" ++  name ++ "=" ++ showx)
           toSend= expr string
       getParam1 name env [toSend]
+      
+
+
 
 
 --instance (Widget a b m view, Monoid view) => Widget [a] b m view where

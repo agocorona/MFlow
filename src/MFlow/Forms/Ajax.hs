@@ -1,4 +1,4 @@
-{-# OPTIONS  -XFlexibleContexts    #-}
+
 
 -- | A very simple (but effective) support for AJAX.
 -- The value of a javaScript variable is sent to the server.
@@ -8,15 +8,19 @@
 -- This example increase the value, from 0 on, in a text box trough AJAX:
 --
 -- @
--- ajaxheader html= thehtml << `ajaxHead` << html
 -- ajaxsample= do
---   setHeader ajaxheader
---   ajaxc \<- `ajaxCommand` \"document.getElementById(\'text1\').value\"
---                           (\n ->  return $ \"document.getElementById(\'text1\').value='\"++show(read n +1)++\"'\")
---   ask $ (getInt (Just 0) \<! [(\"id\",\"text1\"),(\"onclick\",ajaxc)])
+--
+--   let ajaxf n= return $ "document.getElementById('text1').value='"++show(read  n +1)++"'"
+--   ajaxc <- ajaxCommand "document.getElementById('text1').value" ajaxf
+--
+--   ask $  requires[JScript ajaxScript]
+--       >> getInt (Just 0) <! [("id","text1"),("onclick", ajaxc)]
 --   breturn()@
+--
+-- here `requires` install the ajaxScript in the browser
 
-module MFlow.Forms.Ajax (ajaxCommand,ajaxHead, ajaxScript) where
+
+module MFlow.Forms.Ajax (ajaxCommand, ajaxScript) where
 import MFlow
 import MFlow.Forms
 import Text.XHtml
@@ -60,52 +64,14 @@ ajaxCommand jsparam serverProc = do
    justify = flip  fromMaybe
    ajaxCall jsparam servname = "doServer("++"'" ++  servname++"',"++jsparam++")"
 
--- | @ajaxHead@ must be used instead of `header` when using ajax(see example).
---
--- Although it produces code form "Text.XHtml" rendering (package xhtml),
--- it can be converted to byteString, so that any rendering can be used trough normalization
--- . see `setHeader`. Example:
---
--- > setHeader $ \html -> thehtml << ajaxHead << p << "click the box" +++ html
-ajaxHead :: Html -> Html
-ajaxHead html= header <<  ajaxScript1 +++ body << html
 
--- | ajax script  included in `ajaxHead`
-ajaxScript1 :: Html
-ajaxScript1= script ![thetype "text/javascript"] <<  ajaxScript
 
---ajaxScript :: String
---ajaxScript=
---        "function loadXMLObj()\n" ++
---        "{\n" ++
---        "var xmlhttp;\n" ++
---        "if (window.XMLHttpRequest)\n" ++
---        "  {\n// code for IE7+, Firefox, Chrome, Opera, Safari\n" ++
---        "  xmlhttp=new XMLHttpRequest();\n" ++
---        "  }\n" ++
---        "else\n" ++
---        "  {\n// code for IE6, IE5\n\n" ++
---        "  xmlhttp=new ActiveXObject('Microsoft.XMLHTTP');\n" ++
---        "  }\n" ++
---        "return xmlhttp\n" ++
---        "}\n" ++
+
+-- | the ajax script necessary for ajax execution.
 --
---        " xmlhttp= loadXMLObj();\n" ++
---        " noparam= '';\n"++
---        "\n"++
---        "function doServer (servproc,param){\n" ++
---        "   xmlhttp.open('GET',servproc+'?ajax='+param,true);\n" ++
---        "   xmlhttp.send();}\n" ++
---        "\n"++
---        "xmlhttp.onreadystatechange=function()\n" ++
---        "  {\n" ++
---        "  if (xmlhttp.readyState + xmlhttp.status==204)\n" ++
---        "    { \n" ++
---        "    eval(xmlhttp.responseText);\n" ++
---        "    }\n" ++
---        "  }\n" ++
---        "\n"
-
+-- must be inserted in the widget with `requires`
+--
+-- > ask $ requires[ajaxScript] >> widget-with-ajax-call
 
 ajaxScript=
         "function loadXMLObj()" ++

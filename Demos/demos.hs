@@ -84,15 +84,16 @@ clicks s= do
              `validate` (\s -> return $ if length s   > 5 then Just "length must be < 5" else Nothing )
    clicks $ s'++ "1"
 
-ajaxheader html= thehtml << ajaxHead << p << "click the box" +++ html
+
 
 ajaxsample= do
-   setHeader ajaxheader
    let ajaxf n= return $ "document.getElementById('text1').value='"++show(read  n +1)++"'"
    ajaxc <- ajaxCommand "document.getElementById('text1').value" ajaxf
 
-   ask $ (getInt (Just 0) <! [("id","text1"),("onclick", ajaxc)])
+   ask $  requires[JScript ajaxScript]
+       >> getInt (Just 0) <! [("id","text1"),("onclick", ajaxc)]
    breturn()
+
 
 actions n=do
   ask $ wlink () (p << "exit from action")
@@ -129,13 +130,16 @@ shopCart  = do
 
 
 
+
+-- an example of content management
 textEdit= do
     setHeader $ \html -> thehtml << body << html
-    let first=  p << italics <<
-                   (thespan<< "this is a page with"
-                   +++ bold << " two " +++ thespan << "paragrapsh")
 
-        second= p << italics << "The original text is this. This is the second paragraph"
+    let first=  p << italics <<
+                   (thespan << "this is a page with"
+                   +++ bold << " two " +++ thespan << "paragraphs")
+
+        second= p << italics << "This is the original text of the second paragraph"
 
         pageEditable =  (tFieldEd "first"  first)
                     **> (tFieldEd "second" second)
@@ -156,15 +160,12 @@ textEdit= do
 
     logout
 
-    ask $ p << "the user can not edit it, it see the edited content"
-      ++> pageEditable
-      **> wlink () (p << "click to continue")
+    ask $   p << "the user can not edit it, it see the edited content"
+        ++> pageEditable
+        **> wlink () (p << "click to continue")
 
-    ask $   p << "When text are fixed,the edit facility and the original texts can be removed.\
-                 \ The content is indexed by the field key"
+    ask $   p << "When text are fixed,the edit facility and the original texts can be removed. The content is indexed by the field key"
         ++> tField "first"
         **> tField "second"
         **> p << "End of edit field demo" ++> wlink () (p << "click here to go to menu")
-
     breturn ()
-
