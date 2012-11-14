@@ -20,8 +20,8 @@ import Data.ByteString.Lazy.Char8
 
 import Text.Blaze.Html
 import qualified Text.Blaze.Internal as I
-import Text.Blaze.Html4.Strict as St
-import Text.Blaze.Html4.Strict.Attributes as At
+import Text.Blaze.Html5 as St
+import Text.Blaze.Html5.Attributes as At
 import Text.Blaze.Html.Renderer.Utf8 (renderHtml)
 import Control.Monad.Trans
 import Data.Typeable
@@ -33,6 +33,8 @@ instance ToByteString Html where
   toByteString  =  renderHtml
 
 (<<) tag v= tag $ toMarkup v
+
+infixr 7 <<
 
 instance FormInput Html where
     ftag x=  I.Parent (fromString x) (fromString $ "<"++x) (fromString $ "</"++ x ++">")

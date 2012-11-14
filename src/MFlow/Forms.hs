@@ -308,7 +308,7 @@ import Control.Monad.Trans.Maybe
 import Data.Maybe
 import Control.Applicative
 import Control.Exception
-
+import Control.Concurrent
 import Control.Workflow as WF 
 import Control.Monad.Identity
 import Unsafe.Coerce
@@ -1716,7 +1716,12 @@ wstateless w = transient $ runFlow loop
 
 -- | transfer control to another flow.
 transfer :: MonadIO m => String -> FlowM v m ()
-transfer method = gets mfToken >>= \t-> liftIO $ msgScheduler t{twfname= method} >> return ()
+transfer flowname = do
+     t <- gets mfToken
+     let t'= t{twfname= flowname}
+     liftIO . forkIO $ msgScheduler t' >> return ()
+     return ()
+
 
 -- | wrap a widget of form element within a form-action element.
 ---- Usually it is done automatically by the @Wiew@ monad.

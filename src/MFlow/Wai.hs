@@ -68,23 +68,23 @@ instance Processable Request  where
 --   getPath env= pathInfo env
 --   getPort env= serverPort env
    
-data Flow= Flow !Integer deriving (Read, Show, Typeable)
+data NFlow= NFlow !Integer deriving (Read, Show, Typeable)
 
-instance Serializable Flow where
+instance Serializable NFlow where
   serialize= B.pack . show
   deserialize= read . B.unpack
 
-instance Indexable Flow where
+instance Indexable NFlow where
   key _= "Flow"
 
 
-rflow= getDBRef . key $ Flow undefined
+rflow= getDBRef . key $ NFlow undefined
 
 newFlow= liftIO $ do
         TOD t _ <- getClockTime
         atomically $ do 
-                    Flow n <- readDBRef rflow `onNothing` return (Flow 0)
-                    writeDBRef rflow . Flow $ n+1
+                    NFlow n <- readDBRef rflow `onNothing` return (NFlow 0)
+                    writeDBRef rflow . NFlow $ n+1
                     return . show $ t + n
          
 

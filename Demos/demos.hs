@@ -1,13 +1,12 @@
 {-# LANGUAGE ScopedTypeVariables, DeriveDataTypeable, NoMonomorphismRestriction #-}
 module Main where
-import MFlow.Hack.XHtml.All  -- hiding (ask)
+import  MFlow.Hack.XHtml.All -- hiding (ask)
 --import MFlow.Forms.Test
 import MFlow
 import MFlow.FileServer
 import MFlow.Forms.Ajax
 import MFlow.Forms.Admin
 import MFlow.Forms
-import Text.XHtml
 import Data.TCache
 import Control.Monad.Trans
 import Data.Typeable
@@ -160,7 +159,7 @@ textEdit= do
 
     logout
 
-    ask $   p << "the user can not edit it, it see the edited content"
+    ask $   p << "the user sees the edited content. He can not edit"
         ++> pageEditable
         **> wlink () (p << "click to continue")
 

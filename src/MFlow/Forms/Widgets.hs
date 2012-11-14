@@ -94,13 +94,13 @@ data WebRequirement= CSSFile String
                    | CSS Script
                    | JScriptFile File [OnLoadScript]
                    | JScript Script
-                   | ServerProc (String, Token -> Workflow IO ())
+                   | ServerProc (String, Flow)
                    deriving(Eq,Typeable,Ord)
 
-instance Eq    (String, Token -> Workflow IO ()) where
+instance Eq (String, Flow) where
    (x,_) == (y,_)= x == y
 
-instance Ord    (String, Token -> Workflow IO ()) where
+instance Ord (String, Flow) where
    compare(x,_)  (y,_)= compare x y
 
 instance Requirements WebRequirement where
@@ -149,10 +149,10 @@ selectAutocomplete serverproc = do
     getCheckBoxes
       (thediv ! [strAttr "id" "users"] <<< noWidget )
       <++ input ![thetype "text"
-        ,value "select users"
-        ,strAttr "id" "text1"
-        ,strAttr "oninput" ajaxc
-        ,strAttr "autocomplete" "off"]
+                 ,value "select users"
+                 ,strAttr "id" "text1"
+                 ,strAttr "oninput" ajaxc
+                 ,strAttr "autocomplete" "off"]
     where
     events=
                  "$(document).ready(function(){   \

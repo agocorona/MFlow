@@ -45,7 +45,7 @@ setFilesPath :: String -> IO ()
 setFilesPath path= writeIORef rfilesPath path
 
 pathPrm=  "path"
-fileServe ::(Token -> Workflow IO ())
+fileServe :: Flow
 fileServe  = stateless $ \env  -> do
   case lookup pathPrm   env of
     Nothing -> error " no file specified"
@@ -124,7 +124,7 @@ addFileServerWF= addMessageFlows [("file", fileServe)]
 linkFile :: String -> String
 linkFile path=  "file?path=" <>  path
 
-directory :: Token -> Workflow IO ()
+directory :: Flow
 directory = stateless $ \_ -> do
    path <- readIORef rfilesPath
    directory1 path

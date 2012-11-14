@@ -26,10 +26,10 @@ In order to manage resources, there are primitives that kill the process and its
 
 All these details are hidden in the monad of "MFlow.Forms" that provides an higher level interface.
 
-Fragment based streaming 'sendFragment' 'sendEndFragment' are  provided only at this level.
+Fragment based streaming 'sendFragment'  are  provided only at this level.
 
 'stateless' and 'transient' server processeses are also possible. `stateless` are request-response
- with no intermediate messaging dialog. `transient` processes have no persistent
+ . `transient` processes have no persistent
  state, so they restart anew after a timeout or a crash.
 
 -}
@@ -46,7 +46,7 @@ Fragment based streaming 'sendFragment' 'sendEndFragment' are  provided only at 
               ,ScopedTypeVariables
                #-}  
 module MFlow (
-Params,  Workflow, HttpData(..),Processable(..), ToHttpData(..)
+Flow, Params, HttpData(..),Processable(..), ToHttpData(..)
 , Token(..), ProcList
 -- * low level comunication primitives. Use `ask` instead
 ,flushRec, receive, receiveReq, receiveReqTimeout, send, sendFlush, sendFragment
@@ -91,8 +91,8 @@ import qualified Control.Exception as CE
 --import Debug.Trace
 --(!>)= flip trace
 
+type Flow= (Token -> Workflow IO ())
 
---type Header= (String,String)
 data HttpData = HttpData Params [Cookie] ByteString | Error WFErrors ByteString deriving (Typeable, Show)
 
 instance ToHttpData HttpData where
@@ -220,6 +220,7 @@ sendFlush t msg= flushRec t >> send t msg     -- !> "sendFlush "
 sendFragment ::  ToHttpData a => Token  -> a -> IO()
 sendFragment (Token _ _ _ _ qresp) msg=   putMVar qresp  . Fragm $ toHttpData msg
 
+{-# DEPRECATED sendEndFragment "use send to end a fragmented response instead" #-}
 sendEndFragment :: ToHttpData a =>  Token  -> a -> IO()
 sendEndFragment (Token _ _ _ _ qresp  ) msg=  putMVar qresp  . EndFragm  $ toHttpData msg
 
@@ -253,24 +254,23 @@ receiveReqTimeout time time2 t=
 
 
 delMsgHistory t = do
-
       let statKey=  keyWF (twfname t)  t                  -- !> "wf"      --let qnme= keyWF wfname t
-      delWFHistory1 statKey                                 -- `debug` "delWFHistory"
+      delWFHistory1 statKey                               -- `debug` "delWFHistory"
       
 
 
 -- | executes a simple monadic computation that receive the params and return a response
 --
 -- It is used with `addMessageFlows` 
-stateless :: (ToHttpData b) => (Params -> IO b) -> (Token -> Workflow IO ())
+stateless :: (ToHttpData b) => (Params -> IO b) -> Flow
 stateless f = transient proc
   where
   proc t@(Token _ _ _ queue qresp) = loop t queue qresp
   loop t queue qresp=do
-    req <- takeMVar queue  -- !> (">>>>>> stateless " ++ thread t)
+    req <- takeMVar queue                       -- !> (">>>>>> stateless " ++ thread t)
     resp <- f (getParams req)
-    (putMVar qresp  . Resp $ toHttpData resp) -- !> ("<<<<<< stateless " ++thread t)
-    loop t queue qresp     -- !>  ("enviado stateless " ++ thread t)
+    (putMVar qresp  . Resp $ toHttpData resp  ) -- !> ("<<<<<< stateless " ++thread t)
+    loop t queue qresp                          -- !>  ("enviado stateless " ++ thread t)
 --
 
 
@@ -279,12 +279,12 @@ stateless f = transient proc
 -- not store its state in permanent storage. The process once stopped, will restart anew 
 --
 ---- It is used with `addMessageFlows` `hackMessageFlow` or `waiMessageFlow`
-transient :: (Token -> IO ()) -> (Token -> Workflow IO ())   
+transient :: (Token -> IO ()) -> Flow   
 transient f=  unsafeIOtoWF . f -- WF(\s -> f t>>= \x-> return (s, x) )
 
 
-_messageFlows :: MVar (M.Map String (Token-> Workflow IO ()))
-_messageFlows= unsafePerformIO $ newMVar M.empty -- [(String,Token  -> Workflow IO ())])
+_messageFlows :: MVar (M.Map String Flow)
+_messageFlows= unsafePerformIO $ newMVar M.empty 
 
 -- | add a list of flows to be scheduled. Each entry in the list is a pair @(path, flow)@
 addMessageFlows wfs=  modifyMVar_ _messageFlows(\ms ->  return $ M.union ms  (M.fromList $ map flt wfs))
@@ -301,21 +301,18 @@ thread t= show(unsafePerformIO myThreadId) ++ " "++ show (twfname t)
 
 --tellToWF :: (Typeable a,  Typeable c, Processable a) => Token -> a -> IO c
 tellToWF t@(Token _ _ _ queue qresp ) msg = do  
-    putMVar queue (Req msg)    -- !> (">>>>> telltowf"++ thread t)
-    m <-  takeMVar qresp  --  !> ("<<<<<< tellTowf"++ thread t)
+    putMVar queue (Req msg)              -- !> (">>>>> telltowf"++ thread t)
+    m <-  takeMVar qresp                 -- !> ("<<<<<< tellTowf"++ thread t)
     case m  of
-        Resp r  ->  return  r  -- !> ("recibido  tellTowf"++ thread t)
+        Resp r  ->  return  r            -- !> ("recibido  tellTowf"++ thread t)
         Fragm r -> do
                    result <- getStream   r
                    return  result
 
-                    
     where
-
     getStream r =  do
          mr <-  takeMVar qresp 
          case mr of
-            Resp _ -> error "\"send\" used instead of \"sendFragment\" or \"sendEndFragment\""
             Fragm h -> do
                  rest <- unsafeInterleaveIO $  getStream  h
                  let result=  mappend  r   rest
@@ -324,7 +321,9 @@ tellToWF t@(Token _ _ _ queue qresp ) msg = do
                  let result=  mappend r   h
                  return  result
 
-
+            Resp h -> do
+                 let result=  mappend r   h
+                 return  result
 
 
 
@@ -344,10 +343,10 @@ msgScheduler x  = do
   token <- getToken x 
 
   th <- startMessageFlow (pwfname x) token
-  r<- tellToWF token  x
+  r  <- tellToWF token  x
   return (r,th)
   where
-  
+  --start the flow if not started yet
   startMessageFlow wfname token = 
    forkIO $ do
         wfs <- getMessageFlows
@@ -402,7 +401,7 @@ notFoundResponse=  unsafePerformIO $ newIORef defNotFoundResponse
 setNotFoundResponse f= liftIO $ writeIORef notFoundResponse  f
 getNotFoundResponse= unsafePerformIO $ readIORef notFoundResponse
 
--- basic bytestring XML tags
+-- basic bytestring  tags
 type Attribs= [(String,String)]
 -- | Writes a XML tag in a ByteString. It is the most basic form of formatting. For
 -- more sophisticated formatting , use "MFlow.Forms.XHtml" or "MFlow.Forms.HSP".
