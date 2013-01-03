@@ -1,16 +1,24 @@
-{-# LANGUAGE ScopedTypeVariables, DeriveDataTypeable #-}
+{-# LANGUAGE ScopedTypeVariables, DeriveDataTypeable, NoMonomorphismRestriction #-}
 module Main where
+<<<<<<< HEAD
 import MFlow.Wai.XHtml.All  -- hiding (ask)
+=======
+import  MFlow.Hack.XHtml.All -- hiding (ask)
+>>>>>>> 393fb07bfb3f14b6557dff6fb36fedfcbb786ac6
 --import MFlow.Forms.Test
 import MFlow
 import MFlow.FileServer
 import MFlow.Forms.Ajax
 import MFlow.Forms.Admin
 import MFlow.Forms
+<<<<<<< HEAD
 import Text.XHtml
+=======
+>>>>>>> 393fb07bfb3f14b6557dff6fb36fedfcbb786ac6
 import Data.TCache
 import Control.Monad.Trans
 import Data.Typeable
+
 import Control.Concurrent
 import Control.Exception as E
 import qualified Data.ByteString.Char8 as SB
@@ -25,21 +33,32 @@ main= do
    addFileServerWF
    addMessageFlows [(""  ,transient $ runFlow mainf),
                     ("shop"    ,runFlow shopCart)]
+<<<<<<< HEAD
    wait $ run 80 waiMessageFlow
 --   adminLoop -- for debug
 
 stdheader c= thehtml << body << (p << "you can press the back button to go to the menu"+++ c)
+=======
+   run 80 hackMessageFlow
 
-data Options= CountI | CountS | Action | Ajax | Select deriving (Bounded, Enum,Read, Show,Typeable)
+   adminLoop
+
+stdheader c= thehtml << body << (p << "you can press the back button"+++ c)
+>>>>>>> 393fb07bfb3f14b6557dff6fb36fedfcbb786ac6
+
+data Options= CountI | CountS | TextEdit |Shop | Action | Ajax | Select deriving (Bounded, Enum,Read, Show,Typeable)
 
 mainf=   do
        setHeader stdheader
-       r <- ask $   wlink CountI (bold << "increase an Int")
+       r <- ask $   br ++> wlink TextEdit (bold << "Content Management")
+               <|>  br ++> wlink Shop (bold << "example of transfer to another flow (shopping)")
+               <|>  br ++> wlink CountI (bold << "increase an Int")
                <|>  br ++> wlink CountS (bold << "increase a String")
                <|>  br ++> wlink Action (bold << "Example of a string widget with an action")
                <|>  br ++> wlink Ajax (bold << "Simple AJAX example")
                <|>  br ++> wlink Select (bold << "select options")
                <++ (br +++ linkShop) -- this is an ordinary XHtml link
+
 
        case r of
              CountI    ->  clickn 0
@@ -47,6 +66,8 @@ mainf=   do
              Action    ->  actions 1
              Ajax      ->  ajaxsample
              Select    ->  options
+             TextEdit  ->  textEdit
+             Shop      ->  transfer "shop"
        mainf
 
        where
@@ -87,6 +108,7 @@ ajaxsample= do
        >> getInt (Just 0) <! [("id","text1"),("onclick", ajaxc)]
    breturn()
 
+
 actions n=do
   ask $ wlink () (p << "exit from action")
      <**((getInt (Just (n+1)) <** submitButton "submit" ) `waction` actions )
@@ -119,3 +141,45 @@ shopCart  = do
 
     where
     linkHome= (toHtml $ hotlink  noScript << bold << "home")
+
+
+
+
+-- an example of content management
+textEdit= do
+    setHeader $ \html -> thehtml << body << html
+
+    let first=  p << italics <<
+                   (thespan << "this is a page with"
+                   +++ bold << " two " +++ thespan << "paragraphs")
+
+        second= p << italics << "This is the original text of the second paragraph"
+
+        pageEditable =  (tFieldEd "first"  first)
+                    **> (tFieldEd "second" second)
+
+    ask $   first
+        ++> second
+        ++> wlink () (p << "click here to edit it")
+
+    setAdminUser "admin" "admin"
+
+    ask $ p << "Please login with admin/admin to edit it"
+            ++> userWidget (Just "admin") userLogin
+
+    ask $   p << "now you can click the field and edit them"
+        ++> p << bold << "to save the edited field, double click on it"
+        ++> pageEditable
+        **> wlink () (p << "click here to see it as a normal user")
+
+    logout
+
+    ask $   p << "the user sees the edited content. He can not edit"
+        ++> pageEditable
+        **> wlink () (p << "click to continue")
+
+    ask $   p << "When text are fixed,the edit facility and the original texts can be removed. The content is indexed by the field key"
+        ++> tField "first"
+        **> tField "second"
+        **> p << "End of edit field demo" ++> wlink () (p << "click here to go to menu")
+    breturn ()
