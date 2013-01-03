@@ -1,8 +1,12 @@
 {-# LANGUAGE ScopedTypeVariables, DeriveDataTypeable #-}
 module Main where
-import MFlow.Wai.XHtml.All hiding (ask,waction, wmodify)
-import MFlow.Forms.Test
-
+import MFlow.Wai.XHtml.All  -- hiding (ask)
+--import MFlow.Forms.Test
+import MFlow
+import MFlow.FileServer
+import MFlow.Forms.Ajax
+import MFlow.Forms.Admin
+import MFlow.Forms
 import Text.XHtml
 import Data.TCache
 import Control.Monad.Trans
@@ -13,22 +17,18 @@ import qualified Data.ByteString.Char8 as SB
 import qualified Data.Vector as V
 import Data.Maybe
 
-test= do
-   addMessageFlows [(noScript  ,transient $ runFlow mainf)
-                   ,("shop"    ,runFlow shopCart)]
-
-   runTest [(15, "shop")]
+--test= runTest [(15,"shop")]
 
 main= do
    syncWrite SyncManual
    setFilesPath ""
    addFileServerWF
-   addMessageFlows [(""  ,transient $ runFlow mainf)
-                   ,("shop"    ,runFlow shopCart)]
-   forkIO $ run 80 waiMessageFlow
-   adminLoop
+   addMessageFlows [(""  ,transient $ runFlow mainf),
+                    ("shop"    ,runFlow shopCart)]
+   wait $ run 80 waiMessageFlow
+--   adminLoop -- for debug
 
-stdheader c= p << "you can press the back button to go to the menu"+++ c
+stdheader c= thehtml << body << (p << "you can press the back button to go to the menu"+++ c)
 
 data Options= CountI | CountS | Action | Ajax | Select deriving (Bounded, Enum,Read, Show,Typeable)
 
@@ -78,16 +78,13 @@ clicks s= do
    clicks $ s'++ "1"
 
 
-ajaxheader html= thehtml << ajaxHead << p << "click the box" +++ html
-
-
 
 ajaxsample= do
-   setHeader ajaxheader
    let ajaxf n= return $ "document.getElementById('text1').value='"++show(read  n +1)++"'"
    ajaxc <- ajaxCommand "document.getElementById('text1').value" ajaxf
 
-   ask $ (getInt (Just 0) <! [("id","text1"),("onclick", ajaxc)])
+   ask $  requires[JScript ajaxScript]
+       >> getInt (Just 0) <! [("id","text1"),("onclick", ajaxc)]
    breturn()
 
 actions n=do
@@ -112,8 +109,8 @@ shopCart  = do
              ++> (tbody
                   <<<  tr ! [rowspan 2] << td << linkHome
                   ++> (tr <<< td <<< wlink  IPhone (bold <<"iphone") <++  td << ( bold << show ( cart V.! 0))
-                  <|>  tr <<< td <<< wlink  IPad (bold <<"ipad")   <++  td << ( bold << show ( cart V.! 1))
-                  <|>  tr <<< td <<< wlink  IPod (bold <<"ipod")   <++  td << ( bold << show ( cart V.! 2)))
+                  <|>  tr <<< td <<< wlink  IPad (bold <<"ipad")     <++  td << ( bold << show ( cart V.! 1))
+                  <|>  tr <<< td <<< wlink  IPod (bold <<"ipod")     <++  td << ( bold << show ( cart V.! 2)))
                   <++  tr << td << linkHome
                   )
      let i =fromEnum o

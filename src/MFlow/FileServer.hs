@@ -24,6 +24,7 @@ module MFlow.FileServer (addFileServerWF, linkFile,setFilesPath
 ) where
 
 import MFlow
+import MFlow.Cookies(contentHtml)
 import Control.Monad.State
 import Data.TCache.Memoization
 import MFlow.Forms.XHtml
@@ -45,7 +46,7 @@ setFilesPath :: String -> IO ()
 setFilesPath path= writeIORef rfilesPath path
 
 pathPrm=  "path"
-fileServe ::(Token -> Workflow IO ())
+fileServe :: Flow
 fileServe  = stateless $ \env  -> do
   case lookup pathPrm   env of
     Nothing -> error " no file specified"
@@ -65,7 +66,7 @@ fileServe  = stateless $ \env  -> do
 
 
  where
- setMime x= [("Content-Type",x)]
+ setMime x= ("Content-Type",x)
 
  dropBack ".."= ".."
  dropBack path
@@ -80,14 +81,15 @@ fileServe  = stateless $ \env  -> do
  servefile path= do
      mr <-  cachedByKey path 0  $   (B.readFile  path >>=  return . Just) `CE.catch` ioerr (return Nothing)
      case mr of
-      Nothing -> return $ HttpData  (setMime "text/plain") [] $ pack $  "not accessible"
+      Nothing -> return $ HttpData  [setMime "text/plain"] [] $ pack $  "not accessible"
       Just r ->
          let ext  = reverse . takeWhile (/='.') $ reverse path
              mmime= lookup (map toLower ext) mimeTable
              mime = case mmime of Just m -> m ;Nothing -> "application/octet-stream"
 
-         in return $ HttpData  (setMime mime) [] r
+         in return $ HttpData  [setMime mime, ("Cache-Control", "max-age=360000")] [] r
 
+stringServer mime str= stateless
 -- | Is the flow to be added to the list in order to stream any file from the filesystem
 -- for example, images
 --
@@ -123,14 +125,14 @@ addFileServerWF= addMessageFlows [("file", fileServe)]
 linkFile :: String -> String
 linkFile path=  "file?path=" <>  path
 
-directory :: Token -> Workflow IO ()
+directory :: Flow
 directory = stateless $ \_ -> do
    path <- readIORef rfilesPath
    directory1 path
 
 directory1 path = do
    fs <- getDirectoryContents path
-   return $ B.concat [btag "a" [("href",linkFile ( path ++  file))] (B.pack file) `append` btag "br" [] B.empty | file <- fs]
+   return $  HttpData [contentHtml][] $ B.concat [btag "a" [("href",linkFile ( path ++  file))] (B.pack file) `append` btag "br" [] B.empty | file <- fs]
 
 
 mimeTable=[
@@ -247,6 +249,7 @@ mimeTable=[
     ("p7m",	"application/x-pkcs7-mime"),
     ("p7r",	"application/x-pkcs7-certreqresp"),
     ("p7s",	"application/x-pkcs7-signature"),
+    ("png",     "image/png"),
     ("pbm",	"image/x-portable-bitmap"),
     ("pfx",	"application/x-pkcs12"),
     ("pgm",	"image/x-portable-graymap"),

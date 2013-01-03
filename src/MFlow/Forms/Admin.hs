@@ -2,7 +2,7 @@
             -XScopedTypeVariables
 
             #-}
-module MFlow.Forms.Admin(adminLoop,addAdminWF) where
+module MFlow.Forms.Admin(adminLoop, wait, addAdminWF) where
 import MFlow.Forms
 import MFlow.Forms.XHtml
 import MFlow
@@ -24,6 +24,8 @@ import Data.Maybe
 import Data.Map as M (keys)
 import System.Exit
 import Control.Exception as E
+import Control.Concurrent
+import Control.Concurrent.MVar
 
 
 
@@ -50,21 +52,36 @@ adminLoop= do
   putStrLn ""
   putStrLn "Commands: sync, flush, end, abort"
   adminLoop1
+  `E.catch` (\(e:: E.SomeException) ->do
+                      ssyncCache
+                      error $ "\nException: "++ show e)
 
 adminLoop1= do
        putStr ">"; hFlush stdout
        op <- getLine
        case op of
-        "sync" -> ssyncCache
+        "sync"  -> ssyncCache
         "flush" -> atomically flushAll >> putStrLn "flushed cache"
-        "end"  -> ssyncCache >> putStrLn "bye" >> exitWith ExitSuccess
+        "end"   -> ssyncCache >> putStrLn "bye" >> exitWith ExitSuccess
         "abort" -> exitWith ExitSuccess
-        _      -> return()
+        _       -> return()
        adminLoop1
 
-      `E.catch` (\(e:: E.SomeException) ->do
-                      ssyncCache
-                      error $ "\nException: "++ show e)
+-- | execute the process and wait for its finalization.
+--  then it synchronizes the cache
+wait f= do
+    mv <- newEmptyMVar
+    forkIO (f1 >> putMVar mv True)
+    takeMVar mv
+   `E.catch` (\(e:: E.SomeException) ->do
+                  ssyncCache
+                  error $ "Signal: "++ show e)
+    where
+    f1= f
+--     do
+--        n <- getNumProcessors
+--        setNumCapabilities n
+--        f
 
 -- | Install the admin flow in the list of flows handled by `HackMessageFlow`
 -- this gives access to an administrator page. It is necessary to
@@ -106,7 +123,7 @@ errors= do
        log   <- liftIO $ hGetNonBlocking hlog  (fromIntegral size)
 
        let ls :: [[String ]]= runR  readp $ pack "[" `append` (B.tail log) `append` pack "]"
-       let rows= [wlink (head e) (bold << head e) `waction` optionsUser  : map (\x ->noWidget <++ fromString x) (Prelude.tail e) | e <- ls]
+       let rows= [wlink (head e) (bold << head e) `waction` optionsUser  : map (\x ->noWidget <++ fromStr x) (Prelude.tail e) | e <- ls]
        showFormList rows 0 10
   breturn()
 
@@ -138,8 +155,7 @@ showFormList ls n l= do
 
 optionsUser  us = do
     wfs <- liftIO $ return . M.keys =<< getMessageFlows
-
-    stats <-  liftIO $ mapM  (\wf -> getWFHistory  wf Token{twfname= wf,tuser=us}) wfs
+    stats <-  liftIO $ mapM  (\wf -> getWFHistory wf Token{twfname= wf,tuser=us}) wfs
     let wfss= filter (isJust . snd) $ zip wfs stats
     if null wfss
      then ask $ bold << " not logs for this user" ++> wlink () (bold << "Press here")

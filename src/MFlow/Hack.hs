@@ -55,23 +55,23 @@ instance Processable Env  where
 --   getPort env= serverPort env
 
    
-data Flow= Flow !Integer deriving (Read, Show, Typeable)
+data NFlow= NFlow !Integer deriving (Read, Show, Typeable)
 
-instance Serializable Flow where
+instance Serializable NFlow where
   serialize= B.pack . show
   deserialize= read . B.unpack
 
-instance Indexable Flow where
-  key _= "Flow"
+instance Indexable NFlow where
+  key _= "NFlow"
 
 
-rflow= getDBRef . key $ Flow undefined
+rflow= getDBRef . key $ NFlow undefined
 
 newFlow= do
         TOD t _ <- getClockTime
         atomically $ do 
-                    Flow n <- readDBRef rflow `onNothing` return (Flow 0)
-                    writeDBRef rflow . Flow $ n+1
+                    NFlow n <- readDBRef rflow `onNothing` return (NFlow 0)
+                    writeDBRef rflow . NFlow $ n+1
                     return . show $ t + n
          
 
@@ -100,9 +100,9 @@ newFlow= do
 --               -> IO (TResp, ThreadId)
 --webScheduler = msgScheduler 
 
---theDir= unsafePerformIO getCurrentDirectory
+--theDir= unsafePerformIO getCurrentDirectory 
 
-wFMiddleware :: (Env -> Bool) -> (Env-> IO Response) ->   (Env -> IO Response)
+wFMiddleware :: (Env -> Bool) -> (Env-> IO Response) ->   (Env -> IO Response) 
 wFMiddleware filter f = \ env ->  if filter env then hackMessageFlow env    else f env -- !> "new message"
 
 -- | An instance of the abstract "MFlow" scheduler to the Hack interface
@@ -155,7 +155,7 @@ hackMessageFlow req1=   do
               Just fl -> return  (fl, [])
               Nothing  -> do
                      fl <- newFlow
-                     return ( fl,  [( flow,  fl,  "/",Nothing)])
+                     return ( fl,  [( flow,  fl,  "/",(Just $ show $ 365*24*60*60))])
                      
 {-  for state persistence in cookies 
      putStateCookie req1 cookies
@@ -179,7 +179,7 @@ hackMessageFlow req1=   do
 
 
      let resp''= toResponse resp'
-     let headers1= case retcookies of [] -> headers resp''; _ -> ctype :   (cookieHeaders retcookies)
+     let headers1= case retcookies of [] -> headers resp''; _ ->   (cookieHeaders retcookies)
      let resp =   resp''{status=200, headers= headers1 {-,("Content-Length",show $ B.length x) -}}
 
      return resp

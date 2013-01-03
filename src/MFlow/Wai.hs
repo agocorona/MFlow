@@ -68,30 +68,27 @@ instance Processable Request  where
 --   getPath env= pathInfo env
 --   getPort env= serverPort env
    
-data Flow= Flow !Integer deriving (Read, Show, Typeable)
+data NFlow= NFlow !Integer deriving (Read, Show, Typeable)
 
-instance Serializable Flow where
+instance Serializable NFlow where
   serialize= B.pack . show
   deserialize= read . B.unpack
 
-instance Indexable Flow where
+instance Indexable NFlow where
   key _= "Flow"
 
 
-rflow= getDBRef . key $ Flow undefined
+rflow= getDBRef . key $ NFlow undefined
 
 newFlow= liftIO $ do
         TOD t _ <- getClockTime
         atomically $ do 
-                    Flow n <- readDBRef rflow `onNothing` return (Flow 0)
-                    writeDBRef rflow . Flow $ n+1
+                    NFlow n <- readDBRef rflow `onNothing` return (NFlow 0)
+                    writeDBRef rflow . NFlow $ n+1
                     return . show $ t + n
          
 
 ---------------------------------------------
-
-
-
 --
 --instance ConvertTo String TResp  where
 --      convert = TResp . pack
@@ -159,13 +156,11 @@ splitPath str=
        in   (tail $ reverse path, reverse mod, reverse ext)
 
 
-
 waiMessageFlow  ::  Request ->  ResourceT IO Response
 waiMessageFlow req1=   do
      let httpreq1= getParams  req1 
 
      let cookies=getCookies  httpreq1
-
 
      (flowval , retcookies) <-  case lookup flow cookies of
               Just fl -> return  (fl, [])
@@ -180,8 +175,7 @@ waiMessageFlow req1=   do
                                 Just ck -> ck:retcookies1
 -}
 
-     input <-
-           case   parseMethod $ requestMethod req1  of
+     input <- case   parseMethod $ requestMethod req1  of
               Right POST -> if  lookup  ("Content-Type") httpreq1 == Just "application/x-www-form-urlencoded"
                   then do
                    inp <- liftIO $ runResourceT (requestBody req1 $$ CList.consume)
@@ -190,24 +184,21 @@ waiMessageFlow req1=   do
                   
               Right GET -> let tail1 s | s==SB.empty =s
                                tail1 xs= SB.tail xs
-                           in return . urlDecode $  SB.unpack   . tail1 $ rawQueryString req1 -- !> (SB.unpack $ rawQueryString req1)
+                           in return . urlDecode $  SB.unpack   . tail1 $ rawQueryString req1  -- !> (SB.unpack $ rawQueryString req1)
               x ->  return [] 
      let req = case retcookies of
-          [] -> req1{requestHeaders=  mkParams (input ++ cookies) ++ requestHeaders req1}   -- !> "REQ"
-          _  -> req1{requestHeaders=  mkParams ((flow, flowval): input ++ cookies) ++ requestHeaders req1}   -- !> "REQ"
+          [] -> req1{requestHeaders=  mkParams (input ++ cookies) ++ requestHeaders req1}  -- !> "REQ"
+          _  -> req1{requestHeaders=  mkParams ((flow, flowval): input ++ cookies) ++ requestHeaders req1}  --  !> "REQ"
 
 
-     (resp',th) <- liftIO $ msgScheduler req -- !> (show $ requestHeaders req)
+     (resp',th) <- liftIO $ msgScheduler req  -- !> (show $ requestHeaders req)
 
      let resp= case (resp',retcookies) of
             (_,[]) -> resp'
             (error@(Error _ _),_) -> error
             (HttpData hs co str,_) -> HttpData hs (co++ retcookies)  str
 
---     let resp''= toResponse resp'
---     let headers1= case retcookies of [] -> headers resp''; _ -> ctype : cookieHeaders retcookies
---     let resp =   resp''{status=200, headers= headers1 {-,("Content-Length",show $ B.length x) -}}
-
+     liftIO $ putStrLn "--------">> print resp
      return $ toResponse resp
 
 

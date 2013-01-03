@@ -21,6 +21,7 @@ module MFlow.Hack.XHtml.All (
 ,module MFlow.Forms.Admin
 ,module MFlow.Forms.Ajax
 ,module MFlow.Hack.XHtml
+,module MFlow.Forms.Widgets
 ,module Hack
 ,module Hack.Handler.SimpleServer
 ,module Text.XHtml.Strict
@@ -34,6 +35,7 @@ import MFlow.Forms
 import MFlow.Forms.XHtml
 import MFlow.Forms.Admin
 import MFlow.Forms.Ajax
+import MFlow.Forms.Widgets
 import MFlow.Hack.XHtml
 
 import Hack(Env)

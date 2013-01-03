@@ -1,3 +1,23 @@
+data Action  a= forall msg.Backward msg  | Forward a
+
+data Supreme m a= Sup { runSup :: StateT m Handlers (Action  a)}
+
+class Monad m => Supreme m where
+    fail   msg = Sup . return $ Backward msg
+    return x = Sup . return $ Forward x
+    x >>= f  = Sup $ loop
+     where
+     loop msg= do
+        v <- runSup x                          -- !> "loop"
+        case v of
+
+            Forward y  -> do
+                 z <- runSup (f y)           -- !> "BACK"
+                 case z of
+                  Backward msg   -> loop msg            -- !> "GoBack"
+                  other -> return other
+            Backward msg  -> return  $ Backward msg
+
 data ReadShow v a= ReadShow v Maybe a
 
 instance Monoid v => Applicative( ReadShow v) where

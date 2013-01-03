@@ -12,6 +12,7 @@
              -XTypeFamilies
              -XTypeOperators
              -XOverloadedStrings
+
 #-}
 
 {- | This module implement  stateful processes (flows) that are optionally persistent.
@@ -101,7 +102,7 @@ This example has three formLet elements with the attribute "size" added, and a s
 >        (User <$> getString (Just "enter user")                  <! [("size","5")]
 >              <*> getPassword                                    <! [("size","5")]
 >              <** submitButton "login")
->              <+> (fromString "  password again" ++> getPassword  <! [("size","5")]
+>              <+> (fromStr "  password again" ++> getPassword  <! [("size","5")]
 >              <*  submitButton "register")
 
 
@@ -188,7 +189,7 @@ This is a complete example, that can be run with runghc, which show some of thes
 >
 > ajaxsample= do
 >    setHeader ajaxheader
->    ajaxc <- ajaxCommand "document.getElementById('text1').value"
+>    ajaxc <- ajax "document.getElementById('text1').value"
 >                         (\n ->  return $ "document.getElementById('text1').value='"++show(read  n +1)++"'")
 >    ask $ (getInt (Just 0) <! [("id","text1"),("onclick", ajaxc)])
 >    breturn()
@@ -228,39 +229,38 @@ This is a complete example, that can be run with runghc, which show some of thes
 module MFlow.Forms(
 
 -- * Basic definitions 
-FormLet(..), 
-FlowM,View, FormInput(..)
+-- FormLet(..), 
+FlowM, View(..), FormElm(..), FormInput(..)
 
 -- * Users 
 ,userRegister, userValidate, isLogged, User(userName), setAdminUser, getAdminName
-,getCurrentUser,getUserSimple, getUser, userFormLine, userLogin, userWidget,
+,getCurrentUser,getUserSimple, getUser, userFormLine, userLogin,logout, userWidget,getLang,
 -- * User interaction 
-ask, clearEnv, 
+ask, clearEnv, wstateless, transfer,
 -- * formLets 
 -- | they mimic the HTML form elements.
 -- It is possible to modify their attributes with the `<!` operator.
 -- They are combined with the widget combinators.
 -- formatting can be added with the formatting combinators.
 -- modifiers change their presentation and behaviour
-getString,getInt,getInteger, getTextBox
+getString,getInt,getInteger, getTextBox 
 ,getMultilineText,getBool,getSelect, setOption,setSelectedOption, getPassword,
-getRadio, getRadioActive, getCheckBoxes, setCheckBox,
-submitButton,resetButton, wlink, wform,
- firstOf,
+getRadio, setRadio, setRadioActive, getCheckBoxes, genCheckBoxes, setCheckBox,
+submitButton,resetButton, whidden, wlink, returning, wform, firstOf, manyOf, wraw, wrender
 -- * FormLet modifiers
-validate, noWidget, wrender, waction, wmodify,
+,validate, noWidget, waction, wmodify,
 
 -- * Caching widgets
-cachedWidget,
+cachedWidget, wcached, wfreeze, 
 -- * Widget combinators
-(<+>),(|*>),(|+|), (**>),(<**),(<|>),(<*),(<$>),(<*>),
+(<+>),(|*>),(|+|), (**>),(<**),(<|>),(<*),(<$>),(<*>),(>:>)
 
 -- * Normalized (convert to ByteString) widget combinators
 -- | these dot operators are indentical to the non dot operators, with the addition of the conversion of the arguments to lazy byteStrings
 --
 -- The purpose is to combine heterogeneous formats into byteString-formatted widgets that
 -- can be cached with `cachedWidget`
-(.<+>.), (.|*>.), (.|+|.), (.**>.),(.<**.), (.<|>.),
+,(.<+>.), (.|*>.), (.|+|.), (.**>.),(.<**.), (.<|>.),
 
 -- * Formatting combinators
 (<<<),(<++),(++>),(<!),
@@ -273,468 +273,70 @@ cachedWidget,
 ,btag,bhtml,bbody
 
 -- * Normalization
-, flatten, normalize, ToByteString(..)
+, flatten, normalize
 
 -- * Running the flow monad
-,runFlow,runFlowIn,MFlow.Forms.step, goingBack,breturn
+,runFlow,runFlowIn,MFlow.Forms.Internals.step, goingBack,breturn
 
 -- * Setting parameters
 ,setHeader
+,setSessionData
+,getSessionData
 ,getHeader
 ,setTimeouts
 
 -- * Cookies
 ,setCookie
+-- * Ajax
+,ajax
+,ajaxSend
+,ajaxSend_
+-- * Requirements
+,Requirements(..)
+,requires
+-- * Utility
+,genNewId
+,changeMonad
 
+,installServerControl
+,getToken
+,receiveWithTimeouts
+,getEnv
+,MFlowState
 )
 where
+
+import Data.RefSerialize hiding ((<|>))
 import Data.TCache
-import Data.TCache.DefaultPersistence
 import Data.TCache.Memoization
 import MFlow
+import MFlow.Forms.Internals
 import MFlow.Cookies
-import Data.RefSerialize hiding((<|>))
 import Data.ByteString.Lazy.Char8 as B(ByteString,cons,pack,unpack,append,empty,fromChunks) 
-
+import Data.List
 import qualified Data.CaseInsensitive as CI
 import Data.Typeable
 import Data.Monoid
 import Control.Monad.State.Strict 
-import Control.Monad.Trans.Maybe
 import Data.Maybe
 import Control.Applicative
 import Control.Exception
-
+import Control.Concurrent
 import Control.Workflow as WF 
 import Control.Monad.Identity
 import Unsafe.Coerce
 import Data.List(intersperse)
 import Data.IORef
-
+import qualified Data.Map as M
 import System.IO.Unsafe
 import Data.Char(isNumber)
 import Network.HTTP.Types.Header
+
 
 import Debug.Trace
 (!>)= flip trace
 
 
-instance Serialize a => Serializable a where
-  serialize=  runW . showp
-  deserialize=   runR readp
-
-data User= User
-            { userName :: String
-            , upassword :: String
-            } deriving (Read, Show, Typeable)
-
-eUser= User (error1 "username") (error1 "password")
-
-error1 s= error $ s ++ " undefined"
-
-userPrefix= "User/"
-instance Indexable User where
-   key User{userName= user}= keyUserName user
-
--- | return  the key name of an user
-keyUserName n= userPrefix++n
-
--- | Register an user/password 
-userRegister :: MonadIO m => String -> String  -> m (DBRef User)
-userRegister user password  = liftIO . atomically $ newDBRef $ User user password
-
-
-
--- | Authentication against `userRegister`ed users.
--- to be used with `validate`
-userValidate :: MonadIO m =>  (UserStr,PasswdStr) -> m (Maybe String)
-userValidate (u,p) =
-    let user= eUser{userName=u}
-    in liftIO $ atomically
-     $ withSTMResources [user]
-     $ \ mu -> case mu of
-         [Nothing] -> resources{toReturn= err }
-         [Just (User _ pass )] -> resources{toReturn= 
-               case pass==p  of
-                 True -> Nothing
-                 False -> err
-               }
-
-     where
-     err= Just "Username or password invalid"
-
-data Config = Config UserStr deriving (Read, Show, Typeable)
-
-keyConfig= "MFlow.Config"
-instance Indexable Config where key _= keyConfig
-rconf= getDBRef keyConfig
-
-setAdminUser :: MonadIO m => UserStr -> PasswdStr -> m ()
-setAdminUser user password= liftIO $  atomically $ do
-  newDBRef $ User user password
-  writeDBRef rconf $ Config user
-
-getAdminName :: MonadIO m => m UserStr
-getAdminName= liftIO $ atomically ( readDBRef rconf `onNothing` error "admin user not set" ) >>= \(Config u) -> return u
-
-
---test= runBackT $ do
---        liftRepeat $ print "hola"
---        n2 <- lift $ getLine
---        lift $ print "n3"
---
---        n3  <- lift $  getLine
---        if n3 == "back"
---                   then  fail ""
---                  else lift $ print  $ n2++n3
-
-
-data FailBack a = BackPoint a | NoBack a | GoBack   deriving (Show,Typeable)
-
-
-instance (Serialize a) => Serialize (FailBack a ) where
-   showp (BackPoint x)= insertString (pack iCanFailBack) >> showp x
-   showp (NoBack x)= insertString (pack noFailBack) >> showp x
-   showp GoBack = insertString (pack repeatPlease)
-
-   readp = choice [icanFailBackp,repeatPleasep,noFailBackp]
-    where
-    noFailBackp   = {-# SCC "deserialNoBack" #-} symbol noFailBack >> readp >>= return . NoBack
-    icanFailBackp = {-# SCC "deserialBackPoint" #-} symbol iCanFailBack >> readp >>= return . BackPoint
-    repeatPleasep = {-# SCC "deserialbackPlease" #-}  symbol repeatPlease  >> return  GoBack
-
-iCanFailBack= "B"
-repeatPlease= "G"
-noFailBack= "N"
-
-newtype BackT m a = BackT { runBackT :: m (FailBack a ) }
-
---instance Monad m => Monad (BackT  m) where
---    fail   _ = BackT $ return GoBack
---    return x = BackT . return $ NoBack x
---    x >>= f  = BackT $ loop
---     where
---     loop = do
---      res<- do
---        v <- runBackT x                          -- !> "loop"
---        case v of
---            NoBack y  -> runBackT (f y) >>= return . Right       -- !> "runback"
---            BackPoint y  -> do
---                 z <- runBackT (f y)           -- !> "BACK"
---                 case z of
---                  GoBack  -> return $ Left ()             -- !> "GoBack"
---                  other -> return $ Right other
---            GoBack -> return  $ Right GoBack
---      case res of
---        Left _ -> loop
---        Right r -> return r
-
-instance Monad m => Monad (BackT  m) where
-    fail   _ = BackT . return $ GoBack
-    return x = BackT . return $ NoBack x
-    x >>= f  = BackT $ loop
-     where
-     loop = do
-        v <- runBackT x                          -- !> "loop"
-        case v of
-            NoBack y  -> runBackT (f y)         -- !> "runback"
-            BackPoint y  -> do
-                 z <- runBackT (f y)           -- !> "BACK"
-                 case z of
-                  GoBack   -> loop              -- !> "GoBack"
-                  other -> return other
-            GoBack  -> return  $ GoBack
-
---instance Monad m => Monad (BackT  m) where
---    fail   _ = BackT $ return GoBack
---    return x = BackT . return $ NoBack x
---    x >>= f  = BackT $  do
---        v <- runBackT x
---        case v of
---            NoBack y  -> runBackT (f y)
---            BackPoint y  -> loop
---             where
---             loop= do
---                 z <- runBackT (f y)
---                 case z of
---                  GoBack  -> loop
---                  other -> return other
---            GoBack -> return  GoBack
-
-
-{-# NOINLINE breturn  #-}
-
--- | Use this instead of return to return from a computation with an ask statement
---
--- This way when the user press the back button, the computation will execute back, to
--- the returned code, according with the user navigation.
-breturn x= BackT . return $ BackPoint x         -- !> "breturn"
-
-
-instance (MonadIO m) => MonadIO (BackT  m) where
-  liftIO f= BackT $ liftIO  f >>= \ x -> return $ NoBack x
-
-instance (Monad m,Functor m) => Functor (BackT m) where
-  fmap f g= BackT $ do
-     mr <- runBackT g
-     case mr of
-      BackPoint x  -> return . BackPoint $ f x
-      NoBack x     -> return . NoBack $ f x
-      GoBack       -> return $ GoBack
-
-{-# NOINLINE liftBackT  #-}
-liftBackT f = BackT $ f  >>= \x ->  return $ NoBack x
-instance MonadTrans BackT where
-  lift f = BackT $ f  >>= \x ->  return $ NoBack x
-
-
-instance MonadState s m => MonadState s (BackT m) where
-   get= lift get                                -- !> "get"
-   put= lift . put
-
-type  WState view m = StateT (MFlowState view) m
-type FlowM view m=  BackT (WState view m)
-
-data FormElm view a = FormElm [view] (Maybe a) deriving Typeable
-
-newtype View v m a = View { runView :: WState v m (FormElm v a) }
-
-
-instance (FormInput v,Serialize a)
-   => Serialize (a,MFlowState v) where
-   showp (x,s)= case mfDebug s of
-      False -> showp x
-      True  -> showp(x, mfEnv s)
-   readp= choice[nodebug, debug]
-    where
-    nodebug= readp  >>= \x -> return  (x, mFlowState0)
-    debug=  do
-     (x,env) <- readp
-     return  (x,mFlowState0{mfEnv= env})
-    
-
-instance Functor (FormElm view ) where
-  fmap f (FormElm form x)= FormElm form (fmap f x)
-
-instance  (Monad m,Functor m) => Functor (View view m) where
-  fmap f x= View $   fmap (fmap f) $ runView x
-
-  
-instance (Functor m, Monad m) => Applicative (View view m) where
-  pure a  = View $  return (FormElm  [] $ Just a)
-  View f <*> View g= View $
-                   f >>= \(FormElm form1 k) ->
-                   g >>= \(FormElm form2 x) ->
-                   return $ FormElm (form1 ++ form2) (k <*> x) 
-
-instance (Functor m, Monad m) => Alternative (View view m) where
-  empty= View $ return $ FormElm [] Nothing
-  View f <|> View g= View $ 
-                   f  >>= \(FormElm form1 k) ->
-                   g  >>= \(FormElm form2 x) ->
-                   return $ FormElm (form1 ++ form2) (k <|> x)
-
-
-instance  (Monad m, Functor m) => Monad (View view m) where
-  --View view m a-> (a -> View view m b) -> View view m b
-    View x >>= f = View $ do
-                   FormElm form1 mk <- x
-                   case mk of
-                     Just k  -> do
-                       FormElm form2 mk <- runView $ f k
-                       return $ FormElm (form1++ form2) mk
-                     Nothing -> return $ FormElm form1 Nothing
-
-    return= View .  return . FormElm  [] . Just 
-
-
-instance MonadTrans (View view) where
-  lift f = View $   lift  f >>= \x ->  return $ FormElm [] $ Just x
-
-instance  (Functor m, Monad m)=> MonadState (MFlowState view) (View view m) where
-  get = View $  get >>= \x ->  return $ FormElm [] $ Just x
-  put st = View $  put st >>= \x ->  return $ FormElm [] $ Just x
-
-
-instance (MonadIO m, Functor m) => MonadIO (View view m) where
-    liftIO= lift . liftIO
-
---instance Executable (View v m) where
---  execute f =  execute $  evalStateT  f mFlowState0
-
-
---instance (Monad m, Executable m, Monoid view, FormInput view)
---          => Executable (StateT (MFlowState view) m) where
---   execute f= execute $  evalStateT  f mFlowState0
-
--- | Cached widgets operate with widgets in the Identity monad, but they may perform IO using the execute instance
--- of the monad m, which is usually the IO monad. execute basically \"sanctifies\" the use of unsafePerformIO for a transient purpose
--- such is caching. This is defined in "Data.TCache.Memoization". The user can create his
--- own instance for his monad.
---
--- With `cachedWidget` it is possible to cache the rendering of a widget as a ByteString (maintaining type safety)
---, permanently or for a certain time. this is very useful for complex widgets that present information. Specially it they must access to databases.
---
--- @
--- import MFlow.Wai.XHtm.All
--- import Some.Time.Library
--- addMessageFlows [(noscript, time)]
--- main= run 80 waiMessageFlow
--- time=do  ask $ cachedWidget \"time\" 5
---            $ wlink () bold << \"the time is \" ++ show (execute giveTheTime) ++ \" click here\"
---          time
--- @
---
--- this pseudocode would update the time every 5 seconds. The execution of the IO computation
--- giveTheTime must be executed inside the cached widget to avoid unnecesary IO executions.
-
-cachedWidget ::(Show a,MonadIO m,Typeable view
-        , FormInput view, Typeable a, Functor m, Executable m )
-        => String  -- ^ The key of the cached object for the retrieval
-        -> Int     -- ^ Timeout of the caching. Zero means sessionwide
-        -> View view Identity a   -- ^ The cached widget, in the Identity monad
-        -> View view m a          -- ^ The cached result
-cachedWidget key t mf = View $ StateT $ \s -> do
-        let(FormElm  form _, seq)= execute $ cachedByKey key 0 $ proc mf s{mfCached=True}
-        let(FormElm  _ mx2, s2)  = execute $ runStateT  (runView mf)    s{mfSequence= seq,mfCached=True} --  !> ("mfSequence s1="++  show(mfSequence s1)) !> ("mfSequence s="++  show(mfSequence s)) !> ("mfSequence s'="++  show(mfSequence s'))
-        let s''=  s{validated = validated s2}
-        return (FormElm form mx2, s'')
-        where
-        proc mf s= runStateT (runView mf) s>>= \(r,_) -> return (r,mfSequence s)
-
-
--- | A FormLet instance
-class (Functor m, MonadIO m) => FormLet  a  m view where
-   digest :: Maybe a
-          -> View view m a
-
---wrender
---  :: Widget a1 a m v => a1 -> StateT (MFlowState v) m ([v], Maybe a)
---
---wrender x =do
---         (FormElm frm x) <-  runView (widget x)
---         return (frm, x)
-
--- Minimal definition: either (wrender and wget) or widget
---class (Functor m, MonadIO m) => Widget  a b m view |  a -> b view where
---   wrender :: a -> WState view m [view]
---   wrender x =do
---         (FormElm frm (_ :: Maybe b)) <-  runView (widget x)
---         return frm
---   wget :: a -> WState view m (Maybe b)
---   wget x=  runView (widget x) >>= \(FormElm _ mx) -> return mx
-
---   widget :: a  -> View view m b
---   widget x = View $  do
---       form <- wrender x  
---       got  <- wget x  
---       return $ FormElm form got
-
-
---instance FormLet  a m view => Widget (Maybe a) a m view  where
---   widget = digest
-
-{- | Execute the @FlowM view m@ monad. It is used as parameter of `hackMessageFlow`
-`waiMessageFlow` or `addMessageFlows`
-
-@main= do
-   addMessageFlows [(\"noscript\",transient $ runFlow mainf)]
-   forkIO . run 80 $ waiMessageFlow
-   adminLoop
-@
--}
-runFlow :: (FormInput view,  Monad m)
-        => FlowM view m a -> Token -> m a 
-runFlow  f = \ t ->  evalStateT (runBackT $ backp >>  f)  mFlowState0{mfToken=t}  >>= return . fromFailBack  -- >> return ()
-  where
-  -- to restart the flow in case of going back before the first page of the flow
-  backp = breturn()
-  fromFailBack (NoBack x)= x
-  fromFailBack (BackPoint x)= x
-
--- | run a persistent flow inside the current flow. It is identified by the procedure and
--- the string identifier.
--- unlike the normal flows, that are infinite loops, runFlowIn executes finite flows
--- once executed, in subsequent executions the flow will return the stored result
--- without asking again. This is useful for asking/storing/retrieving user defined configurations.
-runFlowIn
-  :: (MonadIO m,
-      FormInput view)
-  => String
-  -> FlowM  view  (Workflow IO)  b
-  -> FlowM view m b
-runFlowIn wf f= do
-  t <-  gets mfToken
-  liftIO $ WF.exec1nc wf $ runFlow f t
-
-
-
-step
-  :: (Serialize a,
-      Typeable view,
-      FormInput view,
-      MonadIO m,
-      Typeable a) =>
-      FlowM view m a
-      -> FlowM view (Workflow m) a
-
-step f= do
-   s <- get
-   BackT $ do
-    (r,s') <-  lift . WF.step $ runStateT (runBackT f) s
-    -- when recovery of a workflow, the MFlow state is not considered
-    when( mfSequence s' >0) $ put s'
-    return r
-
-
-
---stepDebug
---  :: (Serialize a,
---      Typeable view,
---      FormInput view,
---      Monoid view,
---      MonadIO m,
---      Typeable a) =>
---      FlowM view m a
---      -> FlowM view (Workflow m) a
---stepDebug f= BackT  $ do
---     s <- get
---     (r, s') <- lift $ do
---              (r',stat)<- do
---                     rec <- isInRecover
---                     case rec of
---                          True ->do (r',  s'') <- getStep 0
---                                    return (r',s{mfEnv= mfEnv (s'' `asTypeOf`s)})
---                          False -> return (undefined,s)
---              (r'', s''') <- WF.stepDebug  $ runStateT  (runBackT f) stat >>= \(r,s)-> return (r, s)
---              return $ (r'' `asTypeOf` r', s''' )
---     put s'
---     return r
-
-
-
-getParam1 :: (Monad m, MonadState (MFlowState v) m, Typeable a, Read a, FormInput v)
-          => String -> Params -> [v] ->  m (FormElm v a)
-getParam1 par req form=  r
- where
- r= case lookup  par req of
-    Just x -> do
-        modify $ \s -> s{validated= True}
-        maybeRead x                        -- !> x
-    Nothing  -> return $ FormElm form Nothing
- getType ::  m (FormElm v a) -> a
- getType= undefined
- x= getType r
- maybeRead str= do
-
-   if typeOf x == (typeOf  ( undefined :: String))
-         then return . FormElm form . Just  $ unsafeCoerce str
-         else case readsPrec 0 $ str of
-              [(x,"")] ->  return . FormElm form  $ Just x
-              _ -> do
-
-                   let err= inred . fromString $ "can't read \"" ++ str ++ "\" as type " ++  show (typeOf x)
-                   return $ FormElm  (err:form) Nothing
 
 -- | Validates a form or widget result against a validating procedure
 --
@@ -749,73 +351,68 @@ validate  formt val= View $ do
    case mx of
     Just x -> do
       me <- val x
-      modify (\s -> s{validated= True})
+      modify (\s -> s{inSync= True})
       case me of
          Just str ->
            --FormElm form mx' <- generateForm [] (Just x) noValidate
-           return $ FormElm ( inred (fromString str) : form) Nothing
+           return $ FormElm ( inred (fromStr str) : form) Nothing
          Nothing  -> return $ FormElm [] mx
     _ -> return $ FormElm form mx
 
 -- | Actions are callbacks that are executed when a widget is validated.
 -- It is useful when the widget is inside widget containers that know nothing about his content.
+--
 -- It returns a result  that can be significative or, else, be ignored with '<**' and '**>'.
 -- An action may or may not initiate his own dialog with the user via `ask`
 waction
-  :: (FormInput view, Monad m) =>
-     View view m a
+  :: (FormInput view, Monad m)
+     => View view m a
      -> (a -> FlowM view m b)
      -> View view m b
-waction formt act= View $ do
-   FormElm form mx <- (runView  formt) 
-   case mx of
-    Just x -> do
-      modify (\s -> s{validated= True})
-      clearEnv
-      br <- runBackT $ act x
-      case br of
-       GoBack -> do
-               modify (\s -> s{validated= False})
-               return $ FormElm form Nothing
-       NoBack r    ->  return . FormElm form $ Just r
-       BackPoint r ->  return . FormElm form $ Just r -- bad. no backpoints
-        
-    _ -> return $ FormElm form Nothing
+waction f ac = do
+  x <- f
+  s <- get
+  let env =  mfEnv s
+  let seq = mfSequence s
+  put s{mfSequence=mfSequence s+ 100,mfEnv=[]}
+  r <- flowToView $ ac x !> "ACTION"
+  modify $ \s-> s{mfSequence= seq, mfEnv= env}
+  return r
+  where
+  flowToView x=
+          View $ do
+              r <- runBackT $ runFlowM  x
+              case r of
+                NoBack x ->
+                     return (FormElm [] $ Just x)
+                BackPoint x->
+                     return (FormElm [] $ Just x)
+                GoBack-> do
+                     modify $ \s ->s{notSyncInAction= True}
+                     return (FormElm [] Nothing)
 
--- | A modifier get the result and the rendering of a widget and change them.
---
--- This modifier, when logged, changes a login-password-register widget with a display username.
---
--- @userFormOrName= `userWidget` Nothing `userFormLine` \`wmodify\` f
---   where
---   f _ justu\@(Just u)  =  return ([`fromString` u], justu) -- user validated, display and return user
---   f felem Nothing = do
---     us <-  `getCurrentUser`
---     if us == `anonymous`
---           then return (felem, Nothing)                    -- user not logged, present the form
---           else return([`fromString` us],  Just us)        -- already logged, display and return user@
 wmodify :: (Monad m, FormInput v)
         => View v m a
         -> ([v] -> Maybe a -> WState v m ([v], Maybe b))
         -> View v m b
 wmodify formt act = View $ do
    FormElm f mx <- runView  formt 
-   (f',mx') <- act f mx
+   (f',mx') <-  act f mx
    return $ FormElm f' mx'
 
 
-
-instance (FormInput view, FormLet a m view , FormLet b m view )
-          => FormLet (a,b) m view  where
-  digest  mxy  = do
-      let (x,y)= case mxy of Nothing -> (Nothing, Nothing); Just (x,y)-> (Just x, Just y)
-      (,) <$> digest x   <*> digest  y
-
-instance (FormInput view, FormLet a m view , FormLet b m view,FormLet c m view )
-          => FormLet (a,b,c) m view  where
-  digest  mxy  = do
-      let (x,y,z)= case mxy of Nothing -> (Nothing, Nothing, Nothing); Just (x,y,z)-> (Just x, Just y,Just z)
-      (,,) <$> digest x  <*> digest  y  <*> digest  z
+--
+--instance (FormInput view, FormLet a m view , FormLet b m view )
+--          => FormLet (a,b) m view  where
+--  digest  mxy  = do
+--      let (x,y)= case mxy of Nothing -> (Nothing, Nothing); Just (x,y)-> (Just x, Just y)
+--      (,) <$> digest x   <*> digest  y
+--
+--instance (FormInput view, FormLet a m view , FormLet b m view,FormLet c m view )
+--          => FormLet (a,b,c) m view  where
+--  digest  mxy  = do
+--      let (x,y,z)= case mxy of Nothing -> (Nothing, Nothing, Nothing); Just (x,y,z)-> (Just x, Just y,Just z)
+--      (,,) <$> digest x  <*> digest  y  <*> digest  z
 
 -- | display a text box and return a String
 getString  :: (FormInput view,Monad m) =>
@@ -823,12 +420,12 @@ getString  :: (FormInput view,Monad m) =>
 getString = getTextBox
 
 -- | display a text box and return an Integer (if the value entered is not an Integer, fails the validation)
-getInteger :: (FormInput view, Functor m, MonadIO m) =>
+getInteger :: (FormInput view,  MonadIO m) =>
      Maybe Integer -> View view m  Integer
 getInteger =  getTextBox
 
 -- | display a text box and return a Int (if the value entered is not an Int, fails the validation)
-getInt :: (FormInput view, Functor m, MonadIO m) =>
+getInt :: (FormInput view, MonadIO m) =>
      Maybe Int -> View view m Int
 getInt =  getTextBox
 
@@ -838,34 +435,42 @@ getPassword :: (FormInput view,
      View view m String
 getPassword = getParam Nothing "password" Nothing
 
+data Radio= Radio String
 -- | implement a radio button that perform a submit when pressed.
 -- the parameter is the name of the radio group
-getRadioActive :: (FormInput view, Functor m, MonadIO m) =>
-             String -> String -> View view m  String
-getRadioActive  n v= View $ do
+setRadioActive :: (FormInput view,  MonadIO m) =>
+             String -> String -> View view m  Radio
+setRadioActive  v n = View $ do
   st <- get
   put st{needForm= True}
   let env =  mfEnv st
   FormElm form mn <- getParam1 n env []
   return $ FormElm [finput n "radio" v
-          ( isJust mn  && v== fromJust mn) (Just "this.form.submit()")]
-          mn
+          ( isJust mn  && v== fromJust mn) (Just  "this.form.submit()")]
+          (fmap Radio mn)
 
-       
 
 -- | implement a radio button
 -- the parameter is the name of the radio group
-getRadio :: (FormInput view, Functor m, MonadIO m) =>
-            String -> String -> View view m  String
-getRadio n v= View $ do
-  st <- get
-  put st{needForm= True}
-  let env =  mfEnv st
-  FormElm f mn <- getParam1 n env []
-  return $ FormElm
-      (f++[finput n "radio" v
-          ( isJust mn  && v== fromJust mn) Nothing])
-      mn
+setRadio :: (FormInput view,  MonadIO m) =>
+            String -> String -> View view m  Radio
+setRadio v n= View $ do
+      st <- get
+      put st{needForm= True}
+      let env =  mfEnv st
+      FormElm f mn <- getParam1 n env []
+      return $ FormElm
+          (f++[finput n "radio" v
+              ( isJust mn && v== fromJust mn) Nothing])
+          (fmap Radio mn)
+
+getRadio
+  :: (Monad m, Functor m, FormInput view) =>
+     [String -> View view m Radio] -> View view m String
+getRadio rs=  do
+        id <- genNewId
+        Radio r <- firstOf $ map (\r -> r id)  rs
+        return r
 
 data CheckBoxes = CheckBoxes [String]
 
@@ -873,26 +478,26 @@ instance Monoid CheckBoxes where
   mappend (CheckBoxes xs) (CheckBoxes ys)= CheckBoxes $ xs ++ ys
   mempty= CheckBoxes []
 
-instance (Monad m, Functor m) => Monoid (View v m CheckBoxes) where
-  mappend x y=  mappend <$> x <*> y
-  mempty= return (CheckBoxes [])
+--instance (Monad m, Functor m) => Monoid (View v m CheckBoxes) where
+--  mappend x y=  mappend <$> x <*> y
+--  mempty= return (CheckBoxes [])
 
 instance (Monad m, Functor m, Monoid a) => Monoid (View v m a) where
   mappend x y = mappend <$> x <*> y  -- ^ beware that both operands must validate to generate a sum
   mempty= return mempty
 
 -- | display a text box and return the value entered if it is readable( Otherwise, fail the validation)
-setCheckBox :: (FormInput view, Functor m, MonadIO m) =>
+setCheckBox :: (FormInput view,  MonadIO m) =>
                 Bool -> String -> View view m  CheckBoxes
 setCheckBox checked v= View $ do
-  n <- getNewName
+  n <- genNewId
   st <- get
   put st{needForm= True}
-  let env =  mfEnv st
+  let env = mfEnv st
       strs= map snd $ filter ((==) n . fst) env
       mn= if null strs then Nothing else Just $ head strs
---  FormElm f mn <- getParam1 n env []
-  val <- gets validated
+
+  val <- gets inSync
   let ret= case val of
         True ->  Just $ CheckBoxes  strs
         False -> Nothing
@@ -901,9 +506,35 @@ setCheckBox checked v= View $ do
         ( checked || (isJust mn  && v== fromJust mn)) Nothing])
       ret
 
+-- | read the checkboxes dinamically created by JavaScript within the view parameter
+-- see for example `selectAutocomplete` in "MFlow.Forms.Widgets"
+genCheckBoxes :: (Monad m, FormInput view) => view ->  View view m  CheckBoxes
+genCheckBoxes v= View $ do
+  n <- genNewId
+  st <- get
+  put st{needForm= True}
+  let env = mfEnv st
+      strs= map snd $ filter ((==) n . fst) env
+      mn= if null strs then Nothing else Just $ head strs
+
+  val <- gets inSync
+  let ret= case val of
+        True ->  Just $ CheckBoxes  strs
+        False -> Nothing
+  return $ FormElm [ftag "span" v `attrs`[("id",n)]] ret
+
+whidden :: (Monad m, FormInput v,Read a, Show a, Typeable a) => a -> View v m a
+whidden x= View $ do
+  n <- genNewId
+  env <- gets mfEnv
+  let showx= case cast x of
+              Just x' -> x'
+              Nothing -> show x
+  getParam1 n env [finput n "hidden" showx False Nothing]
+
 getCheckBoxes ::(FormInput view, Monad m)=> View view m  CheckBoxes -> View view m [String]
 getCheckBoxes boxes =  View $ do
-    n <- getNewName
+    n <- genNewId
     env <- gets mfEnv
     FormElm form (mr :: Maybe String) <- getParam1 n env [finput n "hidden" "" False Nothing]
     st <- get
@@ -920,8 +551,8 @@ getCheckBoxes boxes =  View $ do
 
 
 -- get a parameter form the las received response
-getEnv ::  MonadState (MFlowState view) m => String -> m(Maybe String)
-getEnv n= gets mfEnv >>= return . lookup  n
+getEnv ::  MonadState (MFlowState view) m =>  m Params
+getEnv = gets mfEnv
      
 getTextBox
   :: (FormInput view,
@@ -942,36 +573,57 @@ getParam
      Maybe String -> String -> Maybe a -> View view m  a
 getParam look type1 mvalue = View $ do
     tolook <- case look of
-       Nothing  -> getNewName  
+       Nothing  -> genNewId  
        Just n -> return n
     let nvalue= case mvalue of
            Nothing  -> ""
            Just v   ->
-             let typev= typeOf v
-             in if typev==typeOf (undefined :: String) then unsafeCoerce v
-                else if typev==typeOf (undefined :: String) then unsafeCoerce v
-                else if typev==typeOf (undefined :: ByteString) then unsafeCoerce v
-                else show v
+               case cast v of
+                 Just v' -> v'
+                 Nothing -> show v
+--             let typev= typeOf v
+--             in if typev==typeOf (undefined :: String) then unsafeCoerce v
+--                else if typev==typeOf (undefined :: String) then unsafeCoerce v
+--                else if typev==typeOf (undefined :: ByteString) then unsafeCoerce v
+--                else show v
         form= [finput tolook type1 nvalue False Nothing]
     st <- get
     let env = mfEnv st
     put st{needForm= True}
     getParam1 tolook env form
        
-    
-getNewName :: MonadState (MFlowState view) m =>  m String
-getNewName= do
-      st <- get
+-- | generate a new string. Useful for creating tag identifiers and other attributes
+genNewId :: MonadState (MFlowState view) m =>  m String
+genNewId=  do
+  st <- get
+  case mfCached st of
+    False -> do
       let n= mfSequence st
       put $ st{mfSequence= n+1}
-      let pref= if mfCached st then 'c' else 'p'
-      return $  pref : (show n)
+      return $ 'p':(show n)
+    True  -> do
+      let n = mfSeqCache st
+      put $ st{mfSeqCache=n+1}
+      return $  'c' : (show n)
+
+
+
+
+
+
+--genNewId :: MonadState (MFlowState view) m =>  m String
+--genNewId= do
+--      st <- get
+--      let n= mfSequence st
+--      put $ st{mfSequence= n+1}
+--      let pref= if mfCached st then 'c' else 'p'
+--      return $  pref : (show n)
 
 getCurrentName :: MonadState (MFlowState view) m =>  m String
 getCurrentName= do
      st <- get
      let parm = mfSequence st
-     return $ if mfCached st then "c" else "p"++show parm
+     return $ "p"++show parm
 
 
 -- | display a multiline text box and return its content
@@ -979,7 +631,7 @@ getMultilineText :: (FormInput view,
       Monad m) =>
       String ->  View view m String
 getMultilineText nvalue = View $ do
-    tolook <- getNewName
+    tolook <- genNewId
     env <- gets mfEnv
     let form= [ftextarea tolook nvalue]
     getParam1 tolook env form
@@ -999,7 +651,7 @@ getBool :: (FormInput view,
       Monad m) =>
       Bool -> String -> String -> View view m Bool
 getBool mv truestr falsestr= View $  do
-    tolook <- getNewName
+    tolook <- genNewId
     st <- get
     let env = mfEnv st
     put st{needForm= True}
@@ -1017,7 +669,7 @@ getSelect :: (FormInput view,
       Monad m,Typeable a, Read a) =>
       View view m (MFOption a) ->  View view m  a
 getSelect opts = View $ do
-    tolook <- getNewName
+    tolook <- genNewId
     st <- get
     let env = mfEnv st
     put st{needForm= True}
@@ -1087,24 +739,6 @@ infixr 5 <<<
 --
 -- > widget .<+>. widget'
 
-normalize ::(Monad m, ToByteString v) => View v m a -> View ByteString m a
-normalize f=  View $ StateT $ \s ->do
-       (FormElm fs mx, s') <-  runStateT  (runView f) $ unsafeCoerce s
-       -- the only diference between the states of the two views is mfHeader
-       -- which don't affect to runState 
-       return  $ (FormElm (map toByteString fs ) mx,unsafeCoerce s')
-
-class ToByteString a where
-  toByteString :: a -> ByteString
-
-instance ToByteString a => ToHttpData a where
-  toHttpData = toHttpData . toByteString
-
-instance ToByteString ByteString where
-  toByteString= id
-
-instance ToByteString String where
-  toByteString  =  pack
 
 
 
@@ -1131,38 +765,12 @@ html ++> digest =  (html `mappend`) <<< digest
 
 
 
-type Name= String
-type Type= String
-type Value= String
-type Checked= Bool
-type OnClick= Maybe String
-
-
--- | Minimal interface for defining the basic form combinators in a concrete rendering.
--- defined in this module. see "MFlow.Forms.XHtml" for the instance for @Text.XHtml@ and MFlow.Forms.HSP for an instance
--- form Haskell Server Pages.
-class Monoid view => FormInput view where
-    ftag :: String -> view 
-    inred   :: view -> view
-    fromString :: String -> view
-    flink ::  String -> view -> view 
-    flink1:: String -> view
-    flink1 verb = flink verb (fromString  verb) 
-    finput :: Name -> Type -> Value -> Checked -> OnClick -> view 
-    ftextarea :: String -> String -> view
-    fselect :: String ->  view -> view
-    foption :: String -> view -> Bool -> view
-    foption1 :: String -> Bool -> view
-    foption1   val msel= foption val (fromString val) msel
-    formAction  :: String -> view -> view
-    addAttributes :: view -> Attribs -> view
-
 -- | add attributes to the form element
 -- if the view has more than one element, it is applied to  the first
 infix 8 <!
 widget <! atrs= View $ do
       FormElm fs  mx <- runView widget
-      return $ FormElm  [addAttributes (head fs) atrs] mx
+      return $ FormElm  [attrs (head fs) atrs] mx
 
 
 -------------------------------
@@ -1177,123 +785,10 @@ widget <! atrs= View $ do
 --        `validate` userValidate
 
 
-newtype Lang= Lang String
-
-data MFlowState view= MFlowState{   
-   mfSequence :: Int,
-   mfCached   :: Bool,
-   prevSeq    :: [Int],
-   onInit     :: Bool,
-   validated  :: Bool,
---   mfUser     :: String,
-   mfLang     :: Lang,
-   mfEnv      :: Params,
-   needForm   :: Bool,
-   hasForm    :: Bool,
---   mfServer   :: String,
---   mfPath     :: String,
---   mfPort     :: Int,
-
-   mfToken     :: Token,
-   mfkillTime :: Int,
-   mfSessionTime :: Integer,
-   mfCookies   :: [Cookie],
-   mfHeader ::  view -> view,
-   mfDebug  :: Bool
-   }
-   deriving Typeable
-
-stdHeader v = v
-
-
-mFlowState0 :: (FormInput view) => MFlowState view
-mFlowState0= MFlowState 0 False [] True  False  (Lang "en") [] False False (error "token of mFlowState0 used") 0 0 [] stdHeader False
-
--- | Set the header-footer that will enclose the widgets. It must be provided in the
--- same formatting than them, altrough with normalization to byteStrings can be used any formatting
---
--- This header uses XML trough Haskell Server Pages (<http://hackage.haskell.org/package/hsp>)
---
--- @
--- setHeader $ \c ->
---            \<html\>
---                 \<head\>
---                      \<title\>  my title \</title\>
---                      \<meta name= \"Keywords\" content= \"sci-fi\" /\>)
---                 \</head\>
---                  \<body style= \"margin-left:5%;margin-right:5%\"\>
---                       \<% c %\>
---                  \</body\>
---            \</html\>
--- @
---
--- This header uses "Text.XHtml"
---
--- @
--- setHeader $ \c ->
---           `thehtml`
---               << (`header`
---                   << (`thetitle` << title +++
---                       `meta` ! [`name` \"Keywords\",content \"sci-fi\"])) +++
---                  `body` ! [`style` \"margin-left:5%;margin-right:5%\"] c
--- @
---
--- This header uses both. It uses byteString tags
---
--- @
--- setHeader $ \c ->
---          `bhtml` [] $
---               `btag` "head" [] $
---                     (`toByteString` (thetitle << title) `append`
---                     `toByteString` <meta name= \"Keywords\" content= \"sci-fi\" />) `append`
---                  `bbody` [(\"style\", \"margin-left:5%;margin-right:5%\")] c
--- @
-
-setHeader :: Monad m => (view -> view) -> FlowM view m ()
-setHeader header= do
-  fs <- get
-  put fs{mfHeader= header}
 
 
 
--- | return the current header
-getHeader :: Monad m => FlowM view m (view -> view)
-getHeader= gets mfHeader
 
--- | Set an HTTP cookie
-setCookie :: MonadState (MFlowState view) m
-          => String  -- ^ name
-          -> String  -- ^ value
-          -> String  -- ^ path
-          -> Maybe Integer   -- ^ Max-Age in seconds. Nothing for a session cookie
-          -> m ()
-setCookie n v p me= do
-    modify $ \st -> st{mfCookies=  (n,v,p,fmap  show me):mfCookies st }
-
--- | Set 1) the timeout of the flow execution since the last user interaction.
--- Once passed, the flow executes from the begining. 2). In persistent flows
--- it set the session state timeout for the flow, that is persistent. If the
--- flow is not persistent, it has no effect.
---
--- `transient` flows restart anew.
--- persistent flows (that use `step`) restart at the las saved execution point, unless
--- the session time has expired for the user.
-setTimeouts :: Monad m => Int -> Integer -> FlowM view m ()
-setTimeouts kt st= do
- fs <- get
- put fs{ mfkillTime= kt, mfSessionTime= st}
-
-
-getWFName ::   MonadState (MFlowState view) m =>   m String
-getWFName = do
- fs <- get
- return . twfname $ mfToken fs
-
-getCurrentUser ::  MonadState (MFlowState view) m=>  m String
-getCurrentUser = return . tuser  =<< gets mfToken
-
-type UserStr= String
-type PasswdStr= String
 -- | Is an example of login\/register validation form needed by 'userWidget'. In this case
 -- the form field appears in a single line. it shows, in sequence, entries for the username,
 -- password, a button for loging, a entry to repeat password necesary for registering
@@ -1302,23 +797,23 @@ type PasswdStr= String
 --
 -- @ userFormLine=
 --     (User \<\$\> getString (Just \"enter user\") \<\*\> getPassword \<\+\> submitButton \"login\")
---     \<\+\> fromString \"  password again\" \+\> getPassword \<\* submitButton \"register\"
+--     \<\+\> fromStr \"  password again\" \+\> getPassword \<\* submitButton \"register\"
 -- @
 userFormLine :: (FormInput view, Functor m, Monad m)
             => View view m (Maybe (UserStr,PasswdStr), Maybe PasswdStr)
 userFormLine=
        ((,)  <$> getString (Just "enter user")                  <! [("size","5")]
              <*> getPassword                                    <! [("size","5")]
-         <+> submitButton "login")
-         <** (fromString "  password again" ++> getPassword      <! [("size","5")]
+         <** submitButton "login")
+         <+> (fromStr "  password again" ++> getPassword      <! [("size","5")]
          <*  submitButton "register")
 
 -- | Example of user\/password form (no validation) to be used with 'userWidget'
 userLogin :: (FormInput view, Functor m, Monad m)
             => View view m (Maybe (UserStr,PasswdStr), Maybe String)
 userLogin=
-        ((,)  <$> fromString "Enter User: " ++> getString Nothing     <! [("size","4")]
-              <*> fromString "  Enter Pass: " ++> getPassword                       <! [("size","4")]
+        ((,)  <$> fromStr "Enter User: " ++> getString Nothing     <! [("size","4")]
+              <*> fromStr "  Enter Pass: " ++> getPassword         <! [("size","4")]
               <** submitButton "login")
               <+> (noWidget
               <*  noWidget)
@@ -1331,10 +826,16 @@ noWidget ::  (FormInput view,
      View view m a
 noWidget= View . return $ FormElm  [] Nothing
 
--- | render the Show instance of the parameter and return it. It is useful
--- for displaying information
-wrender :: (Monad m, Show a, FormInput view) => a -> View view m a
-wrender x= View . return $ FormElm [fromString $ show x] (Just x)
+-- | render a  value and return it
+wrender
+  :: (Monad m, Functor m, Show a, FormInput view) =>
+     a -> View view m a
+wrender x = (wraw . fromStr $ show x) **> return x
+
+-- | render raw view formatting. It is useful for displaying information
+wraw :: Monad m => view -> View view m ()
+wraw x= View . return . FormElm [x] $ Just ()
+
 
 -- | Wether the user is logged or is anonymous
 isLogged :: MonadState (MFlowState v) m => m Bool
@@ -1344,15 +845,19 @@ isLogged= do
 
 -- | It creates a widget for user login\/registering. If a user name is specified
 -- in the first parameter, it is forced to login\/password as this specific user.
--- Otherwise, if the user is already logged, the widget does not appear
--- If the user press the register button, the user/password is registered and the
+-- If this user was already logged, the widget return the user without asking.
+-- If the user press the register button, the new user-password is registered and the
 -- user logged.
 userWidget :: ( MonadIO m, Functor m
           , FormInput view) 
          => Maybe String
          -> View view m (Maybe (UserStr,PasswdStr), Maybe String)
          -> View view m String
-userWidget muser formuser= wform formuser `validate` val muser `waction` login
+userWidget muser formuser= do
+   user <- getCurrentUser
+   if muser== Just user
+         then return user
+         else formuser `validate` val muser `waction` login 
    where
    val _ (Nothing,_) = return $ Just "Plese fill in the user/passwd to login, or user/passwd/passwd to register"
 
@@ -1368,9 +873,9 @@ userWidget muser formuser= wform formuser `validate` val muser `waction` login
                   else return $ Just "The passwords do not match"
         else return $ Just "wrong user for the operation"
 
-   val _ _ = return $ Just "Please fill in the fields for login or register"
+--   val _ _ = return $ Just "Please fill in the fields for login or register"
 
-   login  (Just (u,p), Nothing)= do
+   login (Just (u,p), Nothing)= do
          let uname= u
          st <- get
          let t = mfToken st
@@ -1379,19 +884,30 @@ userWidget muser formuser= wform formuser `validate` val muser `waction` login
          put st{mfToken= t'}
          liftIO $ deleteTokenInList t
          liftIO $ addTokenToList t'
-         setCookie cookieuser   uname "/" Nothing   -- !> "setcookie"
+         setCookie cookieuser   uname "/"  (Just $ 365*24*60*60) 
          return uname
 
    login (Just us@(u,p), Just _)=  do
          userRegister u p
          login (Just us , Nothing)
 
+-- | logout. The user is resetted to the `anonymous` user
+logout :: (MonadIO m, MonadState (MFlowState view) m) => m ()
+logout= do
+     st <- get
+     let t = mfToken st
+         t'= t{tuser= anonymous}
+     moveState (twfname t) t t'
+     put st{mfToken= t'}
+     liftIO $ deleteTokenInList t
+     liftIO $ addTokenToList t'
+
+     setCookie cookieuser   anonymous "/" (Just $ -1000)
 
 -- | If not logged, perform login. otherwise return the user
 --
 -- @getUserSimple= getUser Nothing userFormLine@
 getUserSimple :: ( FormInput view, Typeable view
-                 , ToHttpData view
                  , MonadIO m, Functor m)
               => FlowM view m String
 getUserSimple= getUser Nothing userFormLine
@@ -1404,7 +920,6 @@ getUserSimple= getUser Nothing userFormLine
 --
 -- @getUser mu form= ask $ userWidget mu form@
 getUser :: ( FormInput view, Typeable view
-           , ToHttpData view
            , MonadIO m, Functor m)
           => Maybe String
           -> View view m (Maybe (UserStr,PasswdStr), Maybe String)
@@ -1438,7 +953,7 @@ infixr 2 <+>, .<+>.
 (<+>)  = mix
 
 
-infixr 3  **> , .**>. ,  <** , .<**.
+infixr 1  **> , .**>. ,  <** , .<**.
 -- | The first elem result (even if it is not validated) is discarded, and the secod is returned
 -- . This contrast with the applicative operator '*>' which fails the whole validation if
 -- the validation of the first elem fails.
@@ -1480,52 +995,69 @@ valid form= View $ do
 -- To force asking in any case, put an `clearEnv` statement before
 ask
   :: (
-      ToHttpData view,
       FormInput view,
       MonadIO m,
       Typeable view) =>
       View view m b -> FlowM view m b
-ask x =   do
-     st1 <- get
-     let st= st1{hasForm= False, needForm= False,validated= False} 
+ask w =  do
+  st1 <- get
+  let env= mfEnv st1
+  case (mfAjax st1,lookup "ajax" env, lookup "val" env)  of
+   ( Just ajaxl,Just v1, Just v2) -> do
+     let f = fromMaybe (error $ "not found Ajax handler for: "++ v1) $ M.lookup v1 ajaxl
+     FlowM . lift $ (unsafeCoerce f) v2
+     FlowM $ lift receiveWithTimeouts
+     ask w
+
+   _ ->   do
+     let st= st1{needForm= False, inSync= False, mfRequirements= []} 
      put st
-     FormElm forms mx <- lift $ runView  x  -- !> "runWidget"
-     st' <-  get
-     case mx    of 
+     FormElm forms mx <- FlowM . lift $ runView  w
+              
+     st' <- get
+     if notSyncInAction st' then put st'{notSyncInAction=False}>> ask w  else
+      case mx    of
+
        Just x -> do
          put st'{prevSeq= mfSequence st: prevSeq st',onInit= True ,mfEnv=[]}
-         breturn x                                 -- !> "just x"
-             
-       _ ->
-         if  not (validated st') && not (onInit st') && hasParams (mfSequence st') ( mfEnv st')  -- !> (show $ validated st')  !> (show $ onInit st')
+         breturn x -- BackT . return $ BackPoint  x                                 -- !> "just x"
+
+       Nothing ->
+         if  not (inSync st') && not (onInit st') && hasParams (mfSequence st') (mfSeqCache st') ( mfEnv st')  -- !> (show $ inSync st')  !> (show $ onInit st')
           then do
              put st'{mfSequence= head1 $ prevSeq st'
                     ,prevSeq= tail1 $ prevSeq st' }
-             fail ""                           -- !> "repeatPlease"
+             fail ""
           else do
+             reqs <-  FlowM $ lift installAllRequirements
              let header= mfHeader st'
                  t= mfToken st'
-                 cont = case (needForm st', hasForm st') of
-                   (True, False) ->  header $ formAction (twfname t) $ mconcat forms
-                   _             ->  header $ mconcat  forms
+                 cont = case (needForm st') of
+                      True ->  header $  reqs <> (formAction (twfname t ) $ mconcat forms)
+                      _    ->  header $  reqs <> mconcat  forms
 
-             let HttpData ctype c s= toHttpData cont 
-             liftIO . sendFlush t $ HttpData ctype (mfCookies st' ++ c) s
-             put st{mfCookies=[], onInit= False, mfToken= t }                --    !> ("after "++show ( mfSequence st'))
-             receiveWithTimeouts
-             ask x
+                 HttpData ctype c s= toHttpData cont 
+             liftIO . sendFlush t $ HttpData (ctype++mfHttpHeaders st') (mfCookies st' ++ c) s
+             put st{mfCookies=[],mfHttpHeaders=[], onInit= False, mfToken= t, mfAjax= mfAjax st', mfSeqCache= mfSeqCache st' }                --    !> ("after "++show ( mfSequence st'))
+             FlowM $ lift  receiveWithTimeouts
+             ask w
     where
     head1 []=0
     head1 xs= head xs
     tail1 []=[]
     tail1 xs= tail xs
 
-    hasParams seq= not . null . filter (\(p,_) ->
-
-       let tailp = tail p in
-       (head p== 'p' || head p == 'c')
-       && and (map isNumber tailp)
-       && read  tailp <= seq)
+    hasParams seq cseq= not . null . filter (\(p,_) ->
+       let tailp = tail p
+       in  and (map isNumber tailp) &&
+       let rt= read tailp
+       in  case head p of
+         'p' -> rt <= seq
+         'c' -> rt <= cseq
+         _   -> False)
+--       (head p== 'p' || head p == 'c')
+--       && and (map isNumber tailp)
+--       && read  tailp <= seq)
 
 -- | True if the flow is going back (as a result of the back button pressed in the web browser).
 --  Usually this chech is nos necessary unless conditional code make it necessary
@@ -1561,7 +1093,7 @@ ask x =   do
 goingBack :: MonadState (MFlowState view) m => m Bool
 goingBack = do
     st <- get
-    return $ not (validated st) && not (onInit st)
+    return $ not (inSync st) && not (onInit st)
 
 -- | Clears the environment
 clearEnv :: MonadState (MFlowState view) m =>  m ()
@@ -1569,7 +1101,7 @@ clearEnv= do
   st <- get
   put st{ mfEnv= []}
 
-receiveWithTimeouts :: MonadIO m => FlowM view m ()
+receiveWithTimeouts :: MonadIO m => WState view m ()
 receiveWithTimeouts= do
          st <- get
          let t= mfToken st
@@ -1577,24 +1109,61 @@ receiveWithTimeouts= do
              t2= mfSessionTime st
          req <- return . getParams =<< liftIO ( receiveReqTimeout t1 t2  t)
          put st{mfEnv= req}
-        
+
+-- | it creates a stateless flow (see `stateless`) whose behaviour is defined as a widget  
+wstateless
+  :: (Typeable view,  FormInput view) =>
+     View view IO a -> Flow
+wstateless w = transient $ runFlow loop
+  where
+  loop= do
+      ask w
+      env <- get
+      put $ env{ mfSequence= 0,prevSeq=[]} 
+      loop
+
+---- | it creates a stateless flow (see `stateless`) whose behaviour is defined as a widget  
+----
+---- This version writes a log with all the values returned by ask
+--wstatelessLog
+--  :: (Typeable view, ToHttpData view, FormInput view,Serialize a,Typeable a) =>
+--     View view IO a -> (Token -> Workflow IO ())
+--wstatelessLog w = runFlow loop
+--  where
+--  loop= do
+--      MFlow.Forms.step $ do
+--         r <- ask w
+--         env <- get
+--         put $ env{ mfSequence= 0,prevSeq=[]}
+--         return r
+--      loop
+
+-- | transfer control to another flow.
+transfer :: MonadIO m => String -> FlowM v m ()
+transfer flowname =do
+         t <- gets mfToken
+         let t'= t{twfname= flowname}
+         liftIO  $ do
+             (r,_) <- msgScheduler t'
+             sendFlush t r
 
 
 
 -- | wrap a widget of form element within a form-action element.
 ---- Usually it is done automatically by the @Wiew@ monad.
 wform ::  (Monad m, FormInput view)
-          => View view m b -> View view m b
+          => View view m b -> View view m b  
 
 wform x = View $ do
          FormElm form mr <- (runView $   x )
          st <- get
          let t = mfToken  st
-         anchor <- getNewName
-         put st{hasForm= True}
-         let form1= formAction (twfname t++"#"++anchor) $  mconcat form  !> anchor
+         anchor <- genNewId
+         put st{needForm=False}
+         let anchorf= (ftag "a") mempty  `attrs` [("name",anchor)]
+         let form1= formAction (twfname t {-++"#"++anchor-}) $  mconcat ( anchorf:form)  -- !> anchor
 
-         return $ FormElm [(ftag "a") `addAttributes` [("name",anchor)], form1] mr
+         return $ FormElm [form1] mr
 
 resetButton :: (FormInput view, Monad m) => String -> View view m () 
 resetButton label= View $ return $ FormElm [finput  "reset" "reset" label False Nothing]   $ Just ()
@@ -1602,28 +1171,87 @@ resetButton label= View $ return $ FormElm [finput  "reset" "reset" label False 
 submitButton :: (FormInput view, Monad m) => String -> View view m String
 submitButton label= getParam Nothing "submit" $ Just label
 
+newtype AjaxSessionId= AjaxSessionId String deriving Typeable
 
---insertView view= View $ return $ FormElm [view] $ Just ()
---
---infix 3 +>
---view +> widget= (insertView view) *> widget
---
---infix 3 <+
---widget <+ view =  widget <* insertView view
+ajax :: (MonadIO m) => (String ->  View v m ByteString) ->  View v m (String -> String)
+ajax  f =  do
+     t <- gets mfToken
+     id <- genNewId
+     installServerControl id $ \x-> do
+          setSessionData $ AjaxSessionId id
+          r <- f x
+          liftIO $ sendFlush t  (HttpData [("Content-Type", "text/plain")][] r )
+          return ()
+
+installServerControl :: MonadIO m => String -> (String -> View v m ()) -> View v m (String -> String)
+installServerControl id f= do
+      t <- gets mfToken
+      st <- get
+      let ajxl = fromMaybe M.empty $ mfAjax st
+      let ajxl'= M.insert id (unsafeCoerce f ) ajxl
+      put st{mfAjax=Just ajxl'}
+      return $ \param ->  "doServer("++"'" ++  twfname t ++"','"++id++"',"++ param++")"
 
 
+ajaxSend
+  :: (Read a,MonadIO m) => View v m ByteString -> View v m a
+ajaxSend cmd=  View $ do
+   AjaxSessionId id <- getSessionData `onNothing` error "no AjaxSessionId set"
+   env <- getEnv
+   t <- getToken
+   case (lookup "ajax" $ env, lookup "val" env) of
+       (Nothing,_) -> return $ FormElm [] Nothing
+       (Just id, Just _) -> do
+           FormElm __ (Just  str) <- runView  cmd
+           liftIO $ sendFlush t  $ HttpData [("Content-Type", "text/plain")][] $ str <>  readEvalLoop t id "''"
+           receiveWithTimeouts
+           env <- getEnv
+           case (lookup "ajax" $ env,lookup "val" env) of
+               (Nothing,_) -> return $ FormElm [] Nothing
+               (Just id, Just v2) -> do
+                    return $ FormElm []  . Just  $ read v2
+   where
+   readEvalLoop t id v = "doServer('"<> pack (twfname t)<>"','"<> pack id<>"',"<>v<>");" :: ByteString
 
+ajaxSend_
+  :: MonadIO m => View v m ByteString -> View v m ()
+ajaxSend_ = ajaxSend
+
+
+    
 -- | creates a link wiget. A link can be composed with other widget elements,
 wlink :: (Typeable a, Read a, Show a, MonadIO m, Functor m, FormInput view) 
          => a -> view -> View  view m a
 wlink x v= View $ do
       verb <- getWFName
-      name <- getNewName
+      name <- genNewId
       env  <- gets mfEnv 
       let
           showx= if typeOf x== typeOf (undefined :: String) then unsafeCoerce x else show x
           toSend = flink (verb ++ "?" ++  name ++ "=" ++ showx) v
       getParam1 name env [toSend]
+
+-- | when some HTML produces a parameter in response, but it is not produced by
+-- a form or a link, but for example by an script, returning notify the type checker
+-- and the parameter extractor about this fact.
+--
+-- . The parameter is the visualization code, that accept a serialization function that generate
+-- the server invocation string used by the visualization to return the value by means
+-- of a link or a @window.location@ statement in javasCript
+returning ::(Typeable a, Read a, Show a,Monad m, FormInput view) 
+         => ((a->String) ->view) -> View view m a
+returning expr=View $ do
+      verb <- getWFName
+      name <- genNewId
+      env  <- gets mfEnv
+      let string x=
+            let showx= case cast x of
+                   Just x' -> x'
+                   _       -> show x
+            in (verb ++ "?" ++  name ++ "=" ++ showx)
+          toSend= expr string
+      getParam1 name env [toSend]
+      
 
 
 
@@ -1637,15 +1265,30 @@ wlink x v= View $ do
 --      return $ FormElm [mconcat vs] res1
 
 -- | Concat a list of widgets of the same type, return a the first validated result
-firstOf :: (Monoid view, MonadIO m, Functor m)=> [View view m a]  -> View view m a
+firstOf :: (Monoid view, Monad m, Functor m)=> [View view m a]  -> View view m a
 firstOf xs= View $ do 
-      forms <- mapM(\x -> (runView   x )) xs
+      forms <- mapM runView  xs
       let vs  = concatMap (\(FormElm v _) ->  [mconcat v]) forms
           res = filter isJust $ map (\(FormElm _ r) -> r) forms
           res1= if null res then Nothing else head res
       return $ FormElm  vs res1
 
+manyOf :: (FormInput view, MonadIO m, Functor m)=> [View view m a]  -> View view m [a]
+manyOf xs= whidden () *> (View $ do 
+      forms <- mapM runView  xs
+      let vs  = concatMap (\(FormElm v _) ->  [mconcat v]) forms
+          res1= catMaybes $ map (\(FormElm _ r) -> r) forms
+      return $ FormElm  vs $ Just res1)
 
+(>:>) ::(Monad m)=> View v m a -> View v m [a]  -> View v m [a]
+(>:>) w ws= View $ do
+    FormElm fs mxs <- runView $  ws
+    FormElm f1 mx  <- runView w
+    return $ FormElm (f1++ fs)
+         $ case( mx,mxs) of
+             (Just x, Just xs) -> Just $ x:xs
+             (Nothing, mxs) -> mxs
+             (Just x, _) -> Just [x]
 
 -- | intersperse a widget in a list of widgets. the results is a 2-tuple of both types
 (|*>) :: (MonadIO m, Functor m,Monoid view)
@@ -1724,57 +1367,59 @@ instance Flatten (Tuple6 a b c d e f) (Maybe a, Maybe b,Maybe c,Maybe d,Maybe e,
 
 infixr 7 .<<.
 -- | > (.<<.) w x = w $ toByteString x
-(.<<.) :: (ToByteString view) => (ByteString -> ByteString) -> view -> ByteString
+(.<<.) :: (FormInput view) => (ByteString -> ByteString) -> view -> ByteString
 (.<<.) w x = w ( toByteString x)
 
 -- | > (.<+>.) x y = normalize x <+> normalize y
 (.<+>.)
-  :: (Monad m, ToByteString v, ToByteString v1) =>
+  :: (Monad m, FormInput v, FormInput v1) =>
      View v m a -> View v1 m b -> View ByteString m (Maybe a, Maybe b)
 (.<+>.) x y = normalize x <+> normalize y
 
 -- | > (.|*>.) x y = normalize x |*> map normalize y
 (.|*>.)
-  :: (Functor m, MonadIO m, ToByteString v, ToByteString v1) =>
+  :: (Functor m, MonadIO m, FormInput v, FormInput v1) =>
      View v m r
      -> [View v1 m r'] -> View ByteString m (Maybe r, Maybe r')
 (.|*>.) x y = normalize x |*> map normalize y
 
 -- | > (.|+|.) x y = normalize x |+| normalize y
 (.|+|.)
-  :: (Functor m, MonadIO m, ToByteString v, ToByteString v1) =>
+  :: (Functor m, MonadIO m, FormInput v, FormInput v1) =>
      View v m r -> View v1 m r' -> View ByteString m (Maybe r, Maybe r')
 (.|+|.) x y = normalize x |+| normalize y
 
 -- | > (.**>.) x y = normalize x **> normalize y
 (.**>.)
-  :: (Monad m, Functor m, ToByteString v, ToByteString v1) =>
+  :: (Monad m, Functor m, FormInput v, FormInput v1) =>
      View v m a -> View v1 m b -> View ByteString m b
 (.**>.) x y = normalize x **> normalize y
 
 -- | > (.<**.) x y = normalize x <** normalize y
 (.<**.)
-  :: (Monad m, Functor m, ToByteString v, ToByteString v1) =>
+  :: (Monad m, Functor m, FormInput v, FormInput v1) =>
      View v m a -> View v1 m b -> View ByteString m a
 (.<**.) x y = normalize x <** normalize y
 
 -- | > (.<|>.) x y= normalize x <|> normalize y
 (.<|>.)
-  :: (Monad m, Functor m, ToByteString v, ToByteString v1) =>
+  :: (Monad m, Functor m, FormInput v, FormInput v1) =>
      View v m a -> View v1 m a -> View ByteString m a
 (.<|>.) x y= normalize x <|> normalize y
 
 -- | > (.<++.) x v= normalize x <++ toByteString v
-(.<++.) :: (Monad m, ToByteString v, ToByteString v') => View v m a -> v' -> View ByteString m a
+(.<++.) :: (Monad m, FormInput v, FormInput v') => View v m a -> v' -> View ByteString m a
 (.<++.) x v= normalize x <++ toByteString v
 
 -- | > (.++>.) v x= toByteString v ++> normalize x
-(.++>.) :: (Monad m, ToByteString v, ToByteString v') => v -> View v' m a -> View ByteString m a
+(.++>.) :: (Monad m, FormInput v, FormInput v') => v -> View v' m a -> View ByteString m a
 (.++>.) v x= toByteString v ++> normalize x
 
 
 instance FormInput  ByteString  where
-    ftag x= btag x [] mempty
+    toByteString= id
+    toHttpData = HttpData [contentHtml ] []
+    ftag x= btag x []
     inred = btag "b" [("style", "color:red")]
     finput n t v f c= btag "input"  ([("type", t) ,("name", n),("value",  v)] ++ if f then [("checked","true")]  else []
                               ++ case c of Just s ->[( "onclick", s)]; _ -> [] ) ""
@@ -1786,12 +1431,12 @@ instance FormInput  ByteString  where
             where
             selected msel = if  msel then [("selected","true")] else []
 
-    addAttributes = addAttrs
+    attrs = addAttrs
 
 
     formAction action form = btag "form" [("action", action),("method", "post")]  form
-    fromString = pack
-
+    fromStr = pack
+    fromStrNoEncode= pack
 
     flink  v str = btag "a" [("href",  v)]  str
 

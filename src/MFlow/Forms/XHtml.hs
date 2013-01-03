@@ -22,8 +22,9 @@
 
 module MFlow.Forms.XHtml where
 
-
+import MFlow (HttpData(..))
 import MFlow.Forms
+import MFlow.Cookies(contentHtml)
 import Data.ByteString.Lazy.Char8(pack,unpack)
 
 import Text.XHtml.Strict as X
@@ -34,12 +35,11 @@ instance Monad m => ADDATTRS (View Html m a) where
   widget ! atrs= widget `wmodify`  \fs mx -> return ((head fs ! atrs:tail fs), mx)
 
 
-instance ToByteString Html where
-  toByteString  =  pack. showHtmlFragment
-
 
 instance FormInput  Html  where
-    ftag t= tag t noHtml
+    toByteString  =  pack. showHtmlFragment
+    toHttpData = HttpData [contentHtml] []  . toByteString
+    ftag t= tag t
     inred = X.bold ![X.thestyle "color:red"]
     finput n t v f c= X.input ! ([thetype t ,name  n, value  v] ++ if f then [checked]  else []
                               ++ case c of Just s ->[strAttr "onclick"  s]; _ -> [] )
@@ -50,13 +50,13 @@ instance FormInput  Html  where
             where
             selected msel = if  msel then [X.selected] else []
 
-    addAttributes tag attrs = tag ! (map (\(n,v) -> strAttr  n  v)  attrs)
+    attrs tag attrs = tag ! (map (\(n,v) -> strAttr  n  v)  attrs)
 
 
 
     formAction action form = X.form ! [X.action  action, method "post"] << form
-    fromString = stringToHtml
-
+    fromStr = stringToHtml
+    fromStrNoEncode= primHtml
 
     flink  v str = toHtml $ hotlink  (  v) << str
 

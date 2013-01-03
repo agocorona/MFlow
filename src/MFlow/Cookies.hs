@@ -1,7 +1,7 @@
 {-# OPTIONS -XScopedTypeVariables  -XOverloadedStrings #-}
 
 module MFlow.Cookies
-(Cookie,ctype,urlDecode,cookieuser,cookieHeaders,getCookies)
+(Cookie,contentHtml,urlDecode,cookieuser,cookieHeaders,getCookies)
 where
 import Control.Monad(MonadPlus(..), guard, replicateM_, when)
 import Data.Char
@@ -19,7 +19,7 @@ import Text.Parsec
 import Control.Monad.Identity
 --import Text.Parsec.Token
 
-ctype= ("Content-Type", "text/html")
+contentHtml= ("Content-Type", "text/html")
 
 type Cookie=  (String,String,String,Maybe String)
 
@@ -35,12 +35,13 @@ getCookies httpreq=
 cookieHeaders cs =  Prelude.map (\c-> ( "Set-Cookie", showCookie c)) cs
 
 showCookie ::  Cookie -> String
-showCookie (n,v,p,me) = n <> "="  <> v   <> "; path=" 
-                          <>  p <> showMaxAge me  <> "\n"
+showCookie (n,v,p,me) = n <> "="  <> v  <>
+                       ";path="  <> p  <>
+                        showMaxAge me
 
     where
     showMaxAge Nothing =  ""
-    showMaxAge (Just e)  =  "; Max-age=" <> e
+    showMaxAge (Just e)  =  ";Max-age=" <> e
 
 
 --showCookie ::  Cookie -> String

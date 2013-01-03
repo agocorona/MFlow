@@ -42,17 +42,17 @@ instance ToResponse Response where
       toResponse = id
 
 instance ToResponse ByteString  where
-      toResponse x= Response{status=200, headers=[ctype {-,("Content-Length",show $ B.length x) -}], body= x}
+      toResponse x= Response{status=200, headers=[contentHtml {-,("Content-Length",show $ B.length x) -}], body= x}
 
 instance ToResponse String  where
-      toResponse x= Response{status=200, headers=[ctype{-,("Content-Length",show $ B.length x) -}], body= B.pack x}
+      toResponse x= Response{status=200, headers=[contentHtml{-,("Content-Length",show $ B.length x) -}], body= B.pack x}
 
 instance  ToResponse HttpData  where
   toResponse (HttpData hs cookies x)=   (toResponse x) {headers=  hs++ cookieHeaders cookies}
   toResponse (Error NotFound str)= Response{status=404, headers=[], body=   getNotFoundResponse str}
 
 instance Typeable Env where
-     typeOf = \_-> mkTyConApp (mkTyCon "Hack.Env") []
+     typeOf = \_-> mkTyConApp (mkTyCon3 "hack-handler-simpleserver" "Hack" "Env") []
 
-instance Typeable Response where
-     typeOf = \_-> mkTyConApp (mkTyCon "Hack.Response")[]
+--instance Typeable Response where
+--     typeOf = \_-> mkTyConApp (mkTyCon "Hack.Response")[]

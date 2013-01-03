@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------------
 --
--- Module      :  MFloll.Wai.XHtml.All
+-- Module      :  MFlow.Wai.XHtml.All
 -- Copyright   :
 -- License     :  BSD3
 --
@@ -20,6 +20,7 @@ module MFlow.Wai.XHtml.All (
 ,module MFlow.Forms.XHtml
 ,module MFlow.Forms.Admin
 ,module MFlow.Forms.Ajax
+,module MFlow.Forms.Widgets
 --,module MFlow.Wai.XHtml
 ,module Network.Wai
 ,module Network.Wai.Handler.Warp
@@ -34,6 +35,7 @@ import MFlow.Forms
 import MFlow.Forms.XHtml
 import MFlow.Forms.Admin
 import MFlow.Forms.Ajax
+import MFlow.Forms.Widgets
 --import MFlow.Wai.XHtml
 
 import Network.Wai
