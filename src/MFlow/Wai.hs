@@ -49,7 +49,7 @@ import System.Time
 --(!>)= flip trace
 
 flow=  "flow"
---ciflow= mk flow
+
 
 instance Processable Request  where
    pwfname  env=  if SB.null sc then noScript else SB.unpack sc
@@ -68,83 +68,8 @@ instance Processable Request  where
 --   getPath env= pathInfo env
 --   getPort env= serverPort env
    
-data NFlow= NFlow !Integer deriving (Read, Show, Typeable)
-
-instance Serializable NFlow where
-  serialize= B.pack . show
-  deserialize= read . B.unpack
-
-instance Indexable NFlow where
-  key _= "Flow"
 
 
-rflow= getDBRef . key $ NFlow undefined
-
-newFlow= liftIO $ do
-        TOD t _ <- getClockTime
-        atomically $ do 
-                    NFlow n <- readDBRef rflow `onNothing` return (NFlow 0)
-                    writeDBRef rflow . NFlow $ n+1
-                    return . show $ t + n
-         
-
----------------------------------------------
---
---instance ConvertTo String TResp  where
---      convert = TResp . pack
---
---instance ConvertTo ByteString TResp  where
---      convert = TResp
---
---
---instance ConvertTo Error TResp where
---     convert (Error e)= TResp . pack  $ errorResponse e
---
---instance ToResponse v =>ConvertTo (HttpData v) TResp where
---    convert= TRespR
-
-
---webScheduler   :: Request
---               -> ProcList
---               -> IO (TResp, ThreadId)
---webScheduler = msgScheduler 
-
---theDir= unsafePerformIO getCurrentDirectory
-
---wFMiddleware :: (Request -> Bool) -> (Request-> IO Response) ->   (Request -> IO Response)
---wFMiddleware filter f = \ env ->  if filter env then waiWorkflow env    else f env -- !> "new message"
-
--- | An instance of the abstract "MFlow" scheduler to the <http://hackage.haskell.org/package/wai> interface.
---
--- it accept the list of processes being scheduled and return a wai handler
---
--- Example:
---
--- @main= do
---
---   putStrLn $ options messageFlows
---   'run' 80 $ 'waiMessageFlow'  messageFlows
---   where
---   messageFlows=  [(\"main\",  'runFlow' flowname )
---                  ,(\"hello\", 'stateless' statelesproc)
---                  ,(\"trans\", 'transient' $ runflow transientflow]
---   options msgs= \"in the browser choose\\n\\n\" ++
---     concat [ "http:\/\/server\/"++ i ++ "\n" | (i,_) \<- msgs]
--- @
---waiMessageFlow :: [(String, (Token -> Workflow IO ()))]
---                -> (Request -> ResourceT IO Response)
---waiMessageFlow  messageFlows = 
--- unsafePerformIO (addMessageFlows messageFlows) `seq`
--- waiWorkflow -- wFMiddleware f   other
-
--- where
--- f env = unsafePerformIO $ do
---    paths <- getMessageFlows >>=
---    return (pwfname env `elem` paths)
-
--- other= (\env -> defaultResponse $  "options: " ++ opts)
--- (paths,_)= unzip messageFlows
--- opts= concatMap  (\s -> "<a href=\""++ s ++"\">"++s ++"</a>, ") paths
 
 
 splitPath ""= ("","","")
@@ -165,7 +90,7 @@ waiMessageFlow req1=   do
      (flowval , retcookies) <-  case lookup flow cookies of
               Just fl -> return  (fl, [])
               Nothing  -> do
-                     fl <- newFlow
+                     fl <- liftIO $ newFlow
                      return (fl,  [(flow,  fl, "/",Nothing)::Cookie])
                      
 {-  for state persistence in cookies 
@@ -198,7 +123,6 @@ waiMessageFlow req1=   do
             (error@(Error _ _),_) -> error
             (HttpData hs co str,_) -> HttpData hs (co++ retcookies)  str
 
-     liftIO $ putStrLn "--------">> print resp
      return $ toResponse resp
 
 

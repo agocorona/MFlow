@@ -14,12 +14,12 @@
 
 module MFlow.Wai.Blaze.Html.All (
  module Data.TCache
+,module MFlow
 ,module MFlow.Wai
-,module MFlow.FileServer
 ,module MFlow.Forms
+,module MFlow.Forms.Widgets
 ,module MFlow.Forms.Blaze.Html
 ,module MFlow.Forms.Admin
-,module MFlow.Forms.Ajax
 ,module Network.Wai
 ,module Network.Wai.Handler.Warp
 ,module Control.Applicative
@@ -28,15 +28,14 @@ module MFlow.Wai.Blaze.Html.All (
 ,module Text.Blaze.Html5.Attributes
 ) where
 
-
+import MFlow
 import MFlow.Wai
-import MFlow.FileServer
 import MFlow.Forms
+import MFlow.Forms.Widgets
 import MFlow.Forms.XHtml
 import MFlow.Forms.Admin
-import MFlow.Forms.Ajax
 import MFlow.Forms.Blaze.Html
-import Text.Blaze.Html5
+import Text.Blaze.Html5 hiding (map)
 import Text.Blaze.Html5.Attributes  hiding (label,span,style,cite,title,summary,step,form)
 import Network.Wai
 import Network.Wai.Handler.Warp

@@ -1,14 +1,15 @@
 name: MFlow
-version: 0.1.5.5
+version: 0.2.0.6
 cabal-version: >=1.6
 build-type: Simple
 license: BSD3
 license-file: LICENSE
 maintainer: agocorona@gmail.com
 stability: experimental
+Bug-reports: https://github.com/agocorona/MFlow/issues
 synopsis: Web app server for stateful processes with safe, composable user interfaces.
 description: A Web framework with some unique features thanks to the power of the Haskell language.
-             MFlow run stateful server processes; All the flow of request and responses are coded by the programmer in a single function.
+             MFlow run stateful server processes; All the flow of requests and responses are coded by the programmer in a single function.
              Allthoug single request-response flows and callbacks are possible. Therefore, the code is
              more understandable.
              .
@@ -17,25 +18,29 @@ description: A Web framework with some unique features thanks to the power of th
              is automatic. State consistence and transactions are given by the TCache package.
              .
              The processes interact trough widgets, that are an extension of formlets with
-             additional combinators, formatting, link management, callbacks, modifiers, caching,
+             additional applicative combinators, formatting, link management, callbacks, modifiers, caching,
              byteString conversion and AJAX. All is coded in pure haskell.
              .
-             The interfaces and communications are abstract, but there are bindings for HSP, Text.XHtml and byteString
+             The interfaces and communications are abstract, but there are bindings for blaze-html, HSP, Text.XHtml and byteString
              , Hack and WAI but it can be extended to non Web based architectures.
              .
-             This release add transparent back button management, cached widgets, callbacks, modifiers, heterogeneous formatting, AJAX,
+             Bindings for hack, and hsp >= 0.8,  are not compiled by Hackage, and do not appear, but are included in the package files.
+             To use them, add then to the exported modules and execute cabal install
+             .
+             The previous release add transparent back button management, cached widgets, callbacks, modifiers, heterogeneous formatting, AJAX,
              and WAI integration.
+             .
+             This version add better WAI integration, higher level dynamic Widgets, content management, multilanguage, blaze-html support,
+             stateful ajax for server-side control, user-defined data in sessions and widget requirements for automatic installation of scripts, CSS and server flows.
+
              .
              It is designed for applications that can be run with no deployment with runghc in order
              to speed up the development process.
              .
              See "MFlow.Forms" for details
              .
-             Altroug still it is experimental, it is being used in at least one future commercial project. So I have te commitment to
+             Although still it is experimental, it is being used in at least one future commercial project. So I have te commitment to
              continue its development. There are many examples in the documentation and in the package.
-             .
-             Due to compilation problems in Hackage, this release has the bindings for Hack and HSP not exposed,
-             but they can be found in the source files.
              .
              To do:
              .
@@ -44,8 +49,12 @@ description: A Web framework with some unique features thanks to the power of th
 category: Web, Application Server
 author: Alberto Gómez Corona
 data-dir: ""
-extra-source-files: Demos/ShoppingCart.hs Demos/ShoppingCart.Wai.hs
-                    Demos/demos.hs
+extra-source-files: Demos/demos.blaze.hs
+                  , src/MFlow/Hack.hs
+                  , src/MFlow/Hack/Response.hs
+                  , src/MFlow/Hack/XHtml.hs
+                  , src/MFlow/Hack/XHtml/All.hs
+                  , src/MFlow/Forms/HSP.hs
 
 source-repository head
     type: git
@@ -57,16 +66,16 @@ library
                    bytestring -any, containers -any, RefSerialize -any, TCache -any,
                    stm >2, old-time -any, vector -any, directory -any,
                    utf8-string -any, wai -any, case-insensitive -any, http-types -any,
-                   conduit -any, text -any, parsec -any, warp -any, fay -any,
-                   random -any, hsp == 0.7.1, hack -any, hack-handler-simpleserver -any,
+                   conduit -any, text -any, parsec -any, warp -any,
+                   random -any,
                    blaze-html -any, blaze-markup -any
-    exposed-modules: MFlow.Forms.Internals MFlow.Wai.Blaze.Html.All
-                     MFlow.Forms MFlow.Forms.Admin MFlow MFlow.FileServer
-                     MFlow.Forms.Ajax MFlow.Cookies MFlow.Wai.Response MFlow.Wai
-                     MFlow.Wai.XHtml.All MFlow.Forms.XHtml MFlow.Forms.HSP
-                     MFlow.Hack.Response MFlow.Hack MFlow.Hack.XHtml
-                     MFlow.Hack.XHtml.All MFlow.Forms.Blaze.Html MFlow.Forms.Test
+    exposed-modules: MFlow MFlow.Wai.Blaze.Html.All
+                     MFlow.Forms MFlow.Forms.Admin
+                     MFlow.Cookies  MFlow.Wai
+                     MFlow.Wai.XHtml.All MFlow.Forms.XHtml
+                     MFlow.Forms.Blaze.Html MFlow.Forms.Test
                      MFlow.Forms.Widgets
+    other-modules: MFlow.Forms.Internals MFlow.Wai.Response
     exposed: True
     buildable: True
     hs-source-dirs: src .

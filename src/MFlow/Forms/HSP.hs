@@ -1,7 +1,8 @@
-{-# OPTIONS -F -pgmFtrhsx   -XUndecidableInstances -XOverlappingInstances -XTypeSynonymInstances -XFlexibleInstances #-}
+{-# OPTIONS -F -pgmFtrhsx  -XTypeFamilies  -XOverloadedStrings -XUndecidableInstances -XOverlappingInstances -XTypeSynonymInstances -XFlexibleInstances #-}
 
-{- | Instantiation of "MFlow.Forms" for the hsp package
-it includes additional features for embedding widgets within HTML-XML formatting
+{- |
+Instantiation of the 'FormInput' class for the HSP package <http://hackage.haskell.org/package/hsp>
+ for embedding widgets within HTML-XML formatting
 
 -}
 
@@ -13,26 +14,34 @@ import MFlow.Cookies(contentHtml)
 import MFlow.Forms
 import Control.Monad.Trans
 import Data.Typeable
-import HSP
+import HSP.Monad
+import HSP.XML
+import HSP.XMLGenerator
 import Data.Monoid
 import Control.Monad(when)
 import Data.ByteString.Lazy.Char8(unpack,pack)
 import System.IO.Unsafe
+import Data.TCache.Memoization (Executable (..))
+import Data.Text.Lazy.Encoding
+import Data.String
 
 
 
-instance Monoid (HSP XML) where
+instance (XMLGen m,XML ~ XMLType m, EmbedAsChild m(XMLType m)) => Monoid (XMLGenT m XML) where
     mempty =   <span/>
-    mappend x y= <span> <% x %> <% y %> </span>
-    mconcat xs= <span> <% [<% x %> | x <- xs] %> </span>
+    mappend  x  y= <span> <% x %> <% y %> </span>
+    mconcat xs=  <span> <% [<% x %> |  x <- xs] %> </span>
 
-instance Typeable (HSP XML) where
-   typeOf= \_ ->  mkTyConApp(mkTyCon "HSP XML") []
+instance Typeable  (XMLGenT m XML) where
+    typeOf= \_ ->  mkTyConApp(mkTyCon3 "hsp" "HSP.XMLGenerator" "XMLGenT m XML") []
 
-instance FormInput (HSP XML)   where
-    toByteString x= unsafePerformIO $ do
-       (_,r) <-  evalHSP Nothing x
-       return .  pack $ renderXML r
+instance (XMLGen m,XML ~ XMLType m
+         ,EmbedAsChild m XML
+         ,EmbedAsAttr m (Attr  String String)
+         ,Executable m
+         ,SetAttr m XML)
+         => FormInput (XMLGenT m XML)   where
+    toByteString =  encodeUtf8 . renderXML . execute . unXMLGenT
     toHttpData = HttpData [contentHtml ] [] . toByteString
     ftag t =  \e -> genElement (toName t) [] [asChild e]
 
@@ -40,9 +49,9 @@ instance FormInput (HSP XML)   where
     fromStrNoEncode s= <pcdata> pcdataToChild s </pcdata>
     finput typ name value checked onclick=
       <input type= (typ)
-             name=(name)
+             name= (name)
              value=(value)
-             checked=(checked)
+             checked=(show checked)
              onclick=(case onclick of Just s -> s ; _ -> "")/>
 
     ftextarea  name text= <textarea name=(name) > <% text %> </textarea>
@@ -54,7 +63,7 @@ instance FormInput (HSP XML)   where
                   </option>
 
           where
-          selected msel = if msel then "true" else  "false"
+          selected msel = if msel then "true" else  "false" :: String
 
     flink  v str = <a href=(v)> <% str %> </a>
 

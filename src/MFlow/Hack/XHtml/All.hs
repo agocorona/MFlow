@@ -19,7 +19,6 @@ module MFlow.Hack.XHtml.All (
 ,module MFlow.Forms
 ,module MFlow.Forms.XHtml
 ,module MFlow.Forms.Admin
-,module MFlow.Forms.Ajax
 ,module MFlow.Hack.XHtml
 ,module MFlow.Forms.Widgets
 ,module Hack
@@ -34,7 +33,6 @@ import MFlow.FileServer
 import MFlow.Forms
 import MFlow.Forms.XHtml
 import MFlow.Forms.Admin
-import MFlow.Forms.Ajax
 import MFlow.Forms.Widgets
 import MFlow.Hack.XHtml
 

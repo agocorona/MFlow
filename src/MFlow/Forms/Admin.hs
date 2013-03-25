@@ -72,6 +72,7 @@ adminLoop1= do
 wait f= do
     mv <- newEmptyMVar
     forkIO (f1 >> putMVar mv True)
+    putStrLn "wait: ready"
     takeMVar mv
    `E.catch` (\(e:: E.SomeException) ->do
                   ssyncCache
@@ -87,7 +88,7 @@ wait f= do
 -- this gives access to an administrator page. It is necessary to
 -- create an admin user with `setAdminUser`.
 --
--- The administration page is reached with the path \"adminserv"\
+-- The administration page is reached with the path \"adminserv\"
 addAdminWF= addMessageFlows[("adminserv",transient $ runFlow adminMFlow)]
 
 
@@ -155,7 +156,8 @@ showFormList ls n l= do
 
 optionsUser  us = do
     wfs <- liftIO $ return . M.keys =<< getMessageFlows
-    stats <-  liftIO $ mapM  (\wf -> getWFHistory wf Token{twfname= wf,tuser=us}) wfs
+    stats <-  let u= undefined
+              in  liftIO $ mapM  (\wf -> getWFHistory wf (Token wf us u u u u)) wfs
     let wfss= filter (isJust . snd) $ zip wfs stats
     if null wfss
      then ask $ bold << " not logs for this user" ++> wlink () (bold << "Press here")

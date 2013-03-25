@@ -61,6 +61,6 @@ instance FormInput  Html  where
     flink  v str = toHtml $ hotlink  (  v) << str
 
 instance Typeable Html where
-     typeOf =  \_ -> mkTyConApp (mkTyCon "Text.XHtml.Strict.Html") []
+     typeOf =  \_ -> mkTyConApp (mkTyCon3 "xhtml" "Text.XHtml.Strict" "Html") []
 
 

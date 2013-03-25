@@ -1,3 +1,177 @@
+como se genera una respuesta partiendo de un tipo
+
+instance Generate (Id a) where
+    generate= return . id
+
+Como se almacenan las votacones:
+ Vector(prioridad,opcion)
+
+ map user (prioridad , option)    delegations
+  como se recuentan los votos cada vez que vota alguien?
+   cuando vota un usuario
+        mirar sus delegantes
+        ir a cada uno de sus delegantes
+          mirar la prioridad de su voto
+            si es mayor, cambiar el voto en el sumario
+
+como se serializan las votaciones
+  para serializar, es mejor un vector que un map si votan todos
+  si votan unos cuantos, es mejor un map
+  o mejor una tabla per group usuario - numero
+    y luego un map int vote
+  opcion no almacenar y ejecutar la secuencia de eventos de votacion
+    guardar cada voto como un evento
+    ejecutar los eventos para generar la votacion en memoria, no serializarla
+    los eventos se almacenarian en un wf con process
+
+Si uso google docs,por que copiar el texto en el subject
+  si puedo poner un link?
+  servicio añadido votación.
+  add WFlows to google docs.
+
+documento: texto, votation{pregunta, opctiones}
+
+como introducri en el wF un bucle hasta que se cumple una condicion?
+  rechazar un documento hasta que se apruebe.
+    se puede modificar y votar continuamente
+    como determinar que se votó si se modifica continuamente?
+      cuando se aprueba se bloquea?
+       como se notifica al votante que se ha modificado?
+         mensajes? discusión?
+    si se usa una unica DBRef, se pierde el historial de modificaciones
+     cuando esta siendo sometido a votación, bloquear edicion
+     cuando es rechazado,
+        desbloquear edicion
+        permitir reiniciar wf
+           creando un nuevo WFRef
+           prosiguiendo el antiguo WF para tener toda la historia del proceso.
+              codigo de enganche?
+           usar un exec que continue el log
+           permisos de ejecutar?
+             solo el autor y cuando esta en estado editable.
+
+ como reiniciar el wf?
+   ejecutando getConfigureWF otra vez? si
+     pero getConfigureWF añade mas votation y coje el ultimo subject
+
+ como se presentan los resultados
+   no se borran de las colas
+       permanecen en las de cada grupo
+       no hay cola de destino
+       hay que notificar el estado finalizado en el Subject
+
+como se evaluan los resultados
+   por la ultima votacion?
+
+
+processData transact= do
+  let k= key transact
+  th <- start k process
+  r  <-tellToWF k x
+  process val= do
+    step $ do
+      r <- rec
+      val'= r val
+      send $ val'
+      return r
+    process val'
+
+
+rollback con rebuild-1
+freeze:
+  se salva el log a historia
+  se guarda el resultado final
+
+processData t= do
+   let var =
+   res <- do
+           mr <-  readMVar var
+           case mr of
+               Just res -> return res
+               Nothing  -> rebuild mempty
+   log t
+   let res'= mappend res t
+   ever $ writeMVar var res
+   return res'
+ where
+ log x= exec1nc (key x) (step $ return x)
+ rebuild res= do
+   is <- isInRecover
+   if not is
+     then return res
+     else do
+        t <- step $  undefined
+        res' <- res <> t
+        rebuild1 res'
+
+--  fforward f = WF $\s@Stat{..} ->(s{versions=[],recover=false},())
+
+no hace falta fforward
+ el WF permanece en TCache
+  independientemente de si el proceso se ha acabado o no.
+  varios procesos pueden escribir en el mismo log si usan en mismo wfname.
+  basta rebuild y fforward
+
+to do:
+  mensaje fin de sesion
+  ajax: popup con link
+  no ajax:
+     meter addressable
+
+  meter addressable
+     se desactiva con POST
+     re-activable manualmente
+     como saber si es post o get?
+     de momento no desactivarlo
+     como funciona
+      if addressable st
+          st{params= params st ++ getParams mfEnv st}
+
+  datos dentro de un proc que lo maneja
+
+
+
+  transacciones:
+   quiero reservar 1 entrada
+     como lo hago transaccional?
+      como hago events atomico?
+        timestamp todos los req
+
+  por qué no va al link cuando hay timeout y se refresca?
+  condicion de bloqueo?
+
+  debug con Supervisor
+    trace back
+
+  general state para stateless flows?
+   y para datosz
+
+
+problema de dirigirse a root de un flow
+  hasParams controla si hay parametros
+  ahora si no hasParams, refresca
+      para manejar stateful  - shopCart
+      pero entoces root no es addressable
+      soluciones
+        parametro especial  /verbo?root
+            detectarlo
+             if  (addresable && rootParam)
+                  not (inSync st')
+              ||
+               && not (onInit st')
+               && hasParams (mfSequence st') (mfSeqCache st') ( mfEnv st')
+        quitar hasParams
+            se iria siempre a root si no hay parametros
+                malo para shopCart
+
+      no hacer nada
+
+problema : hacer un buen log cuando hay un error con Supervisor
+   que guarde una traza de ejecucion
+
+   (!>) proc text= add tesxt al stack,
+    cuando falla
+
 data Action  a= forall msg.Backward msg  | Forward a
 
 data Supreme m a= Sup { runSup :: StateT m Handlers (Action  a)}

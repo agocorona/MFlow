@@ -54,6 +54,6 @@ instance ToResponse String  where
 
 instance  ToResponse HttpData  where
   toResponse (HttpData hs cookies x)= responseLBS status200 (mkParams ( hs ++ cookieHeaders cookies)) x
-  toResponse (Error NotFound str)= responseLBS status404 [] $ getNotFoundResponse str
+  toResponse (Error NotFound str)= responseLBS status404 [] $ (unsafePerformIO  getNotFoundResponse) str
 
 

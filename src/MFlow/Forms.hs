@@ -70,9 +70,34 @@ It is posssible to combine links and forms in the same widget by using applicati
 additional applicative combinators like  \<+> !*> , |*|. Widgets are also monoids, so they can
 be combined as such.
 
-* NEW IN THIS RELEASE:
+* NEW IN THIS RELEASE
 
-[@Back Button@] This is probably the first implementation of an stateful Web framework that works well with the back button, thanks
+[@WAI interface@] Now MFlow works with Snap and other WAI developments. Include "MFlow.Wai" or "MFlow.Wai.Blaze.Html.All" to use it.
+
+[@blaze-html support@] see <http://hackage.haskell.org/package/blaze-html> import "MFlow.Forms.Blaze.Html" or "MFlow.Wai.Blaze.Html.All" to use Blaze-Html
+
+[@AJAX@] Now an ajax procedures (defined with 'ajax' can perform many interactions with the browser widgets, instead
+of a single request-response (see 'ajaxSend').
+
+[@Active widgets@] "MFlow.Forms.Widgets" contains active widgets that interact with the
+server via Ajax and dynamically control other widgets: 'wEditList', 'autocomplete' 'autocompleteEdit' and others.
+
+[@Requirements@] a widget can specify javaScript files, JavasScript online scipts, CSS files, online CSS and server processes
+ and any other instance of the 'Requrement' class. See 'requires' and 'WebRequirements'
+
+
+[@content-management@] for templating and online edition of the content template. See 'tFieldEd' 'tFieldGen' and 'tField'
+
+[@multilanguage@] see 'mField' and 'mFieldEd'
+
+[@URLs to internal states@] if the web navigation is trough GET forms or links,
+ an URL can express a direct path to the n-th step of a flow, So this URL can be shared with other users.
+Just like in the case of an ordinary stateless application.
+
+* NEW IN PREVIOUS RELEASE:
+
+[@Back Button@] This is probably the first implementation in any language where the navigation
+can be expressed procedurally and still it works well with the back button, thanks
 to monad magic. (See <http://haskell-web.blogspot.com.es/2012/03//failback-monad.html>)
 
 
@@ -95,134 +120,16 @@ Example:
 @ ask $ wform userloginform \``validate`\` valdateProc \``waction`\` loginProc \``wmodify`\` hideIfLogged@
 
 
-[@attributes for formLet elements@] it is not only possible to add Html formatting, but also to add atributes to a formlet element.
-This example has three formLet elements with the attribute "size" added, and a string prepended to the second password box.
-
-> userFormLine=
->        (User <$> getString (Just "enter user")                  <! [("size","5")]
->              <*> getPassword                                    <! [("size","5")]
->              <** submitButton "login")
->              <+> (fromStr "  password again" ++> getPassword  <! [("size","5")]
->              <*  submitButton "register")
+[@attributes for formLet elements@]  to add atributes to widgets. See the  '<!' opèrator
 
 
-[@ByteString normalization and hetereogeneous formatting@] For caching the rendering of widgets at the ByteString level, and to permit many formatring styles
+[@ByteString normalization and hetereogeneous formatting@] For caching the rendering of widgets at the
+ ByteString level, and to permit many formatring styles
 in the same page, there are operators that combine different formats which are converted to ByteStrings.
 For example the header and footer may be coded in XML, while the formlets may be formatted using Text.XHtml.
 
-
-[@AJAX@] See "MFlow.Forms.Ajax"
-
-
 [@File Server@] With file caching. See "MFlow.FileServer"
 
-This is a complete example, that can be run with runghc, which show some of these features:
-
-> {-# LANGUAGE ScopedTypeVariables, DeriveDataTypeable #-}
-> module Main where
-> import MFlow.Wai.XHtml.All
-> import Data.TCache
-> import Control.Monad.Trans
-> import Data.Typeable
-> import Control.Concurrent
-> import Control.Exception as E
-> import qualified Data.ByteString.Char8 as SB
-> import qualified Data.Vector as V
-> import Data.Maybe
->
-> data Ops= Ints | Strings | Actions | Ajax | Opt deriving(Typeable,Read, Show)
-> main= do
->    setFilesPath ""
->    addFileServerWF
->    addMessageFlows [(""  ,transient $ runFlow mainf)
->                    ,("shop"    ,runFlow shopCart)]
->    forkIO $ run 80 waiMessageFlow
->    adminLoop
->
-> stdheader c= p << "you can press the back button to go to the menu"+++ c
->
-> mainf=   do
->        setHeader stdheader
->        r <- ask $   wlink Ints (bold << "increase an Int")
->                <|>  br ++> wlink Strings (bold << "increase a String")
->                <|>  br ++> wlink Actions (bold << "Example of a string widget with an action")
->                <|>  br ++> wlink Ajax (bold << "Simple AJAX example")
->                <|>  br ++> wlink Opt (bold << "select options")
->                <++ (br +++ linkShop) -- this is an ordinary XHtml link
->
->        case r of
->          Ints    ->  clickn 0
->          Strings ->  clicks "1"
->          Actions ->  actions 1
->          Ajax    ->  ajaxsample
->          Opt     ->  options
->        mainf
->     where
->     linkShop= toHtml $ hotlink  "shop" << "shopping"
->
-> options= do
->    r <- ask $ getSelect (setOption "blue" (bold << "blue")   <|>
->                          setSelectedOption "Red"  (bold << "red")  ) <! dosummit
->    ask $ p << (r ++ " selected") ++> wlink () (p<< " menu")
->    breturn()
->    where
->    dosummit= [("onchange","this.form.submit()")]
->
-> clickn (n :: Int)= do
->    setHeader stdheader
->    r <- ask $  wlink "menu" (p << "menu")
->            |+| getInt (Just n) <* submitButton "submit"
->    case r of
->     (Just _,_) -> breturn ()
->     (_, Just n') -> clickn $ n'+1
->
->
-> clicks s= do
->    setHeader stdheader
->    s' <- ask $ (getString (Just s)
->              <* submitButton "submit")
->              `validate` (\s -> return $ if length s   > 5 then Just "length must be < 5" else Nothing )
->    clicks $ s'++ "1"
->
->
-> ajaxheader html= thehtml << ajaxHead << p << "click the box" +++ html
->
-> ajaxsample= do
->    setHeader ajaxheader
->    ajaxc <- ajax "document.getElementById('text1').value"
->                         (\n ->  return $ "document.getElementById('text1').value='"++show(read  n +1)++"'")
->    ask $ (getInt (Just 0) <! [("id","text1"),("onclick", ajaxc)])
->    breturn()
->
-> actions n=do
->   ask $ wlink () (p << "exit from action")
->      <**((getInt (Just (n+1)) <** submitButton "submit" ) `waction` actions )
->   breturn ()
->
-> -- A persistent flow  (uses step). The process is killed after 10 seconds of inactivity
-> -- but it is restarted automatically. if you restart the program, it remember the shopping cart
-> -- defines a table with links enclosed that return ints and a link to the menu, that abandon this flow.
-> shopCart  = do
->    setTimeouts 10 0
->    shopCart1 (V.fromList [0,0,0:: Int])
->    where
->    shopCart1 cart=  do
->      i <- step . ask $
->              table ! [border 1,thestyle "width:20%;margin-left:auto;margin-right:auto"]
->              <<< caption << "choose an item"
->              ++> thead << tr << concatHtml[ th << bold << "item", th << bold << "times chosen"]
->              ++> (tbody
->                   <<<  tr ! [rowspan 2] << td << linkHome
->                   ++> (tr <<< td <<< wlink  0 (bold <<"iphone") <++  td << ( bold << show ( cart V.! 0))
->                   <|>  tr <<< td <<< wlink  1 (bold <<"ipad")   <++  td << ( bold << show ( cart V.! 1))
->                   <|>  tr <<< td <<< wlink  2 (bold <<"ipod")   <++  td << ( bold << show ( cart V.! 2)))
->                   <++  tr << td << linkHome
->                   )
->
->      let newCart= cart V.// [(i, cart V.! i + 1 )]
->      shopCart1 newCart
->      where
->      linkHome= (toHtml $ hotlink  noScript << bold << "home")
 
 -}
 
@@ -233,14 +140,15 @@ module MFlow.Forms(
 FlowM, View(..), FormElm(..), FormInput(..)
 
 -- * Users 
-,userRegister, userValidate, isLogged, User(userName), setAdminUser, getAdminName
-,getCurrentUser,getUserSimple, getUser, userFormLine, userLogin,logout, userWidget,getLang,
+,userRegister, userValidate, isLogged, setAdminUser, getAdminName
+,getCurrentUser,getUserSimple, getUser, userFormLine, userLogin,logout, userWidget,getLang, login,
+userName,
 -- * User interaction 
-ask, clearEnv, wstateless, transfer,
+ask, askt, asktn, clearEnv, wstateless, transfer,
 -- * formLets 
--- | they mimic the HTML form elements.
+-- | They usually produce the HTML form elements (depending on the FormInput instance used)
 -- It is possible to modify their attributes with the `<!` operator.
--- They are combined with the widget combinators.
+-- They are combined with applicative ombinators and some additional ones
 -- formatting can be added with the formatting combinators.
 -- modifiers change their presentation and behaviour
 getString,getInt,getInteger, getTextBox 
@@ -251,12 +159,13 @@ submitButton,resetButton, whidden, wlink, returning, wform, firstOf, manyOf, wra
 ,validate, noWidget, waction, wmodify,
 
 -- * Caching widgets
-cachedWidget, wcached, wfreeze, 
+cachedWidget, wcached, wfreeze,
+
 -- * Widget combinators
 (<+>),(|*>),(|+|), (**>),(<**),(<|>),(<*),(<$>),(<*>),(>:>)
 
 -- * Normalized (convert to ByteString) widget combinators
--- | these dot operators are indentical to the non dot operators, with the addition of the conversion of the arguments to lazy byteStrings
+-- | These dot operators are indentical to the non dot operators, with the addition of the conversion of the arguments to lazy byteStrings
 --
 -- The purpose is to combine heterogeneous formats into byteString-formatted widgets that
 -- can be cached with `cachedWidget`
@@ -266,7 +175,7 @@ cachedWidget, wcached, wfreeze,
 (<<<),(<++),(++>),(<!),
 
 -- * Normalized (convert to ByteString) formatting combinators
--- | some combinators that convert the formatting of their arguments to lazy byteString
+-- | Some combinators that convert the formatting of their arguments to lazy byteString
 (.<<.),(.<++.),(.++>.)
 
 -- * ByteString tags
@@ -276,7 +185,7 @@ cachedWidget, wcached, wfreeze,
 , flatten, normalize
 
 -- * Running the flow monad
-,runFlow,runFlowIn,MFlow.Forms.Internals.step, goingBack,breturn
+,runFlow,runFlowOnce,runFlowIn,MFlow.Forms.Internals.step, goingBack,breturn
 
 -- * Setting parameters
 ,setHeader
@@ -293,16 +202,14 @@ cachedWidget, wcached, wfreeze,
 ,ajaxSend_
 -- * Requirements
 ,Requirements(..)
+,WebRequirement(..)
 ,requires
 -- * Utility
 ,genNewId
 ,changeMonad
-
-,installServerControl
-,getToken
-,receiveWithTimeouts
-,getEnv
-,MFlowState
+,FailBack
+,fromFailBack
+,toFailBack
 )
 where
 
@@ -314,7 +221,7 @@ import MFlow.Forms.Internals
 import MFlow.Cookies
 import Data.ByteString.Lazy.Char8 as B(ByteString,cons,pack,unpack,append,empty,fromChunks) 
 import Data.List
-import qualified Data.CaseInsensitive as CI
+--import qualified Data.CaseInsensitive as CI
 import Data.Typeable
 import Data.Monoid
 import Control.Monad.State.Strict 
@@ -344,19 +251,18 @@ import Debug.Trace
 validate
   :: (FormInput view, Monad m) =>
      View view m a
-     -> (a -> WState view m (Maybe String))
+     -> (a -> WState view m (Maybe view))
      -> View view m a
 validate  formt val= View $ do
-   FormElm form mx <- (runView  formt) 
+   FormElm form mx <- (runView  formt)  
    case mx of
     Just x -> do
       me <- val x
       modify (\s -> s{inSync= True})
       case me of
          Just str ->
-           --FormElm form mx' <- generateForm [] (Just x) noValidate
-           return $ FormElm ( inred (fromStr str) : form) Nothing
-         Nothing  -> return $ FormElm [] mx
+           return $ FormElm ( form ++ [inred  str]) Nothing 
+         Nothing  -> return $ FormElm [] mx 
     _ -> return $ FormElm form mx
 
 -- | Actions are callbacks that are executed when a widget is validated.
@@ -375,7 +281,7 @@ waction f ac = do
   let env =  mfEnv s
   let seq = mfSequence s
   put s{mfSequence=mfSequence s+ 100,mfEnv=[]}
-  r <- flowToView $ ac x !> "ACTION"
+  r <- flowToView $ ac x
   modify $ \s-> s{mfSequence= seq, mfEnv= env}
   return r
   where
@@ -414,29 +320,29 @@ wmodify formt act = View $ do
 --      let (x,y,z)= case mxy of Nothing -> (Nothing, Nothing, Nothing); Just (x,y,z)-> (Just x, Just y,Just z)
 --      (,,) <$> digest x  <*> digest  y  <*> digest  z
 
--- | display a text box and return a String
+-- | Display a text box and return a String
 getString  :: (FormInput view,Monad m) =>
      Maybe String -> View view m String
 getString = getTextBox
 
--- | display a text box and return an Integer (if the value entered is not an Integer, fails the validation)
+-- | Display a text box and return an Integer (if the value entered is not an Integer, fails the validation)
 getInteger :: (FormInput view,  MonadIO m) =>
      Maybe Integer -> View view m  Integer
 getInteger =  getTextBox
 
--- | display a text box and return a Int (if the value entered is not an Int, fails the validation)
+-- | Display a text box and return a Int (if the value entered is not an Int, fails the validation)
 getInt :: (FormInput view, MonadIO m) =>
      Maybe Int -> View view m Int
 getInt =  getTextBox
 
--- | display a password box 
+-- | Display a password box 
 getPassword :: (FormInput view,
      Monad m) =>
      View view m String
 getPassword = getParam Nothing "password" Nothing
 
 data Radio= Radio String
--- | implement a radio button that perform a submit when pressed.
+-- | Implement a radio button that perform a submit when pressed.
 -- the parameter is the name of the radio group
 setRadioActive :: (FormInput view,  MonadIO m) =>
              String -> String -> View view m  Radio
@@ -450,7 +356,7 @@ setRadioActive  v n = View $ do
           (fmap Radio mn)
 
 
--- | implement a radio button
+-- | Implement a radio button
 -- the parameter is the name of the radio group
 setRadio :: (FormInput view,  MonadIO m) =>
             String -> String -> View view m  Radio
@@ -483,10 +389,10 @@ instance Monoid CheckBoxes where
 --  mempty= return (CheckBoxes [])
 
 instance (Monad m, Functor m, Monoid a) => Monoid (View v m a) where
-  mappend x y = mappend <$> x <*> y  -- ^ beware that both operands must validate to generate a sum
+  mappend x y = mappend <$> x <*> y  -- beware that both operands must validate to generate a sum
   mempty= return mempty
 
--- | display a text box and return the value entered if it is readable( Otherwise, fail the validation)
+-- | Display a text box and return the value entered if it is readable( Otherwise, fail the validation)
 setCheckBox :: (FormInput view,  MonadIO m) =>
                 Bool -> String -> View view m  CheckBoxes
 setCheckBox checked v= View $ do
@@ -506,7 +412,7 @@ setCheckBox checked v= View $ do
         ( checked || (isJust mn  && v== fromJust mn)) Nothing])
       ret
 
--- | read the checkboxes dinamically created by JavaScript within the view parameter
+-- | Read the checkboxes dinamically created by JavaScript within the view parameter
 -- see for example `selectAutocomplete` in "MFlow.Forms.Widgets"
 genCheckBoxes :: (Monad m, FormInput view) => view ->  View view m  CheckBoxes
 genCheckBoxes v= View $ do
@@ -550,9 +456,6 @@ getCheckBoxes boxes =  View $ do
 
 
 
--- get a parameter form the las received response
-getEnv ::  MonadState (MFlowState view) m =>  m Params
-getEnv = gets mfEnv
      
 getTextBox
   :: (FormInput view,
@@ -592,7 +495,7 @@ getParam look type1 mvalue = View $ do
     put st{needForm= True}
     getParam1 tolook env form
        
--- | generate a new string. Useful for creating tag identifiers and other attributes
+-- | Generate a new string. Useful for creating tag identifiers and other attributes
 genNewId :: MonadState (MFlowState view) m =>  m String
 genNewId=  do
   st <- get
@@ -607,18 +510,6 @@ genNewId=  do
       return $  'c' : (show n)
 
 
-
-
-
-
---genNewId :: MonadState (MFlowState view) m =>  m String
---genNewId= do
---      st <- get
---      let n= mfSequence st
---      put $ st{mfSequence= n+1}
---      let pref= if mfCached st then 'c' else 'p'
---      return $  pref : (show n)
-
 getCurrentName :: MonadState (MFlowState view) m =>  m String
 getCurrentName= do
      st <- get
@@ -626,7 +517,7 @@ getCurrentName= do
      return $ "p"++show parm
 
 
--- | display a multiline text box and return its content
+-- | Display a multiline text box and return its content
 getMultilineText :: (FormInput view,
       Monad m) =>
       String ->  View view m String
@@ -645,7 +536,7 @@ getMultilineText nvalue = View $ do
 --                          True ->  "True"
 --                          False -> "False"
 
--- | display a dropdown box with the two values (second (true) and third parameter(false))
+-- | Display a dropdown box with the two values (second (true) and third parameter(false))
 -- . With the value of the first parameter selected.                  
 getBool :: (FormInput view,
       Monad m) =>
@@ -663,7 +554,7 @@ getBool mv truestr falsestr= View $  do
     where
     fromstr x= if x== truestr then True else False
 
--- | display a dropdown box with the options in the first parameter is optionally selected
+-- | Display a dropdown box with the options in the first parameter is optionally selected
 -- . It returns the selected option. 
 getSelect :: (FormInput view,
       Monad m,Typeable a, Read a) =>
@@ -682,10 +573,10 @@ instance (Monad m, Functor m) => Monoid (View view m (MFOption a)) where
   mappend =  (<|>)
   mempty = Control.Applicative.empty
 
--- | set the option for getSelect. Options are concatenated with `<|>`
+-- | Set the option for getSelect. Options are concatenated with `<|>`
 setOption n v = setOption1 n v False
 
--- | set the selected option for getSelect. Options are concatenated with `<|>`
+-- | Set the selected option for getSelect. Options are concatenated with `<|>`
 setSelectedOption n v= setOption1 n v True
  
 setOption1 :: (FormInput view,
@@ -699,22 +590,25 @@ setOption1 nam  val check= View $ do
     return . FormElm [foption n val check]  $ Just MFOption
 
 
--- | Enclose Widgets in some formating.
+-- | Enclose Widgets within some formating.
 -- @view@ is intended to be instantiated to a particular format
 --
--- This is a widget, which is table with some links. it returns an Int
+-- This is a widget, which is a table with some links. it returns an Int
 --
--- > import MFlow.Forms.XHtml
+-- it has a infix priority : @infixr 5@ less than '++>' so use parenthesis when appropriate
+--
+-- > import MFlow.Forms.Blaze.Html
 -- >
 -- > tableLinks :: View Html Int
--- > tableLinks= table ! [border 1,thestyle "width:20%;margin-left:auto;margin-right:auto"]
--- >              <<< caption << "choose an item"
--- >              ++> thead << tr << concatHtml[ th << bold << "item", th << bold << "times chosen"]
--- >              ++> (tbody
--- >                   <<< (tr <<< td <<< wlink  0 (bold <<"iphone") <++  td << ( bold << "One")
--- >                   <|>  tr <<< td <<< wlink  1 (bold <<"ipad")   <++  td << ( bold << "Two")
--- >                   <|>  tr <<< td <<< wlink  2 (bold <<"ipod")   <++  td << ( bold << "Three"))
--- >                   )
+-- > table ! At.style "border:1;width:20%;margin-left:auto;margin-right:auto"
+-- >            <<< caption << text "choose an item"
+-- >            ++> thead << tr << ( th << b << text  "item" <> th << b << text "times chosen")
+-- >            ++> (tbody
+-- >                 <<< tr ! rowspan "2" << td << linkHome
+-- >                 ++> (tr <<< td <<< wlink  IPhone (b << text "iphone") <++  td << ( b << text (fromString $ show ( cart V.! 0)))
+-- >                 <|>  tr <<< td <<< wlink  IPod (b << text "ipad")     <++  td << ( b << text (fromString $ show ( cart V.! 1)))
+-- >                 <|>  tr <<< td <<< wlink  IPad (b << text "ipod")     <++  td << ( b << text (fromString $ show ( cart V.! 2))))
+-- >                 )
 (<<<) :: (Monad m,  Monoid view)
           => (view ->view)
          -> View view m a
@@ -745,6 +639,8 @@ infixr 5 <<<
 -- | Append formatting code to a widget
 --
 -- @ getString "hi" <++ H1 << "hi there"@
+--
+-- It has a infix prority: @infixr 6@ higuer that '<<<' and most other operators
 (<++) :: (Monad m)
       => View v m a
       -> v
@@ -757,7 +653,8 @@ infixr 6 <++ , .<++. , ++> , .++>.
 -- | Prepend formatting code to a widget
 --
 -- @bold << "enter name" ++> getString Nothing @
-
+--
+-- It has a infix prority: @infixr 6@ higuer that '<<<' and most other operators
 (++>) :: (Monad m,  Monoid view)
        => view -> View view m a -> View view m a
 html ++> digest =  (html `mappend`) <<< digest
@@ -765,28 +662,16 @@ html ++> digest =  (html `mappend`) <<< digest
 
 
 
--- | add attributes to the form element
--- if the view has more than one element, it is applied to  the first
+-- | Add attributes to the topmost tag of a widget
+--
+-- it has a fixity @infix 8@
 infix 8 <!
-widget <! atrs= View $ do
+widget <! attribs= View $ do
       FormElm fs  mx <- runView widget
-      return $ FormElm  [attrs (head fs) atrs] mx
-
-
--------------------------------
-
---
---
---instance (MonadIO m, Functor m, FormInput view)
---         => FormLet User m view where
---       digest muser=
---        (User <$>  getString ( userName <$> muser)
---              <*>  getPassword)
---        `validate` userValidate
-
-
-
-
+      return $ FormElm  (head fs `attrs` attribs:tail fs) mx
+--      case fs of
+--        [hfs] -> return $ FormElm  [hfs `attrs` attribs] mx
+--        _ -> error $ "operator <! : malformed widget: "++ concatMap (unpack. toByteString) fs
 
 
 -- | Is an example of login\/register validation form needed by 'userWidget'. In this case
@@ -820,19 +705,19 @@ userLogin=
 
 
 
--- | empty widget that return Nothing. May be used as \"empty boxes\" inside larger widgets
+-- | Empty widget that return Nothing. May be used as \"empty boxes\" inside larger widgets
 noWidget ::  (FormInput view,
      Monad m) =>
      View view m a
 noWidget= View . return $ FormElm  [] Nothing
 
--- | render a  value and return it
+-- | Render a Show-able  value and return it
 wrender
   :: (Monad m, Functor m, Show a, FormInput view) =>
      a -> View view m a
-wrender x = (wraw . fromStr $ show x) **> return x
+wrender x = (fromStr $ show x) ++> return x
 
--- | render raw view formatting. It is useful for displaying information
+-- | Render raw view formatting. It is useful for displaying information
 wraw :: Monad m => view -> View view m ()
 wraw x= View . return . FormElm [x] $ Just ()
 
@@ -857,39 +742,53 @@ userWidget muser formuser= do
    user <- getCurrentUser
    if muser== Just user
          then return user
-         else formuser `validate` val muser `waction` login 
+         else formuser `validate` val muser `waction` login1 
    where
-   val _ (Nothing,_) = return $ Just "Plese fill in the user/passwd to login, or user/passwd/passwd to register"
+   val _ (Nothing,_) = return . Just $ fromStr "Plese fill in the user/passwd to login, or user/passwd/passwd to register"
 
    val mu (Just us, Nothing)=
         if isNothing mu || isJust mu && fromJust mu == fst us
            then userValidate us
-           else return $ Just "wrong user for the operation"
+           else return . Just $ fromStr "wrong user for the operation"
 
    val mu (Just us, Just p)=
       if isNothing mu || isJust mu && fromJust mu == fst us
         then  if  length p > 0 && snd us== p
                   then return Nothing
-                  else return $ Just "The passwords do not match"
-        else return $ Just "wrong user for the operation"
+                  else return . Just $ fromStr "The passwords do not match"
+        else return . Just $ fromStr "wrong user for the operation"
 
---   val _ _ = return $ Just "Please fill in the fields for login or register"
+--   val _ _ = return . Just $ fromStr "Please fill in the fields for login or register"
 
-   login (Just (u,p), Nothing)= do
-         let uname= u
-         st <- get
-         let t = mfToken st
-             t'= t{tuser= uname}
-         moveState (twfname t) t t'
-         put st{mfToken= t'}
-         liftIO $ deleteTokenInList t
-         liftIO $ addTokenToList t'
-         setCookie cookieuser   uname "/"  (Just $ 365*24*60*60) 
-         return uname
+   login1
+      :: (MonadIO m, MonadState (MFlowState view) m) =>
+         (Maybe (String, String), Maybe String) -> m String
+   login1 (Just (uname,_), Nothing)= login uname >> return uname
 
-   login (Just us@(u,p), Just _)=  do
-         userRegister u p
-         login (Just us , Nothing)
+   login1 (Just us@(u,p), Just _)=  do  -- register button pressed
+             userRegister u p
+             login u
+             return u
+
+-- | change the user
+--
+-- It is supposed that the user has been validated
+
+
+login uname= do
+ st <- get
+ let t = mfToken st
+     u = tuser t
+ if u== uname then return () else do
+     let t'= t{tuser= uname}
+     moveState (twfname t) t t'
+     put st{mfToken= t'}
+     liftIO $ deleteTokenInList t
+     liftIO $ addTokenToList t'
+     setCookie cookieuser   uname "/"  (Just $ 365*24*60*60) 
+     return ()
+
+
 
 -- | logout. The user is resetted to the `anonymous` user
 logout :: (MonadIO m, MonadState (MFlowState view) m) => m ()
@@ -927,13 +826,12 @@ getUser :: ( FormInput view, Typeable view
 getUser mu form= ask $ userWidget mu form
 
 
---instance   (MonadIO m, Functor m, m1 ~ m, b ~ a)
---           => Widget(View view m1 b) a m view where
---    widget  =  id 
-
 -- | Join two widgets in the same page
 -- the resulting widget, when `ask`ed with it, return a 2 tuple of their validation results
+-- if both return Noting, the widget return @Nothing@ (invalid).
 --
+-- it has a low infix priority: @infixr 2@
+-- 
 --  > r <- ask  widget1 <+>  widget2
 --  > case r of (Just x, Nothing) -> ..
 (<+>) , mix ::  Monad m
@@ -953,7 +851,7 @@ infixr 2 <+>, .<+>.
 (<+>)  = mix
 
 
-infixr 1  **> , .**>. ,  <** , .<**.
+
 -- | The first elem result (even if it is not validated) is discarded, and the secod is returned
 -- . This contrast with the applicative operator '*>' which fails the whole validation if
 -- the validation of the first elem fails.
@@ -966,18 +864,21 @@ infixr 1  **> , .**>. ,  <** , .<**.
 --
 --   @(w1 <** w2)@ will return @Just r1@ even if w2 is not validated
 --
-
+--  it has a low infix priority: @infixr 1@
 
 (**>) :: (Functor m, Monad m)
       => View view m a -> View view m b -> View view m b
 (**>) form1 form2 = valid form1 *> form2
 
+infixr 1  **> , .**>. ,  <** , .<**.
 
 -- | The second elem result (even if it is not validated) is discarded, and the first is returned
 -- . This contrast with the applicative operator '*>' which fails the whole validation if
 -- the validation of the second elem fails.
 -- The second element is displayed however, as in the case of '<*'.
 -- see the `<**` examples
+--
+--  it has a low infix priority: @infixr 1@
 (<**)
   :: (Functor m, Monad m) =>
      View view m a -> View view m b -> View view m a
@@ -988,23 +889,38 @@ valid form= View $ do
    FormElm form mx <- runView form
    return $ FormElm form $ Just undefined
 
+-- | for compatibility with the same procedure in 'MFLow.Forms.Text.askt'.
+-- This is the non testing version
+--
+-- > askt v w= ask w
+--
+-- hide one or the other
+askt :: (MonadIO m, FormInput v) => a -> View v m a -> FlowM v m a
+askt v w =  ask w
+
+asktn :: (MonadIO m, FormInput v) => [a] -> View v m a -> FlowM v m a
+asktn vs w =  ask w
 
 -- | It is the way to interact with the user.
 -- It takes a widget and return the user result.
--- If the environment has the result, ask don't ask to the user.
+--
+-- If the widget is not validated (return @Nothing@), the page is presented again
+--
+-- If the environment has the parameters being looked at, as a result of a previous interaction,
+-- it will not ask to the user.
 -- To force asking in any case, put an `clearEnv` statement before
 ask
-  :: (
-      FormInput view,
-      MonadIO m,
-      Typeable view) =>
+  :: (FormInput view,
+      MonadIO m) =>
       View view m b -> FlowM view m b
 ask w =  do
   st1 <- get
   let env= mfEnv st1
-  case (mfAjax st1,lookup "ajax" env, lookup "val" env)  of
-   ( Just ajaxl,Just v1, Just v2) -> do
-     let f = fromMaybe (error $ "not found Ajax handler for: "++ v1) $ M.lookup v1 ajaxl
+  let mv1= lookup "ajax" env
+  let majax1= mfAjax st1
+
+  case (majax1,mv1,M.lookup (fromJust mv1)(fromJust majax1), lookup "val" env)  of
+   (Just ajaxl,Just v1,Just f, Just v2) -> do
      FlowM . lift $ (unsafeCoerce f) v2
      FlowM $ lift receiveWithTimeouts
      ask w
@@ -1020,7 +936,7 @@ ask w =  do
 
        Just x -> do
          put st'{prevSeq= mfSequence st: prevSeq st',onInit= True ,mfEnv=[]}
-         breturn x -- BackT . return $ BackPoint  x                                 -- !> "just x"
+         breturn x                      -- !> "just x"
 
        Nothing ->
          if  not (inSync st') && not (onInit st') && hasParams (mfSequence st') (mfSeqCache st') ( mfEnv st')  -- !> (show $ inSync st')  !> (show $ onInit st')
@@ -1087,7 +1003,7 @@ ask w =  do
 --                op1 -> setGoStraighTo (Just goop1) >> goop1
 --                op2 -> setGoStraighTo (Just goop2) >> goop2@
 --
--- However this is very specialized. normally the back button detection is not necessary.
+-- However this is very specialized. Normally the back button detection is not necessary.
 -- In a persistent flow (with step) even this default entry option would be completely automatic,
 -- since the process would restar at the last page visited. No setting is necessary.
 goingBack :: MonadState (MFlowState view) m => m Bool
@@ -1110,7 +1026,8 @@ receiveWithTimeouts= do
          req <- return . getParams =<< liftIO ( receiveReqTimeout t1 t2  t)
          put st{mfEnv= req}
 
--- | it creates a stateless flow (see `stateless`) whose behaviour is defined as a widget  
+
+-- | Creates a stateless flow (see `stateless`) whose behaviour is defined as a widget  
 wstateless
   :: (Typeable view,  FormInput view) =>
      View view IO a -> Flow
@@ -1148,9 +1065,8 @@ transfer flowname =do
              sendFlush t r
 
 
-
--- | wrap a widget of form element within a form-action element.
----- Usually it is done automatically by the @Wiew@ monad.
+-- | Wrap a widget of form element within a form-action element.
+---- Usually this is not necessary since this wrapping is done automatically by the @Wiew@ monad.
 wform ::  (Monad m, FormInput view)
           => View view m b -> View view m b  
 
@@ -1173,8 +1089,20 @@ submitButton label= getParam Nothing "submit" $ Just label
 
 newtype AjaxSessionId= AjaxSessionId String deriving Typeable
 
-ajax :: (MonadIO m) => (String ->  View v m ByteString) ->  View v m (String -> String)
+-- | Install the server code and return the client code for an AJAX interaction.
+--
+-- This example increases the value of a text box each time the box is clicked
+--
+-- >  ask $ do
+-- >        let elemval= "document.getElementById('text1').value"
+-- >        ajaxc <- ajax $ \n -> return $ elemval <> "='" <> B.pack(show(read  n +1)) <> "'"
+-- >        b <<  text "click the box"
+-- >          ++> getInt (Just 0) <! [("id","text1"),("onclick", ajaxc elemval)]
+ajax :: (MonadIO m)
+     => (String ->  View v m ByteString)  -- ^ user defined procedure, executed in the server.Receives the value of the javascript expression and must return another javascript expression that will be executed in the web browser
+     ->  View v m (String -> String)      -- ^ returns a function that accept a javascript expression and return a javascript event handler expression that invoques the ajax server procedure
 ajax  f =  do
+     requires[JScript ajaxScript]
      t <- gets mfToken
      id <- genNewId
      installServerControl id $ \x-> do
@@ -1192,7 +1120,9 @@ installServerControl id f= do
       put st{mfAjax=Just ajxl'}
       return $ \param ->  "doServer("++"'" ++  twfname t ++"','"++id++"',"++ param++")"
 
-
+-- | Send the javascript expression, generated by the procedure parameter as a ByteString, execute it in the browser and the result is returned back
+--
+-- The @ajaxSend@ invocation must be inside a ajax procedure or else a /No ajax session set/ error will be produced
 ajaxSend
   :: (Read a,MonadIO m) => View v m ByteString -> View v m a
 ajaxSend cmd=  View $ do
@@ -1213,13 +1143,14 @@ ajaxSend cmd=  View $ do
    where
    readEvalLoop t id v = "doServer('"<> pack (twfname t)<>"','"<> pack id<>"',"<>v<>");" :: ByteString
 
+-- | Like @ajaxSend@ but the result is ignored
 ajaxSend_
   :: MonadIO m => View v m ByteString -> View v m ()
 ajaxSend_ = ajaxSend
 
 
     
--- | creates a link wiget. A link can be composed with other widget elements,
+-- | Creates a link wiget. A link can be composed with other widget elements,
 wlink :: (Typeable a, Read a, Show a, MonadIO m, Functor m, FormInput view) 
          => a -> view -> View  view m a
 wlink x v= View $ do
@@ -1231,12 +1162,13 @@ wlink x v= View $ do
           toSend = flink (verb ++ "?" ++  name ++ "=" ++ showx) v
       getParam1 name env [toSend]
 
--- | when some HTML produces a parameter in response, but it is not produced by
--- a form or a link, but for example by an script, returning notify the type checker
--- and the parameter extractor about this fact.
+-- | When some HTML return some response to the server, but it is not produced by
+-- a form or a link, but for example by an script, @returning@ notify the type checker.
+--
+-- At runtime the parameter is read from the environment and validated.
 --
 -- . The parameter is the visualization code, that accept a serialization function that generate
--- the server invocation string used by the visualization to return the value by means
+-- the server invocation string, used by the visualization to return the value by means
 -- of a link or a @window.location@ statement in javasCript
 returning ::(Typeable a, Read a, Show a,Monad m, FormInput view) 
          => ((a->String) ->view) -> View view m a
@@ -1273,12 +1205,15 @@ firstOf xs= View $ do
           res1= if null res then Nothing else head res
       return $ FormElm  vs res1
 
+-- | from a list of widgets, it return the validated ones.
 manyOf :: (FormInput view, MonadIO m, Functor m)=> [View view m a]  -> View view m [a]
 manyOf xs= whidden () *> (View $ do 
       forms <- mapM runView  xs
       let vs  = concatMap (\(FormElm v _) ->  [mconcat v]) forms
+          
           res1= catMaybes $ map (\(FormElm _ r) -> r) forms
       return $ FormElm  vs $ Just res1)
+
 
 (>:>) ::(Monad m)=> View v m a -> View v m [a]  -> View v m [a]
 (>:>) w ws= View $ do
@@ -1290,7 +1225,9 @@ manyOf xs= whidden () *> (View $ do
              (Nothing, mxs) -> mxs
              (Just x, _) -> Just [x]
 
--- | intersperse a widget in a list of widgets. the results is a 2-tuple of both types
+-- | Intersperse a widget in a list of widgets. the results is a 2-tuple of both types.
+--
+-- it has a infix priority @infixr 5@
 (|*>) :: (MonadIO m, Functor m,Monoid view)
             => View view m r
             -> [View view m r']
@@ -1308,7 +1245,10 @@ manyOf xs= whidden () *> (View $ do
 
 infixr 5 |*>, .|*>.
 
--- | Put a widget above and below other. Useful for navigation links in a page.
+-- | Put a widget before and after other. Useful for navigation links in a page that appears at toAdd
+-- and at the bottom of a page.
+
+-- It has a low infix priority: @infixr 1@
 (|+|) :: (Functor m, Monoid view, MonadIO m)
       => View view m r
       -> View view m r'

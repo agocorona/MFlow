@@ -1,18 +1,12 @@
------------------------------------------------------------------------------
---
--- Module      :  MFlow.Forms.Blaze.Html
--- Copyright   :
--- License     :  AllRightsReserved
---
--- Maintainer  :
--- Stability   :
--- Portability :
---
--- |
---
------------------------------------------------------------------------------
 {-# OPTIONS  -XOverloadedStrings -XFlexibleInstances -XTypeSynonymInstances
            #-}
+{- |
+Instantiation of the 'FormInput' class for blaze-html <http://hackage.haskell.org/package/blaze-html>
+
+This package is included in "MFlow.Wai.Blaze.Hml.All".
+
+Use it to create applicaitons with this kind of formatting.
+-}
 module MFlow.Forms.Blaze.Html where
 import MFlow
 import MFlow.Forms
@@ -30,12 +24,9 @@ import Data.String
 import Data.Monoid
 import Unsafe.Coerce
 
-import Debug.Trace
-(!>)= flip trace
-
-
-
-
+-- | used to insert html elements within a tag with the appropriate infix priority for the
+-- other operators used in MFlow
+(<<) :: ToMarkup a => (Markup -> t) -> a -> t
 (<<) tag v= tag $ toMarkup v
 
 infixr 7 <<

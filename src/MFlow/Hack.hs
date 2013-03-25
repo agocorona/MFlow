@@ -3,7 +3,12 @@
              , MultiParamTypeClasses
              , DeriveDataTypeable
              , FlexibleInstances #-}
-             
+
+{- | Instantiation of the "MFlow" server for the Hack interface
+
+see <http://hackage.haskell.org/package/hack>
+-}
+
 module MFlow.Hack(
      module MFlow.Cookies
     ,module MFlow
@@ -54,26 +59,6 @@ instance Processable Env  where
 --   getPath env= pathInfo env
 --   getPort env= serverPort env
 
-   
-data NFlow= NFlow !Integer deriving (Read, Show, Typeable)
-
-instance Serializable NFlow where
-  serialize= B.pack . show
-  deserialize= read . B.unpack
-
-instance Indexable NFlow where
-  key _= "NFlow"
-
-
-rflow= getDBRef . key $ NFlow undefined
-
-newFlow= do
-        TOD t _ <- getClockTime
-        atomically $ do 
-                    NFlow n <- readDBRef rflow `onNothing` return (NFlow 0)
-                    writeDBRef rflow . NFlow $ n+1
-                    return . show $ t + n
-         
 
                     
 ---------------------------------------------

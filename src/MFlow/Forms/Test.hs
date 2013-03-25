@@ -15,14 +15,15 @@
             -XOverlappingInstances
             -XFlexibleInstances
             -XUndecidableInstances
-            -XPatternGuards
+            -XPatternGuards 
             -XRecordWildCards
             #-}
 
-module MFlow.Forms.Test (runTest,ask) where
-import MFlow.Forms hiding(ask)
+module MFlow.Forms.Test (Generate(..),runTest,runTest1, ask, askt, userWidget, getUser, getUserSimple, verify) where
+import MFlow.Forms hiding(ask,askt,getUser,userWidget,getUserSimple)
 import qualified MFlow.Forms (ask)
-import MFlow.Forms(FormInput(..))
+import MFlow.Forms.Internals
+import MFlow.Forms(FormInput(..)) 
 import MFlow.Forms.Admin
 import Control.Workflow as WF
 import Control.Concurrent
@@ -44,39 +45,45 @@ import Data.Maybe
 import Data.IORef
 import MFlow.Cookies(cookieuser)
 
+import Data.Dynamic
+import Data.TCache.Memoization
 
-class Response a where
-  response :: IO a
+import Debug.Trace
 
-instance Response a => Response (Maybe a) where
-   response= do
+(!>)= flip trace
+
+class Generate a where
+  generate :: IO a
+
+instance Generate a => Generate (Maybe a) where
+   generate= do
      b <- randomRIO(0,1 :: Int)
-     case b of 0 -> response >>= return . Just ; _ -> return Nothing
+     case b of 0 -> generate >>= return . Just ; _ -> return Nothing
 
-instance  Response String where
-   response= replicateM 5  $ randomRIO ('a','z')
+instance  Generate String where
+   generate= replicateM 5  $ randomRIO ('a','z')
 
-instance Response Int where
-   response= randomRIO(1,1000)
+instance Generate Int where
+   generate= randomRIO(1,1000)
 
-instance Response Integer where
-   response= randomRIO(1,1000)
-
-
-instance (Response a, Response b) => Response (a,b) where
-  response= fmap (,) response `ap` response
+instance Generate Integer where
+   generate= randomRIO(1,1000)
 
 
-instance (Response a, Response b) => Response (Maybe a,Maybe b) where
-  response= do
-       r <- response
+instance (Generate a, Generate b) => Generate (a,b) where
+  generate= fmap (,) generate `ap` generate
+
+
+instance (Generate a, Generate b) => Generate (Maybe a,Maybe b) where
+  generate= do
+       r <- generate
        case r of
-        (Nothing,Nothing) -> response
+        (Nothing,Nothing) -> generate
         other -> return other
 
 
-instance (Bounded a, Enum a) => Response a where
-    response= mx
+instance (Bounded a, Enum a) => Generate a where
+    generate= mx
      where
      mx= do
           let x= typeOfIO mx
@@ -85,46 +92,96 @@ instance (Bounded a, Enum a) => Response a where
           return $ toEnum n
           where
           typeOfIO :: IO a -> a
-          typeOfIO = error $ "typeOfIO not defined"
+          typeOfIO = undefined
+
+-- | run a list of flows with a number of simultaneous threads
 
 
-runTest :: [(Int, Token -> Workflow IO ())] -> IO ()
-runTest ps=do
+
+runTest :: [(Int, Flow)] -> IO () 
+runTest ps= do
   mapM_ (forkIO . run1) ps
-
   putStrLn $ "started " ++ (show . sum . fst $ unzip ps) ++ " threads"
-  adminLoop
-
-run1 (nusers,  proc) =  replicateM_ nusers $ randomFlow proc
+   
   where
-  randomFlow f = do
-    name <- response
-    x <- response
-    y <- response
-    z <- response
+  run1 (nusers,  proc) =  replicateM_ nusers $ runTest1 proc
+  
+runTest1 f = do
+    name <- generate
+    x <- generate
+    y <- generate
+    z <- generate 
     r1<- liftIO newEmptyMVar
-    r2<- liftIO newEmptyMVar
-    let t = Token x y z r1 r2
-    forkIO . WF.exec1  name $  f t
+    r2<- liftIO newEmptyMVar 
+    let t = Token x y z [] r1 r2
+    WF.start  name   f t
 
 
-ask :: (Response a, MonadIO m, Functor m, FormInput v,Typeable v) => View v m a -> FlowM v m a
+
+
+
+-- | a simulated ask that generate  simulated user generates of the type expected
+--
+--  it is a substitute of 'ask' from "MFlow.Forms" for testing purposes.
+
+-- execute 'runText' to initiate threads under different load conditions.
+ask :: (Generate a, MonadIO m, Functor m, FormInput v,Typeable v) => View v m a -> FlowM v m a
 ask w = do
-     w  `MFlow.Forms.wmodify` (\v x -> consume v >> return (v,x))
-     `seq` rest
-     where
-     consume= liftIO . B.writeFile "NULL" . B.concat . map  toByteString
-     rest= do
-        bool <- liftIO $ response
-        case bool of
-              False -> fail ""
-              True -> do
-                b <- liftIO response
-                r <- liftIO $ response
-                case  (b,r)  of
-                    (True,x)  -> breturn x
-                    _         -> ask w
+    FormElm forms mx <- FlowM . lift $ runView  w
+    r <- liftIO generate
+    breturn $ forms `seq` mx `seq` r
+--    let u= undefined
+--    liftIO $ runStateT (runView mf) s
+--    bool <- liftIO generate 
+--    case bool of
+--          False -> fail ""
+--          True -> do
+--            b <- liftIO generate
+--            r <- liftIO generate
+--            case  (b,r)  of
+--                (True,x)  -> breturn x
+--                _         -> ask w
 
+
+-- | instead of generating a result like `ask`, the result is given as the first parameter
+-- so it does not need a Generate instance
+askt :: Monad m => a -> View v m a -> FlowM v m a
+askt v w =  do
+    FormElm forms mx <- FlowM . lift $ runView  w
+    breturn $ forms `seq` mx `seq` v
+
+mvtestopts :: MVar (M.Map String (Int,Dynamic))
+mvtestopts = unsafePerformIO $ newMVar M.empty
+
+asktn :: (Typeable a,MonadIO m) => [a] -> View v m a -> FlowM v m a
+asktn xs w= do
+    v <- liftIO $ do
+         let k = addrStr xs
+         opts <- takeMVar mvtestopts
+         let r = M.lookup k opts
+         case r of
+              Nothing -> do
+                putMVar mvtestopts $ M.singleton k (0,toDyn xs)
+                return $ head  xs
+              Just (i,d) -> do
+                putMVar mvtestopts $ M.insert k (i+1,d) opts
+                return $ (fromMaybe (error err1) $ fromDynamic d) !! i
+
+    askt v w
+
+    where
+    err1= "MFlow.Forms.Test: asktn: fromDynamic error"
+
+
+-- | verify a property. if not true, throw the error message.
+--
+-- It is intended to be used in a infix notation, on the right of the code
+-- separated from it:
+--
+-- > liftIO $ print (x :: Int)          `verify` (x > 10, "x < = 10")
+verify f (prop, msg)= case prop of
+     True ->  f
+     False -> error  msg
 
 --
 --match form=do
@@ -147,25 +204,57 @@ ask w = do
 --         getPar= par $ search "name"
 --    in  getPar form
 --
-{-
-waction ::(Functor m, MonadIO m,Response a, FormInput view)
+
+waction ::(Functor m, MonadIO m,Generate a, FormInput view)
      => View view m a
      -> (a -> FlowM view m b)
      -> View view m b
 waction w f= do
-  x <- liftIO response
+  x <- liftIO generate
   MFlow.Forms.waction (return x) f
 
+userWidget :: ( MonadIO m, Functor m
+          , FormInput view) 
+         => Maybe String
+         -> View view m (Maybe (String,String), Maybe String)
+         -> View view m String
+userWidget muser formuser= do
+   user <- getCurrentUser
+   if muser== Just user then return user
+    else if isJust muser then do
+          let user= fromJust muser
+          login user >> return user
+    else liftIO generate >>= \u -> login u >> return u
+
+   where
+   login uname= do
+         st <- get
+         let t = mfToken st
+             t'= t{tuser= uname}
+         put st{mfToken= t'}
+         return ()
+   
+getUserSimple :: ( FormInput view, Typeable view
+                 , MonadIO m, Functor m)
+              => FlowM view m String
+getUserSimple= getUser Nothing userFormLine
+
+
+getUser :: ( FormInput view, Typeable view
+           , MonadIO m, Functor m)
+          => Maybe String
+          -> View view m (Maybe (String,String), Maybe String)
+          -> FlowM view m String
+getUser mu form= ask $ userWidget mu form
 
 --wmodify
---  :: (Functor m, MonadIO m, FormInput v, Response (Maybe a)) =>
+--  :: (Functor m, MonadIO m, FormInput v, Generate (Maybe a)) =>
 --     View v m a1
 --     -> ([v] -> Maybe a -> WState v m ([v], Maybe b))
 --     -> View v m b
-wmodify formt act = do
-    x <-  liftIO response
-    formt `MFlow.Forms.wmodify` (\ f _-> return (f,x)) `MFlow.Forms.wmodify` act
--}
+--wmodify formt act = do
+--    x <-  liftIO generate
+--    formt `MFlow.Forms.wmodify` (\ f _-> return (f,x)) `MFlow.Forms.wmodify` act
 
 {-
 type Var= String
@@ -196,15 +285,15 @@ instance  FormInput TestM  where
     formAction  _ _= id
     addAttributes _ _= id
 
-generateResponse Test{..}= do
-  b <- response
+generateGenerate Test{..}= do
+  b <- generate
   case b of
      True -> genLink
      False -> genForm
 
   where
   genForm= do
-         -- one on every response is incomplete
+         -- one on every generate is incomplete
          n <- randomRIO(0,10) :: IO Int
          case n of
            0 -> do
@@ -239,7 +328,7 @@ generateResponse Test{..}= do
       then return []
       else mapM gen tfinput
       where gen(n,_)= do
-             str <- response
+             str <- generate
              return $  (n,str)
 
   genTextArea= do
@@ -249,7 +338,7 @@ generateResponse Test{..}= do
        else mapM gen tftextarea
        where
        gen(n,_)= do
-             str <- response
+             str <- generate
              return $  (n,str)
 
 pwf= "pwf"
@@ -257,7 +346,7 @@ ind= "ind"
 instance  Processable Params where
      pwfname = fromMaybe noScript  . lookup pwf
      puser= fromMaybe anonymous  . lookup cookieuser
-     pind = fromMaybe "0"  . lookup ind
+     pind = fromMaybe "0"  . lookup ind 
      getParams = id
 
 
@@ -267,17 +356,17 @@ runTest nusers = do
    replicateM nusers $ gen wfs
    where
    gen wfs = do
-     u <- response
+     u <- generate
      mapM (genTraffic u) $ M.toList wfs
 
-   genTraffic u (n,_)= forkIO $ iterateresponses  [(pwf,n),(cookieuser,u)] []
+   genTraffic u (n,_)= forkIO $ iterategenerates  [(pwf,n),(cookieuser,u)] []
 
-   iterateresponses ident msg= iterate [] msg
+   iterategenerates ident msg= iterate [] msg
      where
      iterate cs msg= do
        (HttpData ps cooks test,_) <- msgScheduler $  ident ++ cs++ msg
        let cs'= cs++ map (\(a,b,c,d)-> (a,b)) cooks
-       resp <- generateResponse . read $ B.unpack test
+       resp <- generateGenerate . read $ B.unpack test
        iterate cs' resp
 
       -}
