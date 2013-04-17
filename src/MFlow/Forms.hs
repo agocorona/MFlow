@@ -144,7 +144,7 @@ FlowM, View(..), FormElm(..), FormInput(..)
 ,getCurrentUser,getUserSimple, getUser, userFormLine, userLogin,logout, userWidget,getLang, login,
 userName,
 -- * User interaction 
-ask, askt, asktn, clearEnv, wstateless, transfer,
+ask, askt, clearEnv, wstateless, transfer,
 -- * formLets 
 -- | They usually produce the HTML form elements (depending on the FormInput instance used)
 -- It is possible to modify their attributes with the `<!` operator.
@@ -185,7 +185,7 @@ cachedWidget, wcached, wfreeze,
 , flatten, normalize
 
 -- * Running the flow monad
-,runFlow,runFlowOnce,runFlowIn,MFlow.Forms.Internals.step, goingBack,breturn
+,runFlow,runFlowOnce,runFlowIn,MFlow.Forms.Internals.step, goingBack,breturn, preventGoingBack
 
 -- * Setting parameters
 ,setHeader
@@ -210,6 +210,8 @@ cachedWidget, wcached, wfreeze,
 ,FailBack
 ,fromFailBack
 ,toFailBack
+-- * The monster of the deep
+,MFlowState
 )
 where
 
@@ -695,7 +697,7 @@ userFormLine=
 
 -- | Example of user\/password form (no validation) to be used with 'userWidget'
 userLogin :: (FormInput view, Functor m, Monad m)
-            => View view m (Maybe (UserStr,PasswdStr), Maybe String)
+          => View view m (Maybe (UserStr,PasswdStr), Maybe String)
 userLogin=
         ((,)  <$> fromStr "Enter User: " ++> getString Nothing     <! [("size","4")]
               <*> fromStr "  Enter Pass: " ++> getPassword         <! [("size","4")]
@@ -895,11 +897,9 @@ valid form= View $ do
 -- > askt v w= ask w
 --
 -- hide one or the other
-askt :: (MonadIO m, FormInput v) => a -> View v m a -> FlowM v m a
+askt :: (MonadIO m, FormInput v) => (Int -> a) -> View v m a -> FlowM v m a
 askt v w =  ask w
 
-asktn :: (MonadIO m, FormInput v) => [a] -> View v m a -> FlowM v m a
-asktn vs w =  ask w
 
 -- | It is the way to interact with the user.
 -- It takes a widget and return the user result.
@@ -1011,6 +1011,30 @@ goingBack = do
     st <- get
     return $ not (inSync st) && not (onInit st)
 
+-- | Will prevent the backtrack beyond the point where 'preventGoingBack' is located.
+-- If the  user press the back button beyond that point, the flow parameter is executed, usually
+-- it is an ask statement with a message. If the flow is not going back, it does nothing. It is a cut in backtracking
+--
+-- It is useful when an undoable transaction has been commited. For example, after a payment.
+--
+-- This example show a message when the user go back and press again to pay
+--
+-- >   ask $ wlink () << b << "press here to pay 100000 $ "
+-- >   payIt
+-- >   preventGoingBack . ask $ b << "You already payed it before"
+-- >   ask $ wlink () << b << "you payed just one time , no more. press here to go to the menu or press the back button to verify that you can not pay again"
+-- >   where
+-- >   payIt= liftIO $ print "paying"
+
+preventGoingBack
+  :: (Functor m, MonadIO m, FormInput v) => FlowM v m () -> FlowM v m ()
+preventGoingBack msg= do
+   back <- goingBack
+   if not back  then breturn() else do
+         clearEnv
+         msg
+         breturn()
+
 -- | Clears the environment
 clearEnv :: MonadState (MFlowState view) m =>  m ()
 clearEnv= do
@@ -1027,7 +1051,8 @@ receiveWithTimeouts= do
          put st{mfEnv= req}
 
 
--- | Creates a stateless flow (see `stateless`) whose behaviour is defined as a widget  
+-- | Creates a stateless flow (see `stateless`) whose behaviour is defined as a widget. It is a
+-- higuer level form of the latter 
 wstateless
   :: (Typeable view,  FormInput view) =>
      View view IO a -> Flow
@@ -1039,8 +1064,7 @@ wstateless w = transient $ runFlow loop
       put $ env{ mfSequence= 0,prevSeq=[]} 
       loop
 
----- | it creates a stateless flow (see `stateless`) whose behaviour is defined as a widget  
-----
+
 ---- This version writes a log with all the values returned by ask
 --wstatelessLog
 --  :: (Typeable view, ToHttpData view, FormInput view,Serialize a,Typeable a) =>
@@ -1162,7 +1186,7 @@ wlink x v= View $ do
           toSend = flink (verb ++ "?" ++  name ++ "=" ++ showx) v
       getParam1 name env [toSend]
 
--- | When some HTML return some response to the server, but it is not produced by
+-- | When some user interface int return some response to the server, but it is not produced by
 -- a form or a link, but for example by an script, @returning@ notify the type checker.
 --
 -- At runtime the parameter is read from the environment and validated.

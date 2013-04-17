@@ -620,12 +620,12 @@ The flow is executed in a loop. When the flow is finished, it is started again
    adminLoop
 @
 -}
-runFlow :: (FormInput view, Monad m)
+runFlow :: (FormInput view,  Monad m)
         => FlowM view m () -> Token -> m ()
 runFlow  f t =
   loop $ runFlowOnce  f t --evalStateT (runBackT . runFlowM $ breturn() >>  f)  mFlowState0{mfToken=t,mfEnv= tenv t}  >> return ()  -- >> return ()
   where
-  loop f= f >>  loop f
+  loop f= f >> loop f
 
 runFlowOnce :: (FormInput view,  Monad m)
         => FlowM view m () -> Token -> m ()

@@ -19,7 +19,7 @@
             -XRecordWildCards
             #-}
 
-module MFlow.Forms.Test (Generate(..),runTest,runTest1, ask, askt, userWidget, getUser, getUserSimple, verify) where
+module MFlow.Forms.Test (Generate(..),runTest,runTest1,inject, ask, askt, userWidget, getUser, getUserSimple, verify) where
 import MFlow.Forms hiding(ask,askt,getUser,userWidget,getUserSimple)
 import qualified MFlow.Forms (ask)
 import MFlow.Forms.Internals
@@ -107,6 +107,7 @@ runTest ps= do
   run1 (nusers,  proc) =  replicateM_ nusers $ runTest1 proc
   
 runTest1 f = do
+    atomicModifyIORef testNumber (\n -> (n+1,n+1))
     name <- generate
     x <- generate
     y <- generate
@@ -116,11 +117,27 @@ runTest1 f = do
     let t = Token x y z [] r1 r2
     WF.start  name   f t
 
+testNumber= unsafePerformIO $ newIORef 0
 
+getTestNumber :: MonadIO m => m Int
+getTestNumber= liftIO $ readIORef testNumber
 
+-- | inject substitutes an expression by other. It may be used to override
+-- ask interaction with the user. It should bee used infix for greater readability:
+--
+-- > ask something    `inject` const someother
+--
+-- The parameter passed is the test number
+-- if the flow has not been executed by runTest, inject return the original
+inject :: MonadIO m => m b -> (Int -> b) -> m b
+inject exp v= do
+   n <- getTestNumber
+   if n== 0 then exp else exp `seq` return $ v n
 
-
--- | a simulated ask that generate  simulated user generates of the type expected
+-- | a simulated ask that generate  simulated user input of the type expected.
+--
+--  It forces the web page rendering, since it is monadic and can contain
+-- side effects and load effects to be tested.
 --
 --  it is a substitute of 'ask' from "MFlow.Forms" for testing purposes.
 
@@ -129,7 +146,8 @@ ask :: (Generate a, MonadIO m, Functor m, FormInput v,Typeable v) => View v m a 
 ask w = do
     FormElm forms mx <- FlowM . lift $ runView  w
     r <- liftIO generate
-    breturn $ forms `seq` mx `seq` r
+    let n= B.length . toByteString $ mconcat forms
+    breturn $ n `seq` mx `seq` r
 --    let u= undefined
 --    liftIO $ runStateT (runView mf) s
 --    bool <- liftIO generate 
@@ -144,44 +162,64 @@ ask w = do
 
 
 -- | instead of generating a result like `ask`, the result is given as the first parameter
--- so it does not need a Generate instance
-askt :: Monad m => a -> View v m a -> FlowM v m a
+-- so it does not need a Generate instance.
+--
+-- It forces the web page rendering, since it is monadic and can contain
+-- side effects and load effects to be tested.
+askt :: (MonadIO m,FormInput v) => (Int -> a) -> View v m a -> FlowM v m a
 askt v w =  do
     FormElm forms mx <- FlowM . lift $ runView  w
-    breturn $ forms `seq` mx `seq` v
+    n <- getTestNumber
+    let l= B.length . toByteString $ mconcat forms
+    breturn $ l `seq` mx `seq` v n
 
-mvtestopts :: MVar (M.Map String (Int,Dynamic))
-mvtestopts = unsafePerformIO $ newMVar M.empty
+--mvtestopts :: MVar (M.Map String (Int,Dynamic))
+--mvtestopts = unsafePerformIO $ newMVar M.empty
 
-asktn :: (Typeable a,MonadIO m) => [a] -> View v m a -> FlowM v m a
-asktn xs w= do
-    v <- liftIO $ do
-         let k = addrStr xs
-         opts <- takeMVar mvtestopts
-         let r = M.lookup k opts
-         case r of
-              Nothing -> do
-                putMVar mvtestopts $ M.singleton k (0,toDyn xs)
-                return $ head  xs
-              Just (i,d) -> do
-                putMVar mvtestopts $ M.insert k (i+1,d) opts
-                return $ (fromMaybe (error err1) $ fromDynamic d) !! i
-
-    askt v w
-
-    where
-    err1= "MFlow.Forms.Test: asktn: fromDynamic error"
+--asktn :: (Typeable a,MonadIO m) => [a] -> View v m a -> FlowM v m a
+--asktn xs w= do
+--    v <- liftIO $ do
+--         let k = addrStr xs
+--         opts <- takeMVar mvtestopts
+--         let r = M.lookup k opts
+--         case r of
+--              Nothing -> do
+--                putMVar mvtestopts $ M.singleton k (0,toDyn xs)
+--                return $ head  xs
+--              Just (i,d) -> do
+--                putMVar mvtestopts $ M.insert k (i+1,d) opts
+--                return $ (fromMaybe (error err1) $ fromDynamic d) !! i
+--
+--    askt v w
+--
+--    where
+--    err1= "MFlow.Forms.Test: asktn: fromDynamic error"
 
 
 -- | verify a property. if not true, throw the error message.
 --
--- It is intended to be used in a infix notation, on the right of the code
+-- It is intended to be used in a infix notation, on the right of the code,
+-- in order to separate the code assertions from the application code and make clearly
+-- visible them as a form of documentation.
 -- separated from it:
 --
--- > liftIO $ print (x :: Int)          `verify` (x > 10, "x < = 10")
-verify f (prop, msg)= case prop of
+-- > liftIO $ print (x :: Int)          `verify` (return $ x > 10, "x < = 10")
+--
+-- the expression is monadic to allow for complex verifications that may involve IO actions
+verifyM :: Monad m => m b -> (m Bool, String) -> m b
+verifyM f (mprop, msg)= do
+    prop <- mprop
+    case prop of
      True ->  f
      False -> error  msg
+
+-- | a pure version of verifyM
+verify :: a -> (Bool, String) -> a
+verify f (prop, msg)= do
+    case prop of
+     True ->  f
+     False -> error  msg
+
 
 --
 --match form=do
