@@ -140,9 +140,8 @@ users= do
   showFormList   [[wlink u (bold << u) `waction` optionsUser   ] | u<-users] 0 10
 
 showFormList
-  :: (Functor m, MonadIO m) =>
-     [[View Html m ()]]
-     -> Int -> Int -> FlowM Html m b
+  :: [[View Html IO ()]]
+     -> Int -> Int -> FlowM Html IO b
 showFormList ls n l= do
   nav <- ask  $  updown n l <|> (list **> updown n l)
   showFormList ls nav l

@@ -147,7 +147,7 @@ toFailBack x= NoBack x
 
 {-# NOINLINE breturn  #-}
 
--- | Use this instead of return to return from a computation with an ask statement
+-- | Use this instead of return to return from a computation with ask statements
 --
 -- This way when the user press the back button, the computation will execute back, to
 -- the returned code, according with the user navigation.
@@ -329,7 +329,7 @@ mFlowState0 = MFlowState 0 False [] True  False  "en"
 -- >      setHistory $ html' `mappend` html
 
 setSessionData ::  (Typeable a,MonadState (MFlowState view) m) => a ->m ()  
-setSessionData  x=  do
+setSessionData  x=
   modify $ \st -> st{mfData= M.insert  (typeOf x ) (unsafeCoerce x) (mfData st)}
 
 -- | Get the session data of the desired type if there is any.
@@ -621,16 +621,22 @@ The flow is executed in a loop. When the flow is finished, it is started again
 @
 -}
 runFlow :: (FormInput view, Monad m)
-        => FlowM view m () -> Token -> m ()
-runFlow  f t =
-  loop $ runFlowOnce  f t --evalStateT (runBackT . runFlowM $ breturn() >>  f)  mFlowState0{mfToken=t,mfEnv= tenv t}  >> return ()  -- >> return ()
+        => FlowM view m () -> Token -> m () 
+runFlow  f t=
+  loop (runFlowOnce  f) t --evalStateT (runBackT . runFlowM $ breturn() >>  f)  mFlowState0{mfToken=t,mfEnv= tenv t}  >> return ()  -- >> return ()
   where
-  loop f= f >>  loop f
+  loop f t= f t >>= \t ->  loop  f t
+
+-- | Clears the environment
+clearEnv :: MonadState (MFlowState view) m =>  m ()
+clearEnv= do
+  st <- get
+  put st{ mfEnv= []}
 
 runFlowOnce :: (FormInput view,  Monad m)
-        => FlowM view m () -> Token -> m ()
+        => FlowM view m () -> Token -> m Token
 runFlowOnce  f t =
-  evalStateT (runBackT . runFlowM $ breturn() >>  f)  mFlowState0{mfToken=t,mfEnv= tenv t}  >> return ()  -- >> return ()
+  evalStateT (runBackT . runFlowM $  (clearEnv >> breturn ()) >>  f >> getToken)  mFlowState0{mfToken=t,mfEnv= tenv t} >>= return . fromFailBack   -- >> return ()
 
 
   -- to restart the flow in case of going back before the first page of the flow

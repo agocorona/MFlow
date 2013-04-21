@@ -742,7 +742,7 @@ userWidget :: ( MonadIO m, Functor m
          -> View view m String
 userWidget muser formuser= do
    user <- getCurrentUser
-   if muser== Just user
+   if muser== Just user || isNothing muser && user/= anonymous
          then return user
          else formuser `validate` val muser `waction` login1 
    where
@@ -808,9 +808,8 @@ logout= do
 -- | If not logged, perform login. otherwise return the user
 --
 -- @getUserSimple= getUser Nothing userFormLine@
-getUserSimple :: ( FormInput view, Typeable view
-                 , MonadIO m, Functor m)
-              => FlowM view m String
+getUserSimple :: ( FormInput view, Typeable view)
+              => FlowM view IO String
 getUserSimple= getUser Nothing userFormLine
 
 -- | Very basic user authentication. The user is stored in a cookie.
@@ -820,11 +819,10 @@ getUserSimple= getUser Nothing userFormLine
 -- otherwise, the stored username is returned.
 --
 -- @getUser mu form= ask $ userWidget mu form@
-getUser :: ( FormInput view, Typeable view
-           , MonadIO m, Functor m)
+getUser :: ( FormInput view, Typeable view)
           => Maybe String
-          -> View view m (Maybe (UserStr,PasswdStr), Maybe String)
-          -> FlowM view m String
+          -> View view IO (Maybe (UserStr,PasswdStr), Maybe String)
+          -> FlowM view IO String
 getUser mu form= ask $ userWidget mu form
 
 
@@ -897,7 +895,7 @@ valid form= View $ do
 -- > askt v w= ask w
 --
 -- hide one or the other
-askt :: (MonadIO m, FormInput v) => (Int -> a) -> View v m a -> FlowM v m a
+askt :: FormInput v => (Int -> a) -> View v IO a -> FlowM v IO a
 askt v w =  ask w
 
 
@@ -910,9 +908,8 @@ askt v w =  ask w
 -- it will not ask to the user.
 -- To force asking in any case, put an `clearEnv` statement before
 ask
-  :: (FormInput view,
-      MonadIO m) =>
-      View view m b -> FlowM view m b
+  :: (FormInput view) =>
+      View view IO a -> FlowM view IO a
 ask w =  do
   st1 <- get
   let env= mfEnv st1
@@ -941,8 +938,8 @@ ask w =  do
        Nothing ->
          if  not (inSync st') && not (onInit st') && hasParams (mfSequence st') (mfSeqCache st') ( mfEnv st')  -- !> (show $ inSync st')  !> (show $ onInit st')
           then do
-             put st'{mfSequence= head1 $ prevSeq st'
-                    ,prevSeq= tail1 $ prevSeq st' }
+             put st'{ mfSequence= head1 $ prevSeq st',
+                     prevSeq= tail1 $ prevSeq st' }
              fail ""
           else do
              reqs <-  FlowM $ lift installAllRequirements
@@ -1021,8 +1018,9 @@ goingBack = do
 --
 -- >   ask $ wlink () << b << "press here to pay 100000 $ "
 -- >   payIt
--- >   preventGoingBack . ask $ b << "You already payed it before"
--- >   ask $ wlink () << b << "you payed just one time , no more. press here to go to the menu or press the back button to verify that you can not pay again"
+-- >   preventGoingBack . ask $   b << "You  paid 10000 $ one time"
+-- >                          ++> wlink () << b << " Please press here to complete the proccess"
+-- >   ask $ wlink () << b << "OK, press here to go to the menu or press the back button to verify that you can not pay again"
 -- >   where
 -- >   payIt= liftIO $ print "paying"
 
@@ -1035,11 +1033,7 @@ preventGoingBack msg= do
          msg
          breturn()
 
--- | Clears the environment
-clearEnv :: MonadState (MFlowState view) m =>  m ()
-clearEnv= do
-  st <- get
-  put st{ mfEnv= []}
+
 
 receiveWithTimeouts :: MonadIO m => WState view m ()
 receiveWithTimeouts= do
