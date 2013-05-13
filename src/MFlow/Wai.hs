@@ -109,7 +109,7 @@ waiMessageFlow req1=   do
                   
               Right GET -> let tail1 s | s==SB.empty =s
                                tail1 xs= SB.tail xs
-                           in return . urlDecode $  SB.unpack   . tail1 $ rawQueryString req1  -- !> (SB.unpack $ rawQueryString req1)
+                           in return . urlDecode $  SB.unpack   . tail1 $ rawQueryString req1  --  !> (SB.unpack $ rawQueryString req1)
               x ->  return [] 
      let req = case retcookies of
           [] -> req1{requestHeaders=  mkParams (input ++ cookies) ++ requestHeaders req1}  -- !> "REQ"

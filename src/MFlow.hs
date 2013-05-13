@@ -45,7 +45,8 @@ Fragment based streaming: 'sendFragment'  are  provided only at this level.
 
 
 {-# LANGUAGE  DeriveDataTypeable, UndecidableInstances
-              ,ExistentialQuantification, MultiParamTypeClasses
+              ,ExistentialQuantification
+              ,MultiParamTypeClasses
               ,FunctionalDependencies
               ,TypeSynonymInstances
               ,FlexibleInstances
@@ -299,8 +300,10 @@ transient :: (Token -> IO ()) -> Flow
 transient f=  unsafeIOtoWF . f -- WF(\s -> f t>>= \x-> return (s, x) )
 
 
-_messageFlows :: MVar (M.Map String Flow) 
-_messageFlows= unsafePerformIO $ newMVar M.empty 
+_messageFlows :: MVar (WorkflowList  IO Token ()) --  MVar (M.Map String (Token -> Workflow IO ()))
+_messageFlows= unsafePerformIO $ newMVar emptyFList
+  where
+  emptyFList= M.empty  :: WorkflowList  IO Token ()
 
 -- | add a list of flows to be scheduled. Each entry in the list is a pair @(path, flow)@
 addMessageFlows wfs=  modifyMVar_ _messageFlows(\ms ->  return $ M.union ms  (M.fromList $ map flt wfs))

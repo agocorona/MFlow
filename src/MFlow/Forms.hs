@@ -185,7 +185,7 @@ cachedWidget, wcached, wfreeze,
 , flatten, normalize
 
 -- * Running the flow monad
-,runFlow,runFlowOnce,runFlowIn,MFlow.Forms.Internals.step, goingBack,breturn, preventGoingBack
+,runFlow,runFlowOnce,runFlowIn,runFlowConf,MFlow.Forms.Internals.step, goingBack,breturn, preventGoingBack
 
 -- * Setting parameters
 ,setHeader
@@ -781,7 +781,7 @@ login uname= do
  st <- get
  let t = mfToken st
      u = tuser t
- if u== uname then return () else do
+ if u == uname then return () else do
      let t'= t{tuser= uname}
      moveState (twfname t) t t'
      put st{mfToken= t'}

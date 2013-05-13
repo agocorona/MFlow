@@ -187,7 +187,7 @@ urlEncoded
 
 
 --extra :: Parser Char
-extra = satisfy (`Prelude.elem` "!*'(),/")
+extra = satisfy (`Prelude.elem` "!*'(),/\"")
 --
 --safe :: Parser Char
 safe = satisfy (`Prelude.elem` "$-_.") 

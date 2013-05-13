@@ -26,6 +26,7 @@ module MFlow.Wai.Blaze.Html.All (
 ,module Text.Blaze.Internal
 ,module Text.Blaze.Html5
 ,module Text.Blaze.Html5.Attributes
+,module Control.Monad.IO.Class
 ) where
 
 import MFlow
@@ -44,6 +45,7 @@ import Text.Blaze.Internal(text)
 
 
 import Control.Applicative
+import Control.Monad.IO.Class
 
 
 

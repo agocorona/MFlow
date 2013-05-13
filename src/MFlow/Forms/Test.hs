@@ -164,7 +164,7 @@ ask w = do
 -- | instead of generating a result like `ask`, the result is given as the first parameter
 -- so it does not need a Generate instance.
 --
--- It forces the web page rendering, since it is monadic and can contain
+-- It forces the web page rendering, since it is monadic so it can contain
 -- side effects and load effects to be tested.
 askt :: (MonadIO m,FormInput v) => (Int -> a) -> View v m a -> FlowM v m a
 askt v w =  do
