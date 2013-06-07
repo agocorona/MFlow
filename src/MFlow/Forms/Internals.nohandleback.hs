@@ -45,8 +45,8 @@ import Data.List
 import System.IO.Unsafe
 import Control.Concurrent.MVar
 
-import Debug.Trace
-(!>)= flip trace
+--import Debug.Trace
+--(!>)= flip trace
 
 instance Serialize a => Serializable a where
   serialize=  runW . showp
@@ -141,15 +141,15 @@ instance (Monad m, HandleBacktracking s m)=> Monad (BackT  m) where
             BackPoint y  -> do
                  z <- runBackT (f y)           -- !> "BACK"
                  case z of
-                  GoBack   -> handle s >> loop               !> "BACKTRACKING"
+                  GoBack   -> handle s >> loop              -- !> "GoBack"
                   other -> return other
             GoBack  ->  return  $ GoBack
 
 class MonadState s m => HandleBacktracking s m where
    handle :: s -> m ()
 
---instance Monad m => HandleBacktracking () m where
---   handle= const $ return ()
+--instance Monad m => HandleState m where
+--   handle= return ()
 
 fromFailBack (NoBack  x)   = x
 fromFailBack (BackPoint  x)= x
@@ -202,7 +202,7 @@ newtype View v m a = View { runView :: WState v m (FormElm v a)}
 instance Monad m => HandleBacktracking (MFlowState v) (WState v m) where
    handle st= do
         MFlowState{..} <- get
-        put  st{mfEnv= mfEnv, mfPath=mfPath, mfData=mfData,newAsk=False}
+        put  st{mfEnv= mfEnv,linkDepth= linkDepth,mfSequence= mfSequence}
 
 newtype FlowM v m a= FlowM {runFlowM :: FlowMM v m a} deriving (Monad,MonadIO,MonadState(MFlowState v))
 flowM= FlowM
@@ -300,7 +300,8 @@ type Lang=  String
 data MFlowState view= MFlowState{   
    mfSequence       :: Int,
    mfCached         :: Bool,
-   newAsk           :: Bool,
+   prevSeq          :: [Int],
+   onInit           :: Bool,
    inSync           :: Bool,
    mfLang           :: Lang,
    mfEnv            :: Params,
@@ -317,17 +318,18 @@ data MFlowState view= MFlowState{
    mfAjax           :: Maybe (M.Map String Void),
    mfSeqCache       :: Int,
    notSyncInAction  :: Bool,
-   mfPath           :: [String],
-   mfLinkDepth      :: Int
+   hasParams        :: Bool,
+   linkDepth        :: Int,
+   mfPath           :: [String]
    }
    deriving Typeable
 
 type Void = Char
 
 mFlowState0 :: (FormInput view) => MFlowState view
-mFlowState0 = MFlowState 0 False  True  True  "en"
+mFlowState0 = MFlowState 0 False [] True  True  "en"
                 [] False  (error "token of mFlowState0 used")
-                0 0 [] [] stdHeader False [] M.empty  Nothing 0 False    []  (-1)
+                0 0 [] [] stdHeader False [] M.empty  Nothing 0 False  False (-1) []
 
 
 -- | Set user-defined data in the context of the session.
@@ -655,7 +657,7 @@ runFlowOnce :: (FormInput view,  Monad m)
 runFlowOnce f t= runFlowOnce1 f t >> return ()
 
 runFlowOnce1  f t =
-  evalStateT (runBackT . runFlowM $  (clearEnv >> breturn ()) >>  f >> getToken)  mFlowState0{mfToken=t,mfPath= tpath t, mfEnv= tenv t} >>= return . fromFailBack   -- >> return ()
+  evalStateT (runBackT . runFlowM $  (clearEnv >> breturn ()) >>  f >> getToken)  mFlowState0{mfToken=t,mfEnv= tenv t} >>= return . fromFailBack   -- >> return ()
 
 
   -- to restart the flow in case of going back before the first page of the flow
@@ -686,7 +688,7 @@ runFlowConf :: (FormInput view, MonadIO m)
 runFlowConf  f = do
   q  <- liftIO newEmptyMVar  -- `debug` (i++w++u)
   qr <- liftIO newEmptyMVar
-  let t=  Token "" "" "" [] [] q  qr
+  let t=  Token "" "" "" [] q  qr
   evalStateT (runBackT . runFlowM $   f )  mFlowState0{mfToken=t} >>= return . fromFailBack   -- >> return ()
 
 

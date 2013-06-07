@@ -44,7 +44,7 @@ import Data.Conduit.Lazy
 import qualified Data.Conduit.List as CList
 import Data.CaseInsensitive
 import System.Time
-
+import qualified Data.Text as T 
 --import Debug.Trace
 --(!>)= flip trace
 
@@ -52,9 +52,9 @@ flow=  "flow"
 
 
 instance Processable Request  where
-   pwfname  env=  if SB.null sc then noScript else SB.unpack sc
+   pwfPath  env=  if Prelude.null sc then [noScript] else Prelude.map T.unpack sc
       where
-      sc=  SB.tail $ rawPathInfo env
+      sc= pathInfo env
    
    puser env = fromMaybe anonymous $ fmap SB.unpack $ lookup ( mk $SB.pack cookieuser) $ requestHeaders env
                     
@@ -100,7 +100,7 @@ waiMessageFlow req1=   do
                                 Just ck -> ck:retcookies1
 -}
 
-     input <- case   parseMethod $ requestMethod req1  of
+     input <- case parseMethod $ requestMethod req1  of
               Right POST -> if  lookup  ("Content-Type") httpreq1 == Just "application/x-www-form-urlencoded"
                   then do
                    inp <- liftIO $ runResourceT (requestBody req1 $$ CList.consume)
@@ -110,13 +110,14 @@ waiMessageFlow req1=   do
               Right GET -> let tail1 s | s==SB.empty =s
                                tail1 xs= SB.tail xs
                            in return . urlDecode $  SB.unpack   . tail1 $ rawQueryString req1  --  !> (SB.unpack $ rawQueryString req1)
-              x ->  return [] 
+              x ->  return []
+              
      let req = case retcookies of
           [] -> req1{requestHeaders=  mkParams (input ++ cookies) ++ requestHeaders req1}  -- !> "REQ"
           _  -> req1{requestHeaders=  mkParams ((flow, flowval): input ++ cookies) ++ requestHeaders req1}  --  !> "REQ"
 
 
-     (resp',th) <- liftIO $ msgScheduler req  -- !> (show $ requestHeaders req)
+     (resp',th) <- liftIO $ msgScheduler req      -- !> (show $ requestHeaders req)
 
      let resp= case (resp',retcookies) of
             (_,[]) -> resp'

@@ -31,9 +31,24 @@ main= do
 #else
    addMessageFlows  [(""    ,  transient $ runFlow pages)
                     ,("skins", runFlow skins)
-                    ,("shop",  runFlow shop )]
+                    ,("shop",  runFlow shop )
+                    ,("hello", runFlow $ helloWorld 0)
+                    ,("sum", transient $ runFlow sumit)]
    wait $ run 8081 waiMessageFlow
 #endif
+
+helloWorld n= do
+   step $ ask $ h1 << ("this is the Hello World number:" ++ show n) ++> wlink "" << b << "press here"
+   helloWorld $ n + 1
+
+sumit= do
+       setHeader $ html . body
+       n1 <- ask $  p << "give me the first number"  ++>  getInt Nothing
+       n2 <- ask $  p << "give me the second number" ++>  getInt Nothing
+       ask $ p << ("the result is " ++ show (n1 + n2)) ++> wlink () << p << "click here"
+       sumit
+
+
 pages=  do
      r<- ask landingPage
      case r of
@@ -109,7 +124,6 @@ shop = do
    setTimeouts 120 (30*24*60*60)
    catalog
    where
-
    catalog = do
        bought <-  buyProduct
        shoppingCart bought
@@ -134,13 +148,11 @@ shop = do
          if not r then ask $ wlink () << "not implemented, click here" !> show r
               else breturn ()
 
-
-
    atomic= liftIO . atomically
    showList []= wlink Nothing << p << "no results"
    showList xs= Just <$> firstOf [wlink  x << p <<  x | x <- xs]
 
-   buyProduct :: FlowM Html IO ProductName
+--   buyProduct :: FlowM Html IO ProductName
    buyProduct = step $ do
         ttypes   <-  atomic $ allElemsOf typep
         let types= Prelude.map T.unpack ttypes

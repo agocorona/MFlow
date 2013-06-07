@@ -26,7 +26,7 @@ import System.Exit
 import Control.Exception as E
 import Control.Concurrent
 import Control.Concurrent.MVar
-
+import GHC.Conc
 
 
 ssyncCache= putStr "sync..." >> syncCache >> putStrLn "done"
@@ -78,11 +78,14 @@ wait f= do
                   ssyncCache
                   error $ "Signal: "++ show e)
     where
-    f1= f
---     do
---        n <- getNumProcessors
---        setNumCapabilities n
---        f
+    f1= do
+        mv <- newEmptyMVar
+        n <- getNumProcessors
+        putStr "Running in "
+        putStr $ show n
+        putStrLn " core(s)"
+        hFlush stdout
+        f
 
 -- | Install the admin flow in the list of flows handled by `HackMessageFlow`
 -- this gives access to an administrator page. It is necessary to
@@ -156,7 +159,7 @@ showFormList ls n l= do
 optionsUser  us = do
     wfs <- liftIO $ return . M.keys =<< getMessageFlows
     stats <-  let u= undefined
-              in  liftIO $ mapM  (\wf -> getWFHistory wf (Token wf us u u u u)) wfs
+              in  liftIO $ mapM  (\wf -> getWFHistory wf (Token wf us u u u u u)) wfs
     let wfss= filter (isJust . snd) $ zip wfs stats
     if null wfss
      then ask $ bold << " not logs for this user" ++> wlink () (bold << "Press here")

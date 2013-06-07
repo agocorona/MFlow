@@ -114,7 +114,7 @@ runTest1 f = do
     z <- generate 
     r1<- liftIO newEmptyMVar
     r2<- liftIO newEmptyMVar 
-    let t = Token x y z [] r1 r2
+    let t = Token x y z [] [] r1 r2
     WF.start  name   f t
 
 testNumber= unsafePerformIO $ newIORef 0

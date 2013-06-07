@@ -15,6 +15,9 @@ import qualified Data.Text as T
 import qualified Data.Vector as V
 import Data.Maybe
 import Data.Monoid
+--import Debug.Trace
+--
+--(!>) = flip trace
 
 --test= runTest [(15,"shop")]
 
@@ -26,7 +29,7 @@ main= do
        [(""    , transient $ runFlow mainmenu)
        ,("shop", runFlow shopCart)]
 
-   wait $ run 8081 waiMessageFlow
+   wait $ run 80 waiMessageFlow
 
 
 fstr= fromString
@@ -34,13 +37,14 @@ fstr= fromString
 data Options= CountI | CountS | Radio
             | Login | TextEdit |Grid | Autocomp | AutocompList
             | ListEdit |Shop | Action | Ajax | Select
-            | CheckBoxes | PreventBack deriving (Bounded, Enum,Read, Show,Typeable)
+            | CheckBoxes | PreventBack | Multicounter deriving (Bounded, Enum,Read, Show,Typeable)
+
 
 mainmenu=   do
        setHeader stdheader
        setTimeouts 100 0
-       r <- ask $   wcached "menu" 0
-                $   b <<  "BASIC"
+       r <- ask $  -- wcached "menu" 0 $
+                    b <<  "BASIC"
                ++>  br ++> wlink CountI       << b <<  "increase an Int"
                <|>  br ++> wlink CountS       << b <<  "increase a String"
                <|>  br ++> wlink Action       << b <<  "Example of action, executed when a widget is validated"
@@ -48,6 +52,7 @@ mainmenu=   do
                <|>  br ++> wlink CheckBoxes   << b <<  "checkboxes"
                <|>  br ++> wlink Radio        << b <<  "Radio buttons"
                <++  br <>  br                 <> b <<  "DYNAMIC WIDGETS"
+               <|>  br ++> wlink Multicounter << b <<  "Multicounter"
                <|>  br ++> wlink Ajax         << b <<  "AJAX example"
                <|>  br ++> wlink Autocomp     << b <<  "autocomplete"
                <|>  br ++> wlink AutocompList << b <<  "autocomplete List"
@@ -77,7 +82,23 @@ mainmenu=   do
              Radio     ->  radio
              Login     ->  loginSample
              PreventBack -> preventBack
+             Multicounter-> multicounter
 
+multicounter= do
+  r <- ask $ do
+      r <- getInt Nothing <** submitButton "enter" <++ br
+      s <- getInt Nothing <** submitButton "enter" <++ br
+      t <- getInt Nothing <** submitButton "enter" <++ br
+      b << show (r * s * t) ++>  wlink () << b << "menu"
+
+  ask $ p << (show r) ++> wlink () << p << "EXIT"
+
+ where
+-- counterWidget n= b << show n  ++> wlink "+" << b << "+" >> clearEnv >> counterWidget (n+1)
+-- counterWidget n=
+--   b << show n
+--   ++> (wlink "+" << b << "+" >> counterWidget (n + 1))
+--   <|> (wlink "-" << b << "-" >> counterWidget (n - 1))
 
 preventBack= do
     ask $ wlink () << b << "press here to pay 100000 $ "
@@ -93,7 +114,7 @@ options= do
                          setOption "Red"  (b <<  "red")  )  <! dosummit
    ask $ p << (r ++ " selected") ++> wlink () (p <<  " menu")
 
-   mainmenu   -- breturn() would do it as well
+   breturn()
    where
    dosummit= [("onchange","this.form.submit()")]
 
@@ -104,7 +125,7 @@ checkBoxes= do
               <** submitButton "submit"
 
    ask $ p << ( show r ++ " selected")  ++> wlink () (p <<  " menu")
-   mainmenu
+   breturn()
 
 autocomplete1= do
    r <- ask $   p <<  "Autocomplete "
@@ -113,7 +134,7 @@ autocomplete1= do
             ++> wautocomplete (Just "red,green,blue") filter1
             <** submitButton "submit"
    ask $ p << ( show r ++ " selected")  ++> wlink () (p <<  " menu")
-   mainmenu
+   breturn()
    where
    filter1 s = return $ filter (isPrefixOf s) ["red","reed rose","green","green grass","blue","blues"]
 
@@ -124,7 +145,7 @@ autocompList= do
             ++> wautocompleteList "red,green,blue" filter1 ["red"]
             <** submitButton "submit"
    ask $ p << ( show r ++ " selected")  ++> wlink () (p <<  " menu")
-   mainmenu
+   breturn()
    where
    filter1 s = return $ filter (isPrefixOf s) ["red","reed rose","green","green grass","blue","blues"]
 
@@ -144,7 +165,7 @@ grid = do
   ask $   p << (show r ++ " returned")
       ++> wlink () (p <<  " back to menu")
 
-  mainmenu
+  breturn()
 
 wlistEd= do
    r <-  ask  $   addLink
@@ -155,7 +176,8 @@ wlistEd= do
 
    ask $   p << (show r ++ " returned")
        ++> wlink () (p <<  " back to menu")
-   mainmenu
+   breturn()
+
    where
    addLink = a ! At.id  (fstr "wEditListAdd")
                ! href (fstr "#")
@@ -165,15 +187,16 @@ wlistEd= do
                     ! onclick (fstr "this.parentNode.parentNode.removeChild(this.parentNode)")
    getString1 mx= El.div  <<< delBox ++> getString  mx <++ br
 
+
 clickn n= do
    r <- ask $   p << b <<  "increase an Int"
             ++> wlink ("menu" :: String) (p <<  "menu")
             |+| getInt (Just n) <* submitButton "submit"
    case r of
-    (Just _,_) -> mainmenu
+    (Just _,_) -> return()
     (_, Just n') -> clickn $ n'+1
 
-
+   breturn()
 clicks s= do
    s' <- ask $  p << b <<  "increase a String"
              ++> p << b <<  "press the back button to go back to the menu"
@@ -181,12 +204,13 @@ clicks s= do
              <* submitButton "submit")
              `validate` (\s -> return $ if length s   > 5 then Just (b << "length must be < 5") else Nothing )
    clicks $ s'++ "1"
+   breturn()
 
 radio = do
    r <- ask $    p << b <<  "Radio buttons"
              ++> getRadio [\n -> fromStr v ++> setRadioActive v n | v <- ["red","green","blue"]]
    ask $ p << ( show r ++ " selected")  ++> wlink () (p <<  " menu")
-   mainmenu
+   breturn()
 
 
 ajaxsample= do
@@ -197,7 +221,7 @@ ajaxsample= do
          b <<   "click the box"
            ++> getInt (Just 0) <! [("id","text1"),("onclick", ajaxc  elemval)]<** submitButton "submit"
    ask $ p << ( show r ++ " returned")  ++> wlink () (p <<  " menu")
-   mainmenu
+   breturn()
 
 ---- recursive callbacks
 --actions n=do
@@ -211,7 +235,7 @@ actions n= do
           <+> getString (Just "widget2") `waction` action
           <** submitButton "submit"
   ask $ p << ( show r ++ " returned")  ++> wlink () (p <<  " menu")
-  mainmenu
+  breturn()
   where
   action n=  ask $ getString (Just $ n ++ " action")<** submitButton "submit action"
 
@@ -253,11 +277,10 @@ loginSample= do
     user <- getCurrentUser
     ask $ b <<  ("user logged as " <>  user) ++> wlink () (p <<  " logout and go to menu")
     logout
-    mainmenu
+
 
 
 textEdit= do
-
     let first=  p << i <<
                    (El.span <<  "this is a page with"
                    <> b <<  " two " <> El.span <<  "paragraphs. this is the first")
@@ -293,6 +316,7 @@ textEdit= do
         **> tField "second"
         **> p <<  "End of edit field demo" ++> wlink () (p <<  "click here to go to menu")
 
+    breturn()
 
 
 stdheader c= docTypeHtml  $ body $

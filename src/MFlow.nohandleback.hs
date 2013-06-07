@@ -140,7 +140,7 @@ class Processable a where
 
 instance Processable Token where
      pwfname = twfname
-     pwfPath = tpath
+     pwfPath t = [ pwfname t]
      puser = tuser
      pind = tind
      getParams = tenv
@@ -162,10 +162,10 @@ data Resp  = Fragm HttpData
 
 -- | a Token identifies a flow that handle messages. The scheduler compose a Token with every `Processable`
 -- message that arrives and send the mesage to the appropriate flow.
-data Token = Token{twfname,tuser, tind :: String , tpath ::[String], tenv:: Params, tsendq :: MVar Req, trecq :: MVar Resp}  deriving  Typeable
+data Token = Token{twfname,tuser, tind :: String , tenv:: Params, tsendq :: MVar Req, trecq :: MVar Resp}  deriving  Typeable
 
 instance Indexable  Token  where
-     key (Token w u i _ _ _ _  )=
+     key (Token w u i  _ _ _  )=
           if u== anonymous then  u++ i   -- ++ "@" ++ w
                            else  u       -- ++ "@" ++ w
 
@@ -174,8 +174,8 @@ instance Show Token where
 
 instance Read Token where
      readsPrec _ ('T':'o':'k':'e': 'n':' ':str1)
-       | anonymous `isPrefixOf` str1= [(Token  w anonymous i [] [] (newVar 0) (newVar 0), tail str2)]
-       | otherwise                 = [(Token  w ui "0" [] []  (newVar 0) (newVar 0), tail str2)]
+       | anonymous `isPrefixOf` str1= [(Token  w anonymous i [] (newVar 0) (newVar 0), tail str2)]
+       | otherwise                 = [(Token  w ui "0" []  (newVar 0) (newVar 0), tail str2)]
 
         where
 
@@ -203,13 +203,13 @@ deleteTokenInList t@Token{..} =
 
 getToken msg=  do
       qmap  <- readMVar iorefqmap
-      let u= puser msg ; w= pwfname msg ; i=pind msg; ppath=pwfPath msg;penv= getParams msg
+      let u= puser msg ; w= pwfname msg ; i=pind msg; penv= getParams msg
       let mqs = M.lookup ( i  ++ w  ++ u) qmap
       case mqs of
               Nothing  -> do
                  q <-   newEmptyMVar  -- `debug` (i++w++u)
                  qr <-  newEmptyMVar
-                 let token= Token w u i ppath penv q qr
+                 let token= Token w u i penv q qr
                  addTokenToList token
                  return token
 
@@ -230,30 +230,30 @@ instance  (Monad m, Show a) => Traceable (Workflow m a) where
 -}
 -- | send a complete response 
 --send ::   Token  -> HttpData -> IO()
-send  t@(Token _ _ _ _ _ _ qresp) msg=   do
+send  t@(Token _ _ _ _ _ qresp) msg=   do
       ( putMVar qresp  . Resp $  msg )  -- !> ("<<<<< send "++ thread t) 
 
 sendFlush t msg= flushRec t >> send t msg     -- !> "sendFlush "
 
 -- | send a response fragment. Useful for streaming. the last packet must sent trough 'send'
 sendFragment ::  Token  -> HttpData -> IO()
-sendFragment (Token _ _ _ _ _ _ qresp) msg=   putMVar qresp  . Fragm $  msg
+sendFragment (Token _ _ _ _ _ qresp) msg=   putMVar qresp  . Fragm $  msg
 
 {-# DEPRECATED sendEndFragment "use send to end a fragmented response instead" #-}
 sendEndFragment ::   Token  -> HttpData -> IO()
-sendEndFragment (Token _ _ _ _ _ _ qresp  ) msg=  putMVar qresp  $ EndFragm   msg
+sendEndFragment (Token _ _ _ _ _ qresp  ) msg=  putMVar qresp  $ EndFragm   msg
 
 --emptyReceive (Token  queue _  _)= emptyQueue queue
 receive ::  Typeable a => Token -> IO a
 receive t= receiveReq t >>= return  . fromReq
 
-flushRec t@(Token _ _ _ _ _ queue _)= do
+flushRec t@(Token _ _ _ _ queue _)= do
    empty <-  isEmptyMVar  queue
    when (not empty) $ takeMVar queue >> return ()
 
 
 receiveReq ::  Token -> IO Req
-receiveReq t@(Token _ _ _ _ _ queue _)=   readMVar queue  -- !> (">>>>>> receive "++ thread t)
+receiveReq t@(Token _ _ _ _ queue _)=   readMVar queue  -- !> (">>>>>> receive "++ thread t)
 
 fromReq :: Typeable a => Req -> a
 fromReq  (Req x) = x' where
@@ -286,7 +286,7 @@ delMsgHistory t = do
 stateless ::  (Params -> IO HttpData) -> Flow
 stateless f = transient proc
   where
-  proc t@(Token _ _ _ _ _ queue qresp) = loop t queue qresp
+  proc t@(Token _ _ _ _ queue qresp) = loop t queue qresp
   loop t queue qresp=do
     req <- takeMVar queue                       -- !> (">>>>>> stateless " ++ thread t)
     resp <- f (getParams req)
@@ -323,7 +323,7 @@ getMessageFlows = readMVar _messageFlows
 thread t= show(unsafePerformIO  myThreadId) ++ " "++ show (twfname t)
 
 --tellToWF :: (Typeable a,  Typeable c, Processable a) => Token -> a -> IO c
-tellToWF t@(Token _ _ _ _ _ queue qresp ) msg = do  
+tellToWF t@(Token _ _ _ _ queue qresp ) msg = do  
     putMVar queue (Req msg)              -- !> (">>>>> telltowf"++ thread t)
     m <-  takeMVar qresp                 -- !> ("<<<<<< tellTowf"++ thread t)
     case m  of
@@ -402,13 +402,22 @@ msgScheduler x  = do
         r <- startWF wfname  token   wfs                      -- !>( "init wf " ++ wfname)
         case r of
           Left NotFound -> do
-                 (sendFlush token =<<  serveFile  (pwfname x))
-                    `CE.catch`\(e::CE.SomeException) -> showError wfname token (show e)
+                 sendFlush token =<< serveFile (pwfname x)
 --               sendFlush token (Error NotFound $ "Not found: " <> pack wfname)
                  deleteTokenInList token
           Left AlreadyRunning -> return ()                    -- !> ("already Running " ++ wfname)
           Left Timeout -> return()                            -- !>  "Timeout in msgScheduler"
-          Left (WFException e)-> showError wfname token e
+          Left (WFException e)-> do
+               let user= key token
+               print e
+               logError user wfname e
+--               moveState wfname token token{tuser= "error/"++tuser token}
+               fresp<- getNotFoundResponse
+               sendFlush token $ HttpData [("Content-Type", "text/html")] [] $
+                                     fresp $
+                                       case user of
+                                           "admin" -> pack $ show e
+                                           _       -> "The administrator has been notified"
 
 
 
@@ -418,15 +427,6 @@ msgScheduler x  = do
 --               startMessageFlow wfname token wfs
 
               delMsgHistory token; return ()      -- !> ("finished " ++ wfname)
-
-showError wfname token e= do
-               let user= key token
-               print e
-               logError user wfname e
---               moveState wfname token token{tuser= "error/"++tuser token}
-               fresp <- getNotFoundResponse
-               sendFlush token $ fresp token e
-
 
 
 logError u wf e= do
@@ -442,18 +442,11 @@ logFileName= "errlog"
 hlog= unsafePerformIO $ openFile logFileName ReadWriteMode
 
 
-defNotFoundResponse token msg= let user= key token in
-  HttpData [("Content-Type", "text/html")] []
-     $ fresp
-     $ case user of
-           "admin" -> pack msg
-           _       -> "The administrator has been notified"
-  where
-  fresp msg=
+defNotFoundResponse msg=
    "<html><h4>Error 404: Page not found or error ocurred:</h4><h3>" <> msg <>
    "</h3><br/>" <> opts <> "<br/><a href=\"/\" >press here to go home</a></html>"
 
-   
+  where 
   paths= Prelude.map B.pack . M.keys $ unsafePerformIO getMessageFlows
   opts=  "options: " <> B.concat (Prelude.map  (\s ->
                           "<a href=\""<>  s <>"\">"<> s <>"</a>, ") paths)
@@ -513,7 +506,7 @@ serveFile path'= do
      let path= filesPath ++ path'
      mr <-  cachedByKey path 0  $   (B.readFile  path >>=  return . Just) `CE.catch` ioerr (return Nothing)
      case mr of
-      Nothing -> error "not accessible" -- return $ HttpData  [setMime "text/plain"] [] $ pack $  "not accessible"
+      Nothing -> return $ HttpData  [setMime "text/plain"] [] $ pack $  "not accessible"
       Just r ->
          let ext  = reverse . takeWhile (/='.') $ reverse path
              mmime= lookup (map toLower ext) mimeTable
