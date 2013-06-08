@@ -156,7 +156,7 @@ getString,getInt,getInteger, getTextBox
 getRadio, setRadio, setRadioActive, getCheckBoxes, genCheckBoxes, setCheckBox,
 submitButton,resetButton, whidden, wlink, returning, wform, firstOf, manyOf, wraw, wrender
 -- * FormLet modifiers
-,validate, noWidget, waction, wmodify,
+,validate, noWidget, waction, callback, wmodify,
 
 -- * Caching widgets
 cachedWidget, wcached, wfreeze,
@@ -1242,10 +1242,10 @@ wlink x v= View $ do
           path= if null lpath' then verb ++ "/"++ name
                                else "" ++ concat ['/':p | p <- lpath'] ++ "/"++ name
           toSend = flink path v
-          depth' = mfLinkDepth st
-          depth  = if depth'== -1 then length lpath - 1 else depth'
+          depth = mfLinkDepth st !> ("newask="++ show (newAsk st))
+--          depth  = depth' -- if depth'== -1 then length lpath - 1 else depth'
 
-      when (depth' <= 0) $ modify $ \st -> st{newAsk= True}
+      when (depth == 0) $ modify $ \st -> st{newAsk= True}
 
       r <- if (not (null lpath)
              && depth < length lpath
@@ -1258,7 +1258,7 @@ wlink x v= View $ do
                   return $ Just x
               else return Nothing
 
-      return $ r `seq` FormElm [toSend] r
+      return $ FormElm [toSend] r
 
 
 currentPath verb st = do

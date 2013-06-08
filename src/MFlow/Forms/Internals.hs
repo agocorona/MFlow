@@ -253,7 +253,13 @@ instance  (Monad m) => Monad (View view m) where
                        return $ FormElm (form1 ++ form2) mk
                      Nothing -> return $ FormElm form1 Nothing
 
-    return= View .  return . FormElm  [] . Just 
+    return= View .  return . FormElm  [] . Just
+
+callback (View x) f = View $ do
+   FormElm form1 mk <- x
+   case mk of
+     Just k  -> runView $ f k
+     Nothing -> return $ FormElm form1 Nothing
 
 --instance  (Monad m) => Monad (FlowM view m) where
 --  --View view m a-> (a -> View view m b) -> View view m b
@@ -327,7 +333,7 @@ type Void = Char
 mFlowState0 :: (FormInput view) => MFlowState view
 mFlowState0 = MFlowState 0 False  True  True  "en"
                 [] False  (error "token of mFlowState0 used")
-                0 0 [] [] stdHeader False [] M.empty  Nothing 0 False    []  (-1)
+                0 0 [] [] stdHeader False [] M.empty  Nothing 0 False    []  0
 
 
 -- | Set user-defined data in the context of the session.
@@ -552,7 +558,6 @@ cachedWidget ::(MonadIO m,Typeable view
         -> View view Identity a   -- ^ The cached widget, in the Identity monad
         -> View view m a          -- ^ The cached result
 cachedWidget key t mf = View .  StateT $ \s -> do
-
         let((FormElm  form _), sec)= execute $ cachedByKey key t $ proc mf s{mfCached=True}
         let((FormElm  _ mx2), s2)  = execute $ runStateT  ( runView mf)    s{mfSeqCache= sec,mfCached=True}
         let s''=  s{inSync = inSync s2

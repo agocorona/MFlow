@@ -54,7 +54,12 @@ flow=  "flow"
 instance Processable Request  where
    pwfPath  env=  if Prelude.null sc then [noScript] else Prelude.map T.unpack sc
       where
-      sc= pathInfo env
+      sc= let p= pathInfo env
+              p'= reverse p
+          in case p' of
+            [] -> []
+            p' -> if T.null $ head p' then  reverse(tail  p') else p
+
    
    puser env = fromMaybe anonymous $ fmap SB.unpack $ lookup ( mk $SB.pack cookieuser) $ requestHeaders env
                     

@@ -450,7 +450,7 @@ defNotFoundResponse token msg= let user= key token in
            _       -> "The administrator has been notified"
   where
   fresp msg=
-   "<html><h4>Error 404: Page not found or error ocurred:</h4><h3>" <> msg <>
+   "<html><h4>Error 404: Page not found or error ocurred</h4><h3>" <> msg <>
    "</h3><br/>" <> opts <> "<br/><a href=\"/\" >press here to go home</a></html>"
 
    
