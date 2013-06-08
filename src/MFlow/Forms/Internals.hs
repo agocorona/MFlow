@@ -255,11 +255,27 @@ instance  (Monad m) => Monad (View view m) where
 
     return= View .  return . FormElm  [] . Just
 
-callback (View x) f = View $ do
+-- | It is a callback in the view monad. The callback rendering substitutes the widget rendering
+-- when the latter is validated, without afecting the rendering of other widgets. This allow
+-- the simultaneous execution of different behaviours in different widgets simultaneously in the
+-- same page. The inspiration is the callback primitive in the great Seaside Web Framework
+-- that allows the same functionality (See <http://www.seaside.st>)
+--
+-- This is the visible difference with 'waction' callbacks, which execute a
+-- a flow in the FlowM monad that takes complete control of the navigation, while wactions are
+-- executed whithin the same ask statement.
+--
+--
+wcallback
+  :: Monad m =>
+     View view m a -> (a -> View view m b) -> View view m b
+wcallback (View x) f = View $ do
    FormElm form1 mk <- x
    case mk of
      Just k  -> runView $ f k
      Nothing -> return $ FormElm form1 Nothing
+
+
 
 --instance  (Monad m) => Monad (FlowM view m) where
 --  --View view m a-> (a -> View view m b) -> View view m b
@@ -324,7 +340,8 @@ data MFlowState view= MFlowState{
    mfSeqCache       :: Int,
    notSyncInAction  :: Bool,
    mfPath           :: [String],
-   mfLinkDepth      :: Int
+   mfLinkDepth      :: Int,
+   mfLinks          :: M.Map String Int
    }
    deriving Typeable
 
@@ -333,7 +350,7 @@ type Void = Char
 mFlowState0 :: (FormInput view) => MFlowState view
 mFlowState0 = MFlowState 0 False  True  True  "en"
                 [] False  (error "token of mFlowState0 used")
-                0 0 [] [] stdHeader False [] M.empty  Nothing 0 False    []  0
+                0 0 [] [] stdHeader False [] M.empty  Nothing 0 False    []  0 M.empty
 
 
 -- | Set user-defined data in the context of the session.
@@ -424,6 +441,15 @@ setHeader header= do
   fs <- get
   put fs{mfHeader= header}
 
+----addHeader added= do
+----     h <- gets mfHeader
+----     let h' added html = h $ added <> html
+----     setHeader $ h' added
+----
+----addFooter added= do
+----     h <- gets mfHeader
+----     let h' added html = h $ html <> added
+----     setHeader $ h' added
 
 
 -- | Return the current header

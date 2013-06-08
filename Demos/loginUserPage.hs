@@ -15,6 +15,7 @@ import Data.TCache.IndexText
 import Data.Maybe
 import qualified Data.Map as M
 import Control.Workflow.Configuration
+import Control.Workflow (Workflow)
 import Data.Text.Lazy as T
 
 import Debug.Trace
@@ -34,7 +35,7 @@ main= do
                     ,("shop",  runFlow shop )
                     ,("hello", runFlow $ helloWorld 0)
                     ,("sum", transient $ runFlow sumit)]
-   wait $ run 8081 waiMessageFlow
+   wait $ run 80 waiMessageFlow
 #endif
 
 helloWorld n= do
@@ -119,13 +120,14 @@ createProducts= atomically $ mapM newDBRef
     , Product "iphone 3"  ["gadget","phone"] "iphone 3 nice and beatiful"  200 100
     ]
 
+shop :: FlowM Html (Workflow IO) ()
 shop = do
    setHeader $ html . body
    setTimeouts 120 (30*24*60*60)
    catalog
    where
    catalog = do
-       bought <-  buyProduct
+       bought <-  step $ buyProduct
        shoppingCart bought
        catalog
 
@@ -152,8 +154,8 @@ shop = do
    showList []= wlink Nothing << p << "no results"
    showList xs= Just <$> firstOf [wlink  x << p <<  x | x <- xs]
 
---   buyProduct :: FlowM Html IO ProductName
-   buyProduct = step $ do
+   buyProduct :: FlowM Html  IO ProductName
+   buyProduct =  do
         ttypes   <-  atomic $ allElemsOf typep
         let types= Prelude.map T.unpack ttypes
         r  <- ask $   h1 << "Product catalog"

@@ -419,13 +419,14 @@ msgScheduler x  = do
 
               delMsgHistory token; return ()      -- !> ("finished " ++ wfname)
 
-showError wfname token e= do
+showError wfname token@Token{..} e= do
                let user= key token
-               print e
+               let msg= e ++ ": "++twfname++ " "++tuser ++" "++ tind++" "++ show tpath ++ show tenv
+               putStrLn msg
                logError user wfname e
 --               moveState wfname token token{tuser= "error/"++tuser token}
                fresp <- getNotFoundResponse
-               sendFlush token $ fresp token e
+               sendFlush token $ fresp token msg
 
 
 

@@ -156,7 +156,7 @@ getString,getInt,getInteger, getTextBox
 getRadio, setRadio, setRadioActive, getCheckBoxes, genCheckBoxes, setCheckBox,
 submitButton,resetButton, whidden, wlink, returning, wform, firstOf, manyOf, wraw, wrender
 -- * FormLet modifiers
-,validate, noWidget, waction, callback, wmodify,
+,validate, noWidget, waction, wcallback, wmodify,
 
 -- * Caching widgets
 cachedWidget, wcached, wfreeze,
@@ -268,7 +268,10 @@ validate  formt val= View $ do
     _ -> return $ FormElm form mx
 
 -- | Actions are callbacks that are executed when a widget is validated.
--- It is useful when the widget is inside widget containers that know nothing about his content.
+-- A action may be a complete flow in the flowM monad. It takes complete control of the navigation
+-- while it is executed. At the end it return the result to the caller and display the original
+-- calling page.
+-- It is useful when the widget is inside widget containers that may treat it as a black box.
 --
 -- It returns a result  that can be significative or, else, be ignored with '<**' and '**>'.
 -- An action may or may not initiate his own dialog with the user via `ask`
@@ -282,7 +285,7 @@ waction f ac = do
   s <- get
   let env =  mfEnv s
   let seq = mfSequence s
-  put s{mfSequence=mfSequence s+ 100,mfEnv=[]}
+  put s{mfSequence=mfSequence s+ 100,mfEnv=[],newAsk=True}
   r <- flowToView $ ac x
   modify $ \s-> s{mfSequence= seq, mfEnv= env}
   return r
@@ -958,7 +961,7 @@ ask w =  do
      if notSyncInAction st' then put st'{notSyncInAction=False}>> ask w  else
       case mx of
        Just x -> do
-         put st'{newAsk= True ,mfEnv=[]}
+         put st'{newAsk= True ,mfEnv=[],mfLinks = M.empty}
          breturn x                      -- !> "just x"
 
        Nothing ->
@@ -977,7 +980,7 @@ ask w =  do
 
              let HttpData ctype c s= toHttpData cont 
              liftIO . sendFlush t $ HttpData (ctype++mfHttpHeaders st') (mfCookies st' ++ c) s
-             put st{mfCookies=[],mfHttpHeaders=[], newAsk= False, mfToken= t, mfAjax= mfAjax st', mfSeqCache= mfSeqCache st' }                --    !> ("after "++show ( mfSequence st'))
+             put st{mfLinks = M.empty,mfCookies=[],mfHttpHeaders=[], newAsk= False, mfToken= t, mfAjax= mfAjax st', mfSeqCache= mfSeqCache st' }                --    !> ("after "++show ( mfSequence st'))
              FlowM $ lift  receiveWithTimeouts
 
              ask w
@@ -1150,7 +1153,7 @@ wform x = View $ do
 
 
 formPrefix verb st form anchored= do
-     path <- currentPath verb st
+     let path  = currentPath (mfPath st) verb
      (anchor,anchorf)
            <- case anchored of
                True -> do
@@ -1234,15 +1237,23 @@ wlink :: (Typeable a, Show a, MonadIO m,  FormInput view)
 wlink x v= View $ do
       verb <- getWFName
       st   <- get
-      let name = map toLower $ if typeOf x== typeOf(undefined :: String) then unsafeCoerce x else show x
+      
+      let links= mfLinks st
+          name' = map toLower $ if typeOf x== typeOf(undefined :: String) then unsafeCoerce x else show x
           env = mfEnv st
           lpath' = mfPath st
           lpath =  if null lpath' then [] else tail $ lpath'
-
-          path= if null lpath' then verb ++ "/"++ name
-                               else "" ++ concat ['/':p | p <- lpath'] ++ "/"++ name
-          toSend = flink path v
-          depth = mfLinkDepth st !> ("newask="++ show (newAsk st))
+      inclevel <- case M.lookup name' links of
+            Nothing -> do
+                 put st{mfLinks= M.insert name' 1 links}
+                 return 0
+            Just n  -> do
+                 put st{mfLinks= M.insert name' (n+1) links}
+                 return n
+      let name= name' ++ if inclevel==0 then "" else show inclevel
+      let path= currentPath lpath' verb  ++ name 
+          toSend = flink path v !> ("inc=" ++ show links)
+          depth = mfLinkDepth st              -- !> ("newask="++ show (newAsk st))
 --          depth  = depth' -- if depth'== -1 then length lpath - 1 else depth'
 
       when (depth == 0) $ modify $ \st -> st{newAsk= True}
@@ -1261,11 +1272,10 @@ wlink x v= View $ do
       return $ FormElm [toSend] r
 
 
-currentPath verb st = do
-      let lpath' = mfPath st
-          lpath  =  if null lpath' then [] else tail $ lpath'
-      return $ if null lpath' then verb
-                           else concat ['/':p | p <- lpath']
+currentPath lpath' verb =
+      let lpath  =  if null lpath' then [] else tail $ lpath'
+      in if null lpath' then verb
+                           else concat ['/':p | p <- lpath']++"/"
 -- | When some user interface int return some response to the server, but it is not produced by
 -- a form or a link, but for example by an script, @returning@ notify the type checker.
 --

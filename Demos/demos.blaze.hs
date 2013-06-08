@@ -15,6 +15,7 @@ import qualified Data.Text as T
 import qualified Data.Vector as V
 import Data.Maybe
 import Data.Monoid
+import System.IO.Unsafe
 --import Debug.Trace
 --
 --(!>) = flip trace
@@ -37,7 +38,8 @@ fstr= fromString
 data Options= CountI | CountS | Radio
             | Login | TextEdit |Grid | Autocomp | AutocompList
             | ListEdit |Shop | Action | Ajax | Select
-            | CheckBoxes | PreventBack | Multicounter deriving (Bounded, Enum,Read, Show,Typeable)
+            | CheckBoxes | PreventBack | Multicounter
+            | FViewMonad | WCounter deriving (Bounded, Enum,Read, Show,Typeable)
 
 
 mainmenu=   do
@@ -47,12 +49,17 @@ mainmenu=   do
                     b <<  "BASIC"
                ++>  br ++> wlink CountI       << b <<  "increase an Int"
                <|>  br ++> wlink CountS       << b <<  "increase a String"
-               <|>  br ++> wlink Action       << b <<  "Example of action, executed when a widget is validated"
                <|>  br ++> wlink Select       << b <<  "select options"
                <|>  br ++> wlink CheckBoxes   << b <<  "checkboxes"
                <|>  br ++> wlink Radio        << b <<  "Radio buttons"
-               <++  br <>  br                 <> b <<  "DYNAMIC WIDGETS"
+
+               <++  br <>  br                 <> b <<  "WIDGET ACTIONS & CALLBACKS"
+               <|>  br ++> wlink Action       << b <<  "Example of action, executed when a widget is validated"
+               <|>  br ++> wlink FViewMonad   << b <<  "Flow in the View monad"
+               <|>  br ++> wlink WCounter     << b <<  "Counter widget"
                <|>  br ++> wlink Multicounter << b <<  "Multicounter"
+
+               <++  br <>  br                 <> b <<  "DYNAMIC WIDGETS"
                <|>  br ++> wlink Ajax         << b <<  "AJAX example"
                <|>  br ++> wlink Autocomp     << b <<  "autocomplete"
                <|>  br ++> wlink AutocompList << b <<  "autocomplete List"
@@ -83,30 +90,60 @@ mainmenu=   do
              Login     ->  loginSample
              PreventBack -> preventBack
              Multicounter-> multicounter
+             FViewMonad  -> sumInView
+             WCounter    -> counter
+
+sumInView= ask $ do
+      n1 <- p << "enter first number"  ++> getInt Nothing <** submitButton "enter" <++ br
+      n2 <- p << "enter second number" ++> getInt Nothing <** submitButton "enter" <++ br
+      n3 <- p << "enter third number"  ++> getInt Nothing <** submitButton "enter" <++ br
+      b << show (n1 + n2 + n3)  ++>  wlink () << b << " menu"
 
 multicounter= do
-  r <- ask $ do
-      r <- getInt Nothing <** submitButton "enter" <++ br
-      s <- getInt Nothing <** submitButton "enter" <++ br
-      t <- getInt Nothing <** submitButton "enter" <++ br
-      b << show (r * s * t) ++>  wlink () << b << "menu"
+ let explain= p << "This example emulates the"
+              <> a  ! href (fstr "http://www.seaside.st/about/examples/multicounter?_k=yBJEDEGp") << " seaside example"
+              <> p << "It uses a " <> a ! href (fstr "/noscript/wcounter") << "counter widget" <> fromString " repeated three times. This is an example of how it is possible to"
+              <> p << "compose widgets with independent behaviours"
 
-  ask $ p << (show r) ++> wlink () << p << "EXIT"
-
+ ask $ explain ++> firstOf (replicate 5 counter) <|> wlink () << p << "exit"
+ return()
  where
--- counterWidget n= b << show n  ++> wlink "+" << b << "+" >> clearEnv >> counterWidget (n+1)
--- counterWidget n=
---   b << show n
---   ++> (wlink "+" << b << "+" >> counterWidget (n + 1))
---   <|> (wlink "-" << b << "-" >> counterWidget (n - 1))
+ counter= counterWidget 0 <++ hr
+
+counter= do
+   let explain= p <<"This example emulates the"
+                <> a ! href (fstr "http://www.seaside.st/about/examples/counter") << "seaside example"
+                <> p << "as in the Weaside case, this widget uses a callback to permit an independent"
+                <> p << "execution flow for each widget." <> a ! href (fstr "/noscript/multicounter") << "Mulicounteer" <> (fromString " instantiate various counter widgets")
+                <> p << "But while the seaside case the callback update the widget object, in this case"
+                <> p << "the callback call generate a new copy of the counter with the value modified."
+   ask $ explain ++> counterWidget 0 <|> wlink () << p << "exit"
+
+counterWidget n=do
+  (h1 << show n
+   ++> wlink "+" << b << " ++ "
+   <|> wlink "-" << b << " -- ")
+   `wcallback` \op -> case op of
+                      "+" -> counterWidget (n + 1)
+                      "-" -> counterWidget (n - 1)
+
+rpaid= unsafePerformIO $ newMVar (0 :: Int)
 
 preventBack= do
     ask $ wlink () << b << "press here to pay 100000 $ "
     payIt
-    preventGoingBack . ask $ b << "You already paid 100000 before" ++> wlink () << b << " Please press here to continue"
-    ask $ wlink () << b << "you paid just one time. press here to go to the menu or press the back button to verify that you can not pay again"
+    paid  <- liftIO $ readMVar rpaid
+    preventGoingBack . ask $   p << "You already paid 100000 before"
+                           ++> p << "you can no go back until the end of the buy process"
+                           ++> wlink () << p << "Please press here to continue"
+
+    ask $   p << ("you paid"++ show paid)
+        ++> wlink () << p << "Press here to go to the menu or press the back button to verify that you can not pay again"
     where
-    payIt= liftIO $ print "paying"
+    payIt= liftIO $ do
+      print "paying"
+      paid <- takeMVar  rpaid
+      putMVar rpaid $ paid + 100000
 
 options= do
    r <- ask $ getSelect (setSelectedOption ("" :: String) (p <<  "select a option") <|>
@@ -235,7 +272,6 @@ actions n= do
           <+> getString (Just "widget2") `waction` action
           <** submitButton "submit"
   ask $ p << ( show r ++ " returned")  ++> wlink () (p <<  " menu")
-  breturn()
   where
   action n=  ask $ getString (Just $ n ++ " action")<** submitButton "submit action"
 
@@ -320,20 +356,20 @@ textEdit= do
 
 
 stdheader c= docTypeHtml  $ body $
-      a ! At.style (fstr "-align:center") ! href ( fstr  "html/MFlow/index.html") << h1 <<  "MFlow"
+      a ! At.style (fstr "-align:center") ! href ( fstr  "/html/MFlow/index.html") << h1 <<  "MFlow"
    <> br
    <> hr
    <> (El.div ! At.style (fstr "position:fixed;top:40px;left:0%\
-                         \;width:50%;min-height:100%\
+                         \;width:50%\
                          \;margin-left:10px;margin-right:10px") $
           h2 <<  "Example of some features."
 --       <> h3 <<  "This demo uses warp and blaze-html"
 
        <> br <> c)
-   <> (El.div ! At.style (fstr "position:fixed;top:40px;left:50%;width:50%;min-height:100%") $
+   <> (El.div ! At.style (fstr "position:fixed;top:40px;left:50%;width:50%") $
           h2 <<  "Documentation"
        <> br
-       <> p  << a ! href (fstr "html/MFlow/index.html") <<  "MFlow package description and documentation"
+       <> p  << a ! href (fstr "/html/MFlow/index.html") <<  "MFlow package description and documentation"
        <> p  << a ! href (fstr "demos.blaze.hs") <<  "download demo source code"
        <> p  << a ! href (fstr "https://github.com/agocorona/MFlow/issues") <<  "bug tracker"
        <> p  << a ! href (fstr "https://github.com/agocorona/MFlow") <<  "source repository"
