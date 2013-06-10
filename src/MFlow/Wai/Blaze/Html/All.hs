@@ -23,7 +23,7 @@ module MFlow.Wai.Blaze.Html.All (
 ,module Network.Wai
 ,module Network.Wai.Handler.Warp
 ,module Control.Applicative
-,module Text.Blaze.Internal
+--,module Text.Blaze.Internal
 ,module Text.Blaze.Html5
 ,module Text.Blaze.Html5.Attributes
 ,module Control.Monad.IO.Class

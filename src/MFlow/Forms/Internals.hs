@@ -272,8 +272,26 @@ wcallback
 wcallback (View x) f = View $ do
    FormElm form1 mk <- x
    case mk of
-     Just k  -> runView $ f k
+     Just k  -> do
+        s <- get
+        let seq= mfCallBackSeq s
+        put s{mfCallBackSeq= seq + 1}
+        r <- runView (f k)
+        put s{mfCallBackSeq= seq}
+        return r
+
      Nothing -> return $ FormElm form1 Nothing
+
+--incLinkDepth
+--  :: MFlowState v -> Int
+--incLinkDepth s=
+--
+--        let depth= mfLinkDepth s
+--        in  if mfLinkSelected  s
+--                            then
+--                            depth +1
+--                            else
+--                            depth
 
 
 
@@ -294,8 +312,6 @@ instance MonadTrans (View view) where
 
 instance MonadTrans (FlowM view) where
   lift f = FlowM $ lift (lift  f) >>= \x ->  return x
-
-
 
 instance  (Monad m)=> MonadState (MFlowState view) (View view m) where
   get = View $  get >>= \x ->  return $ FormElm [] $ Just x
@@ -339,9 +355,13 @@ data MFlowState view= MFlowState{
    mfAjax           :: Maybe (M.Map String Void),
    mfSeqCache       :: Int,
    notSyncInAction  :: Bool,
+
+   -- Link management
    mfPath           :: [String],
-   mfLinkDepth      :: Int,
-   mfLinks          :: M.Map String Int
+--   mfLinkDepth      :: Int,
+   mfLinks          :: M.Map String Int,
+--   mfLinkSelected   :: Bool,
+   mfCallBackSeq    :: Int
    }
    deriving Typeable
 
@@ -350,7 +370,7 @@ type Void = Char
 mFlowState0 :: (FormInput view) => MFlowState view
 mFlowState0 = MFlowState 0 False  True  True  "en"
                 [] False  (error "token of mFlowState0 used")
-                0 0 [] [] stdHeader False [] M.empty  Nothing 0 False    []  0 M.empty
+                0 0 [] [] stdHeader False [] M.empty  Nothing 0 False    []   M.empty  0
 
 
 -- | Set user-defined data in the context of the session.
@@ -686,9 +706,16 @@ runFlowOnce :: (FormInput view,  Monad m)
 runFlowOnce f t= runFlowOnce1 f t >> return ()
 
 runFlowOnce1  f t =
-  evalStateT (runBackT . runFlowM $  (clearEnv >> breturn ()) >>  f >> getToken)  mFlowState0{mfToken=t,mfPath= tpath t, mfEnv= tenv t} >>= return . fromFailBack   -- >> return ()
+  evalStateT (runBackT . runFlowM $
+        backInit >>  f >> getToken)
+        mFlowState0{mfToken=t
+                   ,mfPath= tpath t
+                   ,mfEnv= tenv t} >>= return . fromFailBack
 
-
+  where
+  backInit= do
+     modify $ \s -> s{mfEnv=[], newAsk= True}
+     breturn ()
   -- to restart the flow in case of going back before the first page of the flow
 
 

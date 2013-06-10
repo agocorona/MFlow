@@ -33,19 +33,20 @@ main= do
    wait $ run 80 waiMessageFlow
 
 
-fstr= fromString
+attr= fromString
+text = fromString
 
 data Options= CountI | CountS | Radio
             | Login | TextEdit |Grid | Autocomp | AutocompList
             | ListEdit |Shop | Action | Ajax | Select
             | CheckBoxes | PreventBack | Multicounter
-            | FViewMonad | WCounter deriving (Bounded, Enum,Read, Show,Typeable)
+            | FViewMonad | Counter deriving (Bounded, Enum,Read, Show,Typeable)
 
 
 mainmenu=   do
        setHeader stdheader
        setTimeouts 100 0
-       r <- ask $  -- wcached "menu" 0 $
+       r <- ask $   wcached "menu" 0 $
                     b <<  "BASIC"
                ++>  br ++> wlink CountI       << b <<  "increase an Int"
                <|>  br ++> wlink CountS       << b <<  "increase a String"
@@ -56,7 +57,7 @@ mainmenu=   do
                <++  br <>  br                 <> b <<  "WIDGET ACTIONS & CALLBACKS"
                <|>  br ++> wlink Action       << b <<  "Example of action, executed when a widget is validated"
                <|>  br ++> wlink FViewMonad   << b <<  "Flow in the View monad"
-               <|>  br ++> wlink WCounter     << b <<  "Counter widget"
+               <|>  br ++> wlink Counter     << b <<  "Counter"
                <|>  br ++> wlink Multicounter << b <<  "Multicounter"
 
                <++  br <>  br                 <> b <<  "DYNAMIC WIDGETS"
@@ -67,9 +68,9 @@ mainmenu=   do
                <|>  br ++> wlink Grid         << b <<  "grid"
                <|>  br ++> wlink TextEdit     << b <<  "Content Management"
                <++  br <>  br                 <> b <<  "STATEFUL PERSISTENT FLOW"
-                 <> br <>  a ! href  (fstr "shop") <<  "shopping"   -- ordinary Blaze.Html link
-                 <> br <>  br <> b <<  "OTHERS"
+                 <> br <>  a ! href  (attr "shop") <<  "shopping"   -- ordinary Blaze.Html link
 
+                 <> br <>  br <> b <<  "OTHERS"
                <|>  br ++> wlink Login        << b <<  "login/logout"
                <|>  br ++> wlink PreventBack  << b <<  "Prevent going back after a transaction"
 
@@ -91,7 +92,7 @@ mainmenu=   do
              PreventBack -> preventBack
              Multicounter-> multicounter
              FViewMonad  -> sumInView
-             WCounter    -> counter
+             Counter    -> counter
 
 sumInView= ask $ do
       n1 <- p << "enter first number"  ++> getInt Nothing <** submitButton "enter" <++ br
@@ -101,31 +102,32 @@ sumInView= ask $ do
 
 multicounter= do
  let explain= p << "This example emulates the"
-              <> a  ! href (fstr "http://www.seaside.st/about/examples/multicounter?_k=yBJEDEGp") << " seaside example"
-              <> p << "It uses a " <> a ! href (fstr "/noscript/wcounter") << "counter widget" <> fromString " repeated three times. This is an example of how it is possible to"
-              <> p << "compose widgets with independent behaviours"
+              <> a  ! href (attr "http://www.seaside.st/about/examples/multicounter?_k=yBJEDEGp")
+                    << " seaside example"
+              <> p << "It uses various copies of the " <> a ! href (attr "/noscript/counter") << "counter widget "
+              <> text "instantiated in the same page. This is an example of how it is possible to "
+              <> text "compose widgets with independent behaviours"
 
- ask $ explain ++> firstOf (replicate 5 counter) <|> wlink () << p << "exit"
- return()
+ ask $ explain ++> firstOf(replicate 3 counter) <|> wlink () << p << "exit"
  where
  counter= counterWidget 0 <++ hr
 
 counter= do
    let explain= p <<"This example emulates the"
-                <> a ! href (fstr "http://www.seaside.st/about/examples/counter") << "seaside example"
-                <> p << "as in the Weaside case, this widget uses a callback to permit an independent"
-                <> p << "execution flow for each widget." <> a ! href (fstr "/noscript/multicounter") << "Mulicounteer" <> (fromString " instantiate various counter widgets")
+                <> a ! href (attr "http://www.seaside.st/about/examples/counter") << "seaside example"
+                <> p << "This widget uses a callback to permit an independent"
+                <> p << "execution flow for each widget." <> a ! href (attr "/noscript/multicounter") << "Multicounteer" <> (text " instantiate various counter widgets")
                 <> p << "But while the seaside case the callback update the widget object, in this case"
                 <> p << "the callback call generate a new copy of the counter with the value modified."
    ask $ explain ++> counterWidget 0 <|> wlink () << p << "exit"
 
 counterWidget n=do
   (h1 << show n
-   ++> wlink "+" << b << " ++ "
-   <|> wlink "-" << b << " -- ")
-   `wcallback` \op -> case op of
-                      "+" -> counterWidget (n + 1)
-                      "-" -> counterWidget (n - 1)
+   ++> wlink "i" << b << " ++ "
+   <|> wlink "d" << b << " -- ")
+  `wcallback` \op -> case op of
+                      "i" -> counterWidget (n + 1)
+                      "d" -> counterWidget (n - 1)
 
 rpaid= unsafePerformIO $ newMVar (0 :: Int)
 
@@ -190,13 +192,13 @@ grid = do
   let row _= tr <<< ( (,) <$> tdborder <<< getInt (Just 0)
                           <*> tdborder <<< getString (Just "")
                           <++ tdborder << delLink)
-      addLink= a ! href (fstr "#")
-                 ! At.id (fstr "wEditListAdd")
+      addLink= a ! href (attr "#")
+                 ! At.id (attr "wEditListAdd")
                  <<  "add"
-      delLink= a ! href (fstr "#")
-                 ! onclick (fstr "this.parentNode.parentNode.parentNode.removeChild(this.parentNode.parentNode)")
+      delLink= a ! href (attr "#")
+                 ! onclick (attr "this.parentNode.parentNode.parentNode.removeChild(this.parentNode.parentNode)")
                  <<  "delete"
-      tdborder= td ! At.style  (fstr "border: solid 1px")
+      tdborder= td ! At.style  (attr "border: solid 1px")
 
   r <- ask $ addLink ++> ( wEditList table  row ["",""] "wEditListAdd") <** submitButton "submit"
   ask $   p << (show r ++ " returned")
@@ -216,12 +218,12 @@ wlistEd= do
    breturn()
 
    where
-   addLink = a ! At.id  (fstr "wEditListAdd")
-               ! href (fstr "#")
+   addLink = a ! At.id  (attr "wEditListAdd")
+               ! href (attr "#")
                $ b << "add"
-   delBox  =  input ! type_   (fstr "checkbox")
-                    ! checked (fstr "")
-                    ! onclick (fstr "this.parentNode.parentNode.removeChild(this.parentNode)")
+   delBox  =  input ! type_   (attr "checkbox")
+                    ! checked (attr "")
+                    ! onclick (attr "this.parentNode.parentNode.removeChild(this.parentNode)")
    getString1 mx= El.div  <<< delBox ++> getString  mx <++ br
 
 
@@ -260,7 +262,7 @@ ajaxsample= do
    ask $ p << ( show r ++ " returned")  ++> wlink () (p <<  " menu")
    breturn()
 
----- recursive callbacks
+---- recursive action
 --actions n=do
 --  ask $ wlink () (p <<  "exit from action")
 --     <**((getInt (Just (n+1)) <** submitButton "submit" ) `waction` actions )
@@ -289,11 +291,11 @@ shopCart  = do
    where
    shopCart1 cart=  do
      o <- step . ask $
-             table ! At.style (fstr "border:1;width:20%;margin-left:auto;margin-right:auto")
+             table ! At.style (attr "border:1;width:20%;margin-left:auto;margin-right:auto")
              <<< caption <<  "choose an item"
              ++> thead << tr << ( th << b <<   "item" <> th << b <<  "times chosen")
              ++> (tbody
-                  <<< tr ! rowspan (fstr "2") << td << linkHome
+                  <<< tr ! rowspan (attr "2") << td << linkHome
                   ++> (tr <<< td <<< wlink  IPhone (b <<  "iphone") <++  td << ( b <<  show ( cart V.! 0))
                   <|>  tr <<< td <<< wlink  IPod (b <<  "ipad")     <++  td << ( b <<  show ( cart V.! 1))
                   <|>  tr <<< td <<< wlink  IPad (b <<  "ipod")     <++  td << ( b <<  show ( cart V.! 2)))
@@ -304,7 +306,7 @@ shopCart  = do
      shopCart1 newCart
 
     where
-    linkHome= a ! href  (fstr noScript) << b <<  "home"
+    linkHome= a ! href  (attr noScript) << b <<  "home"
 
 
 loginSample= do
@@ -356,30 +358,30 @@ textEdit= do
 
 
 stdheader c= docTypeHtml  $ body $
-      a ! At.style (fstr "-align:center") ! href ( fstr  "/html/MFlow/index.html") << h1 <<  "MFlow"
+      a ! At.style (attr "-align:center") ! href ( attr  "/html/MFlow/index.html") << h1 <<  "MFlow"
    <> br
    <> hr
-   <> (El.div ! At.style (fstr "position:fixed;top:40px;left:0%\
+   <> (El.div ! At.style (attr "position:fixed;top:40px;left:0%\
                          \;width:50%\
                          \;margin-left:10px;margin-right:10px") $
           h2 <<  "Example of some features."
 --       <> h3 <<  "This demo uses warp and blaze-html"
 
        <> br <> c)
-   <> (El.div ! At.style (fstr "position:fixed;top:40px;left:50%;width:50%") $
+   <> (El.div ! At.style (attr "position:fixed;top:40px;left:50%;width:50%") $
           h2 <<  "Documentation"
        <> br
-       <> p  << a ! href (fstr "/html/MFlow/index.html") <<  "MFlow package description and documentation"
-       <> p  << a ! href (fstr "demos.blaze.hs") <<  "download demo source code"
-       <> p  << a ! href (fstr "https://github.com/agocorona/MFlow/issues") <<  "bug tracker"
-       <> p  << a ! href (fstr "https://github.com/agocorona/MFlow") <<  "source repository"
-       <> p  << a ! href (fstr "http://hackage.haskell.org/package/MFlow") <<  "Hackage repository"
-       <> p  << a ! href (fstr "http://haskell-web.blogspot.com.es/2012/11/mflow-now-widgets-can-express.html") <<  "MFlow: now the widgets can express requirements"
-       <> p  << a ! href (fstr "http://haskell-web.blogspot.com.es/2012/12/on-spirit-of-mflow-anatomy-of-widget.html") <<  "On the \"spirit\" of MFlow. Anatomy of a Widget"
-       <> p  << a ! href (fstr "http://haskell-web.blogspot.com.es/2013/01/now-example-of-use-of-active-widget.html") <<  "MFlow active widgets example"
-       <> p  << a ! href (fstr "http://haskell-web.blogspot.com.es/2013/01/stateful-but-stateless-at-last-thanks.html") <<  "Stateful, but virtually stateless, thanks to event sourcing"
-       <> p  << a ! href (fstr "http://haskell-web.blogspot.com.es/2012/11/i-just-added-some-templatingcontent.html") <<  "Content Management and multilanguage in MFlow"
-       <> p  << a ! href (fstr "http://haskell-web.blogspot.com.es/2012/10/testing-mflow-applications_9.html") <<  "Testing MFlow applications"
-       <> p  << a ! href (fstr "http://haskell-web.blogspot.com.es/2012/09/a.html") <<  "A Web app. that creates Haskel computations from form responses, that store, retrieve and execute them? It´s easy"
-       <> p  << a ! href (fstr "http://haskell-web.blogspot.com.es/2012/09/announce-mflow-015.html") <<  "ANNOUNCE MFlow 0.1.5 Web app server for stateful processes with safe, composable user interfaces."
+       <> p  << a ! href (attr "/html/MFlow/index.html") <<  "MFlow package description and documentation"
+       <> p  << a ! href (attr "demos.blaze.hs") <<  "download demo source code"
+       <> p  << a ! href (attr "https://github.com/agocorona/MFlow/issues") <<  "bug tracker"
+       <> p  << a ! href (attr "https://github.com/agocorona/MFlow") <<  "source repository"
+       <> p  << a ! href (attr "http://hackage.haskell.org/package/MFlow") <<  "Hackage repository"
+       <> p  << a ! href (attr "http://haskell-web.blogspot.com.es/2012/11/mflow-now-widgets-can-express.html") <<  "MFlow: now the widgets can express requirements"
+       <> p  << a ! href (attr "http://haskell-web.blogspot.com.es/2012/12/on-spirit-of-mflow-anatomy-of-widget.html") <<  "On the \"spirit\" of MFlow. Anatomy of a Widget"
+       <> p  << a ! href (attr "http://haskell-web.blogspot.com.es/2013/01/now-example-of-use-of-active-widget.html") <<  "MFlow active widgets example"
+       <> p  << a ! href (attr "http://haskell-web.blogspot.com.es/2013/01/stateful-but-stateless-at-last-thanks.html") <<  "Stateful, but virtually stateless, thanks to event sourcing"
+       <> p  << a ! href (attr "http://haskell-web.blogspot.com.es/2012/11/i-just-added-some-templatingcontent.html") <<  "Content Management and multilanguage in MFlow"
+       <> p  << a ! href (attr "http://haskell-web.blogspot.com.es/2012/10/testing-mflow-applications_9.html") <<  "Testing MFlow applications"
+       <> p  << a ! href (attr "http://haskell-web.blogspot.com.es/2012/09/a.html") <<  "A Web app. that creates Haskel computations from form responses, that store, retrieve and execute them? It´s easy"
+       <> p  << a ! href (attr "http://haskell-web.blogspot.com.es/2012/09/announce-mflow-015.html") <<  "ANNOUNCE MFlow 0.1.5 Web app server for stateful processes with safe, composable user interfaces."
        )

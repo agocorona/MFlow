@@ -285,7 +285,7 @@ waction f ac = do
   s <- get
   let env =  mfEnv s
   let seq = mfSequence s
-  put s{mfSequence=mfSequence s+ 100,mfEnv=[],newAsk=True}
+  put s{mfSequence=mfSequence s+ 100,mfEnv=[],newAsk=True{-,mfLinkSelected= False-}}
   r <- flowToView $ ac x
   modify $ \s-> s{mfSequence= seq, mfEnv= env}
   return r
@@ -961,13 +961,22 @@ ask w =  do
      if notSyncInAction st' then put st'{notSyncInAction=False}>> ask w  else
       case mx of
        Just x -> do
-         put st'{newAsk= True ,mfEnv=[],mfLinks = M.empty}
+--         let depth= mfLinkDepth st'
+         put st'{newAsk= True ,mfEnv=[]
+--                ,mfLinks = M.empty
+                ,mfCallBackSeq= 0}
+--                ,mfLinkDepth=
+--                         if mfLinkSelected  st'
+--                            then
+--                            depth +1
+--                            else
+--                            depth
+--                ,mfLinkSelected= False}
          breturn x                      -- !> "just x"
 
        Nothing ->
-         if  not (inSync st')  && not (newAsk st')  -- && hasParams st' -- (mfSequence st') (mfSeqCache st') ( mfEnv st')  -- !> (show $ inSync st')  !> (show $ newAsk st')
-          then do
-             fail ""
+         if  not (inSync st')  && not (newAsk st')    !> (show $ inSync st')  !> (show $ newAsk st')
+          then  fail ""
           else do
              reqs <-  FlowM $ lift installAllRequirements
              let header= mfHeader st'
@@ -980,9 +989,18 @@ ask w =  do
 
              let HttpData ctype c s= toHttpData cont 
              liftIO . sendFlush t $ HttpData (ctype++mfHttpHeaders st') (mfCookies st' ++ c) s
-             put st{mfLinks = M.empty,mfCookies=[],mfHttpHeaders=[], newAsk= False, mfToken= t, mfAjax= mfAjax st', mfSeqCache= mfSeqCache st' }                --    !> ("after "++show ( mfSequence st'))
-             FlowM $ lift  receiveWithTimeouts
 
+
+             put st{mfCookies=[]
+--                   ,mfLinks= mfLinks st'
+--                   ,mfLinkDepth= incLinkDepth st'
+                   ,mfHttpHeaders=[]
+                   ,newAsk= False
+                   ,mfToken= t
+                   ,mfAjax= mfAjax st'
+                   ,mfSeqCache= mfSeqCache st' }                --    !> ("after "++show ( mfSequence st'))
+
+             FlowM $ lift  receiveWithTimeouts
              ask w
     where
     head1 []=0
@@ -1243,32 +1261,32 @@ wlink x v= View $ do
           env = mfEnv st
           lpath' = mfPath st
           lpath =  if null lpath' then [] else tail $ lpath'
-      inclevel <- case M.lookup name' links of
+      suffix <- case M.lookup name' links of
             Nothing -> do
                  put st{mfLinks= M.insert name' 1 links}
-                 return 0
+                 return ""
             Just n  -> do
                  put st{mfLinks= M.insert name' (n+1) links}
-                 return n
-      let name= name' ++ if inclevel==0 then "" else show inclevel
+                 return $ show n
+      let csuffix= let n= mfCallBackSeq st in if n == 0 then "" else show n
+      let name= name' ++  csuffix ++ suffix
       let path= currentPath lpath' verb  ++ name 
-          toSend = flink path v !> ("inc=" ++ show links)
-          depth = mfLinkDepth st              -- !> ("newask="++ show (newAsk st))
---          depth  = depth' -- if depth'== -1 then length lpath - 1 else depth'
+          toSend = flink path v
+--          depth = mfLinkDepth st
+--      when (length lpath == 0) $ modify $ \st -> st{newAsk= True}
 
-      when (depth == 0) $ modify $ \st -> st{newAsk= True}
 
       r <- if (not (null lpath)
-             && depth < length lpath
-             && lpath !! depth  == name)
+--             && depth < length lpath
+             && elem name lpath) -- lpath !! depth  == name)
              !> show lpath
-             !> ("depth "++ show depth)
+--             !> ("depth "++ show depth)
              !> show name
              then do
-                  put st{inSync= True, mfLinkDepth= depth +1 }
+                  modify $ \s -> s{inSync= True{-,mfLinkSelected=True-} } -- , mfLinkDepth= depth +1 }
                   return $ Just x
-              else return Nothing
-
+             else return Nothing
+--           !> ("inc=" ++ show links)
       return $ FormElm [toSend] r
 
 
