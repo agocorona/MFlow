@@ -45,8 +45,8 @@ import Data.List
 import System.IO.Unsafe
 import Control.Concurrent.MVar
 
-import Debug.Trace
-(!>)= flip trace
+--import Debug.Trace
+--(!>)= flip trace
 
 instance Serialize a => Serializable a where
   serialize=  runW . showp
@@ -141,7 +141,7 @@ instance (Monad m, HandleBacktracking s m)=> Monad (BackT  m) where
             BackPoint y  -> do
                  z <- runBackT (f y)           -- !> "BACK"
                  case z of
-                  GoBack   -> handle s >> loop               !> "BACKTRACKING"
+                  GoBack   -> handle s >> loop            --   !> "BACKTRACKING"
                   other -> return other
             GoBack  ->  return  $ GoBack
 
@@ -249,11 +249,22 @@ instance  (Monad m) => Monad (View view m) where
                    FormElm form1 mk <- x
                    case mk of
                      Just k  -> do
-                       FormElm form2 mk <- runView $ f k
-                       return $ FormElm (form1 ++ form2) mk
+                        s <- get
+                        let seq= mfCallBackSeq s
+                        put s{mfCallBackSeq= seq + 1}
+                        FormElm form2 mk <- runView $ f k
+                        put s{mfCallBackSeq= seq}
+                        return $ FormElm (form1 ++ form2) mk
+
                      Nothing -> return $ FormElm form1 Nothing
 
     return= View .  return . FormElm  [] . Just
+--    fail msg= View . return $ FormElm [fromStr msg] Nothing
+
+instance (Monad m, Functor m, Monoid a) => Monoid (View v m a) where
+  mappend x y = mappend <$> x <*> y  -- beware that both operands must validate to generate a sum
+  mempty= return mempty
+
 
 -- | It is a callback in the view monad. The callback rendering substitutes the widget rendering
 -- when the latter is validated, without afecting the rendering of other widgets. This allow
@@ -361,7 +372,8 @@ data MFlowState view= MFlowState{
 --   mfLinkDepth      :: Int,
    mfLinks          :: M.Map String Int,
 --   mfLinkSelected   :: Bool,
-   mfCallBackSeq    :: Int
+   mfCallBackSeq    :: Int,
+   mfRestarting     :: Bool
    }
    deriving Typeable
 
@@ -370,7 +382,7 @@ type Void = Char
 mFlowState0 :: (FormInput view) => MFlowState view
 mFlowState0 = MFlowState 0 False  True  True  "en"
                 [] False  (error "token of mFlowState0 used")
-                0 0 [] [] stdHeader False [] M.empty  Nothing 0 False    []   M.empty  0
+                0 0 [] [] stdHeader False [] M.empty  Nothing 0 False    []   M.empty  0 False
 
 
 -- | Set user-defined data in the context of the session.
@@ -687,27 +699,30 @@ The flow is executed in a loop. When the flow is finished, it is started again
    adminLoop
 @
 -}
-runFlow :: (FormInput view, Monad m)
+runFlow :: (FormInput view, MonadIO m)
         => FlowM view m () -> Token -> m () 
 runFlow  f t=
   loop (runFlowOnce1  f) t --evalStateT (runBackT . runFlowM $ breturn() >>  f)  mFlowState0{mfToken=t,mfEnv= tenv t}  >> return ()  -- >> return ()
   where
-  loop f t= f t >>= \t ->  loop  f t
+  loop f t = do
+    t' <- f t
+    let t''= t'{tpath=[twfname t']}
+    liftIO $ do
+       flushRec t''
+       sendToMF t'' t'' -- !> "SEND"
+    loop  f t''         -- !> "LOOPAGAIN"
 
 
--- | Clears the environment
-clearEnv :: MonadState (MFlowState view) m =>  m ()
-clearEnv= do
-  st <- get
-  put st{ mfEnv= []}
 
 runFlowOnce :: (FormInput view,  Monad m)
         => FlowM view m () -> Token -> m ()
-runFlowOnce f t= runFlowOnce1 f t >> return ()
+runFlowOnce f t= runFlowOnce1 f t  >> return ()
 
-runFlowOnce1  f t =
-  evalStateT (runBackT . runFlowM $
-        backInit >>  f >> getToken)
+runFlowOnce1  f t  =
+  evalStateT (runBackT . runFlowM $ do
+        backInit
+        f
+        getToken)
         mFlowState0{mfToken=t
                    ,mfPath= tpath t
                    ,mfEnv= tenv t} >>= return . fromFailBack
@@ -748,6 +763,12 @@ runFlowConf  f = do
   evalStateT (runBackT . runFlowM $   f )  mFlowState0{mfToken=t} >>= return . fromFailBack   -- >> return ()
 
 
+
+-- | Clears the environment
+clearEnv :: MonadState (MFlowState view) m =>  m ()
+clearEnv= do
+  st <- get
+  put st{ mfEnv= []}
 
 step
   :: (Serialize a,

@@ -60,7 +60,7 @@ Flow, Params, HttpData(..),Processable(..)
 , Token(..), ProcList
 -- * low level comunication primitives. Use `ask` instead
 ,flushRec, receive, receiveReq, receiveReqTimeout, send, sendFlush, sendFragment
-, sendEndFragment
+, sendEndFragment, sendToMF
 -- * Flow configuration
 ,addMessageFlows,getMessageFlows, transient, stateless,anonymous
 ,noScript,hlog, setNotFoundResponse,getNotFoundResponse,
@@ -102,8 +102,8 @@ import MFlow.Cookies
 import Control.Monad.Trans
 import qualified Control.Exception as CE
 
---import Debug.Trace
---(!>)= flip trace
+import Debug.Trace
+(!>)= flip trace
 
 type Flow= (Token -> Workflow IO ())
 
@@ -213,7 +213,7 @@ getToken msg=  do
                  addTokenToList token
                  return token
 
-              Just token-> return token
+              Just token-> return token{tpath= ppath, tenv= penv}
 
 
 -- | The anonymous user
@@ -322,6 +322,8 @@ getMessageFlows = readMVar _messageFlows
 
 thread t= show(unsafePerformIO  myThreadId) ++ " "++ show (twfname t)
 
+sendToMF Token{..} msg= putMVar tsendq $ Req msg
+
 --tellToWF :: (Typeable a,  Typeable c, Processable a) => Token -> a -> IO c
 tellToWF t@(Token _ _ _ _ _ queue qresp ) msg = do  
     putMVar queue (Req msg)              -- !> (">>>>> telltowf"++ thread t)
@@ -349,35 +351,6 @@ tellToWF t@(Token _ _ _ _ _ queue qresp ) msg = do
                  return  result
 
 
-
---processData t= do
---  token <- getToken t
---  th <- startMessageFlow (pwfname t) token
---  tellToWF token t
---  where
---  startMessageFlow wfname token = 
---   forkIO $ do
---        r <- start wfname (process mempty) token                         -- !>( "init wf " ++ wfname)
---        case r of
---          Left NotFound -> do
---                 error $ "Not found: " ++ wfname
---                 deleteTokenInList token
---          Left AlreadyRunning -> return ()                    -- !> ("already Running " ++ wfname)
---          Left Timeout -> return()                            -- !>  "Timeout in msgScheduler"
---          Left (WFException e)-> do
---               let user= key token
---               print e
---               logError user wfname e
---               moveState wfname token token{tuser= "error/"++tuser token}
---
---
---  process val t= do
---        r <- step $ receive t
---        let val'= r <> val
---        recover <- isInRecover
---        when(not recover) . liftIO $ sendFlush t val'
---        process val' t
---
 
 
 -- | The scheduler creates a Token with every `Processable`
@@ -407,7 +380,10 @@ msgScheduler x  = do
 --               sendFlush token (Error NotFound $ "Not found: " <> pack wfname)
                  deleteTokenInList token
           Left AlreadyRunning -> return ()                    -- !> ("already Running " ++ wfname)
-          Left Timeout -> return()                            -- !>  "Timeout in msgScheduler"
+          Left Timeout -> do
+              liftIO $ putStrLn  "TIMEOUT in msgScheduler"
+              hFlush stdout
+              return()
           Left (WFException e)-> showError wfname token e
 
 
@@ -419,6 +395,8 @@ msgScheduler x  = do
 
               delMsgHistory token; return ()      -- !> ("finished " ++ wfname)
 
+
+
 showError wfname token@Token{..} e= do
                let user= key token
                let msg= e ++ ": "++twfname++ " "++tuser ++" "++ tind++" "++ show tpath ++ show tenv
@@ -426,7 +404,7 @@ showError wfname token@Token{..} e= do
                logError user wfname e
 --               moveState wfname token token{tuser= "error/"++tuser token}
                fresp <- getNotFoundResponse
-               sendFlush token $ fresp token msg
+               sendFlush token $ fresp (key token)  msg
 
 
 
@@ -443,7 +421,7 @@ logFileName= "errlog"
 hlog= unsafePerformIO $ openFile logFileName ReadWriteMode
 
 
-defNotFoundResponse token msg= let user= key token in
+defNotFoundResponse user msg=
   HttpData [("Content-Type", "text/html")] []
      $ fresp
      $ case user of
@@ -462,6 +440,12 @@ defNotFoundResponse token msg= let user= key token in
 notFoundResponse=  unsafePerformIO $ newIORef defNotFoundResponse
 
 -- | set the  404 "not found" response
+setNotFoundResponse ::
+    (String      -- ^ The user identifier. The username when logged
+  -> String      -- ^ The error string
+  -> HttpData)   -- ^The response. See `defNotFoundResponse` code for an example
+  -> IO ()
+
 setNotFoundResponse f= liftIO $ writeIORef notFoundResponse  f
 getNotFoundResponse= liftIO $ readIORef notFoundResponse
 
@@ -514,7 +498,7 @@ serveFile path'= do
      let path= filesPath ++ path'
      mr <-  cachedByKey path 0  $   (B.readFile  path >>=  return . Just) `CE.catch` ioerr (return Nothing)
      case mr of
-      Nothing -> error "not accessible" -- return $ HttpData  [setMime "text/plain"] [] $ pack $  "not accessible"
+      Nothing -> error "not found" -- return $ HttpData  [setMime "text/plain"] [] $ pack $  "not accessible"
       Just r ->
          let ext  = reverse . takeWhile (/='.') $ reverse path
              mmime= lookup (map toLower ext) mimeTable

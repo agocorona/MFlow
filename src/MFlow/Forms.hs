@@ -154,7 +154,7 @@ ask, askt, clearEnv, wstateless, transfer,
 getString,getInt,getInteger, getTextBox 
 ,getMultilineText,getBool,getSelect, setOption,setSelectedOption, getPassword,
 getRadio, setRadio, setRadioActive, getCheckBoxes, genCheckBoxes, setCheckBox,
-submitButton,resetButton, whidden, wlink, returning, wform, firstOf, manyOf, wraw, wrender
+submitButton,resetButton, whidden, wlink, returning, wform, firstOf, manyOf, wraw, wrender, notValid
 -- * FormLet modifiers
 ,validate, noWidget, waction, wcallback, wmodify,
 
@@ -241,7 +241,6 @@ import System.IO.Unsafe
 import Data.Char(isNumber,toLower)
 import Network.HTTP.Types.Header
 
---
 --import Debug.Trace
 --(!>)= flip trace
 
@@ -401,9 +400,6 @@ instance Monoid CheckBoxes where
 --  mappend x y=  mappend <$> x <*> y
 --  mempty= return (CheckBoxes [])
 
-instance (Monad m, Functor m, Monoid a) => Monoid (View v m a) where
-  mappend x y = mappend <$> x <*> y  -- beware that both operands must validate to generate a sum
-  mempty= return mempty
 
 -- | Display a text box and return the value entered if it is readable( Otherwise, fail the validation)
 setCheckBox :: (FormInput view,  MonadIO m) =>
@@ -416,8 +412,8 @@ setCheckBox checked v= View $ do
       strs= map snd $ filter ((==) n . fst) env
       mn= if null strs then Nothing else Just $ head strs
       val = inSync st
-  let ret= case val !> show val of
-        True  -> Just $ CheckBoxes  strs !> show strs
+  let ret= case val of                    -- !> show val of
+        True  -> Just $ CheckBoxes  strs  -- !> show strs
         False -> Nothing
   return $ FormElm
       ( [ finput n "checkbox" v
@@ -515,8 +511,11 @@ genNewId=  do
   case mfCached st of
     False -> do
       let n= mfSequence st
+          prefseq= let seq= mfCallBackSeq st
+                   in if seq==0 then "" else show seq
       put $ st{mfSequence= n+1}
-      return $ 'p':(show n)
+
+      return $ 'p':prefseq ++(show n)
     True  -> do
       let n = mfSeqCache st
       put $ st{mfSeqCache=n+1}
@@ -743,6 +742,9 @@ wrender x = (fromStr $ show x) ++> return x
 wraw :: Monad m => view -> View view m ()
 wraw x= View . return . FormElm [x] $ Just ()
 
+-- To display some rendering and return  non valid
+notValid :: Monad m => view -> View view m a
+notValid x= View . return $ FormElm [x] Nothing
 
 -- | Wether the user is logged or is anonymous
 isLogged :: MonadState (MFlowState v) m => m Bool
@@ -771,7 +773,7 @@ userWidget muser formuser= do
    val mu (Just us, Nothing)=
         if isNothing mu || isJust mu && fromJust mu == fst us
            then userValidate us
-           else return . Just $ fromStr "wrong user for the operation"
+           else return . Just $ fromStr "This user is no permissions for this task"
 
    val mu (Just us, Just p)=
       if isNothing mu || isJust mu && fromJust mu == fst us
@@ -942,20 +944,23 @@ ask
       View view IO a -> FlowM view IO a
 ask w =  do
   st1 <- get
+
+  -- AJAX
   let env= mfEnv st1
-  let mv1= lookup "ajax" env
-  let majax1= mfAjax st1
+      mv1= lookup "ajax" env
+      majax1= mfAjax st1
 
   case (majax1,mv1,M.lookup (fromJust mv1)(fromJust majax1), lookup "val" env)  of
    (Just ajaxl,Just v1,Just f, Just v2) -> do
      FlowM . lift $ (unsafeCoerce f) v2
      FlowM $ lift receiveWithTimeouts
      ask w
+  -- END AJAX
 
    _ ->   do
      let st= st1{needForm= False, inSync= False, mfRequirements= []} 
      put st
-     FormElm forms mx <- FlowM . lift $ runView  w
+     FormElm forms mx <- FlowM . lift $ runView  w               -- !> ("mfPath="++ show (mfPath st1))
               
      st' <- get
      if notSyncInAction st' then put st'{notSyncInAction=False}>> ask w  else
@@ -972,10 +977,11 @@ ask w =  do
 --                            else
 --                            depth
 --                ,mfLinkSelected= False}
-         breturn x                      -- !> "just x"
+         breturn x
 
        Nothing ->
-         if  not (inSync st')  && not (newAsk st')    !> (show $ inSync st')  !> (show $ newAsk st')
+         if  not (inSync st')  && not (newAsk st')     -- !> ("insinc="++show (inSync st'))
+                                                       -- !> ("newask="++show (newAsk st'))
           then  fail ""
           else do
              reqs <-  FlowM $ lift installAllRequirements
@@ -1008,8 +1014,14 @@ ask w =  do
     tail1 []=[]
     tail1 xs= tail xs
 
-
-
+-- | A synonym of ask.
+--
+-- Maybe more appropiate for pages with long interactions with the user
+-- while the result has little importance.
+page
+  :: (FormInput view) =>
+      View view IO a -> FlowM view IO a
+page= ask
 
 
 -- | True if the flow is going back (as a result of the back button pressed in the web browser).
@@ -1083,13 +1095,17 @@ receiveWithTimeouts= do
          t2= mfSessionTime st
      msg <-  liftIO ( receiveReqTimeout t1 t2  t)
      let req= getParams msg
-         env= updateParams (mfEnv st) req !> show req
-         path= pwfPath msg
-     put st{ mfPath=path, mfEnv= env}
+         env= updateParams pathChanged (mfEnv st) req -- !> show req
+         path=  pwfPath msg
+         pathChanged= path /= mfPath st
+     put st{ mfPath=path
+           , mfEnv= env}
 
      where
-     updateParams :: Params -> Params -> Params
-     updateParams env req=
+     updateParams :: Bool -> Params -> Params -> Params
+     updateParams True _ req= req
+     updateParams False env req=
+
         let params= takeWhile isparam env
             fs= fst $ head req
             parms= (case findIndex (\p -> fst p == fs)  params of
@@ -1098,20 +1114,6 @@ receiveWithTimeouts= do
                     ++  req
         in parms -- !> show parms `seq` parms
 
-
---     hasParams ldepth seq cseq env= hasRestParams ldepth || isparam (head env) -- hasRestParams ldepth || hasPostParams seq cseq env
---     hasRestParams ldepth= ldepth >0
---     hasPostParams seq cseq= not . null . filter (\(p,_) ->
---       let tailp = tail p
---       in  and (map isNumber tailp) &&
---       let rt= read tailp
---       in  case head p of
---         'p' -> rt <= seq
---         'c' -> rt <= cseq
---         _   -> False)
---      split []= []
---      split ('/':r)= split r
---      split s=  let (h,r)= span (/='/') s in h : split r
 
 
 isparam ('p': r,_)= and $ map isNumber r
@@ -1257,7 +1259,9 @@ wlink x v= View $ do
       st   <- get
       
       let links= mfLinks st
-          name' = map toLower $ if typeOf x== typeOf(undefined :: String) then unsafeCoerce x else show x
+          name' = map toLower $ if typeOf x== typeOf(undefined :: String)
+                                   then unsafeCoerce x
+                                   else show x
           env = mfEnv st
           lpath' = mfPath st
           lpath =  if null lpath' then [] else tail $ lpath'
@@ -1272,16 +1276,12 @@ wlink x v= View $ do
       let name= name' ++  csuffix ++ suffix
       let path= currentPath lpath' verb  ++ name 
           toSend = flink path v
---          depth = mfLinkDepth st
---      when (length lpath == 0) $ modify $ \st -> st{newAsk= True}
-
 
       r <- if (not (null lpath)
 --             && depth < length lpath
              && elem name lpath) -- lpath !! depth  == name)
-             !> show lpath
---             !> ("depth "++ show depth)
-             !> show name
+--             !> show lpath
+--             !> show name
              then do
                   modify $ \s -> s{inSync= True{-,mfLinkSelected=True-} } -- , mfLinkDepth= depth +1 }
                   return $ Just x
