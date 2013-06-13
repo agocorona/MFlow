@@ -19,7 +19,7 @@ import System.IO.Unsafe
 import System.Environment
 import Debug.Trace
 --
---(!>) = flip trace
+(!>) = flip trace
 
 --test= runTest [(15,"shop")]
 
@@ -29,7 +29,7 @@ main= do
    setFilesPath ""
    addMessageFlows
        [(""    , transient $ runFlow mainmenu)
-       ,("shop", runFlow shopCart)]
+       ,("shop",  runFlow shopCart)]
    env <- getEnvironment
    let port = fromIntegral . read . fromMaybe "80" $ lookup "PORT" env
    wait $ run port waiMessageFlow
@@ -153,6 +153,7 @@ counterWidget n=do
 
 rpaid= unsafePerformIO $ newMVar (0 :: Int)
 
+
 preventBack= do
     ask $ wlink () << b << "press here to pay 100000 $ "
     payIt
@@ -160,8 +161,7 @@ preventBack= do
     preventGoingBack . ask $   p << "You already paid 100000 before"
                            ++> p << "you can no go back until the end of the buy process"
                            ++> wlink () << p << "Please press here to continue"
-
-    ask $   p << ("you paid"++ show paid)
+    ask $   p << ("you paid "++ show paid)
         ++> wlink () << p << "Press here to go to the menu or press the back button to verify that you can not pay again"
     where
     payIt= liftIO $ do
@@ -277,10 +277,10 @@ radio = do
 ajaxsample= do
    r <- ask $   p << b <<  "Ajax example that increment the value in a box"
             ++> do
-         let elemval= "document.getElementById('text1').value"
-         ajaxc <- ajax $ \n -> return . B.pack $ elemval <> "='" <> show(read  n +1) <>  "'"
-         b <<   "click the box"
-           ++> getInt (Just 0) <! [("id","text1"),("onclick", ajaxc  elemval)]<** submitButton "submit"
+                 let elemval= "document.getElementById('text1').value"
+                 ajaxc <- ajax $ \n -> return . B.pack $ elemval <> "='" <> show(read  n +1) <>  "'"
+                 b <<  "click the box "
+                   ++> getInt (Just 0) <! [("id","text1"),("onclick", ajaxc  elemval)] <** submitButton "submit"
    ask $ p << ( show r ++ " returned")  ++> wlink () (p <<  " menu")
    breturn()
 
@@ -299,33 +299,44 @@ actions n= do
   where
   action n=  ask $ getString (Just $ n ++ " action")<** submitButton "submit action"
 
-data ShopOptions= IPhone | IPod | IPad deriving (Bounded, Enum,Read, Show, Typeable)
+data ShopOptions= IPhone | IPod | IPad deriving (Bounded, Enum, Show,Read , Typeable)
+
+newtype Cart= Cart (V.Vector Int) deriving Typeable
+emptyCart= Cart $ V.fromList [0,0,0]
 
 shopCart  = do
+
    setHeader $ \html -> p << ( El.span <<
-     "A persistent flow  (uses step). The process is killed after 10 seconds of inactivity \
+     "A persistent flow  (uses step). The process is killed after 100 seconds of inactivity \
      \but it is restarted automatically. Event If you restart the whole server, it remember the shopping cart\n\n \
      \Defines a table with links enclosed that return ints and a link to the menu, that abandon this flow.\n\
      \The cart state is not stored, Only the history of events is saved. The cart is recreated by running the history of events."
+
      <> html)
-   setTimeouts 10 0
-   shopCart1 (V.fromList [0,0,0:: Int])
+   setTimeouts 100 (60 * 60)
+   shopCart1
    where
-   shopCart1 cart=  do
-     o <- step . ask $
-             table ! At.style (attr "border:1;width:20%;margin-left:auto;margin-right:auto")
-             <<< caption <<  "choose an item"
-             ++> thead << tr << ( th << b <<   "item" <> th << b <<  "times chosen")
-             ++> (tbody
+   shopCart1 =  do
+     o <- step .  ask $ do
+             let moreexplain= p << "The second parameter of \"setTimeout\" is the time during which the cart is recorded"
+             Cart cart <- getSessionData `onNothing` return emptyCart
+
+             moreexplain
+              ++>
+              (table ! At.style (attr "border:1;width:20%;margin-left:auto;margin-right:auto")
+              <<< caption <<  "choose an item"
+              ++> thead << tr << ( th << b <<   "item" <> th << b <<  "times chosen")
+              ++> (tbody
                   <<< tr ! rowspan (attr "2") << td << linkHome
                   ++> (tr <<< td <<< wlink  IPhone (b <<  "iphone") <++  td << ( b <<  show ( cart V.! 0))
-                  <|>  tr <<< td <<< wlink  IPod (b <<  "ipad")     <++  td << ( b <<  show ( cart V.! 1))
-                  <|>  tr <<< td <<< wlink  IPad (b <<  "ipod")     <++  td << ( b <<  show ( cart V.! 2)))
+                  <|>  tr <<< td <<< wlink  IPod   (b <<  "ipod")   <++  td << ( b <<  show ( cart V.! 1))
+                  <|>  tr <<< td <<< wlink  IPad   (b <<  "ipad")   <++  td << ( b <<  show ( cart V.! 2)))
                   <++  tr << td <<  linkHome
-                  )
+                  ))
      let i =fromEnum o
-     let newCart= cart V.// [(i, cart V.!  i + 1 )]
-     shopCart1 newCart
+     Cart cart <- getSessionData `onNothing` return emptyCart
+     setSessionData . Cart $ cart V.// [(i, cart V.!  i + 1 )]
+     shopCart1
 
     where
     linkHome= a ! href  (attr $ "/" ++ noScript) << b <<  "home"

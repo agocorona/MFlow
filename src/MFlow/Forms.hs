@@ -172,7 +172,7 @@ cachedWidget, wcached, wfreeze,
 ,(.<+>.), (.|*>.), (.|+|.), (.**>.),(.<**.), (.<|>.),
 
 -- * Formatting combinators
-(<<<),(<++),(++>),(<!),
+(<<<),(++>),(<++),(<!),
 
 -- * Normalized (convert to ByteString) formatting combinators
 -- | Some combinators that convert the formatting of their arguments to lazy byteString
@@ -644,17 +644,6 @@ infixr 5 <<<
 
 
 
--- | Useful for the creation of pages using two or more views.
--- For example 'HSP' and 'Html'.
--- Because both have ConvertTo instances to ByteString, then it is possible
--- to mix them via 'normalize':
---
--- > normalize widget  <+> normalize widget'
---
--- is equivalent to
---
--- > widget .<+>. widget'
-
 
 
 
@@ -1056,9 +1045,12 @@ page= ask
 -- However this is very specialized. Normally the back button detection is not necessary.
 -- In a persistent flow (with step) even this default entry option would be completely automatic,
 -- since the process would restar at the last page visited. No setting is necessary.
-goingBack :: MonadState (MFlowState view) m => m Bool
+goingBack :: (MonadIO m,MonadState (MFlowState view) m) => m Bool
 goingBack = do
     st <- get
+    liftIO $ do
+      print $"Insync=" ++ show (inSync st)
+      print $ "newAsk st=" ++ show (newAsk st)
     return $ not (inSync st) && not (newAsk st)
 
 -- | Will prevent the backtrack beyond the point where 'preventGoingBack' is located.
@@ -1081,10 +1073,13 @@ preventGoingBack
   :: (Functor m, MonadIO m, FormInput v) => FlowM v m () -> FlowM v m ()
 preventGoingBack msg= do
    back <- goingBack
+   liftIO $ putStr "BACK= ">> print back
    if not back  then breturn() else do
+         breturn()  -- will not go back bellond this
          clearEnv
+         modify $ \s -> s{newAsk= True}
          msg
-         breturn()
+
 
 
 

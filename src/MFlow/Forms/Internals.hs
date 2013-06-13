@@ -202,7 +202,7 @@ newtype View v m a = View { runView :: WState v m (FormElm v a)}
 instance Monad m => HandleBacktracking (MFlowState v) (WState v m) where
    handle st= do
         MFlowState{..} <- get
-        put  st{mfEnv= mfEnv, mfPath=mfPath, mfData=mfData,newAsk=False}
+        put  st{mfEnv= mfEnv, mfPath=mfPath, mfData=mfData,inSync=False,newAsk=False}
 
 newtype FlowM v m a= FlowM {runFlowM :: FlowMM v m a} deriving (Monad,MonadIO,MonadState(MFlowState v))
 flowM= FlowM
@@ -216,10 +216,10 @@ instance (FormInput v,Serialize a)
       True  -> showp(x, mfEnv s)
    readp= choice[nodebug, debug]
     where
-    nodebug= readp  >>= \x -> return  (x, mFlowState0)
+    nodebug= readp  >>= \x -> return  (x, mFlowState0{mfSequence= -1})
     debug=  do
      (x,env) <- readp
-     return  (x,mFlowState0{mfEnv= env})
+     return  (x,mFlowState0{mfEnv= env,mfSequence= -1})
     
 
 instance Functor (FormElm view ) where
@@ -785,7 +785,7 @@ step f= do
    flowM $ BackT $ do
         (r,s') <-  lift . WF.step $ runStateT (runBackT $ runFlowM f) s
         -- when recovery of a workflow, the MFlow state is not considered
-        when( mfSequence s' >0) $ put s'
+        when( mfSequence s' /= -1) $ put s'  !> (show $ mfSequence s') -- else put  s{newAsk=True}
         return r
 
 --stepWFRef
