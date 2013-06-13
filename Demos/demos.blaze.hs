@@ -16,7 +16,8 @@ import qualified Data.Vector as V
 import Data.Maybe
 import Data.Monoid
 import System.IO.Unsafe
---import Debug.Trace
+import System.Environment
+import Debug.Trace
 --
 --(!>) = flip trace
 
@@ -29,8 +30,9 @@ main= do
    addMessageFlows
        [(""    , transient $ runFlow mainmenu)
        ,("shop", runFlow shopCart)]
-
-   wait $ run 80 waiMessageFlow
+   env <- getEnvironment
+   let port = fromIntegral . read . fromMaybe "80" $ lookup "PORT" env
+   wait $ run port waiMessageFlow
 
 
 attr= fromString
@@ -43,10 +45,10 @@ data Options= CountI | CountS | Radio
             | FViewMonad | Counter deriving (Bounded, Enum,Read, Show,Typeable)
 
 
-mainmenu=   do
+mainmenu=  trace "INIT" $ do
        setHeader stdheader
        setTimeouts 100 0
-       r <- ask $   wcached "menu" 0 $
+       r <- ask $  -- wcached "menu" 0 $
                     b <<  "BASIC"
                ++>  br ++> wlink CountI       << b <<  "increase an Int"
                <|>  br ++> wlink CountS       << b <<  "increase a String"
@@ -68,7 +70,7 @@ mainmenu=   do
                <|>  br ++> wlink Grid         << b <<  "grid"
                <|>  br ++> wlink TextEdit     << b <<  "Content Management"
                <++  br <>  br                 <> b <<  "STATEFUL PERSISTENT FLOW"
-                 <> br <>  a ! href  (attr "shop") <<  "shopping"   -- ordinary Blaze.Html link
+                 <> br <>  a ! href  (attr "/shop") <<  "shopping"   -- ordinary Blaze.Html link
 
                  <> br <>  br <> b <<  "OTHERS"
                <|>  br ++> wlink Login        << b <<  "login/logout"
@@ -94,11 +96,30 @@ mainmenu=   do
              FViewMonad  -> sumInView
              Counter    -> counter
 
-sumInView= ask $ do
-      n1 <- p << "enter first number"  ++> getInt Nothing <** submitButton "enter" <++ br
-      n2 <- p << "enter second number" ++> getInt Nothing <** submitButton "enter" <++ br
-      n3 <- p << "enter third number"  ++> getInt Nothing <** submitButton "enter" <++ br
+sumInView= ask sumWidget
+
+sumWidget= wform $ do
+      n1 <- p << "Enter first number"  ++> getInt Nothing <** submitButton "enter" <++ br
+      n2 <- p << "Enter second number" ++> getInt Nothing <** submitButton "enter" <++ br
+      n3 <- p << "Enter third number"  ++> getInt Nothing <** submitButton "enter" <++ br
       b << show (n1 + n2 + n3)  ++>  wlink () << b << " menu"
+
+   <** hr ++> wlogin
+
+wlogin=  do
+    username <- getCurrentUser
+    liftIO $ print username
+    if username /= anonymous
+     then return username
+     else do
+      name <-  getString (Just $ "Enter username") <++ br
+      pass <- getPassword <++ br
+      val <- userValidate (name,pass)
+      case val of
+        Just msg ->notValid msg
+        Nothing -> login name >> return name
+
+   `wcallback`  \name -> b << ("logged as " ++ name) ++> noWidget
 
 multicounter= do
  let explain= p << "This example emulates the"
@@ -116,18 +137,19 @@ counter= do
    let explain= p <<"This example emulates the"
                 <> a ! href (attr "http://www.seaside.st/about/examples/counter") << "seaside example"
                 <> p << "This widget uses a callback to permit an independent"
-                <> p << "execution flow for each widget." <> a ! href (attr "/noscript/multicounter") << "Multicounteer" <> (text " instantiate various counter widgets")
+                <> p << "execution flow for each widget." <> a ! href (attr "/noscript/multicounter") << "Multicounter" <> (text " instantiate various counter widgets")
                 <> p << "But while the seaside case the callback update the widget object, in this case"
-                <> p << "the callback call generate a new copy of the counter with the value modified."
-   ask $ explain ++> counterWidget 0 <|> wlink () << p << "exit"
+                <> p << "the callback call generates a new copy of the counter with the value modified."
+   ask $ explain ++> counterWidget 0 <|> br ++> sumWidget <|> wlink () << p << "exit"
 
 counterWidget n=do
   (h1 << show n
    ++> wlink "i" << b << " ++ "
    <|> wlink "d" << b << " -- ")
-  `wcallback` \op -> case op of
-                      "i" -> counterWidget (n + 1)
-                      "d" -> counterWidget (n - 1)
+  `wcallback`
+   \op -> case op of
+      "i" -> counterWidget (n + 1)
+      "d" -> counterWidget (n - 1)
 
 rpaid= unsafePerformIO $ newMVar (0 :: Int)
 
@@ -306,7 +328,7 @@ shopCart  = do
      shopCart1 newCart
 
     where
-    linkHome= a ! href  (attr noScript) << b <<  "home"
+    linkHome= a ! href  (attr $ "/" ++ noScript) << b <<  "home"
 
 
 loginSample= do

@@ -39,7 +39,7 @@ main= do
 #endif
 
 helloWorld n= do
-   step $ ask $ h1 << ("this is the Hello World number:" ++ show n) ++> wlink "" << b << "press here"
+   step $ ask $ h1 << ("this is the Hello World number:" ++ show n) ++> wlink () << b << "press here"
    helloWorld $ n + 1
 
 sumit= do

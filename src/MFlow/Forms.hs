@@ -241,8 +241,8 @@ import System.IO.Unsafe
 import Data.Char(isNumber,toLower)
 import Network.HTTP.Types.Header
 
---import Debug.Trace
---(!>)= flip trace
+import Debug.Trace
+(!>)= flip trace
 
 
 
@@ -960,7 +960,7 @@ ask w =  do
    _ ->   do
      let st= st1{needForm= False, inSync= False, mfRequirements= []} 
      put st
-     FormElm forms mx <- FlowM . lift $ runView  w               -- !> ("mfPath="++ show (mfPath st1))
+     FormElm forms mx <- FlowM . lift $ runView  w                !> ("mfPath="++ show (mfPath st1))
               
      st' <- get
      if notSyncInAction st' then put st'{notSyncInAction=False}>> ask w  else

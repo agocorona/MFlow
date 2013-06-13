@@ -1,3 +1,112 @@
+si no matching completo de path, que de error
+
+parameter numbers in monadic view
+   afecta a todos los operadores
+   ahora se exige que el recorrido de paramentros sea el mismo
+   eso no se puede forzar, porque el recorrido monadico puede ser infinito
+     dar un indice a cada paso
+     resetear en contador actual en cada paso
+   el problema es equivalente a numerar un arbol de la msma forma
+   siempre aunque crezca.
+      hay que usar un nuevo contador a cada nivel
+
+                 1
+            11         12
+         11 112 113  121 122
+
+                1           2
+             13    14     15  16
+           27 28  29
+   otra opción asignarles un numero y almacenarlo en el widget
+
+       FormElm (Maybe(IORef Int))  [v] (Maybe x)
+         no vale cuando se juntan dos o mas formelems
+       FormElm Int [v] Maybe
+       los formelem son generados y destruidos
+
+   generar un arbol de asignaciones:
+           1   2         1      3
+                        12
+
+
+   guardando valores de parametros en cada interacción
+      como se puede detectar un cambio en el arbol?
+         se detenctan cuales son los parametros nuevos
+         se desplazan los viejos:
+
+         1 2 3 4 5
+         llegan
+         1 2 3 4 5 6 7 8
+
+         hay tres parametros nuevos, pero donde estan insertos?
+
+         pueden ser todos del mismo tipo (ejm: contadores)
+         no se puede detectar de donde son.
+
+
+
+restarting flag
+
+dynamic envelope:
+  detect changes in the internal widget
+
+  send it by javascript by means of a ajax proc watching for requests
+
+
+  send to ask only the ajax code to respond requests
+
+
+links back
+
+  link function
+
+  return in the mflow monad
+     que quiten
+  que cuando se matchee el ultimo token del path en un recorrido
+
+x backtracking no funciona en form in the view
+   cuando cambia el path, borrar los parametros.
+   en receiveReqTimeout
+      if pathchanged borrar old params.
+
+links de retorno a veces no funcionan
+
+tail path  do not allow backtracking
+  but tail path in callbacks do not work
+
+shop da error
+
+content management textos vacios
+
+necesitamos un sistema de matching que haga asocie una entrada del path con un link concreto
+
+hacer el map de links que no se resetee
+o que cuando hay iteracuión, que se conserve el map de links
+
+seaside multicounter
+http://seaside.st/about/examples/multicounter
+
+counter n= do
+   r <- ask $ p << show n ++> wlink "+" "+" <|> wlink "-" "-"
+   case r of
+     "+" -> counter $ n + 1
+     "-" -> counter $ n - 1
+
+counterWidget n=
+   p << show n
+   ++> wlink "+" "+" >>= counterWidget (n + 1)
+   <|> wlink "-" "-" >>= counterWidget (n - 1)
+
+
+modal:: (html -> html) -> FlowM Html IO a -> (a ->FlowM Html IO b) -> FLowM Html IO b
+
+modal holder w action = do
+
+   holder <<< w `waction` action'
+   where
+   action'= do
+      FormElm f mx <-
+
 como se genera una respuesta partiendo de un tipo
 
 instance Generate (Id a) where

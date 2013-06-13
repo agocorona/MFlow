@@ -1,5 +1,5 @@
 name: MFlow
-version: 0.2.0.6
+version: 0.2.0.9
 cabal-version: >=1.6
 build-type: Simple
 license: BSD3
@@ -7,15 +7,16 @@ license-file: LICENSE
 maintainer: agocorona@gmail.com
 stability: experimental
 Bug-reports: https://github.com/agocorona/MFlow/issues
-synopsis: Web app server for stateful processes with safe, composable user interfaces.
-description: A Web framework with some unique features thanks to the power of the Haskell language.
-             MFlow run stateful server processes; All the flow of requests and responses are coded by the programmer in a single function.
+synopsis: continuation-based Web framework without continuations.
+description: MFlow run stateful server processes; All the flow of requests and responses are coded by the programmer in a single function.
              Allthoug single request-response flows and callbacks are possible. Therefore, the code is
-             more understandable.
+             more understandable. It is not continuation based. It uses a log for thread state persistence and backtracking forall
+             handling the back button. Because  the serialized state is small and can be synchronized,
+             potentially that makes the MFlow architecture scalable.
              .
              These processes are stopped and restarted by the
-             application server on demand, including its execution state. Therefore session management
-             is automatic. State consistence and transactions are given by the TCache package.
+             application server on demand, including the execution state (if the Wokflow monad is used.
+             Therefore session management is automatic. State consistence and transactions are given by the TCache package.
              .
              The processes interact trough widgets, that are an extension of formlets with
              additional applicative combinators, formatting, link management, callbacks, modifiers, caching,
@@ -27,15 +28,16 @@ description: A Web framework with some unique features thanks to the power of th
              Bindings for hack, and hsp >= 0.8,  are not compiled by Hackage, and do not appear, but are included in the package files.
              To use them, add then to the exported modules and execute cabal install
              .
-             The previous release add transparent back button management, cached widgets, callbacks, modifiers, heterogeneous formatting, AJAX,
+             It is designed for applications that can be run with no deployment with runghc in order
+             to speed up the development process. see "Web application in a tweet": http://haskell-web.blogspot.com.es/2013/05/a-web-application-in-tweet.html
+             .
+             The previous release (0.1) add transparent back button management, cached widgets, callbacks, modifiers, heterogeneous formatting, AJAX,
              and WAI integration.
              .
-             This version add better WAI integration, higher level dynamic Widgets, content management, multilanguage, blaze-html support,
+             This version (0.2) add better WAI integration, higher level dynamic Widgets, content management, multilanguage, blaze-html support,
              stateful ajax for server-side control, user-defined data in sessions and widget requirements for automatic installation of scripts, CSS and server flows.
-
              .
-             It is designed for applications that can be run with no deployment with runghc in order
-             to speed up the development process.
+             This version (0.2.0.9) add the runFlowConf primitive
              .
              See "MFlow.Forms" for details
              .
@@ -55,6 +57,7 @@ extra-source-files: Demos/demos.blaze.hs
                   , src/MFlow/Hack/XHtml.hs
                   , src/MFlow/Hack/XHtml/All.hs
                   , src/MFlow/Forms/HSP.hs
+
 
 source-repository head
     type: git
