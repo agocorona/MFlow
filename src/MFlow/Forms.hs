@@ -241,8 +241,8 @@ import System.IO.Unsafe
 import Data.Char(isNumber,toLower)
 import Network.HTTP.Types.Header
 
-import Debug.Trace
-(!>)= flip trace
+--import Debug.Trace
+--(!>)= flip trace
 
 
 
@@ -382,6 +382,7 @@ setRadio v n= View $ do
           ( isValidated mn  && v== fromValidated mn) Nothing]
           (fmap Radio $ valToMaybe mn)
 
+-- | encloses a set of Radio boxes. Return the option selected
 getRadio
   :: (Monad m, Functor m, FormInput view) =>
      [String -> View view m Radio] -> View view m String
@@ -773,7 +774,7 @@ userWidget muser formuser= do
    val mu (Just us, Nothing)=
         if isNothing mu || isJust mu && fromJust mu == fst us
            then userValidate us
-           else return . Just $ fromStr "This user is no permissions for this task"
+           else return . Just $ fromStr "This user has no permissions for this task"
 
    val mu (Just us, Just p)=
       if isNothing mu || isJust mu && fromJust mu == fst us
@@ -964,7 +965,7 @@ ask w =  do
               
      st' <- get
      if notSyncInAction st' then put st'{notSyncInAction=False}>> ask w  else
-      case mx of
+      case mx !> ("lengthreqs="++ (show $ length $mfRequirements st'))of
        Just x -> do
 --         let depth= mfLinkDepth st'
          put st'{newAsk= True ,mfEnv=[]

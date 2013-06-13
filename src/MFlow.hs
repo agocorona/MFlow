@@ -435,7 +435,7 @@ defNotFoundResponse user msg=
    
   paths= Prelude.map B.pack . M.keys $ unsafePerformIO getMessageFlows
   opts=  "options: " <> B.concat (Prelude.map  (\s ->
-                          "<a href=\""<>  s <>"\">"<> s <>"</a>, ") paths)
+                          "<a href=\"/"<>  s <>"\">"<> s <>"</a>, ") paths)
 
 notFoundResponse=  unsafePerformIO $ newIORef defNotFoundResponse
 

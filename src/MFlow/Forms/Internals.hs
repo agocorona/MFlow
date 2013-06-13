@@ -45,8 +45,8 @@ import Data.List
 import System.IO.Unsafe
 import Control.Concurrent.MVar
 
---import Debug.Trace
---(!>)= flip trace
+import Debug.Trace
+(!>)= flip trace
 
 instance Serialize a => Serializable a where
   serialize=  runW . showp
@@ -253,7 +253,8 @@ instance  (Monad m) => Monad (View view m) where
                         let seq= mfCallBackSeq s
                         put s{mfCallBackSeq= seq + 1}
                         FormElm form2 mk <- runView $ f k
-                        put s{mfCallBackSeq= seq}
+                        s' <-get
+                        put s'{mfCallBackSeq= seq}
                         return $ FormElm (form1 ++ form2) mk
 
                      Nothing -> return $ FormElm form1 Nothing
@@ -288,7 +289,8 @@ wcallback (View x) f = View $ do
         let seq= mfCallBackSeq s
         put s{mfCallBackSeq= seq + 1}
         r <- runView (f k)
-        put s{mfCallBackSeq= seq}
+        s' <- get
+        put s'{mfCallBackSeq= seq}
         return r
 
      Nothing -> return $ FormElm form1 Nothing
@@ -897,7 +899,7 @@ getParam1 par req =  r
 -- procedure to be called with the list of requirements.
 -- Varios widgets in the page can require the same element, MFlow will install it once.
 requires rs =do
-    st <- get
+    st <- get !> "requires"
     let l = mfRequirements st
 --    let rs'= map Requirement rs \\ l
     put st {mfRequirements= l ++ map Requirement rs}
@@ -914,7 +916,7 @@ class Requirements  a where
 installAllRequirements ::( Monad m, FormInput view) =>  WState view m view
 installAllRequirements= do
  rs <- gets mfRequirements
- installAllRequirements1 mempty rs
+ installAllRequirements1 mempty rs   !> ("install "++ show (length rs))
  where
 
  installAllRequirements1 v []= return v
