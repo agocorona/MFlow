@@ -47,7 +47,7 @@ import System.IO.Unsafe
 import Control.Concurrent.MVar
 
 import Debug.Trace
-(!>) x y=  x -- flip trace
+(!>)= flip trace
 
 instance Serialize a => Serializable a where
   serialize=  runW . showp
@@ -203,7 +203,7 @@ newtype View v m a = View { runView :: WState v m (FormElm v a)}
 instance Monad m => HandleBacktracking (MFlowState v) (WState v m) where
    handle st= do
         MFlowState{..} <- get
-        put  st{mfEnv= mfEnv,mfToken=mfToken, mfPath=mfPath,mfPIndex= mfPIndex, mfData=mfData,inSync=False,newAsk=False}
+        put  st{mfEnv= mfEnv, mfPath=mfPath, mfData=mfData,inSync=False,newAsk=False}
 
 newtype FlowM v m a= FlowM {runFlowM :: FlowMM v m a} deriving (Monad,MonadIO,MonadState(MFlowState v))
 flowM= FlowM
@@ -242,28 +242,26 @@ instance (Functor m, Monad m) => Alternative (View view m) where
   View f <|> View g= View $ do
                    FormElm form1 k <- f
                    FormElm form2 x <- g
-
                    return $ FormElm (form1 ++ form2) (k <|> x)
 
 
 instance  (Monad m) => Monad (View view m) where
     View x >>= f = View $ do
-
                    FormElm form1 mk <- x
                    case mk of
                      Just k  -> do
-                        modify $ \st -> st{linkMatched= False} !> "------M--------"
+                        s <- get
+                        let seq= mfCallBackSeq s
+                        put s{mfCallBackSeq= seq + 1}
                         FormElm form2 mk <- runView $ f k
+                        s' <-get
+                        put s'{mfCallBackSeq= seq}
                         return $ FormElm (form1 ++ form2) mk
 
-                     Nothing -> do
-                        return $ FormElm form1 Nothing
+                     Nothing -> return $ FormElm form1 Nothing
 
-
-    return = View .  return . FormElm  [] . Just
+    return= View .  return . FormElm  [] . Just
 --    fail msg= View . return $ FormElm [fromStr msg] Nothing
-
-
 
 instance (Monad m, Functor m, Monoid a) => Monoid (View v m a) where
   mappend x y = mappend <$> x <*> y  -- beware that both operands must validate to generate a sum
@@ -281,10 +279,6 @@ instance (Monad m, Functor m, Monoid a) => Monoid (View v m a) where
 -- executed whithin the same ask statement.
 --
 --
-
-
-
-
 wcallback
   :: Monad m =>
      View view m a -> (a -> View view m b) -> View view m b
@@ -292,13 +286,16 @@ wcallback (View x) f = View $ do
    FormElm form1 mk <- x
    case mk of
      Just k  -> do
-       modify $ \st -> st{linkMatched= False} !> "-------C-------"
-       runView (f k)
-     Nothing -> return $ FormElm form1 Nothing
+        s <- get
+        let sec= mfCallBackSeq s
+        put s{mfCallBackSeq= sec + 1}
+        r <- runView (f k)
+        s' <- get
+        put s'{mfCallBackSeq= sec}
+        return r
 
---incLink :: MonadState (MFlowState view) m => m()
---incLink= modify $ \st -> st{mfPIndex= if linkMatched st then mfPIndex  st + 1 else mfPIndex st
---                ,linkMatched= False}  -- !> "<-inc"
+     Nothing ->  return $ FormElm form1 Nothing
+
 --incLinkDepth
 --  :: MFlowState v -> Int
 --incLinkDepth s=
@@ -349,73 +346,6 @@ changeMonad w= View . StateT $ \s ->
     let (r,s')= execute $ runStateT  ( runView w)    s
     in mfSequence s' `seq` return (r,s')
 
--- | True if the flow is going back (as a result of the back button pressed in the web browser).
---  Usually this check is nos necessary unless conditional code make it necessary
---
--- @menu= do
---       mop <- getGoStraighTo
---       case mop of
---        Just goop -> goop
---        Nothing -> do
---               r \<- `ask` option1 \<|> option2
---               case r of
---                op1 -> setGoStraighTo (Just goop1) >> goop1
---                op2 -> setGoStraighTo (Just goop2) >> goop2@
---
--- This pseudocode below would execute the ask of the menu once. But the user will never have
--- the possibility to see the menu again. To let him choose other option, the code
--- has to be change to
---
--- @menu= do
---       mop <- getGoStraighTo
---       back <- `goingBack`
---       case (mop,back) of
---        (Just goop,False) -> goop
---        _ -> do
---               r \<- `ask` option1 \<|> option2
---               case r of
---                op1 -> setGoStraighTo (Just goop1) >> goop1
---                op2 -> setGoStraighTo (Just goop2) >> goop2@
---
--- However this is very specialized. Normally the back button detection is not necessary.
--- In a persistent flow (with step) even this default entry option would be completely automatic,
--- since the process would restar at the last page visited. No setting is necessary.
-goingBack :: (MonadIO m,MonadState (MFlowState view) m) => m Bool
-goingBack = do
-    st <- get
-    liftIO $ do
-      print $"Insync=" ++ show (inSync st)
-      print $ "newAsk st=" ++ show (newAsk st)
-    return $ not (inSync st) && not (newAsk st)
-
--- | Will prevent the backtrack beyond the point where 'preventGoingBack' is located.
--- If the  user press the back button beyond that point, the flow parameter is executed, usually
--- it is an ask statement with a message. If the flow is not going back, it does nothing. It is a cut in backtracking
---
--- It is useful when an undoable transaction has been commited. For example, after a payment.
---
--- This example show a message when the user go back and press again to pay
---
--- >   ask $ wlink () << b << "press here to pay 100000 $ "
--- >   payIt
--- >   preventGoingBack . ask $   b << "You  paid 10000 $ one time"
--- >                          ++> wlink () << b << " Please press here to complete the proccess"
--- >   ask $ wlink () << b << "OK, press here to go to the menu or press the back button to verify that you can not pay again"
--- >   where
--- >   payIt= liftIO $ print "paying"
-
-preventGoingBack
-  :: (Functor m, MonadIO m, FormInput v) => FlowM v m () -> FlowM v m ()
-preventGoingBack msg= do
-   back <- goingBack
-   liftIO $ putStr "BACK= ">> print back
-   if not back  then breturn() else do
-         breturn()  -- will not go back bellond this
-         clearEnv
-         modify $ \s -> s{newAsk= True}
-         msg
-
-
 
 type Lang=  String
 
@@ -442,14 +372,11 @@ data MFlowState view= MFlowState{
 
    -- Link management
    mfPath           :: [String],
-
---   mfLinks          :: M.Map String Int,
-
-   mfPrefix         :: String,
-   mfPIndex         :: Int,
-   mfPageIndex      :: Maybe Int,
-   linkMatched      :: Bool,
-   mfLinks          :: M.Map String Int
+--   mfLinkDepth      :: Int,
+   mfLinks          :: M.Map String Int,
+--   mfLinkSelected   :: Bool,
+   mfCallBackSeq    :: Int,
+   mfRestarting     :: Bool
    }
    deriving Typeable
 
@@ -458,7 +385,7 @@ type Void = Char
 mFlowState0 :: (FormInput view) => MFlowState view
 mFlowState0 = MFlowState 0 False  True  True  "en"
                 [] False  (error "token of mFlowState0 used")
-                0 0 [] [] stdHeader False [] M.empty  Nothing 0 False    []   ""   1 Nothing False M.empty
+                0 0 [] [] stdHeader False [] M.empty  Nothing 0 False    []   M.empty  0 False
 
 
 -- | Set user-defined data in the context of the session.
@@ -602,10 +529,8 @@ getWFName = do
  fs <- get
  return . twfname $ mfToken fs
 
-getCurrentUser ::  MonadState (MFlowState view) m =>  m String
-getCurrentUser = do
-  st<- gets mfToken
-  return $ tuser st
+getCurrentUser ::  MonadState (MFlowState view) m=>  m String
+getCurrentUser = return . tuser  =<< gets mfToken
 
 type Name= String
 type Type= String
@@ -693,7 +618,7 @@ cachedWidget ::(MonadIO m,Typeable view
         -> Int     -- ^ Timeout of the caching. Zero means sessionwide
         -> View view Identity a   -- ^ The cached widget, in the Identity monad
         -> View view m a          -- ^ The cached result
-cachedWidget key t mf =  View .  StateT $ \s ->  do
+cachedWidget key t mf = View .  StateT $ \s -> do
         let((FormElm  form _), sec)= execute $ cachedByKey key t $ proc mf s{mfCached=True}
         let((FormElm  _ mx2), s2)  = execute $ runStateT  ( runView mf)    s{mfSeqCache= sec,mfCached=True}
         let s''=  s{inSync = inSync s2
@@ -975,7 +900,7 @@ getParam1 par req =  r
 -- procedure to be called with the list of requirements.
 -- Varios widgets in the page can require the same element, MFlow will install it once.
 requires rs =do
-    st <- get
+    st <- get !> "requires"
     let l = mfRequirements st
 --    let rs'= map Requirement rs \\ l
     put st {mfRequirements= l ++ map Requirement rs}
@@ -992,7 +917,7 @@ class Requirements  a where
 installAllRequirements ::( Monad m, FormInput view) =>  WState view m view
 installAllRequirements= do
  rs <- gets mfRequirements
- installAllRequirements1 mempty rs
+ installAllRequirements1 mempty rs   !> ("install "++ show (length rs))
  where
 
  installAllRequirements1 v []= return v

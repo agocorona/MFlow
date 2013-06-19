@@ -103,7 +103,7 @@ to monad magic. (See <http://haskell-web.blogspot.com.es/2012/03//failback-monad
 
 [@Cached widgets@] with `cachedWidget` it is possible to cache the rendering of a widget as a ByteString (maintaining type safety)
 , the caching can be permanent or for a certain time. this is very useful for complex widgets that present information. Specially if
-the widget content comes from a database and it is  shared by all users.
+the widget content comes from a database and it is shared by all users.
 
 
 [@Callbacks@] `waction` add a callback to a widget. It is executed when its input is validated.
@@ -144,7 +144,7 @@ FlowM, View(..), FormElm(..), FormInput(..)
 ,getCurrentUser,getUserSimple, getUser, userFormLine, userLogin,logout, userWidget,getLang, login,
 userName,
 -- * User interaction 
-ask, askt, clearEnv, wstateless, transfer, pageFlow, 
+ask, askt, clearEnv, wstateless, transfer,
 -- * formLets 
 -- | They usually produce the HTML form elements (depending on the FormInput instance used)
 -- It is possible to modify their attributes with the `<!` operator.
@@ -240,6 +240,9 @@ import qualified Data.Map as M
 import System.IO.Unsafe
 import Data.Char(isNumber,toLower)
 import Network.HTTP.Types.Header
+
+--import Debug.Trace
+--(!>)= flip trace
 
 
 
@@ -509,10 +512,11 @@ genNewId=  do
   case mfCached st of
     False -> do
       let n= mfSequence st
-          prefseq=  mfPrefix st
+          prefseq= let seq= mfCallBackSeq st
+                   in if seq==0 then "" else show seq
       put $ st{mfSequence= n+1}
 
-      return $ 'p':show n++prefseq
+      return $ 'p':prefseq ++(show n)
     True  -> do
       let n = mfSeqCache st
       put $ st{mfSeqCache=n+1}
@@ -672,7 +676,7 @@ html ++> digest =  (html `mappend`) <<< digest
 -- | Add attributes to the topmost tag of a widget
 --
 -- it has a fixity @infix 8@
-infixl 8 <!
+infix 8 <!
 widget <! attribs= View $ do
       FormElm fs  mx <- runView widget
       return $ FormElm  (head fs `attrs` attribs:tail fs) mx
@@ -800,7 +804,7 @@ login uname= do
 
 
 
--- | logout. The user is reset to the `anonymous` user
+-- | logout. The user is resetted to the `anonymous` user
 logout :: (MonadIO m, MonadState (MFlowState view) m) => m ()
 logout= do
      st <- get
@@ -940,42 +944,43 @@ ask w =  do
   case (majax1,mv1,M.lookup (fromJust mv1)(fromJust majax1), lookup "val" env)  of
    (Just ajaxl,Just v1,Just f, Just v2) -> do
      FlowM . lift $ (unsafeCoerce f) v2
-     FlowM $ lift nextMessage
+     FlowM $ lift receiveWithTimeouts
      ask w
   -- END AJAX
 
    _ ->   do
-     let st= st1{needForm= False, inSync= False, mfRequirements= [],linkMatched=False} 
+     let st= st1{needForm= False, inSync= False, mfRequirements= []} 
      put st
-
-     FormElm forms mx <- FlowM . lift  $ runView  w
-
+     FormElm forms mx <- FlowM . lift $ runView  w                !> ("mfPath="++ show (mfPath st1))
+              
      st' <- get
      if notSyncInAction st' then put st'{notSyncInAction=False}>> ask w  else
-      case mx of
+      case mx !> ("lengthreqs="++ (show $ length $mfRequirements st'))of
        Just x -> do
-
-         put st'{newAsk= True ,mfEnv=[]}
-
+--         let depth= mfLinkDepth st'
+         put st'{newAsk= True ,mfEnv=[]
+--                ,mfLinks = M.empty
+                ,mfCallBackSeq= 0}
+--                ,mfLinkDepth=
+--                         if mfLinkSelected  st'
+--                            then
+--                            depth +1
+--                            else
+--                            depth
+--                ,mfLinkSelected= False}
          breturn x
 
        Nothing ->
-         if  not (inSync st')  && not (newAsk st') -- && (isNothing $ mfPageIndex st')
-                                                        !> ("pageIndex="++ show (mfPageIndex st'))
-                                                        !> ("insinc="++show (inSync st'))
-                                                        !> ("newask="++show (newAsk st'))
-          then do
-            let index = mfPIndex st'
-                nindex= if index== 0 then 1 else index - 1
-            put st'{mfPIndex= nindex}  !> "BACKTRACK"
-            fail ""
+         if  not (inSync st')  && not (newAsk st')     -- !> ("insinc="++show (inSync st'))
+                                                       -- !> ("newask="++show (newAsk st'))
+          then  fail ""
           else do
              reqs <-  FlowM $ lift installAllRequirements
              let header= mfHeader st'
                  t= mfToken st'
              cont <- case (needForm st') of
                       True ->  do
-                               frm <- formPrefix (mfPIndex st') (twfname t ) st' forms False
+                               frm <- formPrefix (twfname t ) st' forms False
                                return . header $  reqs <> frm
                       _    ->  return . header $  reqs <> mconcat  forms
 
@@ -984,14 +989,15 @@ ask w =  do
 
 
              put st{mfCookies=[]
+--                   ,mfLinks= mfLinks st'
+--                   ,mfLinkDepth= incLinkDepth st'
                    ,mfHttpHeaders=[]
                    ,newAsk= False
                    ,mfToken= t
-                   ,mfPageIndex= mfPageIndex st'
                    ,mfAjax= mfAjax st'
                    ,mfSeqCache= mfSeqCache st' }                --    !> ("after "++show ( mfSequence st'))
 
-             FlowM $ lift  nextMessage
+             FlowM $ lift  receiveWithTimeouts
              ask w
     where
     head1 []=0
@@ -1009,33 +1015,87 @@ page
 page= ask
 
 
+-- | True if the flow is going back (as a result of the back button pressed in the web browser).
+--  Usually this check is nos necessary unless conditional code make it necessary
+--
+-- @menu= do
+--       mop <- getGoStraighTo
+--       case mop of
+--        Just goop -> goop
+--        Nothing -> do
+--               r \<- `ask` option1 \<|> option2
+--               case r of
+--                op1 -> setGoStraighTo (Just goop1) >> goop1
+--                op2 -> setGoStraighTo (Just goop2) >> goop2@
+--
+-- This pseudocode below would execute the ask of the menu once. But the user will never have
+-- the possibility to see the menu again. To let him choose other option, the code
+-- has to be change to
+--
+-- @menu= do
+--       mop <- getGoStraighTo
+--       back <- `goingBack`
+--       case (mop,back) of
+--        (Just goop,False) -> goop
+--        _ -> do
+--               r \<- `ask` option1 \<|> option2
+--               case r of
+--                op1 -> setGoStraighTo (Just goop1) >> goop1
+--                op2 -> setGoStraighTo (Just goop2) >> goop2@
+--
+-- However this is very specialized. Normally the back button detection is not necessary.
+-- In a persistent flow (with step) even this default entry option would be completely automatic,
+-- since the process would restar at the last page visited. No setting is necessary.
+goingBack :: (MonadIO m,MonadState (MFlowState view) m) => m Bool
+goingBack = do
+    st <- get
+    liftIO $ do
+      print $"Insync=" ++ show (inSync st)
+      print $ "newAsk st=" ++ show (newAsk st)
+    return $ not (inSync st) && not (newAsk st)
+
+-- | Will prevent the backtrack beyond the point where 'preventGoingBack' is located.
+-- If the  user press the back button beyond that point, the flow parameter is executed, usually
+-- it is an ask statement with a message. If the flow is not going back, it does nothing. It is a cut in backtracking
+--
+-- It is useful when an undoable transaction has been commited. For example, after a payment.
+--
+-- This example show a message when the user go back and press again to pay
+--
+-- >   ask $ wlink () << b << "press here to pay 100000 $ "
+-- >   payIt
+-- >   preventGoingBack . ask $   b << "You  paid 10000 $ one time"
+-- >                          ++> wlink () << b << " Please press here to complete the proccess"
+-- >   ask $ wlink () << b << "OK, press here to go to the menu or press the back button to verify that you can not pay again"
+-- >   where
+-- >   payIt= liftIO $ print "paying"
+
+preventGoingBack
+  :: (Functor m, MonadIO m, FormInput v) => FlowM v m () -> FlowM v m ()
+preventGoingBack msg= do
+   back <- goingBack
+   liftIO $ putStr "BACK= ">> print back
+   if not back  then breturn() else do
+         breturn()  -- will not go back bellond this
+         clearEnv
+         modify $ \s -> s{newAsk= True}
+         msg
 
 
 
-comparePaths _ n [] xs=  n
-comparePaths  o n _ [] = o
-comparePaths  o n (v:path) (v': npath) | v== v' = comparePaths o (n+1)path npath
-                                        | otherwise= n
 
-nextMessage :: MonadIO m => WState view m ()
-nextMessage= do
+receiveWithTimeouts :: MonadIO m => WState view m ()
+receiveWithTimeouts= do
      st <- get
      let t= mfToken st
          t1= mfkillTime st
          t2= mfSessionTime st
-     msg <- liftIO ( receiveReqTimeout t1 t2  t)
+     msg <-  liftIO ( receiveReqTimeout t1 t2  t)
      let req= getParams msg
-         env= req -- updateParams notInPageFlow (mfEnv st) req -- !> show req
-         npath=  pwfPath msg
-
-         path= mfPath st
-         notInPageFlow= isNothing $ mfPageIndex st  
-     put st{ mfPath= npath
-           , mfPIndex= case mfPageIndex st of
-                         Just n -> n
-                         Nothing  ->
-                             comparePaths  (mfPIndex st) 1 (tail path) (tail npath)
---           , mfPageIndex= Nothing
+         env= updateParams pathChanged (mfEnv st) req -- !> show req
+         path=  pwfPath msg
+         pathChanged= path /= mfPath st
+     put st{ mfPath=path
            , mfEnv= env}
 
      where
@@ -1053,8 +1113,8 @@ nextMessage= do
 
 
 
-isparam ('p': r:_,_)=   isNumber r
-isparam ('c': r:_,_)=   isNumber r
+isparam ('p': r,_)= and $ map isNumber r
+isparam ('c': r,_)= and $ map isNumber r
 isparam _= False
 
 -- | Creates a stateless flow (see `stateless`) whose behaviour is defined as a widget. It is a
@@ -1104,13 +1164,13 @@ wform x = View $ do
      FormElm form mr <- (runView $   x )
      st <- get
      verb <- getWFName
-     form1 <- formPrefix (mfPIndex st) verb st form True
+     form1 <- formPrefix verb st form True
      put st{needForm=False}
      return $ FormElm [form1] mr
 
 
-formPrefix index verb st form anchored= do
-     let path  = currentPath False index (mfPath st) verb
+formPrefix verb st form anchored= do
+     let path  = currentPath (mfPath st) verb
      (anchor,anchorf)
            <- case anchored of
                True -> do
@@ -1172,7 +1232,7 @@ ajaxSend cmd=  View $ do
        (Just id, Just _) -> do
            FormElm __ (Just  str) <- runView  cmd
            liftIO $ sendFlush t  $ HttpData [("Content-Type", "text/plain")][] $ str <>  readEvalLoop t id "''"
-           nextMessage
+           receiveWithTimeouts
            env <- getEnv
            case (lookup "ajax" $ env,lookup "val" env) of
                (Nothing,_) -> return $ FormElm [] Nothing
@@ -1194,54 +1254,43 @@ wlink :: (Typeable a, Show a, MonadIO m,  FormInput view)
 wlink x v= View $ do
       verb <- getWFName
       st   <- get
-
-      let
-          name = mfPrefix st ++ (map toLower $ if typeOf x== typeOf(undefined :: String)
+      
+      let links= mfLinks st
+          name' = map toLower $ if typeOf x== typeOf(undefined :: String)
                                    then unsafeCoerce x
-                                   else show x)
-          index = mfPIndex st  + if linkMatched st then -1 else 0
-                               + if Just (mfPIndex st)== mfPageIndex st then 1 else 0
-          lpath = mfPath st
-
-          back = True -- not $ inSync st  || (inSync st && linkMatched st)
-
-      let path=   currentPath back index lpath verb ++ ('/':name)
-                                       !> (show $ mfPath st)
+                                   else show x
+          env = mfEnv st
+          lpath' = mfPath st
+          lpath =  if null lpath' then [] else tail $ lpath'
+      suffix <- case M.lookup name' links of
+            Nothing -> do
+                 put st{mfLinks= M.insert name' 1 links}
+                 return ""
+            Just n  -> do
+                 put st{mfLinks= M.insert name' (n+1) links}
+                 return $ show n
+      let csuffix= let n= mfCallBackSeq st in if n == 0 then "" else show n
+      let name= name' ++  csuffix ++ suffix
+      let path= currentPath lpath' verb  ++ name 
           toSend = flink path v
 
-
-      r <-if linkMatched st then return Nothing
-           else
-           if isJust $ mfPageIndex st !> (show $ mfPageIndex st)
-             then
-             case  M.lookup name $ mfLinks st !> (show $ mfLinks st)of
-                 Just 0 -> do
-                     modify $ \st -> st{ inSync= True}
-                     return Nothing  !> (name ++ " 0 Fail")
-
-                 Just n ->  do
-                     modify $ \st -> st{ inSync= True,linkMatched= True,mfPIndex= index+1,mfLinks= M.insert name (n-1) $ mfLinks st}
-                                            !> (name ++" "++ show n ++ " Match")
-                     return $ Just x
-                 Nothing -> return Nothing  !> (name ++ " 0 Fail")
-             else
-             case  index < length lpath && name== lpath !! index  of
-             True -> do
-                  modify $ \s -> s{inSync= True
-                                  , linkMatched= True, mfPIndex= index+1 }  !> (name ++ "<-" ++show index++ " MATCHED")
+      r <- if (not (null lpath)
+--             && depth < length lpath
+             && elem name lpath) -- lpath !! depth  == name)
+--             !> show lpath
+--             !> show name
+             then do
+                  modify $ \s -> s{inSync= True{-,mfLinkSelected=True-} } -- , mfLinkDepth= depth +1 }
                   return $ Just x
-             False ->  return Nothing !> (name++"<-" ++show index++ " "++(if index < length lpath then lpath !! index else ""))
-
+             else return Nothing
+--           !> ("inc=" ++ show links)
       return $ FormElm [toSend] r
 
 
-currentPath isInBackTracking index lpath verb =
-    (if null lpath then verb
-     else case isInBackTracking of
-        True -> concat $ take (index) ['/':v| v <- lpath]
-        False  -> concat ['/':v| v <- lpath])
-
-
+currentPath lpath' verb =
+      let lpath  =  if null lpath' then [] else tail $ lpath'
+      in if null lpath' then verb
+                           else concat ['/':p | p <- lpath']++"/"
 -- | When some user interface int return some response to the server, but it is not produced by
 -- a form or a link, but for example by an script, @returning@ notify the type checker.
 --
@@ -1293,9 +1342,7 @@ manyOf xs= whidden () *> (View $ do
       let vs  = concatMap (\(FormElm v _) ->  [mconcat v]) forms
           
           res1= catMaybes $ map (\(FormElm _ r) -> r) forms
-
-       
-      return $ FormElm  vs $  Just res1)
+      return $ FormElm  vs $ Just res1)
 
 
 (>:>) ::(Monad m)=> View v m a -> View v m [a]  -> View v m [a]
@@ -1463,37 +1510,5 @@ instance FormInput  ByteString  where
 
     flink  v str = btag "a" [("href",  v)]  str
 
------- page Flows ----
-pageFlow
-  :: (Functor m, MonadIO m) =>
-     String -> View view m a -> View view m a
-pageFlow str flow =do
-     s <- get
-     if isNothing $ mfPageIndex s
-       then do
-       put s{mfPrefix= str++ mfPrefix s
-            ,mfSequence=0
-            ,mfLinks= acum M.empty $ drop (mfPIndex s) (mfPath s)
-            ,mfPageIndex= Just $ mfPIndex s } !> ("PARENT pageflow. prefix="++ str)
-
-       flow <** (modify (\s' -> s'{mfSequence= mfSequence s, mfPrefix= mfPrefix s})
-                                   !> ("END pageflow. prefix="++ str))
-
-
-       else do
-       put s{mfPrefix= str++ mfPrefix s
-            ,mfLinks= acum M.empty $ drop (fromJust $ mfPageIndex s) (mfPath s)
-            ,mfSequence=0}!> ("CHILD pageflow. prefix="++ str)
-       flow <** (modify (\s' -> s'{mfSequence= mfSequence s, mfPrefix= mfPrefix s})
-                                  !> ("END pageflow. prefix="++ str))
-
-
-
-acum map []= map
-acum map (x:xs)  =
-  let map' = case M.lookup x map of
-                 Nothing -> M.insert  x 1 map
-                 Just n  -> M.insert  x (n+1) map
-  in acum map' xs
 
 

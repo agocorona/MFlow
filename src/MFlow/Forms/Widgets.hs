@@ -443,7 +443,7 @@ tFieldGen  k  getcontent create =   wfreeze k 0 $ do
     content <-  liftIO $ getcontent  k
     admin   <- getAdminName
     ajaxjs   <- ajax  $ \str -> do
-              let (k,s)= break (==',')    str
+              let (k,s)= break (==',')    str !> str
               liftIO  . create  k  $ fromStrNoEncode (tail s)
               liftIO $ flushCached k
               return "alert('saved')"
