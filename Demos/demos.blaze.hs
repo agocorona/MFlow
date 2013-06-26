@@ -18,8 +18,13 @@ import Data.Monoid
 import System.IO.Unsafe
 import System.Environment
 import Debug.Trace
+
+
+
 --
-(!>) = flip trace
+--import Control.Monad.State
+--import MFlow.Forms.Internals
+(!>) x y= x -- flip trace
 
 --test= runTest [(15,"shop")]
 
@@ -28,8 +33,8 @@ main= do
    syncWrite SyncManual
    setFilesPath ""
    addMessageFlows
-       [(""    , transient $ runFlow mainmenu)
-       ,("shop",  runFlow shopCart)]
+       [(""    , transient $ runFlow  mainmenu)
+       ,("shop", runFlow shopCart)]
    env <- getEnvironment
    let port = fromIntegral . read . fromMaybe "80" $ lookup "PORT" env
    wait $ run port waiMessageFlow
@@ -42,14 +47,17 @@ data Options= CountI | CountS | Radio
             | Login | TextEdit |Grid | Autocomp | AutocompList
             | ListEdit |Shop | Action | Ajax | Select
             | CheckBoxes | PreventBack | Multicounter
+            | Combination
             | FViewMonad | Counter deriving (Bounded, Enum,Read, Show,Typeable)
 
 
 mainmenu=  trace "INIT" $ do
        setHeader stdheader
-       setTimeouts 100 0
-       r <- ask $  -- wcached "menu" 0 $
-                    b <<  "BASIC"
+--       setTimeouts 100 0
+       r <- ask $  do
+              requires[CSSFile "http://jqueryui.com/resources/demos/style.css"]
+              wcached "menu" 0 $
+               b <<  "BASIC"
                ++>  br ++> wlink CountI       << b <<  "increase an Int"
                <|>  br ++> wlink CountS       << b <<  "increase a String"
                <|>  br ++> wlink Select       << b <<  "select options"
@@ -59,8 +67,9 @@ mainmenu=  trace "INIT" $ do
                <++  br <>  br                 <> b <<  "WIDGET ACTIONS & CALLBACKS"
                <|>  br ++> wlink Action       << b <<  "Example of action, executed when a widget is validated"
                <|>  br ++> wlink FViewMonad   << b <<  "Flow in the View monad"
-               <|>  br ++> wlink Counter     << b <<  "Counter"
+               <|>  br ++> wlink Counter      << b <<  "Counter"
                <|>  br ++> wlink Multicounter << b <<  "Multicounter"
+               <|>  br ++> wlink Combination  << b <<  "combination of three active widgets"
 
                <++  br <>  br                 <> b <<  "DYNAMIC WIDGETS"
                <|>  br ++> wlink Ajax         << b <<  "AJAX example"
@@ -70,11 +79,12 @@ mainmenu=  trace "INIT" $ do
                <|>  br ++> wlink Grid         << b <<  "grid"
                <|>  br ++> wlink TextEdit     << b <<  "Content Management"
                <++  br <>  br                 <> b <<  "STATEFUL PERSISTENT FLOW"
-                 <> br <>  a ! href  (attr "/shop") <<  "shopping"   -- ordinary Blaze.Html link
+                 <> br <>  a ! href (attr "/shop") <<  "shopping"   -- ordinary Blaze.Html link
 
                  <> br <>  br <> b <<  "OTHERS"
                <|>  br ++> wlink Login        << b <<  "login/logout"
                <|>  br ++> wlink PreventBack  << b <<  "Prevent going back after a transaction"
+
 
 
        case r of
@@ -95,61 +105,123 @@ mainmenu=  trace "INIT" $ do
              Multicounter-> multicounter
              FViewMonad  -> sumInView
              Counter    -> counter
+             Combination -> combination
 
-sumInView= ask sumWidget
 
-sumWidget= wform $ do
+sumInView= ask $ p << "ask for three numbers in the same page and display the result.\
+                      \It is possible to modify the inputs and the sum will reflect it"
+               ++> sumWidget
+               **> wlink () << text "exit"
+
+formWidget=  wform $ do
+      (n,s) <- (,) <$> p << "Who are you?"
+                   ++> getString Nothing <! hint "name"     <++ br
+                   <*> getString Nothing <! hint "surname"  <++ br
+                   <** submitButton "ok" <++ br
+
+      flag <- b << "Do you " ++> getRadio[radiob "work?",radiob "study?"] <++ br
+
+      r<-case flag of
+         "work?" -> pageFlow "l"
+                     $ Left  <$> b << "do you enjoy your work? "
+                             ++> getBool True "yes" "no"
+                             <** submitButton "ok"  <++ br
+
+         "study?"-> pageFlow "r"
+                     $ Right <$> b << "do you study in "
+                             ++> getRadio[radiob "University"
+                                         ,radiob "High School"]
+      u <-  getCurrentUser
+      p << ("You are "++n++" "++s)
+        ++> p << ("And your user is: "++ u)
+        ++> case r of
+             Left fl ->   p << ("You work and it is " ++ show fl ++ " that you enjoy your work")
+                            ++> noWidget
+
+             Right stu -> p << ("You study at the " ++ stu)
+                            ++> noWidget
+
+
+hint s= [("placeholder",s)]
+onClickSubmit= [("onclick","$(this).parent().submit()")]
+radiob s n= wlabel (text s) $ setRadio s n <! onClickSubmit
+
+sumWidget= do
       n1 <- p << "Enter first number"  ++> getInt Nothing <** submitButton "enter" <++ br
       n2 <- p << "Enter second number" ++> getInt Nothing <** submitButton "enter" <++ br
       n3 <- p << "Enter third number"  ++> getInt Nothing <** submitButton "enter" <++ br
-      b << show (n1 + n2 + n3)  ++>  wlink () << b << " menu"
+      p <<  ("The result is: "++show (n1 + n2 + n3))  ++>  wlink () << b << " menu"
+      <++ p << "you can change them to see the result"
 
-   <** hr ++> wlogin
 
-wlogin=  do
+
+combination = ask $
+     p << "Three active widgets in the same page with autoRefresh. Each widget refresh itself \
+          \with Ajax. If Ajax is not active, they will refresh by sending a new page."
+     ++> hr
+     ++> p << "Login widget (use admin/admin)" ++> autoRefresh(pageFlow "r" wlogin)  <++ hr
+     **> p << "Counter widget" ++> autoRefresh (pageFlow "c" (counterWidget 0))  <++ hr
+     **> p << "Dynamic form widget" ++> autoRefresh(pageFlow "f" formWidget) <++ hr
+     **> wlink () << b << "exit"
+
+wlogin :: View Html IO ()
+wlogin= wform (do
     username <- getCurrentUser
-    liftIO $ print username
     if username /= anonymous
      then return username
      else do
-      name <-  getString (Just $ "Enter username") <++ br
-      pass <- getPassword <++ br
-      val <- userValidate (name,pass)
+      name <- getString Nothing <! hint "username" <++ br
+      pass <- getPassword <! focus <** submitButton "login" <++ br
+      val  <- userValidate (name,pass)
       case val of
-        Just msg ->notValid msg
-        Nothing -> login name >> return name
+        Just msg -> notValid msg
+        Nothing  -> login name >> return name)
 
-   `wcallback`  \name -> b << ("logged as " ++ name) ++> noWidget
+   `wcallback` (\name -> b << ("logged as " ++ name)
+                     ++> p << ("navigate away of this page before logging out")
+                     ++>  wlink "logout"  << b << " logout")
+   `wcallback`  const (logout >>  wlogin)
+
+focus = [("onload","this.focus()")]
+
 
 multicounter= do
  let explain= p << "This example emulates the"
-              <> a  ! href (attr "http://www.seaside.st/about/examples/multicounter?_k=yBJEDEGp")
+              <> a ! href (attr "http://www.seaside.st/about/examples/multicounter?_k=yBJEDEGp")
                     << " seaside example"
               <> p << "It uses various copies of the " <> a ! href (attr "/noscript/counter") << "counter widget "
               <> text "instantiated in the same page. This is an example of how it is possible to "
               <> text "compose widgets with independent behaviours"
 
- ask $ explain ++> firstOf(replicate 3 counter) <|> wlink () << p << "exit"
- where
- counter= counterWidget 0 <++ hr
+ ask $ explain ++> add (counterWidget 0) [1,2] <|> wlink () << p << "exit"
 
+
+add widget list= firstOf [pageFlow (show i) widget <++ hr | i <-list]
+
+counter1= do
+    ask $ wlink "p" <<p<<"press here"
+    ask $ pageFlow "c" $ ex  [ wlink i << text (show (i :: Int)) | i <- [1..] ]
+               where
+
+               ex (a:as)= a >> ex as
 counter= do
    let explain= p <<"This example emulates the"
-                <> a ! href (attr "http://www.seaside.st/about/examples/counter") << "seaside example"
+                <> a ! href (attr "http://www.seaside.st/about/examples/counter") << "seaside counter example"
                 <> p << "This widget uses a callback to permit an independent"
                 <> p << "execution flow for each widget." <> a ! href (attr "/noscript/multicounter") << "Multicounter" <> (text " instantiate various counter widgets")
                 <> p << "But while the seaside case the callback update the widget object, in this case"
                 <> p << "the callback call generates a new copy of the counter with the value modified."
-   ask $ explain ++> counterWidget 0 <|> br ++> sumWidget <|> wlink () << p << "exit"
 
-counterWidget n=do
-  (h1 << show n
+   ask $ explain ++> pageFlow "c" (counterWidget 0) <++ br <|> wlink () << p << "exit"
+
+counterWidget n= do
+  (h2 << show n !> show n
    ++> wlink "i" << b << " ++ "
    <|> wlink "d" << b << " -- ")
   `wcallback`
-   \op -> case op of
-      "i" -> counterWidget (n + 1)
-      "d" -> counterWidget (n - 1)
+    \op -> case op  of
+      "i" -> counterWidget (n + 1)    !> "increment"
+      "d" -> counterWidget (n - 1)    !> "decrement"
 
 rpaid= unsafePerformIO $ newMVar (0 :: Int)
 
@@ -171,8 +243,10 @@ preventBack= do
 
 options= do
    r <- ask $ getSelect (setSelectedOption ("" :: String) (p <<  "select a option") <|>
+                         setOption "red"  (b <<  "red")     <|>
                          setOption "blue" (b <<  "blue")    <|>
-                         setOption "Red"  (b <<  "red")  )  <! dosummit
+                         setOption "Red"  (b <<  "red")  )
+                         <! dosummit
    ask $ p << (r ++ " selected") ++> wlink () (p <<  " menu")
 
    breturn()
@@ -190,9 +264,8 @@ checkBoxes= do
 
 autocomplete1= do
    r <- ask $   p <<  "Autocomplete "
-            ++> p <<  "enter "
-            ++> p <<  "when su press submit, the box  is returned"
-            ++> wautocomplete (Just "red,green,blue") filter1
+            ++> p <<  "when su press submit, the box value  is returned"
+            ++> wautocomplete Nothing filter1 <! hint "red,green or blue"
             <** submitButton "submit"
    ask $ p << ( show r ++ " selected")  ++> wlink () (p <<  " menu")
    breturn()
@@ -252,7 +325,7 @@ wlistEd= do
 clickn n= do
    r <- ask $   p << b <<  "increase an Int"
             ++> wlink ("menu" :: String) (p <<  "menu")
-            |+| getInt (Just n) <* submitButton "submit"
+            |+| getSpinner (Just n) <** datePicker Nothing <* submitButton "submit"
    case r of
     (Just _,_) -> return()
     (_, Just n') -> clickn $ n'+1
@@ -317,7 +390,7 @@ shopCart  = do
    shopCart1
    where
    shopCart1 =  do
-     o <- step .  ask $ do
+     o <-  step . ask $ do
              let moreexplain= p << "The second parameter of \"setTimeout\" is the time during which the cart is recorded"
              Cart cart <- getSessionData `onNothing` return emptyCart
 
@@ -369,7 +442,7 @@ textEdit= do
     ask $   p <<  "Please login with admin/admin to edit it"
         ++> userWidget (Just "admin") userLogin
 
-    ask $   p <<  "now you can click the fields and edit them"
+    ask $   p <<  "Now you can click the fields and edit them"
         ++> p << b <<  "to save an edited field, double click on it"
         ++> tFieldEd "first"  first
         **> tFieldEd "second" second
@@ -385,12 +458,13 @@ textEdit= do
     ask $   p <<  "When texts are fixed,the edit facility and the original texts can be removed. The content is indexed by the field key"
         ++> tField "first"
         **> tField "second"
-        **> p <<  "End of edit field demo" ++> wlink () (p <<  "click here to go to menu")
-
-    breturn()
+        **> p << "End of edit field demo" ++> wlink () (p <<  "click here to go to menu")
 
 
-stdheader c= docTypeHtml  $ body $
+
+stdheader= html . body
+
+stdheader1 c= docTypeHtml  $ body $
       a ! At.style (attr "-align:center") ! href ( attr  "/html/MFlow/index.html") << h1 <<  "MFlow"
    <> br
    <> hr

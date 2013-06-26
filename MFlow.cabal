@@ -10,12 +10,12 @@ Bug-reports: https://github.com/agocorona/MFlow/issues
 synopsis: continuation-based Web framework without continuations.
 description: MFlow run stateful server processes; All the flow of requests and responses are coded by the programmer in a single function.
              Allthoug single request-response flows and callbacks are possible. Therefore, the code is
-             more understandable. It is not continuation based. It uses a log for thread state persistence and backtracking forall
-             handling the back button. Because  the serialized state is small and can be synchronized,
-             potentially that makes the MFlow architecture scalable.
+             more understandable. It is not continuation based. It uses a log for thread state persistence and backtracking for
+             handling the back button. Potentially that makes the MFlow architecture scalable, since the state is serializable and small
+             .
              .
              These processes are stopped and restarted by the
-             application server on demand, including the execution state (if the Wokflow monad is used.
+             application server on demand, including the execution state (if the Wokflow monad is used).
              Therefore session management is automatic. State consistence and transactions are given by the TCache package.
              .
              The processes interact trough widgets, that are an extension of formlets with
@@ -37,7 +37,7 @@ description: MFlow run stateful server processes; All the flow of requests and r
              This version (0.2) add better WAI integration, higher level dynamic Widgets, content management, multilanguage, blaze-html support,
              stateful ajax for server-side control, user-defined data in sessions and widget requirements for automatic installation of scripts, CSS and server flows.
              .
-             This version (0.2.0.9) add the runFlowConf primitive
+             This version (0.2.0.10) XXXXX
              .
              See "MFlow.Forms" for details
              .

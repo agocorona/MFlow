@@ -153,7 +153,7 @@ ask, askt, clearEnv, wstateless, transfer, pageFlow,
 -- modifiers change their presentation and behaviour
 getString,getInt,getInteger, getTextBox 
 ,getMultilineText,getBool,getSelect, setOption,setSelectedOption, getPassword,
-getRadio, setRadio, setRadioActive, getCheckBoxes, genCheckBoxes, setCheckBox,
+getRadio, setRadio, setRadioActive, wlabel, getCheckBoxes, genCheckBoxes, setCheckBox,
 submitButton,resetButton, whidden, wlink, returning, wform, firstOf, manyOf, wraw, wrender, notValid
 -- * FormLet modifiers
 ,validate, noWidget, waction, wcallback, wmodify,
@@ -502,21 +502,6 @@ getParam look type1 mvalue = View $ do
        NotValidated s err -> return $ FormElm ([finput tolook type1 s False Nothing]++[err]) $ Nothing
        NoParam            -> return $ FormElm [finput tolook type1 (nvalue mvalue) False Nothing] $ Nothing
        
--- | Generate a new string. Useful for creating tag identifiers and other attributes
-genNewId :: MonadState (MFlowState view) m =>  m String
-genNewId=  do
-  st <- get
-  case mfCached st of
-    False -> do
-      let n= mfSequence st
-          prefseq=  mfPrefix st
-      put $ st{mfSequence= n+1}
-
-      return $ 'p':show n++prefseq
-    True  -> do
-      let n = mfSeqCache st
-      put $ st{mfSeqCache=n+1}
-      return $  'c' : (show n)
 
 
 getCurrentName :: MonadState (MFlowState view) m =>  m String
@@ -951,7 +936,9 @@ ask w =  do
      FormElm forms mx <- FlowM . lift  $ runView  w
 
      st' <- get
-     if notSyncInAction st' then put st'{notSyncInAction=False}>> ask w  else
+     if notSyncInAction st' then put st'{notSyncInAction=False}>> ask w
+      else if mfAutorefresh st' then resetState st st' >>  FlowM (lift  nextMessage) >> ask w
+      else
       case mx of
        Just x -> do
 
@@ -983,17 +970,19 @@ ask w =  do
              liftIO . sendFlush t $ HttpData (ctype++mfHttpHeaders st') (mfCookies st' ++ c) s
 
 
-             put st{mfCookies=[]
-                   ,mfHttpHeaders=[]
-                   ,newAsk= False
-                   ,mfToken= t
-                   ,mfPageIndex= mfPageIndex st'
-                   ,mfAjax= mfAjax st'
-                   ,mfSeqCache= mfSeqCache st' }                --    !> ("after "++show ( mfSequence st'))
+             resetState st st'              
 
              FlowM $ lift  nextMessage
              ask w
     where
+    resetState st st'=
+             put st{mfCookies=[]
+                   ,mfHttpHeaders=[]
+                   ,newAsk= False
+                   ,mfToken= mfToken st'
+                   ,mfPageIndex= mfPageIndex st'
+                   ,mfAjax= mfAjax st'
+                   ,mfSeqCache= mfSeqCache st' }
     head1 []=0
     head1 xs= head xs
     tail1 []=[]
@@ -1109,15 +1098,7 @@ wform x = View $ do
      return $ FormElm [form1] mr
 
 
-formPrefix index verb st form anchored= do
-     let path  = currentPath False index (mfPath st) verb
-     (anchor,anchorf)
-           <- case anchored of
-               True -> do
-                        anchor <- genNewId
-                        return ('#':anchor, (ftag "a") mempty  `attrs` [("name",anchor)])
-               False -> return (mempty,mempty)
-     return $ formAction (path ++ anchor ) $  mconcat ( anchorf:form)  -- !> anchor
+
 
 resetButton :: (FormInput view, Monad m) => String -> View view m () 
 resetButton label= View $ return $ FormElm [finput  "reset" "reset" label False Nothing]   $ Just ()
@@ -1186,7 +1167,14 @@ ajaxSend_
   :: MonadIO m => View v m ByteString -> View v m ()
 ajaxSend_ = ajaxSend
 
-
+wlabel
+  :: (Monad m, FormInput view) => view -> View view m a -> View view m a
+wlabel str w = do
+   id <- genNewId
+--   modify $ \s ->case mfCached s of
+--                       True  -> s{mfSeqCache= mfSeqCache s -1}
+--                       False -> s{mfSequence= mfSequence s -1}
+   ftag "label" str `attrs` [("for",id)] ++> w <! [("id",id)]
     
 -- | Creates a link wiget. A link can be composed with other widget elements,
 wlink :: (Typeable a, Show a, MonadIO m,  FormInput view) 
@@ -1235,11 +1223,6 @@ wlink x v= View $ do
       return $ FormElm [toSend] r
 
 
-currentPath isInBackTracking index lpath verb =
-    (if null lpath then verb
-     else case isInBackTracking of
-        True -> concat $ take (index) ['/':v| v <- lpath]
-        False  -> concat ['/':v| v <- lpath])
 
 
 -- | When some user interface int return some response to the server, but it is not produced by

@@ -103,7 +103,7 @@ import Control.Monad.Trans
 import qualified Control.Exception as CE
 
 import Debug.Trace
-(!>)= flip trace
+(!>) x y = x  -- flip trace
 
 type Flow= (Token -> Workflow IO ())
 
@@ -381,19 +381,14 @@ msgScheduler x  = do
                  deleteTokenInList token
           Left AlreadyRunning -> return ()                    -- !> ("already Running " ++ wfname)
           Left Timeout -> do
-              liftIO $ putStrLn  "TIMEOUT in msgScheduler"
-              hFlush stdout
+
+              hFlush stdout                                      !>  "TIMEOUT in msgScheduler"
               return()
           Left (WFException e)-> showError wfname token e
 
 
 
-          Right _ -> do
---               let msg= "finished Flow "++ wfname++ " restarting"
---               logError (key token) wfname msg
---               startMessageFlow wfname token wfs
-
-              delMsgHistory token; return ()      -- !> ("finished " ++ wfname)
+          Right _ ->  delMsgHistory token >> return ()      -- !> ("finished " ++ wfname)
 
 
 

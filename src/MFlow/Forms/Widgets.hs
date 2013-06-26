@@ -7,16 +7,18 @@ to create other active widgets.
 
 {-# LANGUAGE UndecidableInstances,ExistentialQuantification
             , FlexibleInstances, OverlappingInstances, FlexibleContexts
-            , OverloadedStrings, DeriveDataTypeable #-}
+            , OverloadedStrings, DeriveDataTypeable , ScopedTypeVariables #-}
 
 
 
 
 module MFlow.Forms.Widgets (
+-- * JQueryUi widgets
+datePicker, getSpinner, wautocomplete,
 -- * User Management
 userFormOrName,maybeLogout,
 -- * Active widgets
-wEditList,wautocomplete,wautocompleteList
+wEditList,wautocompleteList
 , wautocompleteEdit,
 
 -- * Editing widgets
@@ -27,6 +29,8 @@ delEdited, getEdited
 
 -- * Multilanguage
 ,mFieldEd, mField
+
+,autoRefresh
 
 ) where
 import MFlow
@@ -53,11 +57,14 @@ import Control.Monad.Identity
 
 readyJQuery="ready=function(){if(!window.jQuery){return setTimeout(ready,100)}};"
 
-jqueryScript= "http://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"
+jqueryScript1= "http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"
+jqueryScript="http://code.jquery.com/jquery-1.9.1.js"
 
-jqueryCSS= "http://code.jquery.com/ui/1.9.1/themes/base/jquery-ui.css"
+jqueryCSS1= "http://code.jquery.com/ui/1.9.1/themes/base/jquery-ui.css"
+jqueryCSS= "http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css"
 
-jqueryUI= "http://code.jquery.com/ui/1.9.1/jquery-ui.js"
+jqueryUI1= "http://code.jquery.com/ui/1.9.1/jquery-ui.js"
+jqueryUI= "http://code.jquery.com/ui/1.10.3/jquery-ui.js"
 
 ------- User Management ------
 
@@ -154,7 +161,7 @@ modifyWidget selector modifier  w = View $ do
 -- The resulting string can be executed in the browser. 'ajax' will return the code to
 -- execute the complete ajax roundtrip. This code returned by ajax must be in an eventhabdler.
 --
--- This example code will insert a widget in the div  when the element with identifier
+-- This example  will insert a widget in the div  when the element with identifier
 -- /clickelem/  is clicked. when the form is sbmitted, the widget values are returned
 -- and the list of edited widgets are deleted.
 --
@@ -166,7 +173,7 @@ modifyWidget selector modifier  w = View $ do
 -- >
 -- >    requires [JScriptFile jqueryScript [installevents] ]
 -- >    ws <- getEdited sel
--- >    r <-  (div  <<< manyOf ws) <! [("id",id1)]
+-- >    r <-  (div <<< manyOf ws) <! [("id",id1)]
 -- >    delEdited sel ws'
 -- >    return  r
 
@@ -242,14 +249,14 @@ wEditList holderview w xs addId = do
     delEdited sel ws'
     return r
 
--- | Present an autocompletion list, from a procedure defined by the programmer, to a text box.
+-- | Present the JQuery autocompletion list, from a procedure defined by the programmer, to a text box.
 wautocomplete
   :: (Show a, MonadIO m, FormInput v)
-  =>  Maybe String      -- ^ Initial value
+  => Maybe String       -- ^ Initial value
   -> (String -> IO a)   -- ^ Autocompletion procedure: will receive a prefix and return a list of strings
   -> View v m String
 wautocomplete mv autocomplete  = do
-    ajaxc <- ajax $ \(u) -> do
+    ajaxc <- ajax $ \u -> do
                           r <- liftIO $ autocomplete u
                           return $ jaddtoautocomp r
 
@@ -484,11 +491,11 @@ mField k= do
   lang <- getLang
   tField $ k ++ ('-':lang)
 
--- | present a calendar to choose a date
+-- | present the JQuery datepicker calendar to choose a date
 datePicker :: (Monad m, FormInput v) => Maybe String -> View v m (Int,Int,Int)
 datePicker jd= do
     id <- genNewId
-    let setit= "$(function() {\
+    let setit= "$(document.ready(function() {\
                    \$( '"++id++"' ).datepicker();\
                 \});"
 
@@ -501,3 +508,101 @@ datePicker jd= do
     let (month,r) = span (/='/')  s
     let (day,r2)= span(/='/') $ tail r
     return (read day,read month, read $ tail r2)
+
+
+getSpinner mv= do
+    id <- genNewId
+    let setit=   "$document.ready(function() {\
+                 \var spinner = $( '"++id++"' ).spinner();\
+                 \spinner.spinner( \"enable\" );\
+                 \});"
+    requires
+      [CSSFile      jqueryCSS
+      ,JScriptFile  jqueryScript []
+      ,JScriptFile  jqueryUI [setit]]
+
+    getInt mv <! [("id",id)]
+
+
+-- | adapted from http://www.codeproject.com/Articles/341151/Simple-AJAX-POST-Form-and-AJAX-Fetch-Link-to-Modal
+
+ajaxGetLink = "function ajaxGetLink(id){\n\
+    \var id1= $('#'+id);\n\
+   \var ida= $('#'+id+' a');\n\
+    \ida.click(function () {\n\
+    \   var pdata = $(this).attr('data-value');\n\
+    \   var actionurl = $(this).attr('href');\n\
+    \   var dialogOpts = {\n\
+    \       type: 'GET',\n\
+    \       url: actionurl+'?bustcache='+ new Date().getTime()+'&auto'+id+'=true',\n\
+    \       data: pdata,\n\
+    \       success: function (resp) {\n\
+    \         id1.html(resp);\n\
+    \         ajaxGetLink(id)\n\
+    \       },\n\
+    \       error: function (xhr, status, error) {\n\
+    \           var msg = $('<div>' + xhr + '</div>');\n\
+    \           id1.html(msg);\n\
+    \       }\n\
+    \   };\n\
+    \   $.ajax(dialogOpts);\n\
+    \   return false;\n\
+    \});\n\
+  \}"
+
+ajaxPostForm = "function ajaxPostForm(id) {\n\
+    \var id1= $('#'+id);\n\
+    \var idform= $('#'+id+' form');\n\
+    \idform.submit(function (event) {\n\
+        \event.preventDefault();\n\
+        \var $form = $(this);\n\
+        \var url = $form.attr('action');\n\
+        \var pdata = $form.serialize();\n\
+        \$.ajax({\n\
+            \type: 'GET',\n\
+            \url: url,\n\
+            \data: 'auto'+id+'=true&'+pdata,\n\
+            \success: function (resp) {\n\
+                \id1.html(resp);\n\
+                \ajaxPostForm(id)\n\
+            \},\n\
+            \error: function (xhr, status, error) {\n\
+                \var msg = $('<div>' + xhr + '</div>');\n\
+                \id1.html(msg);\n\
+            \}\n\
+        \});\n\
+       \});\n\
+      \return false;\n\
+     \}"
+
+
+autoRefresh
+  :: (MonadIO m,
+     FormInput v)
+  => View v m a
+  -> View v m a
+autoRefresh w=  do
+    id <- genNewId
+
+    let installscript=
+            "$(document).ready(function(){\n"
+               ++ "ajaxGetLink('"++id++"');"
+               ++ "ajaxPostForm('"++id++"');"
+               ++ "})\n"
+
+    st <- get
+    r <- getParam1 ("auto"++id) $ mfEnv st
+    case r of
+      NoParam -> do
+         requires [JScript ajaxGetLink,JScript ajaxPostForm, JScriptFile jqueryScript [installscript]]
+         (ftag "div" <<< w) <! [("id",id)]
+
+      Validated (x :: String) -> View $ do
+         let t= mfToken st
+         FormElm form mr <- runView w
+         st <- get
+         let HttpData ctype c s= toHttpData $ mconcat form
+         liftIO . sendFlush t $ HttpData (ctype ++ mfHttpHeaders st) (mfCookies st ++ c) s
+         put st{mfAutorefresh=True}
+         return $ FormElm [] mr
+

@@ -443,13 +443,13 @@ data MFlowState view= MFlowState{
    -- Link management
    mfPath           :: [String],
 
---   mfLinks          :: M.Map String Int,
-
    mfPrefix         :: String,
    mfPIndex         :: Int,
    mfPageIndex      :: Maybe Int,
    linkMatched      :: Bool,
-   mfLinks          :: M.Map String Int
+   mfLinks          :: M.Map String Int,
+
+   mfAutorefresh    :: Bool
    }
    deriving Typeable
 
@@ -458,7 +458,7 @@ type Void = Char
 mFlowState0 :: (FormInput view) => MFlowState view
 mFlowState0 = MFlowState 0 False  True  True  "en"
                 [] False  (error "token of mFlowState0 used")
-                0 0 [] [] stdHeader False [] M.empty  Nothing 0 False    []   ""   1 Nothing False M.empty
+                0 0 [] [] stdHeader False [] M.empty  Nothing 0 False    []   ""   1 Nothing False M.empty False
 
 
 -- | Set user-defined data in the context of the session.
@@ -1129,3 +1129,34 @@ ajaxScript=
         "  };" ++
         ""
 
+formPrefix index verb st form anchored= do
+     let path  = currentPath False index (mfPath st) verb
+     (anchor,anchorf)
+           <- case anchored of
+               True -> do
+                        anchor <- genNewId
+                        return ('#':anchor, (ftag "a") mempty  `attrs` [("name",anchor)])
+               False -> return (mempty,mempty)
+     return $ formAction (path ++ anchor ) $  mconcat ( anchorf:form)  -- !> anchor
+
+currentPath isInBackTracking index lpath verb =
+    (if null lpath then verb
+     else case isInBackTracking of
+        True -> concat $ take (index) ['/':v| v <- lpath]
+        False  -> concat ['/':v| v <- lpath])
+
+-- | Generate a new string. Useful for creating tag identifiers and other attributes
+genNewId :: MonadState (MFlowState view) m =>  m String
+genNewId=  do
+  st <- get
+  case mfCached st of
+    False -> do
+      let n= mfSequence st
+          prefseq=  mfPrefix st
+      put $ st{mfSequence= n+1}
+
+      return $ 'p':show n++prefseq
+    True  -> do
+      let n = mfSeqCache st
+      put $ st{mfSeqCache=n+1}
+      return $  'c' : (show n)

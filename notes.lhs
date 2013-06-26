@@ -1,5 +1,134 @@
 si no matching completo de path, que de error
 
+selective update
+clustering via web
+trace
+
+
+autorefresh:
+  work for links and posts
+  intercept posts and links
+
+
+adapted from: http://www.codeproject.com/Articles/341151/Simple-AJAX-POST-Form-and-AJAX-Fetch-Link-to-Modal
+
+
+
+requires[JSFile jquery]
+  id <- genNewName
+  let ajaxPostForm = function () {
+    /* attach a submit handler to the form */
+    $('#"++id++" form').submit(function (event) {
+        event.preventDefault();
+        var $form = $(this);
+
+        var url = $form.attr('action');
+        var pdata = $form.serialize()
+
+
+        $.ajax({
+            type: "POST",
+            url: url,
+            data: pdata,
+            success: function (resp) {
+                ('#"++id++"').html(resp);
+                ajaxPostForm()
+            },
+            error: function (xhr, status, error) {
+                var msg = $('<div>' + xhr + '</div>');
+                ('#"++id++"').html(msg);
+            }
+        });
+    });
+    return false;
+   }
+
+   let ajaxGetLink = function()
+    {
+    $(#'"++id++" a').click(function () {
+        var pdata = $(this).attr('data-value');
+
+        var actionurl = $(this).attr('href');
+
+        var dialogOpts = {
+            type: "GET",
+            url: actionurl+"?bustcache="+ new Date().getTime(),
+            data: pdata,
+            success: function (resp) {
+              ('#"++id++"').html(resp);
+              ajaxGetLink()
+            },
+            error: function (xhr, status, error) {
+                var msg = $('<div>' + xhr + '</div>');
+                ('#"++id++"').html(msg);
+            }
+        };
+        $.ajax(dialogOpts);
+        return false;
+    });
+},
+
+\begin{code}
+
+
+
+wformRefresh w= View $ do
+    id <- genNewName
+    let istallscript=
+        "$(document).ready(function(){\n\
+                \$('#"++id++"').submit(function() {\n\
+                    \var options = {target:'#"++id++"',data:{auto"++id++":'true'}};\n\
+                    \$(this).ajaxSubmit(options);\n\
+                    \return false;\n\
+                 \});\n\
+             \})"
+
+    verb <- getWFName
+    form1 <- formPrefix (mfPIndex st) verb st form True `attrs` [("id",id)]
+    case getParam1 "auto"++id of
+      NoParam -> do
+         requires [JScriptFile jqueryScript[]]
+         requires [JScriptFile "http://malsup.github.com/jquery.form.js" [installscript] ]
+         FormElm form mr <- (runView $   x )
+         modify $ \st -> st{needForm=False}
+
+      _ do
+         reqs <-  FlowM $ lift installAllRequirements
+         sendFlush token $ reqs <>form1
+         modify $ st -> st{needForm=False,mfAutorefresh=True}
+    return $ formElm [form1] mr
+
+\end{code}
+
+
+
+
+all nodes need the same id
+  como se conserva el primero?
+  ForInput rendering [id,f)
+
+
+
+getBool mv truestr falsestr= View $ do
+    tolook <- genNewId
+    st <- get
+    let env = mfEnv st
+    put st{needForm= True}
+    r <- getParam1 tolook env
+    let flag=  isValidated r && fromstr (fromValidated r)
+    let form= [fselect tolook (foption1 truestr flag `mappend` foption1 falsestr (not flag))]
+    return $ FormElm form . fmap fromstr (tolook,
+
+       valToMaybe r
+
+    where
+    fromstr x= if x== truestr then True else False
+
+FormElm1 f x <|> FormElm1  f y= FormElem r ((
+
+
+
+
 parameter numbers in monadic view
    afecta a todos los operadores
    ahora se exige que el recorrido de paramentros sea el mismo
@@ -45,7 +174,7 @@ parameter numbers in monadic view
 
 
 
-restarting flag
+x restarting flag
 
 dynamic envelope:
   detect changes in the internal widget
@@ -69,7 +198,7 @@ x backtracking no funciona en form in the view
    en receiveReqTimeout
       if pathchanged borrar old params.
 
-links de retorno a veces no funcionan
+x links de retorno a veces no funcionan
 
 tail path  do not allow backtracking
   but tail path in callbacks do not work
