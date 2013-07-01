@@ -52,7 +52,7 @@ import Text.Printf
 
 
 import Debug.Trace
-(!>) =    flip trace
+(!>) =  const --  flip trace
 
 instance Serialize a => Serializable a where
   serialize=  runW . showp

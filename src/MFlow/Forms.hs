@@ -949,10 +949,11 @@ ask w =  do
          breturn x
 
        Nothing ->
-         if  not (inSync st')  && not (newAsk st') -- && (isNothing $ mfPageIndex st')
+         if  not (inSync st')  && not (newAsk st')
                                                         !> ("pageIndex="++ show (mfPageIndex st'))
                                                         !> ("insinc="++show (inSync st'))
                                                         !> ("newask="++show (newAsk st'))
+                                                        !> ("mfPIndex="++ show( mfPIndex st'))
           then do
             let index = mfPIndex st'
                 nindex= if index== 0 then 1 else index - 1
