@@ -14,7 +14,7 @@ to create other active widgets.
 
 module MFlow.Forms.Widgets (
 -- * JQueryUi widgets
-datePicker, getSpinner, wautocomplete,
+datePicker, getSpinner, wautocomplete, wdialog,
 -- * User Management
 userFormOrName,maybeLogout,
 -- * Active widgets
@@ -491,12 +491,14 @@ mField k= do
   lang <- getLang
   tField $ k ++ ('-':lang)
 
--- | present the JQuery datepicker calendar to choose a date
-datePicker :: (Monad m, FormInput v) => Maybe String -> View v m (Int,Int,Int)
-datePicker jd= do
+-- | present the JQuery datepicker calendar to choose a date.
+-- The second parameter is the configuration. Use \"()\" by default.
+-- See http://jqueryui.com/datepicker/
+datePicker :: (Monad m, FormInput v) => String -> Maybe String -> View v m (Int,Int,Int)
+datePicker conf jd= do
     id <- genNewId
-    let setit= "$(document.ready(function() {\
-                   \$( '"++id++"' ).datepicker();\
+    let setit= "$(document).ready(function() {\
+                   \$( '#"++id++"' ).datepicker "++ conf ++";\
                 \});"
 
     requires
@@ -509,24 +511,95 @@ datePicker jd= do
     let (day,r2)= span(/='/') $ tail r
     return (read day,read month, read $ tail r2)
 
+-- | present a jQuery dialog with a widget. When a button is pressed it return the result.
+-- the first parameter is the configuration. To make it modal,  use \"({modal: true})\"
+-- As in the case of 'autoRefresh' the enclosed widget must include a complete form, not a part of it.
+-- for this purpose, use 'wform'.
+--
+--
 
-getSpinner mv= do
+wdialog :: (Monad m, FormInput v) => String -> String -> View v m a -> View v m a
+wdialog conf title w= do
     id <- genNewId
-    let setit=   "$document.ready(function() {\
-                 \var spinner = $( '"++id++"' ).spinner();\
-                 \spinner.spinner( \"enable\" );\
+    let setit= "$(document).ready(function() {\n\
+                   \$('#"++id++"').dialog "++ conf ++";\n\
+                   \var idform= $('#"++id++" form');\n\
+                   \idform.submit(function(){$(this).dialog(\"close\")})\n\
+                \});"
+
+    requires
+      [CSSFile      jqueryCSS
+      ,JScriptFile  jqueryScript []
+      ,JScriptFile  jqueryUI [setit]]
+
+    (ftag "div" <<< w) <! [("id",id),("title", title)]
+
+
+
+-- | show the jQuery spinner widget. the first parameter is the configuration . Use \"()\" by default.
+-- See http://jqueryui.com/spinner
+getSpinner
+  :: (MonadIO m, Read a,Show a, Typeable a, FormInput view) =>
+     String -> Maybe a -> View view m a
+getSpinner conf mv= do
+    id <- genNewId
+    let setit=   "$(document).ready(function() {\n\
+                 \var spinner = $( '#"++id++"' ).spinner "++conf++";\n\
+                 \spinner.spinner( \"enable\" );\n\
                  \});"
     requires
       [CSSFile      jqueryCSS
       ,JScriptFile  jqueryScript []
       ,JScriptFile  jqueryUI [setit]]
 
-    getInt mv <! [("id",id)]
+    getTextBox mv <! [("id",id)]
 
 
--- | adapted from http://www.codeproject.com/Articles/341151/Simple-AJAX-POST-Form-and-AJAX-Fetch-Link-to-Modal
 
-ajaxGetLink = "function ajaxGetLink(id){\n\
+
+
+-- | Capture the form submissions and the links of the enclosed widget and send them via AJAX.
+-- The response is the new presentation of the widget, that is updated. No navigation occur.
+-- So a widget with autoRefresh can be used in heavyweight pages.
+-- If AJAX or javascript is not available, the widget is refresh normally, via a new page.
+-- The enclosed widget if has form elements, must include the form action tag, not a part of it.
+-- For this purpose, use 'wform'.
+autoRefresh
+  :: (MonadIO m,
+     FormInput v)
+  => View v m a
+  -> View v m a
+autoRefresh w=  do
+    id <- genNewId
+
+    let installscript=
+            "$(document).ready(function(){\n"
+               ++ "ajaxGetLink('"++id++"');"
+               ++ "ajaxPostForm('"++id++"');"
+               ++ "})\n"
+
+    st <- get
+    r <- getParam1 ("auto"++id) $ mfEnv st
+    case r of
+      NoParam -> do
+         requires [JScript ajaxGetLink
+                  ,JScript ajaxPostForm
+                  ,JScriptFile jqueryScript [installscript]]
+         (ftag "div" <<< w) <! [("id",id)]
+
+      Validated (x :: String) -> View $ do
+         let t= mfToken st
+         FormElm form mr <- runView w
+         st <- get
+         let HttpData ctype c s= toHttpData $ mconcat form
+         liftIO . sendFlush t $ HttpData (ctype ++ mfHttpHeaders st) (mfCookies st ++ c) s
+         put st{mfAutorefresh=True}
+         return $ FormElm [] mr
+
+  where
+  -- | adapted from http://www.codeproject.com/Articles/341151/Simple-AJAX-POST-Form-and-AJAX-Fetch-Link-to-Modal
+
+  ajaxGetLink = "function ajaxGetLink(id){\n\
     \var id1= $('#'+id);\n\
    \var ida= $('#'+id+' a');\n\
     \ida.click(function () {\n\
@@ -550,7 +623,7 @@ ajaxGetLink = "function ajaxGetLink(id){\n\
     \});\n\
   \}"
 
-ajaxPostForm = "function ajaxPostForm(id) {\n\
+  ajaxPostForm = "function ajaxPostForm(id) {\n\
     \var id1= $('#'+id);\n\
     \var idform= $('#'+id+' form');\n\
     \idform.submit(function (event) {\n\
@@ -574,35 +647,3 @@ ajaxPostForm = "function ajaxPostForm(id) {\n\
        \});\n\
       \return false;\n\
      \}"
-
-
-autoRefresh
-  :: (MonadIO m,
-     FormInput v)
-  => View v m a
-  -> View v m a
-autoRefresh w=  do
-    id <- genNewId
-
-    let installscript=
-            "$(document).ready(function(){\n"
-               ++ "ajaxGetLink('"++id++"');"
-               ++ "ajaxPostForm('"++id++"');"
-               ++ "})\n"
-
-    st <- get
-    r <- getParam1 ("auto"++id) $ mfEnv st
-    case r of
-      NoParam -> do
-         requires [JScript ajaxGetLink,JScript ajaxPostForm, JScriptFile jqueryScript [installscript]]
-         (ftag "div" <<< w) <! [("id",id)]
-
-      Validated (x :: String) -> View $ do
-         let t= mfToken st
-         FormElm form mr <- runView w
-         st <- get
-         let HttpData ctype c s= toHttpData $ mconcat form
-         liftIO . sendFlush t $ HttpData (ctype ++ mfHttpHeaders st) (mfCookies st ++ c) s
-         put st{mfAutorefresh=True}
-         return $ FormElm [] mr
-

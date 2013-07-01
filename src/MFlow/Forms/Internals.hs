@@ -46,8 +46,13 @@ import Data.List
 import System.IO.Unsafe
 import Control.Concurrent.MVar
 
+-- for traces
+import Language.Haskell.TH.Syntax(qLocation, Loc(..), Q, Exp, Quasi)
+import Text.Printf
+
+
 import Debug.Trace
-(!>) x y=  x -- flip trace
+(!>) =    flip trace
 
 instance Serialize a => Serializable a where
   serialize=  runW . showp
@@ -136,18 +141,19 @@ instance (Monad m, HandleBacktracking s m)=> Monad (BackT  m) where
      where
      loop = do
         s <- get
-        v <- runBackT x                          -- !> "loop"
+        v <-  runBackT x                         -- !> "loop"
         case v of
             NoBack y  -> runBackT (f y)         -- !> "runback"
             BackPoint y  -> do
-                 z <- runBackT (f y)           -- !> "BACK"
+                 z <- runBackT (f y)            -- !> "BACK"
                  case z of
-                  GoBack   -> handle s >> loop            --   !> "BACKTRACKING"
-                  other -> return other
+                  GoBack  -> handle s >> loop            --   !> "BACKTRACKING"
+                  other   -> return other
             GoBack  ->  return  $ GoBack
 
 class MonadState s m => HandleBacktracking s m where
    handle :: s -> m ()
+--   supervise ::    m (FailBack a) -> m (FailBack a)
 
 --instance Monad m => HandleBacktracking () m where
 --   handle= const $ return ()
@@ -197,17 +203,49 @@ instance Serialize a => Serialize (FormElm view a) where
    showp (FormElm _ x)= showp x
    readp= readp >>= \x -> return $ FormElm  [] x
 
-
+-- | @View v m a@ is a widget (formlet)  with formatting v  running the monad m (usually IO) and which return a value of type a
 newtype View v m a = View { runView :: WState v m (FormElm v a)}
 
 instance Monad m => HandleBacktracking (MFlowState v) (WState v m) where
    handle st= do
-        MFlowState{..} <- get
-        put  st{mfEnv= mfEnv,mfToken=mfToken, mfPath=mfPath,mfPIndex= mfPIndex, mfData=mfData,inSync=False,newAsk=False}
+      MFlowState{..} <- get
+      case mfTrace of
+           Nothing ->
+             put  st{mfEnv= mfEnv,mfToken=mfToken, mfPath=mfPath,mfPIndex= mfPIndex, mfData=mfData,inSync=False,newAsk=False}
+--           Just trace -> do
+--             -- inspired by Pepe Iborra withLocTH
+--             loc <- qLocation
+--             let loc_msg = showLoc loc
+--             put st{mfTrace= Just(loc_msg:trace)}
+
+
+--   supervise f= f `WF.catch` handler
+--      where
+--      handler e= do
+--              loc <- qLocation
+--              let loc_msg = showLoc loc
+--              modify $ \st -> st{mfTrace= Just [loc_msg++" exception: " ++show e]}
+--              return GoBack
+
+--showLoc :: Loc -> String
+--showLoc Loc{loc_module=mod, loc_filename=filename, loc_start=start} =
+--         {- text package <> char '.' <> -}
+--         printf "%s (%s). %s" mod filename (show start)
+
+--instance (MonadIO m, Functor m) => Quasi (StateT (MFlowState v) m) where
+--    qLocation  = badIO "currentLocation"
+
+
+badIO :: MonadIO m => String -> StateT (MFlowState v) m a
+badIO op = do
+    liftIO $ putStrLn  $ "Template Haskell error: " ++"Can't do `" ++ op ++ "' in the IO monad"
+    fail "Template Haskell failure"
+
 
 newtype FlowM v m a= FlowM {runFlowM :: FlowMM v m a} deriving (Monad,MonadIO,MonadState(MFlowState v))
 flowM= FlowM
 --runFlowM= runView
+
 
 
 instance (FormInput v,Serialize a)
@@ -248,7 +286,6 @@ instance (Functor m, Monad m) => Alternative (View view m) where
 
 instance  (Monad m) => Monad (View view m) where
     View x >>= f = View $ do
-
                    FormElm form1 mk <- x
                    case mk of
                      Just k  -> do
@@ -279,12 +316,6 @@ instance (Monad m, Functor m, Monoid a) => Monoid (View v m a) where
 -- This is the visible difference with 'waction' callbacks, which execute a
 -- a flow in the FlowM monad that takes complete control of the navigation, while wactions are
 -- executed whithin the same ask statement.
---
---
-
-
-
-
 wcallback
   :: Monad m =>
      View view m a -> (a -> View view m b) -> View view m b
@@ -449,7 +480,8 @@ data MFlowState view= MFlowState{
    linkMatched      :: Bool,
    mfLinks          :: M.Map String Int,
 
-   mfAutorefresh    :: Bool
+   mfAutorefresh    :: Bool,
+   mfTrace          :: Maybe [String]
    }
    deriving Typeable
 
@@ -458,7 +490,7 @@ type Void = Char
 mFlowState0 :: (FormInput view) => MFlowState view
 mFlowState0 = MFlowState 0 False  True  True  "en"
                 [] False  (error "token of mFlowState0 used")
-                0 0 [] [] stdHeader False [] M.empty  Nothing 0 False    []   ""   1 Nothing False M.empty False
+                0 0 [] [] stdHeader False [] M.empty  Nothing 0 False    []   ""   1 Nothing False M.empty False Nothing
 
 
 -- | Set user-defined data in the context of the session.
@@ -630,9 +662,12 @@ normalize f=  View .  StateT $ \s ->do
 --instance ToByteString String where
 --  toByteString  =  pack
 
--- | Minimal interface for defining the basic form combinators in a concrete rendering.
--- defined in this module. see "MFlow.Forms.XHtml" for the instance for @Text.XHtml@ and MFlow.Forms.HSP for an instance
--- form Haskell Server Pages.
+-- | Minimal interface for defining the basic form and link elements. The core of MFlow is agnostic
+-- about the rendering package used. Every formatting (either HTML or not) used with MFlow must have an
+-- instance of this class
+--
+-- See "MFlow.Forms.Blaze.Html for the instance for blaze-html. "MFlow.Forms.XHtml" for the instance
+-- for @Text.XHtml@ and MFlow.Forms.HSP for the instance for Haskell Server Pages.
 class (Monoid view,Typeable view)   => FormInput view where
     toByteString :: view -> ByteString
     toHttpData :: view -> HttpData

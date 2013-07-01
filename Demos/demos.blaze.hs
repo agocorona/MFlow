@@ -19,12 +19,10 @@ import System.IO.Unsafe
 import System.Environment
 import Debug.Trace
 
-
-
 --
 --import Control.Monad.State
 --import MFlow.Forms.Internals
-(!>) x y= x -- flip trace
+(!>) = const -- flip trace
 
 --test= runTest [(15,"shop")]
 
@@ -48,7 +46,8 @@ data Options= CountI | CountS | Radio
             | ListEdit |Shop | Action | Ajax | Select
             | CheckBoxes | PreventBack | Multicounter
             | Combination
-            | FViewMonad | Counter deriving (Bounded, Enum,Read, Show,Typeable)
+            | FViewMonad | Counter | WDialog
+            deriving (Bounded, Enum,Read, Show,Typeable)
 
 
 mainmenu=  trace "INIT" $ do
@@ -70,6 +69,7 @@ mainmenu=  trace "INIT" $ do
                <|>  br ++> wlink Counter      << b <<  "Counter"
                <|>  br ++> wlink Multicounter << b <<  "Multicounter"
                <|>  br ++> wlink Combination  << b <<  "combination of three active widgets"
+               <|>  br ++> wlink WDialog      << b <<  "modal dialog"
 
                <++  br <>  br                 <> b <<  "DYNAMIC WIDGETS"
                <|>  br ++> wlink Ajax         << b <<  "AJAX example"
@@ -88,7 +88,7 @@ mainmenu=  trace "INIT" $ do
 
 
        case r of
-             CountI    ->  clickn  0
+             CountI    ->  clickn  (0 :: Int)
              CountS    ->  clicks "1"
              Action    ->  actions 1
              Ajax      ->  ajaxsample
@@ -106,7 +106,17 @@ mainmenu=  trace "INIT" $ do
              FViewMonad  -> sumInView
              Counter    -> counter
              Combination -> combination
+             WDialog     -> wdialog1
 
+wdialog1= do
+     q <- ask $ pageFlow "diag" $ do
+               r <-  wform $ p<< "please enter your name" ++> getString (Just "your name") <** submitButton "ok"
+               wdialog "({modal: true})" "question" . wform $
+                   p << ("Do your name is \""++r++"\"?") ++> getBool True "yes" "no" <** submitButton "ok"
+
+     liftIO $ print q
+     if q then ask $ wlink () << b << "thanks"
+          else wdialog1
 
 sumInView= ask $ p << "ask for three numbers in the same page and display the result.\
                       \It is possible to modify the inputs and the sum will reflect it"
@@ -125,7 +135,7 @@ formWidget=  wform $ do
          "work?" -> pageFlow "l"
                      $ Left  <$> b << "do you enjoy your work? "
                              ++> getBool True "yes" "no"
-                             <** submitButton "ok"  <++ br
+                             <** submitButton "ok" <++ br
 
          "study?"-> pageFlow "r"
                      $ Right <$> b << "do you study in "
@@ -143,7 +153,9 @@ formWidget=  wform $ do
 
 
 hint s= [("placeholder",s)]
-onClickSubmit= [("onclick","$(this).parent().submit()")]
+onClickSubmit= [("onclick","if(window.jQuery){\n\
+                                  \$(this).parent().submit();}\n\
+                           \else {this.form.submit()}")]
 radiob s n= wlabel (text s) $ setRadio s n <! onClickSubmit
 
 sumWidget= do
@@ -159,9 +171,9 @@ combination = ask $
      p << "Three active widgets in the same page with autoRefresh. Each widget refresh itself \
           \with Ajax. If Ajax is not active, they will refresh by sending a new page."
      ++> hr
-     ++> p << "Login widget (use admin/admin)" ++> autoRefresh(pageFlow "r" wlogin)  <++ hr
+     ++> p << "Login widget (use admin/admin)" ++> autoRefresh (pageFlow "r" wlogin)  <++ hr
      **> p << "Counter widget" ++> autoRefresh (pageFlow "c" (counterWidget 0))  <++ hr
-     **> p << "Dynamic form widget" ++> autoRefresh(pageFlow "f" formWidget) <++ hr
+     **> p << "Dynamic form widget" ++> autoRefresh (pageFlow "f" formWidget) <++ hr
      **> wlink () << b << "exit"
 
 wlogin :: View Html IO ()
@@ -244,8 +256,8 @@ preventBack= do
 options= do
    r <- ask $ getSelect (setSelectedOption ("" :: String) (p <<  "select a option") <|>
                          setOption "red"  (b <<  "red")     <|>
-                         setOption "blue" (b <<  "blue")    <|>
-                         setOption "Red"  (b <<  "red")  )
+                         setSelectedOption "blue" (b <<  "blue")    <|>
+                         setOption "Green"  (b <<  "Green")  )
                          <! dosummit
    ask $ p << (r ++ " selected") ++> wlink () (p <<  " menu")
 
@@ -258,6 +270,7 @@ checkBoxes= do
                            <> (setCheckBox False "Green" <++ b <<  "green")
                            <> (setCheckBox False "blue"  <++ b <<  "blue"))
               <** submitButton "submit"
+
 
    ask $ p << ( show r ++ " selected")  ++> wlink () (p <<  " menu")
    breturn()
@@ -325,9 +338,9 @@ wlistEd= do
 clickn n= do
    r <- ask $   p << b <<  "increase an Int"
             ++> wlink ("menu" :: String) (p <<  "menu")
-            |+| getSpinner (Just n) <** datePicker Nothing <* submitButton "submit"
+            |+|  getInt (Just n)  <* submitButton "submit"
    case r of
-    (Just _,_) -> return()
+    (Just _,_) -> ask $ wlink () << p << "thanks"
     (_, Just n') -> clickn $ n'+1
 
    breturn()
@@ -343,6 +356,7 @@ clicks s= do
 radio = do
    r <- ask $    p << b <<  "Radio buttons"
              ++> getRadio [\n -> fromStr v ++> setRadioActive v n | v <- ["red","green","blue"]]
+
    ask $ p << ( show r ++ " selected")  ++> wlink () (p <<  " menu")
    breturn()
 

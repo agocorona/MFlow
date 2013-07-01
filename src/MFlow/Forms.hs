@@ -537,22 +537,24 @@ getMultilineText nvalue = View $ do
 -- | Display a dropdown box with the two values (second (true) and third parameter(false))
 -- . With the value of the first parameter selected.                  
 getBool :: (FormInput view,
-      Monad m) =>
+      Monad m, Functor m) =>
       Bool -> String -> String -> View view m Bool
-getBool mv truestr falsestr= View $ do
-    tolook <- genNewId
-    st <- get
-    let env = mfEnv st
-    put st{needForm= True}
-    r <- getParam1 tolook env
-    let flag=  isValidated r && fromstr (fromValidated r)
-    let form= [fselect tolook (foption1 truestr flag `mappend` foption1 falsestr (not flag))]
-    return $ FormElm form . fmap fromstr $ valToMaybe r
---    case mx of
---       Nothing ->  return $ FormElm f Nothing
---       Just x  ->  return . FormElm f $ fromstr x
-    where
-    fromstr x= if x== truestr then True else False
+getBool mv truestr falsestr= do
+   r <- getSelect $   setOption truestr (fromStr truestr)  <! (if mv then [("selected","true")] else [])
+                  <|> setOption falsestr(fromStr falsestr) <! if not mv then [("selected","true")] else []
+   if  r == truestr  then return True else return False
+
+--View $ do
+--    tolook <- genNewId
+--    st <- get
+--    let env = mfEnv st
+--    put st{needForm= True}
+--    r <- getParam1 tolook env
+--    let flag = isValidated r && fromstr (fromValidated r)
+--    let form = [fselect tolook (foption1 truestr flag `mappend` foption1 falsestr (not flag))]
+--    return . FormElm form . fmap fromstr $ valToMaybe r
+--    where
+--    fromstr x = if x == truestr then True else False
 
 -- | Display a dropdown box with the options in the first parameter is optionally selected
 -- . It returns the selected option. 
@@ -1014,18 +1016,19 @@ nextMessage= do
          t2= mfSessionTime st
      msg <- liftIO ( receiveReqTimeout t1 t2  t)
      let req= getParams msg
-         env= req -- updateParams notInPageFlow (mfEnv st) req -- !> show req
+         env=   updateParams notInPageFlow (mfEnv st) req -- !> show req
          npath=  pwfPath msg
 
          path= mfPath st
          notInPageFlow= isNothing $ mfPageIndex st  
      put st{ mfPath= npath
-           , mfPIndex= case mfPageIndex st of
+           , mfPIndex= case mfPageIndex st !>  ("mfPageIndex=" ++ show (mfPageIndex st)) of
                          Just n -> n
                          Nothing  ->
                              comparePaths  (mfPIndex st) 1 (tail path) (tail npath)
 --           , mfPageIndex= Nothing
-           , mfEnv= env}
+           , mfEnv= env }
+
 
      where
      updateParams :: Bool -> Params -> Params -> Params
@@ -1084,8 +1087,9 @@ transfer flowname =do
              sendFlush t r
 
 
--- | Wrap a widget of form element within a form-action element.
----- Usually this is not necessary since this wrapping is done automatically by the @Wiew@ monad.
+-- | Wrap a widget with form element within a form-action element.
+-- Usually this is not necessary since this wrapping is done automatically by the @Wiew@ monad, unless
+-- there are more than one form in the page.
 wform ::  (Monad m, FormInput view)
           => View view m b -> View view m b 
 
