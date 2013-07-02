@@ -52,7 +52,7 @@ import Text.Printf
 
 
 import Debug.Trace
-(!>) =  const --  flip trace
+(!>) = const --   flip trace
 
 instance Serialize a => Serializable a where
   serialize=  runW . showp
@@ -1168,7 +1168,7 @@ formPrefix index verb st form anchored= do
      let path  = currentPath False index (mfPath st) verb
      (anchor,anchorf)
            <- case anchored of
-               True -> do
+               True  -> do
                         anchor <- genNewId
                         return ('#':anchor, (ftag "a") mempty  `attrs` [("name",anchor)])
                False -> return (mempty,mempty)
@@ -1177,7 +1177,7 @@ formPrefix index verb st form anchored= do
 currentPath isInBackTracking index lpath verb =
     (if null lpath then verb
      else case isInBackTracking of
-        True -> concat $ take (index) ['/':v| v <- lpath]
+        True   -> concat $ take (index +1) ['/':v | v <- lpath]  !> "currenPAth back"
         False  -> concat ['/':v| v <- lpath])
 
 -- | Generate a new string. Useful for creating tag identifiers and other attributes

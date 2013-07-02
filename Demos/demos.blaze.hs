@@ -50,7 +50,7 @@ data Options= CountI | CountS | Radio
             deriving (Bounded, Enum,Read, Show,Typeable)
 
 
-mainmenu=  trace "INIT" $ do
+mainmenu=   do
        setHeader stdheader
 --       setTimeouts 100 0
        r <- ask $  do

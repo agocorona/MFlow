@@ -1453,14 +1453,19 @@ instance FormInput  ByteString  where
 
 ------ page Flows ----
 pageFlow
-  :: (Functor m, MonadIO m) =>
+  :: (Monad m, Functor m, FormInput view) =>
      String -> View view m a -> View view m a
-pageFlow str flow =do
+pageFlow str flow'=do
      s <- get
+     let flow = case needForm s of
+            True -> wform flow'
+            False -> flow'
+
      if isNothing $ mfPageIndex s
        then do
        put s{mfPrefix= str++ mfPrefix s
             ,mfSequence=0
+            ,needForm= False
             ,mfLinks= acum M.empty $ drop (mfPIndex s) (mfPath s)
             ,mfPageIndex= Just $ mfPIndex s } !> ("PARENT pageflow. prefix="++ str)
 
@@ -1471,7 +1476,9 @@ pageFlow str flow =do
        else do
        put s{mfPrefix= str++ mfPrefix s
             ,mfLinks= acum M.empty $ drop (fromJust $ mfPageIndex s) (mfPath s)
+            ,needForm= False
             ,mfSequence=0}!> ("CHILD pageflow. prefix="++ str)
+
        flow <** (modify (\s' -> s'{mfSequence= mfSequence s, mfPrefix= mfPrefix s})
                                   !> ("END pageflow. prefix="++ str))
 
