@@ -47,8 +47,8 @@ import System.IO.Unsafe
 import Control.Concurrent.MVar
 
 -- for traces
-import Language.Haskell.TH.Syntax(qLocation, Loc(..), Q, Exp, Quasi)
-import Text.Printf
+--import Language.Haskell.TH.Syntax(qLocation, Loc(..), Q, Exp, Quasi)
+--import Text.Printf
 
 
 import Debug.Trace
@@ -645,7 +645,7 @@ type Value= String
 type Checked= Bool
 type OnClick= Maybe String
 
-normalize ::(Monad m, FormInput v) => View v m a -> View ByteString m a
+normalize :: (Monad m, FormInput v) => View v m a -> View ByteString m a
 normalize f=  View .  StateT $ \s ->do
        (FormElm fs mx, s') <-  runStateT  ( runView f) $ unsafeCoerce s
        return  (FormElm (map toByteString fs ) mx,unsafeCoerce s')
@@ -722,7 +722,7 @@ class (Monoid view,Typeable view)   => FormInput view where
 -- giveTheTime must be executed inside the cached widget to avoid unnecesary IO executions.
 --
 -- NOTE: cached widgets are shared by all users
-cachedWidget ::(MonadIO m,Typeable view
+cachedWidget :: (MonadIO m,Typeable view
          , FormInput view, Typeable a,  Executable m )
         => String  -- ^ The key of the cached object for the retrieval
         -> Int     -- ^ Timeout of the caching. Zero means sessionwide
@@ -740,7 +740,7 @@ cachedWidget key t mf =  View .  StateT $ \s ->  do
         proc mf s= runStateT (runView mf) s >>= \(r,_) ->mfSeqCache s `seq` return (r,mfSeqCache s )
 
 -- | A shorter name for `cachedWidget`
-wcached ::(MonadIO m,Typeable view
+wcached :: (MonadIO m,Typeable view
          , FormInput view, Typeable a,  Executable m )
         => String  -- ^ The key of the cached object for the retrieval
         -> Int     -- ^ Timeout of the caching. Zero means sessionwide
@@ -755,7 +755,7 @@ wcached= cachedWidget
 -- It is not restricted to the Identity monad.
 --
 -- NOTE: cached widgets are shared by all users
-wfreeze ::(MonadIO m,Typeable view
+wfreeze :: (MonadIO m,Typeable view
          , FormInput view, Typeable a,  Executable m )
         => String  -- ^ The key of the cached object for the retrieval
         -> Int     -- ^ Timeout of the caching. Zero means sessionwide
@@ -1024,7 +1024,7 @@ class Requirements  a where
 
 
 
-installAllRequirements ::( Monad m, FormInput view) =>  WState view m view
+installAllRequirements :: ( Monad m, FormInput view) =>  WState view m view
 installAllRequirements= do
  rs <- gets mfRequirements
  installAllRequirements1 mempty rs

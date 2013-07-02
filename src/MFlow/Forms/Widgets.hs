@@ -316,7 +316,7 @@ wautocompleteEdit phold   autocomplete  elem values= do
 
     ws' <- getEdited sel
 
-    r<-(ftag "div" mempty  `attrs` [("id",  id1)]
+    r<- (ftag "div" mempty  `attrs` [("id",  id1)]
       ++> manyOf (ws' ++ (map (changeMonad . elem . Just) values)))
       <++ ftag "input" mempty
              `attrs` [("type", "text")
@@ -512,21 +512,23 @@ datePicker conf jd= do
     return (read day,read month, read $ tail r2)
 
 -- | present a jQuery dialog with a widget. When a button is pressed it return the result.
--- the first parameter is the configuration. To make it modal,  use \"({modal: true})\"
--- As in the case of 'autoRefresh' the enclosed widget must include a complete form, not a part of it.
--- for this purpose, use 'wform'.
+--The first parameter is the configuration. To make it modal,  use \"({modal: true})\" see  "http://jqueryui.com/dialog/" for
+-- the available configutations.
 --
---
+-- As in the case of 'autoRefresh' the enclosed widget will be wrapped within a form tag if the user do not encloses it using wform.
 
 wdialog :: (Monad m, FormInput v) => String -> String -> View v m a -> View v m a
-wdialog conf title w= do
+wdialog conf title w'= do
     id <- genNewId
     let setit= "$(document).ready(function() {\n\
                    \$('#"++id++"').dialog "++ conf ++";\n\
                    \var idform= $('#"++id++" form');\n\
                    \idform.submit(function(){$(this).dialog(\"close\")})\n\
                 \});"
-
+    st <- get
+    let w = case needForm st of
+            True ->   wform w'
+            False ->  w'
     requires
       [CSSFile      jqueryCSS
       ,JScriptFile  jqueryScript []
@@ -563,13 +565,14 @@ getSpinner conf mv= do
 -- So a widget with autoRefresh can be used in heavyweight pages.
 -- If AJAX or javascript is not available, the widget is refresh normally, via a new page.
 -- The enclosed widget if has form elements, must include the form action tag, not a part of it.
--- For this purpose, use 'wform'.
+-- For this purpose, autoRefresh encloses the widget in a form tag if there are form elements on it
+-- and the programmer has not enclosed them in a 'wform' element.
 autoRefresh
   :: (MonadIO m,
      FormInput v)
   => View v m a
   -> View v m a
-autoRefresh w=  do
+autoRefresh w'=  do
     id <- genNewId
 
     let installscript=
@@ -579,6 +582,9 @@ autoRefresh w=  do
                ++ "})\n"
 
     st <- get
+    let w = case needForm st of
+            True -> wform w'
+            False ->  w'
     r <- getParam1 ("auto"++id) $ mfEnv st
     case r of
       NoParam -> do

@@ -71,7 +71,7 @@ library
                    utf8-string -any, wai -any, case-insensitive -any, http-types -any,
                    conduit -any, text -any, parsec -any, warp -any,
                    random -any,
-                   blaze-html -any, blaze-markup -any,
+                   blaze-html -any, blaze-markup -any
 
     exposed-modules: MFlow MFlow.Wai.Blaze.Html.All
                      MFlow.Forms MFlow.Forms.Admin

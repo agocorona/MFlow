@@ -445,7 +445,7 @@ whidden x= View $ do
   r <- getParam1 n env
   return $ FormElm [finput n "hidden" showx False Nothing] $ valToMaybe r
 
-getCheckBoxes ::(FormInput view, Monad m)=> View view m  CheckBoxes -> View view m [String]
+getCheckBoxes :: (FormInput view, Monad m)=> View view m  CheckBoxes -> View view m [String]
 getCheckBoxes boxes =  View $ do
     n <- genNewId
     st <- get
@@ -1203,7 +1203,7 @@ wlink x v= View $ do
           toSend = flink path v
 
 
-      r <-if linkMatched st then return Nothing
+      r <- if linkMatched st then return Nothing
            else
            if isJust $ mfPageIndex st !> (show $ mfPageIndex st)
              then
@@ -1238,7 +1238,7 @@ wlink x v= View $ do
 -- . The parameter is the visualization code, that accept a serialization function that generate
 -- the server invocation string, used by the visualization to return the value by means
 -- of a link or a @window.location@ statement in javasCript
-returning ::(Typeable a, Read a, Show a,Monad m, FormInput view) 
+returning :: (Typeable a, Read a, Show a,Monad m, FormInput view) 
          => ((a->String) ->view) -> View view m a
 returning expr=View $ do
       verb <- getWFName
@@ -1286,7 +1286,7 @@ manyOf xs= whidden () *> (View $ do
       return $ FormElm  vs $  Just res1)
 
 
-(>:>) ::(Monad m)=> View v m a -> View v m [a]  -> View v m [a]
+(>:>) :: (Monad m)=> View v m a -> View v m [a]  -> View v m [a]
 (>:>) w ws= View $ do
     FormElm fs mxs <- runView $  ws
     FormElm f1 mx  <- runView w
@@ -1455,17 +1455,14 @@ instance FormInput  ByteString  where
 pageFlow
   :: (Monad m, Functor m, FormInput view) =>
      String -> View view m a -> View view m a
-pageFlow str flow'=do
+pageFlow str flow=do
      s <- get
-     let flow = case needForm s of
-            True -> wform flow'
-            False -> flow'
+
 
      if isNothing $ mfPageIndex s
        then do
        put s{mfPrefix= str++ mfPrefix s
             ,mfSequence=0
-            ,needForm= False
             ,mfLinks= acum M.empty $ drop (mfPIndex s) (mfPath s)
             ,mfPageIndex= Just $ mfPIndex s } !> ("PARENT pageflow. prefix="++ str)
 
@@ -1476,7 +1473,6 @@ pageFlow str flow'=do
        else do
        put s{mfPrefix= str++ mfPrefix s
             ,mfLinks= acum M.empty $ drop (fromJust $ mfPageIndex s) (mfPath s)
-            ,needForm= False
             ,mfSequence=0}!> ("CHILD pageflow. prefix="++ str)
 
        flow <** (modify (\s' -> s'{mfSequence= mfSequence s, mfPrefix= mfPrefix s})
