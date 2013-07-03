@@ -447,9 +447,9 @@ tFieldGen :: (MonadIO m,Functor m, Executable m
         -> (Key ->v  -> IO())   -- ^ the write procedure, user defiend
         -> View v m ()
 tFieldGen  k  getcontent create =   wfreeze k 0 $ do
-    content <-  liftIO $ getcontent  k
+    content <- liftIO $ getcontent  k
     admin   <- getAdminName
-    ajaxjs   <- ajax  $ \str -> do
+    ajaxjs  <- ajax  $ \str -> do
               let (k,s)= break (==',')    str !> str
               liftIO  . create  k  $ fromStrNoEncode (tail s)
               liftIO $ flushCached k
@@ -513,30 +513,39 @@ datePicker conf jd= do
 
 -- | present a jQuery dialog with a widget. When a button is pressed it return the result.
 --The first parameter is the configuration. To make it modal,  use \"({modal: true})\" see  "http://jqueryui.com/dialog/" for
--- the available configutations.
+-- the available configurations.
 --
 -- As in the case of 'autoRefresh' the enclosed widget will be wrapped within a form tag if the user do not encloses it using wform.
 
 wdialog :: (Monad m, FormInput v) => String -> String -> View v m a -> View v m a
-wdialog conf title w'= do
+wdialog conf title w= do
     id <- genNewId
     let setit= "$(document).ready(function() {\n\
                    \$('#"++id++"').dialog "++ conf ++";\n\
                    \var idform= $('#"++id++" form');\n\
                    \idform.submit(function(){$(this).dialog(\"close\")})\n\
                 \});"
-    st <- get
-    let w = case needForm st of
-            True ->   wform w'
-            False ->  w'
+
+    modify $ \st -> st{needForm= False}
     requires
       [CSSFile      jqueryCSS
       ,JScriptFile  jqueryScript []
       ,JScriptFile  jqueryUI [setit]]
 
-    (ftag "div" <<< w) <! [("id",id),("title", title)]
+    (ftag "div" <<< insertForm w) <! [("id",id),("title", title)]
+
+insertForm w=View $ do
+    FormElm forms mx <- runView w
+    st <- get
 
 
+    cont <- case needForm st of
+                      True ->  do
+                               frm <- formPrefix (mfPIndex st) (twfname $ mfToken st ) st forms False
+                               return   frm
+                      _    ->  return $ mconcat  forms
+    put st{needForm= False}
+    return $ FormElm [cont] mx
 
 -- | show the jQuery spinner widget. the first parameter is the configuration . Use \"()\" by default.
 -- See http://jqueryui.com/spinner
@@ -572,7 +581,7 @@ autoRefresh
      FormInput v)
   => View v m a
   -> View v m a
-autoRefresh w'=  do
+autoRefresh w=  do
     id <- genNewId
 
     let installscript=
@@ -582,16 +591,14 @@ autoRefresh w'=  do
                ++ "})\n"
 
     st <- get
-    let w = case needForm st of
-            True -> wform w'
-            False ->  w'
+
     r <- getParam1 ("auto"++id) $ mfEnv st
     case r of
       NoParam -> do
          requires [JScript ajaxGetLink
                   ,JScript ajaxPostForm
                   ,JScriptFile jqueryScript [installscript]]
-         (ftag "div" <<< w) <! [("id",id)]
+         (ftag "div" <<< insertForm w) <! [("id",id)]
 
       Validated (x :: String) -> View $ do
          let t= mfToken st

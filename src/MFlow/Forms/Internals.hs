@@ -52,7 +52,7 @@ import Control.Concurrent.MVar
 
 
 import Debug.Trace
-(!>) = const --   flip trace
+(!>) =  const --  flip trace
 
 instance Serialize a => Serializable a where
   serialize=  runW . showp
@@ -293,7 +293,7 @@ instance  (Monad m) => Monad (View view m) where
                         FormElm form2 mk <- runView $ f k
                         return $ FormElm (form1 ++ form2) mk
 
-                     Nothing -> do
+                     Nothing -> 
                         return $ FormElm form1 Nothing
 
 
@@ -310,8 +310,8 @@ instance (Monad m, Functor m, Monoid a) => Monoid (View v m a) where
 -- | It is a callback in the view monad. The callback rendering substitutes the widget rendering
 -- when the latter is validated, without afecting the rendering of other widgets. This allow
 -- the simultaneous execution of different behaviours in different widgets simultaneously in the
--- same page. The inspiration is the callback primitive in the great Seaside Web Framework
--- that allows the same functionality (See <http://www.seaside.st>)
+-- same page. The inspiration is the callback primitive in the Seaside Web Framework
+-- that allows similar functionality (See <http://www.seaside.st>)
 --
 -- This is the visible difference with 'waction' callbacks, which execute a
 -- a flow in the FlowM monad that takes complete control of the navigation, while wactions are
@@ -1177,7 +1177,7 @@ formPrefix index verb st form anchored= do
 currentPath isInBackTracking index lpath verb =
     (if null lpath then verb
      else case isInBackTracking of
-        True   -> concat $ take (index +1) ['/':v | v <- lpath]  !> "currenPAth back"
+        True   -> concat $ take index  ['/':v | v <- lpath]  !> ("index= " ++ show index)
         False  -> concat ['/':v| v <- lpath])
 
 -- | Generate a new string. Useful for creating tag identifiers and other attributes

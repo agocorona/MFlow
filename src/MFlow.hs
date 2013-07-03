@@ -162,7 +162,7 @@ data Resp  = Fragm HttpData
 
 -- | a Token identifies a flow that handle messages. The scheduler compose a Token with every `Processable`
 -- message that arrives and send the mesage to the appropriate flow.
-data Token = Token{twfname,tuser, tind :: String , tpath ::[String], tenv:: Params, tsendq :: MVar Req, trecq :: MVar Resp}  deriving  Typeable
+data Token = Token{twfname,tuser, tind :: String , tpath :: [String], tenv:: Params, tsendq :: MVar Req, trecq :: MVar Resp}  deriving  Typeable
 
 instance Indexable  Token  where
      key (Token w u i _ _ _ _  )=
@@ -376,7 +376,7 @@ msgScheduler x  = do
         case r of
           Left NotFound -> do
                  (sendFlush token =<<  serveFile  (pwfname x))
-                    `CE.catch`\(e::CE.SomeException) -> showError wfname token (show e)
+                    `CE.catch`\(e:: CE.SomeException) -> showError wfname token (show e)
 --               sendFlush token (Error NotFound $ "Not found: " <> pack wfname)
                  deleteTokenInList token
           Left AlreadyRunning -> return ()                    -- !> ("already Running " ++ wfname)
@@ -435,7 +435,7 @@ defNotFoundResponse user msg=
 notFoundResponse=  unsafePerformIO $ newIORef defNotFoundResponse
 
 -- | set the  404 "not found" response
-setNotFoundResponse ::
+setNotFoundResponse :: 
     (String      -- ^ The user identifier. The username when logged
   -> String      -- ^ The error string
   -> HttpData)   -- ^The response. See `defNotFoundResponse` code for an example

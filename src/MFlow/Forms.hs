@@ -144,7 +144,7 @@ FlowM, View(..), FormElm(..), FormInput(..)
 ,getCurrentUser,getUserSimple, getUser, userFormLine, userLogin,logout, userWidget,getLang, login,
 userName,
 -- * User interaction 
-ask, askt, clearEnv, wstateless, transfer, pageFlow, 
+ask, page, askt, clearEnv, wstateless, transfer, pageFlow, 
 -- * formLets 
 -- | They usually produce the HTML form elements (depending on the FormInput instance used)
 -- It is possible to modify their attributes with the `<!` operator.
@@ -447,7 +447,7 @@ whidden x= View $ do
 
 getCheckBoxes :: (FormInput view, Monad m)=> View view m  CheckBoxes -> View view m [String]
 getCheckBoxes boxes =  View $ do
-    n <- genNewId
+    n  <- genNewId
     st <- get
     let env =  mfEnv st
     let form= [finput n "hidden" "" False Nothing]
@@ -944,7 +944,10 @@ ask w =  do
       case mx of
        Just x -> do
 
-         put st'{newAsk= True ,mfEnv=[]}
+         put st'{newAsk= True , mfEnv=[]
+                ,mfPageIndex=Nothing
+                ,mfPIndex= length (mfPath st') -1
+         }
 
          breturn x
 
@@ -986,10 +989,7 @@ ask w =  do
                    ,mfPageIndex= mfPageIndex st'
                    ,mfAjax= mfAjax st'
                    ,mfSeqCache= mfSeqCache st' }
-    head1 []=0
-    head1 xs= head xs
-    tail1 []=[]
-    tail1 xs= tail xs
+
 
 -- | A synonym of ask.
 --
@@ -1017,11 +1017,11 @@ nextMessage= do
          t2= mfSessionTime st
      msg <- liftIO ( receiveReqTimeout t1 t2  t)
      let req= getParams msg
-         env=   updateParams notInPageFlow (mfEnv st) req -- !> show req
+         env=   updateParams inPageFlow (mfEnv st) req -- !> show req
          npath=  pwfPath msg
 
          path= mfPath st
-         notInPageFlow= isNothing $ mfPageIndex st  
+         inPageFlow= isJust $ mfPageIndex st  
      put st{ mfPath= npath
            , mfPIndex= case mfPageIndex st !>  ("mfPageIndex=" ++ show (mfPageIndex st)) of
                          Just n -> n
@@ -1033,16 +1033,17 @@ nextMessage= do
 
      where
      updateParams :: Bool -> Params -> Params -> Params
-     updateParams True _ req= req
-     updateParams False env req=
-
+     updateParams False _ req= req   !> "NOT IN PAGE FLOW"
+     updateParams True env req=
         let params= takeWhile isparam env
             fs= fst $ head req
             parms= (case findIndex (\p -> fst p == fs)  params of
                       Nothing -> params
                       Just  i -> take i params)
                     ++  req
-        in parms -- !> show parms `seq` parms
+        in parms !> "IN PAGE FLOW"  !>  ("parms=" ++ show parms )
+                                    !>  ("env=" ++ show env)
+                                    !>  ("req=" ++ show req)
 
 
 
@@ -1192,11 +1193,12 @@ wlink x v= View $ do
           name = mfPrefix st ++ (map toLower $ if typeOf x== typeOf(undefined :: String)
                                    then unsafeCoerce x
                                    else show x)
-          index = mfPIndex st  + if linkMatched st then -1 else 0
+          index' = mfPIndex st  + if linkMatched st then -1 else 0
                                + if Just (mfPIndex st)== mfPageIndex st then 1 else 0
+          index = if index'== 0 then 1 else index'
           lpath = mfPath st
 
-          back = True -- not $ inSync st  || (inSync st && linkMatched st)
+          back =  True -- not $ inSync st  || (inSync st && linkMatched st)
 
       let path=   currentPath back index lpath verb ++ ('/':name)
                                        !> (show $ mfPath st)
@@ -1452,31 +1454,40 @@ instance FormInput  ByteString  where
     flink  v str = btag "a" [("href",  v)]  str
 
 ------ page Flows ----
+
+-- | prepares the state for a page flow. A page flow is a dynamic page which changes his rendering by executing
+-- a monadic computation with widgets that are validated depending on the user responses.
+-- It initiates the creation of a well known sequence of identifiers for the formlets and also
+-- keep the state of the previous form submissions within the page.
+-- If the computation has branches   @if@ @case@ etc, each branch must have its pageFlow with a distinct identifier
+--
+-- See "http://haskell-web.blogspot.com.es/2013/06/the-promising-land-of-monadic-formlets.html"
 pageFlow
   :: (Monad m, Functor m, FormInput view) =>
      String -> View view m a -> View view m a
 pageFlow str flow=do
      s <- get
 
-
      if isNothing $ mfPageIndex s
        then do
-       put s{mfPrefix= str++ mfPrefix s
+       put s{mfPrefix= str ++ mfPrefix s
             ,mfSequence=0
             ,mfLinks= acum M.empty $ drop (mfPIndex s) (mfPath s)
-            ,mfPageIndex= Just $ mfPIndex s } !> ("PARENT pageflow. prefix="++ str)
+            ,mfPageIndex= Just $ mfPIndex s }                                                      !> ("PARENT pageflow. prefix="++ str)
 
-       flow <** (modify (\s' -> s'{mfSequence= mfSequence s, mfPrefix= mfPrefix s})
-                                   !> ("END pageflow. prefix="++ str))
+       flow <** (modify (\s' -> s'{mfSequence= mfSequence s
+                                 ,mfPrefix= mfPrefix s})
+                                                                                                                      !> ("END PARENT pageflow. prefix="++ str))
 
 
        else do
        put s{mfPrefix= str++ mfPrefix s
             ,mfLinks= acum M.empty $ drop (fromJust $ mfPageIndex s) (mfPath s)
-            ,mfSequence=0}!> ("CHILD pageflow. prefix="++ str)
+            ,mfSequence=0}                                                                                  !> ("CHILD pageflow. prefix="++ str)
 
-       flow <** (modify (\s' -> s'{mfSequence= mfSequence s, mfPrefix= mfPrefix s})
-                                  !> ("END pageflow. prefix="++ str))
+       flow <** (modify (\s' -> s'{mfSequence= mfSequence s
+                                 ,mfPrefix= mfPrefix s})
+                                                                                                                      !> ("END CHILD pageflow. prefix="++ str))
 
 
 
