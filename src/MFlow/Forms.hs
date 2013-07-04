@@ -321,10 +321,13 @@ wmodify formt act = View $ do
 --      let (x,y,z)= case mxy of Nothing -> (Nothing, Nothing, Nothing); Just (x,y,z)-> (Just x, Just y,Just z)
 --      (,,) <$> digest x  <*> digest  y  <*> digest  z
 
--- | Display a text box and return a String
+-- | Display a text box and return a non empty String
 getString  :: (FormInput view,Monad m) =>
      Maybe String -> View view m String
-getString = getTextBox
+getString ms = getTextBox ms
+     `validate`
+     \s -> if null s then return (Just $ fromStr "")
+                    else return Nothing
 
 -- | Display a text box and return an Integer (if the value entered is not an Integer, fails the validation)
 getInteger :: (FormInput view,  MonadIO m) =>
@@ -577,9 +580,15 @@ instance (Monad m, Functor m) => Monoid (View view m (MFOption a)) where
   mempty = Control.Applicative.empty
 
 -- | Set the option for getSelect. Options are concatenated with `<|>`
+setOption
+  :: (Monad m, Show a, Typeable a, FormInput view) =>
+     a -> view -> View view m (MFOption a)
 setOption n v = setOption1 n v False
 
 -- | Set the selected option for getSelect. Options are concatenated with `<|>`
+setSelectedOption
+  :: (Monad m, Show a, Typeable a, FormInput view) =>
+     a -> view -> View view m (MFOption a)
 setSelectedOption n v= setOption1 n v True
  
 setOption1 :: (FormInput view,
