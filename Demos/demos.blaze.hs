@@ -52,7 +52,7 @@ data Options= CountI | CountS | Radio
 
 mainmenu=   do
        setHeader stdheader
---       setTimeouts 100 0
+       setTimeouts 100 0
        r <- ask $  do
               requires[CSSFile "http://jqueryui.com/resources/demos/style.css"]
               wcached "menu" 0 $
@@ -65,7 +65,7 @@ mainmenu=   do
 
                <++  br <>  br                 <> b <<  "WIDGET ACTIONS & CALLBACKS"
                <|>  br ++> wlink Action       << b <<  "Example of action, executed when a widget is validated"
-               <|>  br ++> wlink FViewMonad   << b <<  "Flow in the View monad"
+               <|>  br ++> wlink FViewMonad   << b <<  "in page flow: sum of three numbers"
                <|>  br ++> wlink Counter      << b <<  "Counter"
                <|>  br ++> wlink Multicounter << b <<  "Multicounter"
                <|>  br ++> wlink Combination  << b <<  "combination of three active widgets"
@@ -108,15 +108,16 @@ mainmenu=   do
              Combination -> combination
              WDialog     -> wdialog1
 
-wdialog1= do
-     q <- ask $ pageFlow "diag" $ do
-               r <-  wform $ p<< "please enter your name" ++> getString (Just "your name") <** submitButton "ok"
-               wdialog "({modal: true})" "question" . wform $
-                   p << ("Do your name is \""++r++"\"?") ++> getBool True "yes" "no" <** submitButton "ok"
+wdialog1= ask  wdialogw
 
-     liftIO $ print q
-     if q then ask $ wlink () << b << "thanks"
-          else wdialog1
+wdialogw= pageFlow "diag" $ do
+   r <- wform $ p<< "please enter your name" ++> getString (Just "your name") <** submitButton "ok"
+   wdialog "({modal: true})" "question"  $ 
+           p << ("Do your name is \""++r++"\"?") ++> getBool True "yes" "no" <** submitButton "ok"
+
+  `wcallback` \q -> if not q then wdialogw
+                      else  wlink () << b << "thanks, press here to go to the menu"
+
 
 sumInView= ask $ p << "ask for three numbers in the same page and display the result.\
                       \It is possible to modify the inputs and the sum will reflect it"
@@ -131,7 +132,7 @@ formWidget=  wform $ do
 
       flag <- b << "Do you " ++> getRadio[radiob "work?",radiob "study?"] <++ br
 
-      r<-case flag of
+      r<- case flag of
          "work?" -> pageFlow "l"
                      $ Left  <$> b << "do you enjoy your work? "
                              ++> getBool True "yes" "no"
@@ -208,7 +209,7 @@ multicounter= do
  ask $ explain ++> add (counterWidget 0) [1,2] <|> wlink () << p << "exit"
 
 
-add widget list= firstOf [pageFlow (show i) widget <++ hr | i <-list]
+add widget list= firstOf [pageFlow (show i) widget <++ hr | i <- list]
 
 counter1= do
     ask $ wlink "p" <<p<<"press here"
@@ -254,14 +255,14 @@ preventBack= do
       putMVar rpaid $ paid + 100000
 
 options= do
-   r <- ask $ getSelect (setSelectedOption ("" :: String) (p <<  "select a option") <|>
+   r <- ask $ getSelect (setSelectedOption ""  (p <<  "select a option") <|>
                          setOption "red"  (b <<  "red")     <|>
                          setSelectedOption "blue" (b <<  "blue")    <|>
                          setOption "Green"  (b <<  "Green")  )
                          <! dosummit
    ask $ p << (r ++ " selected") ++> wlink () (p <<  " menu")
 
-   breturn()
+
    where
    dosummit= [("onchange","this.form.submit()")]
 
@@ -273,7 +274,7 @@ checkBoxes= do
 
 
    ask $ p << ( show r ++ " selected")  ++> wlink () (p <<  " menu")
-   breturn()
+
 
 autocomplete1= do
    r <- ask $   p <<  "Autocomplete "
@@ -281,7 +282,7 @@ autocomplete1= do
             ++> wautocomplete Nothing filter1 <! hint "red,green or blue"
             <** submitButton "submit"
    ask $ p << ( show r ++ " selected")  ++> wlink () (p <<  " menu")
-   breturn()
+
    where
    filter1 s = return $ filter (isPrefixOf s) ["red","reed rose","green","green grass","blue","blues"]
 
@@ -292,7 +293,7 @@ autocompList= do
             ++> wautocompleteList "red,green,blue" filter1 ["red"]
             <** submitButton "submit"
    ask $ p << ( show r ++ " selected")  ++> wlink () (p <<  " menu")
-   breturn()
+
    where
    filter1 s = return $ filter (isPrefixOf s) ["red","reed rose","green","green grass","blue","blues"]
 
@@ -312,7 +313,7 @@ grid = do
   ask $   p << (show r ++ " returned")
       ++> wlink () (p <<  " back to menu")
 
-  breturn()
+
 
 wlistEd= do
    r <-  ask  $   addLink
@@ -323,7 +324,7 @@ wlistEd= do
 
    ask $   p << (show r ++ " returned")
        ++> wlink () (p <<  " back to menu")
-   breturn()
+
 
    where
    addLink = a ! At.id  (attr "wEditListAdd")
@@ -337,13 +338,13 @@ wlistEd= do
 
 clickn n= do
    r <- ask $   p << b <<  "increase an Int"
-            ++> wlink ("menu" :: String) (p <<  "menu")
+            ++> wlink "menu"  << p <<  "menu"
             |+|  getInt (Just n)  <* submitButton "submit"
    case r of
-    (Just _,_) -> ask $ wlink () << p << "thanks"
+    (Just _,_) -> return ()  --  ask $ wlink () << p << "thanks"
     (_, Just n') -> clickn $ n'+1
 
-   breturn()
+
 clicks s= do
    s' <- ask $  p << b <<  "increase a String"
              ++> p << b <<  "press the back button to go back to the menu"
@@ -351,15 +352,13 @@ clicks s= do
              <* submitButton "submit")
              `validate` (\s -> return $ if length s   > 5 then Just (b << "length must be < 5") else Nothing )
    clicks $ s'++ "1"
-   breturn()
+
 
 radio = do
    r <- ask $    p << b <<  "Radio buttons"
              ++> getRadio [\n -> fromStr v ++> setRadioActive v n | v <- ["red","green","blue"]]
 
-   ask $ p << ( show r ++ " selected")  ++> wlink () (p <<  " menu")
-   breturn()
-
+   ask $ p << ( show r ++ " selected")  ++> wlink ()  << p <<  " menu"
 
 ajaxsample= do
    r <- ask $   p << b <<  "Ajax example that increment the value in a box"
@@ -368,8 +367,8 @@ ajaxsample= do
                  ajaxc <- ajax $ \n -> return . B.pack $ elemval <> "='" <> show(read  n +1) <>  "'"
                  b <<  "click the box "
                    ++> getInt (Just 0) <! [("id","text1"),("onclick", ajaxc  elemval)] <** submitButton "submit"
-   ask $ p << ( show r ++ " returned")  ++> wlink () (p <<  " menu")
-   breturn()
+   ask $ p << ( show r ++ " returned")  ++> wlink ()  << p <<  " menu"
+
 
 ---- recursive action
 --actions n=do
@@ -382,7 +381,7 @@ actions n= do
           ++> getString (Just "widget1") `waction` action
           <+> getString (Just "widget2") `waction` action
           <** submitButton "submit"
-  ask $ p << ( show r ++ " returned")  ++> wlink () (p <<  " menu")
+  ask $ p << ( show r ++ " returned")  ++> wlink ()  << p <<  " menu"
   where
   action n=  ask $ getString (Just $ n ++ " action")<** submitButton "submit action"
 
@@ -433,7 +432,7 @@ loginSample= do
     ask $ p <<  "Please login with admin/admin"
             ++> userWidget (Just "admin") userLogin
     user <- getCurrentUser
-    ask $ b <<  ("user logged as " <>  user) ++> wlink () (p <<  " logout and go to menu")
+    ask $ b <<  ("user logged as " <>  user) ++> wlink ()  << p <<  " logout and go to menu"
     logout
 
 
@@ -450,7 +449,7 @@ textEdit= do
     ask $   p << b <<  "An example of content management"
         ++> first
         ++> second
-        ++> wlink () (p <<  "click here to edit it")
+        ++> wlink ()  << p <<  "click here to edit it"
 
 
     ask $   p <<  "Please login with admin/admin to edit it"
@@ -460,19 +459,19 @@ textEdit= do
         ++> p << b <<  "to save an edited field, double click on it"
         ++> tFieldEd "first"  first
         **> tFieldEd "second" second
-        **> wlink () (p <<  "click here to see it as a normal user")
+        **> wlink ()  << p <<  "click here to see it as a normal user"
 
     logout
 
     ask $   p <<  "the user sees the edited content. He can not edit"
         ++> tFieldEd "first"  first
         **> tFieldEd "second" second
-        **> wlink () (p <<  "click to continue")
+        **> wlink ()  << p <<  "click to continue"
 
     ask $   p <<  "When texts are fixed,the edit facility and the original texts can be removed. The content is indexed by the field key"
         ++> tField "first"
         **> tField "second"
-        **> p << "End of edit field demo" ++> wlink () (p <<  "click here to go to menu")
+        **> p << "End of edit field demo" ++> wlink ()  << p <<  "click here to go to menu"
 
 
 

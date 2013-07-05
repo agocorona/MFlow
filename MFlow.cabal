@@ -1,5 +1,5 @@
 name: MFlow
-version: 0.2.0.9
+version: 0.3.0.0
 cabal-version: >=1.6
 build-type: Simple
 license: BSD3
@@ -7,14 +7,22 @@ license-file: LICENSE
 maintainer: agocorona@gmail.com
 stability: experimental
 Bug-reports: https://github.com/agocorona/MFlow/issues
-synopsis: continuation-based Web framework without continuations.
-description: MFlow run stateful server processes; All the flow of requests and responses are coded by the programmer in a single function.
-             Allthoug single request-response flows and callbacks are possible. Therefore, the code is
+synopsis: stateful, RESTful web framework
+description: MFlow run stateful server processes. This version is the first stateful web framework
+             that is as RESTful as a web framework can be.
+             .
+             The routes are expressed as normal, monadic haskell code in the FlowM monad. Local links
+             point to alternative routes within this monadic computation just like a textual menu
+             in a console application. Any GET page is directly reachable by means of a RESTful URL.
+             .
+             All the flow of requests and responses are coded by the programmer in a single procedure.
+             Allthoug single request-response flows are possible. Therefore, the code is
              more understandable. It is not continuation based. It uses a log for thread state persistence and backtracking for
-             handling the back button. Potentially that makes the MFlow architecture scalable, since the state is serializable and small
+             handling the back button. Back button state syncronization is supported out-of-the-box
              .
+             The MFlow architecture is scalable, since the state is serializable and small
              .
-             These processes are stopped and restarted by the
+             The processes are stopped and restarted by the
              application server on demand, including the execution state (if the Wokflow monad is used).
              Therefore session management is automatic. State consistence and transactions are given by the TCache package.
              .
@@ -29,24 +37,35 @@ description: MFlow run stateful server processes; All the flow of requests and r
              To use them, add then to the exported modules and execute cabal install
              .
              It is designed for applications that can be run with no deployment with runghc in order
-             to speed up the development process. see "Web application in a tweet": http://haskell-web.blogspot.com.es/2013/05/a-web-application-in-tweet.html
+             to speed up the development process. see <http://haskell-web.blogspot.com.es/2013/05/a-web-application-in-tweet.html>
              .
-             The previous release (0.1) add transparent back button management, cached widgets, callbacks, modifiers, heterogeneous formatting, AJAX,
-             and WAI integration.
+             This release includes:
              .
-             This version (0.2) add better WAI integration, higher level dynamic Widgets, content management, multilanguage, blaze-html support,
+             - /RESTful/ URLs
+             .
+             - Automatic independent refreshing of widgets via Ajax. (see <http://haskell-web.blogspot.com.es/2013/06/and-finally-widget-auto-refreshing.html>)
+             .
+             - Now each widget can be monadic so it can express his own behaviour and can run its own independent page flow. (see <http://haskell-web.blogspot.com.es/2013/06/the-promising-land-of-monadic-formlets.html>)
+             .
+             - Per-widget callbacks, used in page flows, that change the rendering of the widget (see <http://haskell-web.blogspot.com.es/2013/06/callbacks-in-mflow.html>)
+             .
+             - Widgets in modal and non modal dialogs  (using jQuery dialog)
+             .
+             - Other jQuery widgets as MFlow widgets: spinner, datepicker
+             .
+             The version 0.2 added better WAI integration, higher level dynamic Widgets, content management, multilanguage, blaze-html support,
              stateful ajax for server-side control, user-defined data in sessions and widget requirements for automatic installation of scripts, CSS and server flows.
              .
-             This version (0.2.0.10) XXXXX
+             The version  0.1 added transparent back button management, cached widgets, callbacks, modifiers, heterogeneous formatting, AJAX,
+             and WAI integration.
              .
              See "MFlow.Forms" for details
-             .
-             Although still it is experimental, it is being used in at least one future commercial project. So I have te commitment to
-             continue its development. There are many examples in the documentation and in the package.
-             .
+             .             .
              To do:
              .
              -Clustering
+             .
+             -Automatic error traces
              .
 category: Web, Application Server
 author: Alberto Gómez Corona

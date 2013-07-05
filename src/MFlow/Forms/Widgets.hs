@@ -512,7 +512,7 @@ datePicker conf jd= do
     return (read day,read month, read $ tail r2)
 
 -- | present a jQuery dialog with a widget. When a button is pressed it return the result.
---The first parameter is the configuration. To make it modal,  use \"({modal: true})\" see  "http://jqueryui.com/dialog/" for
+-- The first parameter is the configuration. To make it modal,  use \"({modal: true})\" see  "http://jqueryui.com/dialog/" for
 -- the available configurations.
 --
 -- As in the case of 'autoRefresh' the enclosed widget will be wrapped within a form tag if the user do not encloses it using wform.
@@ -534,6 +534,8 @@ wdialog conf title w= do
 
     (ftag "div" <<< insertForm w) <! [("id",id),("title", title)]
 
+
+
 insertForm w=View $ do
     FormElm forms mx <- runView w
     st <- get
@@ -546,26 +548,6 @@ insertForm w=View $ do
                       _    ->  return $ mconcat  forms
     put st{needForm= False}
     return $ FormElm [cont] mx
-
--- | show the jQuery spinner widget. the first parameter is the configuration . Use \"()\" by default.
--- See http://jqueryui.com/spinner
-getSpinner
-  :: (MonadIO m, Read a,Show a, Typeable a, FormInput view) =>
-     String -> Maybe a -> View view m a
-getSpinner conf mv= do
-    id <- genNewId
-    let setit=   "$(document).ready(function() {\n\
-                 \var spinner = $( '#"++id++"' ).spinner "++conf++";\n\
-                 \spinner.spinner( \"enable\" );\n\
-                 \});"
-    requires
-      [CSSFile      jqueryCSS
-      ,JScriptFile  jqueryScript []
-      ,JScriptFile  jqueryUI [setit]]
-
-    getTextBox mv <! [("id",id)]
-
-
 
 
 
@@ -660,3 +642,26 @@ autoRefresh w=  do
        \});\n\
       \return false;\n\
      \}"
+
+
+-- | show the jQuery spinner widget. the first parameter is the configuration . Use \"()\" by default.
+-- See http://jqueryui.com/spinner
+getSpinner
+  :: (MonadIO m, Read a,Show a, Typeable a, FormInput view) =>
+     String -> Maybe a -> View view m a
+getSpinner conf mv= do
+    id <- genNewId
+    let setit=   "$(document).ready(function() {\n\
+                 \var spinner = $( '#"++id++"' ).spinner "++conf++";\n\
+                 \spinner.spinner( \"enable\" );\n\
+                 \});"
+    requires
+      [CSSFile      jqueryCSS
+      ,JScriptFile  jqueryScript []
+      ,JScriptFile  jqueryUI [setit]]
+
+    getTextBox mv <! [("id",id)]
+
+
+
+

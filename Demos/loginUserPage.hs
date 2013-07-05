@@ -132,9 +132,9 @@ shop = do
        catalog
 
    shoppingCart bought= do
-       cart <- getSessionData `onNothing` return (M.empty ::Cart)
+       cart <- getSessionData `onNothing` return (M.empty :: Cart)
        let (n,price) = fromMaybe (0,undefined) $ M.lookup  bought cart
-       (n,price) <-step $ do
+       (n,price) <- step $ do
                    if n /= 0 then return (n,price) else do
                     [price] <- atomic $ Q.select pricep $ namep .==. bought
                     return (n, price)

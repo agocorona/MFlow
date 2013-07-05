@@ -27,6 +27,8 @@ module MFlow.Wai.Blaze.Html.All (
 ,module Text.Blaze.Html5
 ,module Text.Blaze.Html5.Attributes
 ,module Control.Monad.IO.Class
+,runServerTransient
+,runServer
 ) where
 
 import MFlow
@@ -43,14 +45,49 @@ import Network.Wai.Handler.Warp
 import Data.TCache
 import Text.Blaze.Internal(text)
 
+import Control.Workflow (Workflow)
+
 
 import Control.Applicative
 import Control.Monad.IO.Class
+import System.Environment
+import Data.Maybe(fromMaybe)
+import Data.Char(isNumber)
+
+-- | run a transient flow (see 'transient'). The port is read from the first exectution parameter
+-- if no parameter, it is read from the PORT environment variable.
+-- if this does not exist, the port 80 is used.
+runServerTransient :: FormInput view => FlowM view IO () -> IO Bool
+runServerTransient f= do
+    addMessageFlows[("", transient $ runFlow f)]
+    porti <- getPort
+    wait $ run porti waiMessageFlow
 
 
+-- The port is read from the first exectution parameter
+-- if no parameter, it is read from the PORT environment variable.
+-- if this does not exist, the port 80 is used.
+getPort= do
+    args <- getArgs
+    port <- case args of
+           port:xs -> return port
+           _  -> do
+               env <- getEnvironment
+               return $ fromMaybe "80" $ lookup "PORT" env
+    let porti= if and $ map isNumber port then fromIntegral $ read port
+                                          else 80
+    putStr "using port "
+    print porti
+    return porti
 
-
-
+-- | run a persistent flow. The port is read from the first exectution parameter
+-- if no parameter, it is read from the PORT environment variable.
+-- if this does not exist, the port 80 is used.
+runServer :: FormInput view => FlowM view (Workflow IO) () -> IO Bool
+runServer f= do
+    addMessageFlows[("", runFlow f)]
+    porti <- getPort
+    wait $ run porti waiMessageFlow
 
 
 

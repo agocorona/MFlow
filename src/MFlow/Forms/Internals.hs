@@ -203,7 +203,43 @@ instance Serialize a => Serialize (FormElm view a) where
    showp (FormElm _ x)= showp x
    readp= readp >>= \x -> return $ FormElm  [] x
 
--- | @View v m a@ is a widget (formlet)  with formatting v  running the monad m (usually IO) and which return a value of type a
+-- | @View v m a@ is a widget (formlet)  with formatting `v`  running the monad `m` (usually `IO`) and which return a value of type `a`
+--
+-- It has 'Applicative', 'Alternative' and 'Monad' instances.
+--
+-- Things to know about these instances:
+--
+--   If the View expression does not validate, ask will present the page again.
+--
+-- /Alternative instance/: Both alternatives are executed. The rest is as usual
+--
+-- /Monad Instance/:
+--
+--  The rendering of each statement is added to the previous. If you want to avoid this, use 'wcallback'
+--
+--  The execution is stopped when the statement has a formlet-widget that does not validate.
+--
+--  The monadic code is executed from the beginning each time the page is presented or refreshed
+--
+--  use 'pageFlow' if your page has more than one monadic computation with dynamic behaviour
+--
+-- use 'pageFlow' to identify each subflow branch of a conditional
+--
+--  For example:
+--
+--  > pageFlow "myid" $ do
+--  >      r <- formlet1
+--  >      liftIO $ ioaction1 r
+--  >      s <- formlet2
+--  >      liftIO $ ioaction2 s
+--  >      case s of
+--  >       True  -> pageFlow "idtrue" $ do ....
+--  >       False -> paeFlow "idfalse" $ do ...
+--  >      ...
+--
+--  Here if  @formlet2@ do not validate, @ioaction2@ is not executed. But if @formLet1@ validates and the
+--  page is refreshed two times (because @formlet2@ has failed, see above),then @ioaction1@ is executed two times.
+
 newtype View v m a = View { runView :: WState v m (FormElm v a)}
 
 instance Monad m => HandleBacktracking (MFlowState v) (WState v m) where
@@ -241,7 +277,11 @@ badIO op = do
     liftIO $ putStrLn  $ "Template Haskell error: " ++"Can't do `" ++ op ++ "' in the IO monad"
     fail "Template Haskell failure"
 
-
+-- | the FlowM monad executes the page navigation. It perform backtracking when necessary to syncronize
+-- when the user press the back button or when the user enter an arbitrary URL. The instruction pointer
+-- is moved to the right position within the procedure to handle the request.
+--
+-- However this is transparent to the programmer, who codify in the style of a console application.
 newtype FlowM v m a= FlowM {runFlowM :: FlowMM v m a} deriving (Monad,MonadIO,MonadState(MFlowState v))
 flowM= FlowM
 --runFlowM= runView

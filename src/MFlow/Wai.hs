@@ -44,9 +44,8 @@ import Data.Conduit.Lazy
 import qualified Data.Conduit.List as CList
 import Data.CaseInsensitive
 import System.Time
-import qualified Data.Text as T 
---import Debug.Trace
---(!>)= flip trace
+import qualified Data.Text as T
+
 
 flow=  "flow"
 
@@ -96,7 +95,7 @@ waiMessageFlow req1=   do
               Just fl -> return  (fl, [])
               Nothing  -> do
                      fl <- liftIO $ newFlow
-                     return (fl,  [(flow,  fl, "/",Nothing)::Cookie])
+                     return (fl,  [(flow,  fl, "/",Nothing):: Cookie])
                      
 {-  for state persistence in cookies 
      putStateCookie req1 cookies
@@ -156,6 +155,9 @@ getStateCookie req= do
         swapMVar tvresources Nothing
         return $  Just  (statCookieName,  str , "/")
 
+
+
+    
 {-
 persistInCookies= setPersist  PersistStat{readStat=readResource, writeStat=writeResource, deleteStat=deleteResource}
     where

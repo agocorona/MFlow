@@ -15,13 +15,72 @@
 
 #-}
 
-{- | This module implement  stateful processes (flows) that are optionally persistent.
+{- |
+MFlow run stateful server processes. This version is the first stateful web framework
+that is as RESTful as a web framework can be.
+
+The routes are expressed as normal, monadic haskell code in the FlowM monad. Local links
+point to alternative routes within this monadic computation just like a textual menu
+in a console application. Any GET page is directly reachable by means of a RESTful URL.
+
+At any moment the flow can respond to the back button or to any RESTful path that the user may paste in the navigation bar.
+If the procedure is waiting for another different page, the FlowM monad backtrack until the path partially match
+. From this position the execution goes forward until the rest of the path match. This way the
+statelessness is optional. However, it is possible to store a session state, which may backtrack or
+not when the navigation goes back and forth. It is upto the programmer.
+
+
+All the flow of requests and responses are coded by the programmer in a single procedure.
+Allthoug single request-response flows are possible. Therefore, the code is
+more understandable. It is not continuation based. It uses a log for thread state persistence and backtracking for
+handling the back button. Back button state syncronization is supported out-of-the-box
+
+The MFlow architecture is scalable, since the state is serializable and small
+
+The processes are stopped and restarted by the
+application server on demand, including the execution state (if the Wokflow monad is used).
+Therefore session management is automatic. State consistence and transactions are given by the TCache package.
+
+The processes interact trough widgets, that are an extension of formlets with
+additional applicative combinators, formatting, link management, callbacks, modifiers, caching,
+byteString conversion and AJAX. All is coded in pure haskell.
+
+The interfaces and communications are abstract, but there are bindings for blaze-html, HSP, Text.XHtml and byteString
+, Hack and WAI but it can be extended to non Web based architectures.
+
+Bindings for hack, and hsp >= 0.8,  are not compiled by Hackage, and do not appear, but are included in the package files.
+To use them, add then to the exported modules and execute cabal install
+
+It is designed for applications that can be run with no deployment with runghc in order
+to speed up the development process. see <http://haskell-web.blogspot.com.es/2013/05/a-web-application-in-tweet.html>
+
+This release (0.3) includes:
+
+ - /RESTful/ URLs
+
+ - Automatic independent refreshing of widgets via Ajax. (see <http://haskell-web.blogspot.com.es/2013/06/and-finally-widget-auto-refreshing.html>)
+
+ - Now each widget can be monadic so it can express his own behaviour and can run its own independent page flow. (see <http://haskell-web.blogspot.com.es/2013/06/the-promising-land-of-monadic-formlets.html>)
+
+ - Per-widget callbacks, used in page flows, that change the rendering of the widget (see <http://haskell-web.blogspot.com.es/2013/06/callbacks-in-mflow.html>)
+
+ - Widgets in modal and non modal dialogs  (using jQuery dialog)
+
+ - Other wrappers for jQuery widgets as MFlow widgets: spinner, datepicker
+
+The version 0.2 added better WAI integration, higher level dynamic Widgets, content management, multilanguage, blaze-html support,
+stateful ajax for server-side control, user-defined data in sessions and widget requirements for automatic installation of scripts, CSS and server flows.
+
+The version  0.1 added transparent back button management, cached widgets, callbacks, modifiers, heterogeneous formatting, AJAX,
+and WAI integration.
+
+This module implement  stateful processes (flows) that are optionally persistent.
 This means that they automatically store and recover his execution state. They are executed by the MFlow app server.
 defined in the "MFlow" module.
 
 These processses interact with the user trough user interfaces made of widgets (see below) that return back statically typed responses to
 the calling process. Because flows are stateful, not request-response, the code is more understandable, because
-all the flow of request and responses is coded by the programmer in a single function. Allthoug
+all the flow of request and responses is coded by the programmer in a single procedure in the FlowM monad. Allthoug
 single request-response flows and callbacks are possible.
 
 This module is abstract with respect to the formatting (here referred with the type variable @view@) . For an
@@ -72,6 +131,20 @@ be combined as such.
 
 * NEW IN THIS RELEASE
 
+[@RESTful URLs@] Now each page is directly reachable by means of a intuitive, RESTful url, whose path is composed by the sucession
+of links clicked to reach such page and such point in the procedure. Just what you would expect.
+
+[@Page flows@] each widget-formlet can have its own independent behaviour within the page. They can
+refresh independently trough AJAX by means of 'autoRefresh'. Additionally, 'pageFlow' initiates the page flow mode or a
+subpage flow by adding a well know indetifier prefix for links and form parameters.
+'wdialog' present a widget within a modal or non modal jQuery dialog. while a monadic
+widget-formlet can add different form elements depending on the user responses, 'wcallback' can
+substitute the widget by other. (See 'Demos/demos.blaze.hs' for some examples)
+
+[@JQuery widgets@] with MFlow interface: 'getSpinner', 'datePicker', 'wdialog'
+
+* IN PREVIOUS RELEASES
+
 [@WAI interface@] Now MFlow works with Snap and other WAI developments. Include "MFlow.Wai" or "MFlow.Wai.Blaze.Html.All" to use it.
 
 [@blaze-html support@] see <http://hackage.haskell.org/package/blaze-html> import "MFlow.Forms.Blaze.Html" or "MFlow.Wai.Blaze.Html.All" to use Blaze-Html
@@ -85,7 +158,6 @@ server via Ajax and dynamically control other widgets: 'wEditList', 'autocomplet
 [@Requirements@] a widget can specify javaScript files, JavasScript online scipts, CSS files, online CSS and server processes
  and any other instance of the 'Requrement' class. See 'requires' and 'WebRequirements'
 
-
 [@content-management@] for templating and online edition of the content template. See 'tFieldEd' 'tFieldGen' and 'tField'
 
 [@multilanguage@] see 'mField' and 'mFieldEd'
@@ -94,7 +166,6 @@ server via Ajax and dynamically control other widgets: 'wEditList', 'autocomplet
  an URL can express a direct path to the n-th step of a flow, So this URL can be shared with other users.
 Just like in the case of an ordinary stateless application.
 
-* NEW IN PREVIOUS RELEASE:
 
 [@Back Button@] This is probably the first implementation in any language where the navigation
 can be expressed procedurally and still it works well with the back button, thanks
@@ -1506,5 +1577,4 @@ acum map (x:xs)  =
                  Nothing -> M.insert  x 1 map
                  Just n  -> M.insert  x (n+1) map
   in acum map' xs
-
 

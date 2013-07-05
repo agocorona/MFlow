@@ -26,7 +26,7 @@ combinator as well as an higher comunication interface.
 
 "MFlow.Forms.HSP"  is an instantiation for the Haskell Server Pages  format
 
-There are some @*.All@ packages thant contain a mix of these instantiations.
+There are some @*.All@ packages that contain a mix of these instantiations.
 For exmaple, "MFlow.Wai.Blaze.Html.All" includes most of all necessary for using MFlow with
 Wai <http://hackage.haskell.org/package/wai> and
 Blaze-html <http://hackage.haskell.org/package/blaze-html>
@@ -434,11 +434,17 @@ defNotFoundResponse user msg=
 
 notFoundResponse=  unsafePerformIO $ newIORef defNotFoundResponse
 
--- | set the  404 "not found" response
+-- | set the  404 "not found" response.
+--
+-- The parameter is as follows:
+--    (String     The user identifier. The username when logged
+--  -> String      The error string
+--  -> HttpData)   The response. See `defNotFoundResponse` code for an example
+
 setNotFoundResponse :: 
-    (String      -- ^ The user identifier. The username when logged
-  -> String      -- ^ The error string
-  -> HttpData)   -- ^The response. See `defNotFoundResponse` code for an example
+    (String    
+  -> String     
+  -> HttpData)  
   -> IO ()
 
 setNotFoundResponse f= liftIO $ writeIORef notFoundResponse  f
