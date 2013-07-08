@@ -1,1 +1,1 @@
-web: ./dist/build/MFlow/demos-blaze/demos-blaze
+web: ./dist/build/demos-blaze/demos-blaze
