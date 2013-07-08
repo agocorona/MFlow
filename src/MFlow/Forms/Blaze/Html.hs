@@ -25,7 +25,8 @@ import Data.Monoid
 import Unsafe.Coerce
 
 -- | used to insert html elements within a tag with the appropriate infix priority for the
--- other operators used in MFlow
+-- other operators used in MFlow. Also it can be used for adding markup to
+-- widgets with this signature such are 'wlink' ad 'setOption'
 (<<) :: ToMarkup a => (Markup -> t) -> a -> t
 (<<) tag v= tag $ toMarkup v
 

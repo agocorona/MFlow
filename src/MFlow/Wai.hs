@@ -57,7 +57,7 @@ instance Processable Request  where
               p'= reverse p
           in case p' of
             [] -> []
-            p' -> if T.null $ head p' then  reverse(tail  p') else p
+            p' -> if T.null $ head p' then  reverse(tail  p') else p 
 
    
    puser env = fromMaybe anonymous $ fmap SB.unpack $ lookup ( mk $SB.pack cookieuser) $ requestHeaders env

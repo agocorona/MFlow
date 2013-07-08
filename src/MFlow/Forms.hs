@@ -256,7 +256,7 @@ cachedWidget, wcached, wfreeze,
 , flatten, normalize
 
 -- * Running the flow monad
-,runFlow,runFlowOnce,runFlowIn,runFlowConf,MFlow.Forms.Internals.step, goingBack,breturn, preventGoingBack
+,runFlow, transientNav,runFlowOnce,runFlowIn,runFlowConf,MFlow.Forms.Internals.step, goingBack,breturn, preventGoingBack
 
 -- * Setting parameters
 ,setHeader
@@ -331,7 +331,7 @@ validate  formt val= View $ do
       case me of
          Just str ->
            return $ FormElm ( form ++ [inred  str]) Nothing 
-         Nothing  -> return $ FormElm [] mx 
+         Nothing  -> return $ FormElm form mx 
     _ -> return $ FormElm form mx
 
 -- | Actions are callbacks that are executed when a widget is validated.
@@ -416,17 +416,20 @@ getPassword :: (FormInput view,
      View view m String
 getPassword = getParam Nothing "password" Nothing
 
-data Radio= Radio String
+newtype Radio a= Radio a
 -- | Implement a radio button that perform a submit when pressed.
 -- the parameter is the name of the radio group
-setRadioActive :: (FormInput view,  MonadIO m) =>
-             String -> String -> View view m  Radio
+setRadioActive :: (FormInput view,  MonadIO m,
+                   Read a, Typeable a, Eq a, Show a) =>
+             a -> String -> View view m  (Radio a)
 setRadioActive  v n = View $ do
   st <- get
   put st{needForm= True}
   let env =  mfEnv st
   mn <- getParam1 n env
-  return $ FormElm [finput n "radio" v
+  let str = if typeOf v == typeOf(undefined :: String)
+                   then unsafeCoerce v else show v
+  return $ FormElm [finput n "radio" str
           ( isValidated mn  && v== fromValidated mn) (Just  "this.form.submit()")]
           (fmap Radio $ valToMaybe mn)
 
@@ -442,21 +445,24 @@ fromValidated (NotValidated s err)= error $ "fromValidated: NotValidated "++ s
 
 -- | Implement a radio button
 -- the parameter is the name of the radio group
-setRadio :: (FormInput view,  MonadIO m) => 
-            String -> String -> View view m  Radio
+setRadio :: (FormInput view,  MonadIO m,
+             Read a, Typeable a, Eq a, Show a) => 
+            a -> String -> View view m  (Radio a)
 setRadio v n= View $ do
   st <- get
   put st{needForm= True}
   let env =  mfEnv st
   mn <- getParam1 n env
-  return $ FormElm [finput n "radio" v
+  let str = if typeOf v == typeOf(undefined :: String)
+                   then unsafeCoerce v else show v
+  return $ FormElm [finput n "radio" str
           ( isValidated mn  && v== fromValidated mn) Nothing]
           (fmap Radio $ valToMaybe mn)
 
 -- | encloses a set of Radio boxes. Return the option selected
 getRadio
   :: (Monad m, Functor m, FormInput view) =>
-     [String -> View view m Radio] -> View view m String
+     [String -> View view m (Radio a)] -> View view m a
 getRadio rs=  do
         id <- genNewId
         Radio r <- firstOf $ map (\r -> r id)  rs
@@ -482,7 +488,7 @@ setCheckBox checked v= View $ do
   put st{needForm= True}
   let env = mfEnv st
       strs= map snd $ filter ((==) n . fst) env
-      mn= if null strs then Nothing else Just $ head strs
+      mn= if null strs then Nothing else Just $ head strs !> "head 3"
       val = inSync st
   let ret= case val of                    -- !> show val of
         True  -> Just $ CheckBoxes  strs  -- !> show strs
@@ -640,11 +646,14 @@ getSelect opts = View $ do
     st <- get
     let env = mfEnv st
     put st{needForm= True}
-    FormElm form mr <- (runView opts)
     r <- getParam1 tolook env
+    setSessionData $ fmap MFOption $ valToMaybe r
+    FormElm form mr <- (runView opts)
+
     return $ FormElm [fselect tolook $ mconcat form] $ valToMaybe r 
 
-data MFOption a= MFOption
+
+newtype MFOption a= MFOption a deriving Typeable
 
 instance (Monad m, Functor m) => Monoid (View view m (MFOption a)) where
   mappend =  (<|>)
@@ -652,25 +661,39 @@ instance (Monad m, Functor m) => Monoid (View view m (MFOption a)) where
 
 -- | Set the option for getSelect. Options are concatenated with `<|>`
 setOption
-  :: (Monad m, Show a, Typeable a, FormInput view) =>
+  :: (Monad m, Show a, Eq a, Typeable a, FormInput view) =>
      a -> view -> View view m (MFOption a)
-setOption n v = setOption1 n v False
+setOption n v = do
+  mo <- getSessionData
+  case mo  of
+   Nothing -> setOption1 n v False
+   Just Nothing -> setOption1 n v False
+   Just (Just (MFOption o)) -> setOption1 n v $   n == o
 
 -- | Set the selected option for getSelect. Options are concatenated with `<|>`
 setSelectedOption
-  :: (Monad m, Show a, Typeable a, FormInput view) =>
+  :: (Monad m, Show a, Eq a, Typeable a, FormInput view) =>
      a -> view -> View view m (MFOption a)
-setSelectedOption n v= setOption1 n v True
+setSelectedOption n v= do
+  mo <- getSessionData
+  case mo of
+   Nothing -> setOption1 n v True
+   Just Nothing -> setOption1 n v True
+   Just (Just o) -> setOption1 n v $   n == o
+
  
 setOption1 :: (FormInput view,
-      Monad m, Typeable a, Show a) =>
+      Monad m, Typeable a, Eq a, Show a) =>
       a -> view -> Bool ->  View view m  (MFOption a) 
 setOption1 nam  val check= View $ do
     st <- get
     let env = mfEnv st
     put st{needForm= True}
-    let n= if typeOf nam== typeOf(undefined :: String) then unsafeCoerce nam else show nam
-    return . FormElm [foption n val check]  $ Just MFOption
+    let n = if typeOf nam == typeOf(undefined :: String)
+                   then unsafeCoerce nam
+                   else show nam
+                   
+    return . FormElm [foption n val check]  . Just $ MFOption nam
 
 
 -- | Enclose Widgets within some formating.
@@ -742,7 +765,7 @@ html ++> digest =  (html `mappend`) <<< digest
 infixl 8 <!
 widget <! attribs= View $ do
       FormElm fs  mx <- runView widget
-      return $ FormElm  (head fs `attrs` attribs:tail fs) mx
+      return $ FormElm  (head fs `attrs` attribs:tail fs) mx !> "head 4"
 --      case fs of
 --        [hfs] -> return $ FormElm  [hfs `attrs` attribs] mx
 --        _ -> error $ "operator <! : malformed widget: "++ concatMap (unpack. toByteString) fs
@@ -1116,7 +1139,7 @@ nextMessage= do
      updateParams False _ req= req   !> "NOT IN PAGE FLOW"
      updateParams True env req=
         let params= takeWhile isparam env
-            fs= fst $ head req
+            fs= fst $ head req !> "head 1"
             parms= (case findIndex (\p -> fst p == fs)  params of
                       Nothing -> params
                       Just  i -> take i params)
@@ -1353,7 +1376,7 @@ firstOf xs= View $ do
       forms <- mapM runView  xs
       let vs  = concatMap (\(FormElm v _) ->  [mconcat v]) forms
           res = filter isJust $ map (\(FormElm _ r) -> r) forms
-          res1= if null res then Nothing else head res
+          res1= if null res then Nothing else head res !> "head 2"
       return $ FormElm  vs res1
 
 -- | from a list of widgets, it return the validated ones.

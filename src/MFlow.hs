@@ -129,7 +129,7 @@ type Params =  [(String,String)]
 
 class Processable a where
      pwfname :: a -> String
-     pwfname= head . pwfPath
+     pwfname s= head $ pwfPath s !> "head mf"
      pwfPath :: a -> [String]
      puser :: a -> String
      pind :: a -> String

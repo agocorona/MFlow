@@ -11,26 +11,27 @@ import System.IO.Unsafe
 
 
 main= do
-     (Just hin, Just hout, _, _) <-
+     (Just hin, Just hout, _, _) <- 
             createProcess (proc "ghci" []){ std_in= CreatePipe, std_out = CreatePipe }
 
-     addMessageFlows [("",wstateless $ readEvalLoop hin hout)]
+     addMessageFlows [("",wstateless $ readEvalLoop)]
      forkIO $ recloop hout
      wait $ run 80 waiMessageFlow
 
 
-readEvalLoop hin hout= do
-    cmd <- getTextBox Nothing <++ br
-    loop cmd
+readEvalLoop =
+    id <- geNewId
+    wpush "content" "append" id "id.value" $ \ cmd -> do
+           out <- liftIO $ do
+              hPutStr hin code
+              hFlush hin
+              readBuf
+           unlines1 out ++> noWidget <++ br
+    loopInput
     where
-      loop :: String -> View Html IO ()
-      loop code= do
-       out <- liftIO $ do
-          hPutStr hin code
-          hFlush hin
-          readBuf
-       code <- unlines1 out ++> br ++> getTextBox Nothing <** submitButton "" <++ br
-       loop code
+    loopInput= do
+       getTextBox Nothing <! [("id",id)] <** submitButton "Enter"
+       loopInput
 
 unlines1 :: [String] -> Html
 unlines1 ls= mconcat[p << l | l <- ls]
@@ -54,7 +55,7 @@ recloop hout = do
 receiveLoop hout = loop []
  where
  loop xs= do
-   more <-hWaitForInput hout 10
+   more <- hWaitForInput hout 10
    if more
       then do
         x <- hGetLine hout

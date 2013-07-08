@@ -1,27 +1,25 @@
 import MFlow.Wai.Blaze.Html.All
 
--- 9 pages , each page has a restful link
-main= do
-  addMessageFlows[("",transient $ runFlow mainf)]
-  wait $ run 80 waiMessageFlow
+-- 9 pages , each page has a restful link (page = ask)
+main= runNavigation $ do
+  liftIO $ print "start/restart"
 
+  setHeader $ html . body
 
-mainf = do
-  liftIO $ print "INIT"
-  option <- page $   wlink "a" << "letters "
-                 <|> p << "or" ++> wlink "1" << "numbers"
+  option <- page $   wlink "a" << p << "letters " <++ p << "or"
+                 <|> wlink "1" << p << "numbers"
 
   case option of
     "1" -> do
-          page $ wlink "2" << "2"
-          page $ wlink "3" << "3"
-          page $ wlink "4" << "4"
-          page $ wlink  () <<  "menu"
+          page $ wlink "2" << p << "2"
+          page $ wlink "3" << p << "3"
+          page $ wlink "4" << p << "4"
+          page $ wlink ()  << p << "menu"
 
     "a" -> do
-          page $ wlink "b" << "b"
-          page $ wlink "c" << "c"
-          page $ wlink "d" << "d"
-          page $ wlink () <<  "menu"
+          page $ wlink "b" << p << "b"
+          page $ wlink "c" << p << "c"
+          page $ wlink "d" << p << "d"
+          page $ wlink ()  << p << "menu"
 
 

@@ -52,7 +52,7 @@ import Control.Concurrent.MVar
 
 
 import Debug.Trace
-(!>) =  const --  flip trace
+(!>) = const --   flip trace
 
 instance Serialize a => Serializable a where
   serialize=  runW . showp
@@ -335,7 +335,17 @@ instance  (Monad m) => Monad (View view m) where
 
                      Nothing -> 
                         return $ FormElm form1 Nothing
+                        
+    View x >> f = View $ do
+                   FormElm form1 mk <- x
+                   case mk of
+                     Just k  -> do
+                        modify $ \st -> st{linkMatched= False} !> "------M--------"
+                        FormElm form2 mk <- runView  f 
+                        return $ FormElm (form1 ++ form2) mk
 
+                     Nothing -> 
+                        return $ FormElm form1 Nothing
 
     return = View .  return . FormElm  [] . Just
 --    fail msg= View . return $ FormElm [fromStr msg] Nothing
@@ -520,7 +530,7 @@ data MFlowState view= MFlowState{
    linkMatched      :: Bool,
    mfLinks          :: M.Map String Int,
 
-   mfAutorefresh    :: Bool,
+   mfAutorefresh   :: Bool,
    mfTrace          :: Maybe [String]
    }
    deriving Typeable
@@ -939,6 +949,23 @@ step f= do
         when( mfSequence s' /= -1) $ put s'  !> (show $ mfSequence s') -- else put  s{newAsk=True}
         return r
 
+-- | to execute transient flows as if they were persistent
+--
+-- > transient $ runFlow f === runFlow $ transientNav f
+transientNav
+  :: (Serialize a,
+      Typeable view,
+      FormInput view,
+      Typeable a) =>
+      FlowM view IO a
+      -> FlowM view (Workflow IO) a
+transientNav f= do
+   s <- get
+   flowM $ BackT $ do
+        (r,s') <-  lift . unsafeIOtoWF $ runStateT (runBackT $ runFlowM f) s
+        put s'
+        return r
+
 --stepWFRef
 --  :: (Serialize a,
 --      Typeable view,
@@ -1072,7 +1099,7 @@ installAllRequirements= do
 
  installAllRequirements1 v []= return v
  installAllRequirements1 v rs= do
-   let typehead= case head rs of {Requirement r -> typeOf  r}
+   let typehead= case head rs !> "head i1" of {Requirement r -> typeOf  r}
        (rs',rs'')= partition1 typehead  rs
    v' <- installRequirements2 rs'
    installAllRequirements1 (v `mappend` v') rs''

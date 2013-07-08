@@ -27,8 +27,7 @@ module MFlow.Wai.Blaze.Html.All (
 ,module Text.Blaze.Html5
 ,module Text.Blaze.Html5.Attributes
 ,module Control.Monad.IO.Class
-,runServerTransient
-,runServer
+,runNavigation
 ) where
 
 import MFlow
@@ -45,7 +44,7 @@ import Network.Wai.Handler.Warp
 import Data.TCache
 import Text.Blaze.Internal(text)
 
-import Control.Workflow (Workflow)
+import Control.Workflow (Workflow, unsafeIOtoWF)
 
 
 import Control.Applicative
@@ -54,14 +53,20 @@ import System.Environment
 import Data.Maybe(fromMaybe)
 import Data.Char(isNumber)
 
--- | run a transient flow (see 'transient'). The port is read from the first exectution parameter
--- if no parameter, it is read from the PORT environment variable.
--- if this does not exist, the port 80 is used.
-runServerTransient :: FormInput view => FlowM view IO () -> IO Bool
-runServerTransient f= do
-    addMessageFlows[("", transient $ runFlow f)]
-    porti <- getPort
-    wait $ run porti waiMessageFlow
+---- | run a transient flow (see 'transient'). The port is read from the first exectution parameter
+---- if no parameter, it is read from the PORT environment variable.
+---- if this does not exist, the port 80 is used.
+--runServerTransient :: FormInput view => FlowM view IO () -> IO Bool
+--runServerTransient f= do
+--    addMessageFlows[("", transient $ runFlow f)]
+--    porti <- getPort
+--    wait $ run porti waiMessageFlow
+--
+---- | a more grandiloquent name for runServerTransient
+----
+---- > runNavigation= runServerTransient
+--runNavigation :: FormInput view => FlowM view IO () -> IO Bool
+--runNavigation= runServerTransient
 
 
 -- The port is read from the first exectution parameter
@@ -83,12 +88,18 @@ getPort= do
 -- | run a persistent flow. The port is read from the first exectution parameter
 -- if no parameter, it is read from the PORT environment variable.
 -- if this does not exist, the port 80 is used.
-runServer :: FormInput view => FlowM view (Workflow IO) () -> IO Bool
-runServer f= do
-    addMessageFlows[("", runFlow f)]
+runNavigation :: String -> FlowM Html (Workflow IO) () -> IO Bool
+runNavigation n f= do
+    addMessageFlows[(n, runFlow f)]
     porti <- getPort
     wait $ run porti waiMessageFlow
+    
 
 
+---- | a more grandiloquent synonym of runServerTransient
+----
+---- > runPersNavigation= runServer
+--runPersistentNavigation :: FormInput view => FlowM view (Workflow IO) () -> IO Bool
+--runPersistentNavigation= runServer
 
 

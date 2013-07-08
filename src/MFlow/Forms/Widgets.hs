@@ -249,6 +249,32 @@ wEditList holderview w xs addId = do
     delEdited sel ws'
     return r
 
+wpush
+  :: (Typeable a,
+      FormInput v) =>
+     (v -> v)
+     -> String
+     -> String
+     -> String
+     -> (String -> View v IO a)
+     -> View v IO a
+wpush  holder modifier addId expr w = do
+    id1<- genNewId
+    let sel= "$('#" <>  B.pack id1 <> "')"
+    callAjax <- ajax $ \s ->  appendWidget sel ( changeMonad $ w s)
+    let installevents= "$(document).ready(function(){\
+              \$('#"++addId++"').click(function(){"++callAjax expr ++ "});})"
+
+    requires [JScriptFile jqueryScript [installevents] ]
+
+    ws <- getEdited sel
+
+    r <-  holder  <<< firstOf ws  <! [("id",id1)]
+    delEdited sel ws
+    return r
+
+
+
 -- | Present the JQuery autocompletion list, from a procedure defined by the programmer, to a text box.
 wautocomplete
   :: (Show a, MonadIO m, FormInput v)
@@ -584,7 +610,7 @@ autoRefresh w=  do
 
       Validated (x :: String) -> View $ do
          let t= mfToken st
-         FormElm form mr <- runView w
+         FormElm form mr <- runView $ insertForm w
          st <- get
          let HttpData ctype c s= toHttpData $ mconcat form
          liftIO . sendFlush t $ HttpData (ctype ++ mfHttpHeaders st) (mfCookies st ++ c) s
