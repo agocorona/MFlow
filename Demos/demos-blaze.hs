@@ -30,9 +30,8 @@ main= do
    setAdminUser "admin" "admin"
    syncWrite SyncManual
    setFilesPath ""
-   addMessageFlows  [("shop", runFlow shopCart),("",transient $ runFlow mainmenu)]
-   wait $ run 80 waiMessageFlow
---   runNavigation "" $  transientNav mainmenu
+   addMessageFlows  [("shop", runFlow shopCart)]
+   runNavigation "" $  transientNav mainmenu
 
 attr= fromString
 text = toMarkup
