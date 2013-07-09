@@ -107,7 +107,7 @@ instance (Typeable view, Typeable a)
       ta= undefined
 
 getEdited1 id= do
-    Medit stored <-  getSessionData `onNothing` return (Medit (M.empty))
+    Medit stored <- getSessionData `onNothing` return (Medit M.empty)
     return $ fromMaybe [] $ M.lookup id stored
 
 -- | Return the list of edited widgets (added by the active widgets) for a given identifier
@@ -116,7 +116,7 @@ getEdited
      B.ByteString -> m [View v m1 a]
 getEdited id= do
   r <- getEdited1 id
-  let (k,ws)= unzip r
+  let (_,ws)= unzip r
   return ws
 
 -- | Deletes the list of edited widgets for a certain identifier and with the type of the witness widget parameter
@@ -154,13 +154,15 @@ modifyWidget :: (MonadIO m,Executable m,Typeable a,FormInput v)
 modifyWidget selector modifier  w = View $ do
      ws <- getEdited selector
      let n =  length (ws `asTypeOf` [w])
-     let key= "widget"++ show selector ++  show n
+     let key= "widget"++ show selector ++  show n ++ show (typeOf $ typ w)
      let cw = wcached key 0  w
      addEdited selector (key,cw)
      FormElm form _ <-  runView cw
      let elem=  toByteString  $ mconcat form
      return . FormElm [] . Just $   selector <> "." <> modifier <>"('" <> elem <> "');"
-
+     where
+     typ :: View v Identity a -> a
+     typ = undefined
 -- | Return the javascript to be executed on the browser to prepend a widget to the location
 -- identified by the selector (the bytestring parameter), The selector must have the form of a jquery expression
 -- . It stores the added widgets in the edited list, that is accessed with 'getEdited'

@@ -205,10 +205,10 @@ multicounter= do
               <> text "instantiated in the same page. This is an example of how it is possible to "
               <> text "compose widgets with independent behaviours"
 
- ask $ explain ++> add (counterWidget 0) [1,2] <|> wlink () << p << "exit"
+ ask $ explain ++> add (counterWidget 0) [1..4] <|> wlink () << p << "exit"
 
 
-add widget list= firstOf [pageFlow (show i) widget <++ hr | i <- list]
+add widget list= firstOf [autoRefresh $ pageFlow (show i) widget <++ hr | i <- list]
 
 counter1= do
     ask $ wlink "p" <<p<<"press here"

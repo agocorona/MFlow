@@ -11,16 +11,16 @@ main= runNavigation "" $ transientNav $ do
 
   case option of
     "1" -> do
-          page $ wlink "2" << cont "2"
-          page $ wlink "3" << cont "3"
-          page $ wlink "4" << cont "4"
-          page $ wlink ()  << cont "menu"
+          page $ wlink "2" << cont "1"
+          page $ wlink "3" << cont "2"
+          page $ wlink "4" << cont "3"
+          page $ wlink ()  <<  "menu"
 
     "a" -> do
-          page $ wlink "b" << cont "b"
-          page $ wlink "c" << cont "c"
-          page $ wlink "d" << cont "d"
-          page $ wlink ()  << cont "menu"
+          page $ wlink "b" << cont "a"
+          page $ wlink "c" << cont "b"
+          page $ wlink "d" << cont "c"
+          page $ wlink ()  <<  "menu"
 
 
-cont x= p << ("page for " ++ x)
+cont x= p << ("page for " ++ x ++ " goto next page")
