@@ -126,10 +126,17 @@ delEdited
      => B.ByteString           -- ^ identifier
      -> [View v m1 a] -> m ()  -- ^ withess
 delEdited id witness=do
-    (ks,ws) <- return . unzip =<< getEdited1 id
+    Medit stored <-  getSessionData `onNothing` return (Medit (M.empty))
+    let (ks, ws)=  unzip $ fromMaybe [] $ M.lookup id stored
+
     return $ ws `asTypeOf` witness
-    mapM (liftIO . flushCached) ks
-    setEdited id ([] `asTypeOf` (zip (repeat "") witness))
+    liftIO $ mapM  flushCached ks
+    let stored'= M.delete id  stored
+    setSessionData . Medit $ stored'
+
+
+
+--    setEdited id ([] `asTypeOf` (zip (repeat "") witness))
 
 setEdited id ws= do
     Medit stored <-  getSessionData `onNothing` return (Medit (M.empty))

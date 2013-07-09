@@ -13,19 +13,19 @@ import Data.ByteString.Lazy.Char8 as BS hiding (index)
 
 data  MyData= MyData{name :: String} deriving (Typeable, Read, Show)  -- that is enough for file persistence
 
-instance SafeCopy MyData where
-   putCopy (MyData name)= contain $ safePut name
-   getCopy = contain $ MyData <$> safeGet
-   version = 1
-   kind = base
-
-
-instance Serializable MyData where
-   serialize= strictB2Lazy . runPut . migrate. putCopy
-   deserialize = runGet getCopy . lazyB2Strict
-
-lazyB2Strict= BS.concat . BS.toChunks
-strictB2Lazy= BS.fromChunks . []
+--instance SafeCopy MyData where
+--   putCopy (MyData name)= contain $ safePut name
+--   getCopy = contain $ MyData <$> safeGet
+--   version = 1
+--   kind = base
+--
+--
+--instance Serializable MyData where
+--   serialize= strictB2Lazy . runPut . migrate. putCopy
+--   deserialize = runGet getCopy . lazyB2Strict
+--
+--lazyB2Strict= BS.concat . BS.toChunks
+--strictB2Lazy= BS.fromChunks . []
 
 instance Indexable MyData where  key= name     -- just to notify what is the key of the register
 

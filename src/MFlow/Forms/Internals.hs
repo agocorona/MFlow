@@ -561,6 +561,9 @@ setSessionData ::  (Typeable a,MonadState (MFlowState view) m) => a ->m ()
 setSessionData  x=
   modify $ \st -> st{mfData= M.insert  (typeOf x ) (unsafeCoerce x) (mfData st)}
 
+delSessionData x=
+  modify $ \st -> st{mfData= M.delete  (typeOf x ) (mfData st)}
+  
 -- | Get the session data of the desired type if there is any.
 getSessionData ::  (Typeable a, MonadState (MFlowState view) m) =>  m (Maybe a)
 getSessionData =  resp where

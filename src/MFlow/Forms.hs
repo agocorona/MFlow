@@ -1049,7 +1049,9 @@ ask w =  do
 
          put st'{newAsk= True , mfEnv=[]
                 ,mfPageIndex=Nothing
-                ,mfPIndex= length (mfPath st') -1
+                ,mfPIndex= case isJust $ mfPageIndex st' of
+                            True -> length (mfPath st') -1
+                            False -> mfPIndex st'
          }
 
          breturn x
@@ -1296,8 +1298,10 @@ wlink x v= View $ do
           name = mfPrefix st ++ (map toLower $ if typeOf x== typeOf(undefined :: String)
                                    then unsafeCoerce x
                                    else show x)
-          index' = mfPIndex st  + if linkMatched st then -1 else 0
-                               + if Just (mfPIndex st)== mfPageIndex st then 1 else 0
+          index' = mfPIndex st
+                 + if linkMatched st then -1 else 0
+                 + if Just (mfPIndex st)== mfPageIndex st then 1 else 0
+
           index = if index'== 0 then 1 else index'
           lpath = mfPath st
 
@@ -1318,7 +1322,9 @@ wlink x v= View $ do
                      return Nothing  !> (name ++ " 0 Fail")
 
                  Just n ->  do
-                     modify $ \st -> st{ inSync= True,linkMatched= True,mfPIndex= index+1,mfLinks= M.insert name (n-1) $ mfLinks st}
+                     modify $ \st -> st{ inSync= True,linkMatched= True
+                                      , mfPIndex= index + 1
+                                      , mfLinks= M.insert name (n-1) $ mfLinks st}
                                             !> (name ++" "++ show n ++ " Match")
                      return $ Just x
                  Nothing -> return Nothing  !> (name ++ " 0 Fail")

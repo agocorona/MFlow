@@ -1,4 +1,4 @@
-{-# LANGUAGE  DeriveDataTypeable #-}
+{-# LANGUAGE  DeriveDataTypeable, QuasiQuotes #-}
 module Main where
 import MFlow.Wai.Blaze.Html.All
 import Text.Blaze.Html5 as El
@@ -17,6 +17,8 @@ import Debug.Trace
 import Data.String
 import Control.Concurrent.MVar
 
+import Text.Hamlet 
+
 --
 --import Control.Monad.State
 --import MFlow.Forms.Internals
@@ -28,8 +30,9 @@ main= do
    setAdminUser "admin" "admin"
    syncWrite SyncManual
    setFilesPath ""
-   addMessageFlows  [("shop", runFlow shopCart)]
-   runNavigation "" $  transientNav mainmenu
+   addMessageFlows  [("shop", runFlow shopCart),("",transient $ runFlow mainmenu)]
+   wait $ run 80 waiMessageFlow
+--   runNavigation "" $  transientNav mainmenu
 
 attr= fromString
 text = toMarkup
@@ -47,6 +50,7 @@ mainmenu=   do
        setHeader stdheader
        setTimeouts 100 0
        r <- ask $  do
+              -- includes an style
               requires[CSSFile "http://jqueryui.com/resources/demos/style.css"]
               wcached "menu" 0 $
                b <<  "BASIC"
@@ -101,7 +105,9 @@ mainmenu=   do
              Combination -> combination
              WDialog     -> wdialog1
 
-wdialog1= ask  wdialogw
+wdialog1= do
+   ask  wdialogw
+   ask (wlink () << "out of the page flow, press here to go to the menu")
 
 wdialogw= pageFlow "diag" $ do
    r <- wform $ p << "please enter your name" ++> getString (Just "your name") <** submitButton "ok"
@@ -109,7 +115,7 @@ wdialogw= pageFlow "diag" $ do
            p << ("Do your name is \""++r++"\"?") ++> getBool True "yes" "no" <** submitButton "ok"
 
   `wcallback` \q -> if not q then wdialogw
-                      else  wlink () << b << "thanks, press here to go to the menu"
+                      else  wlink () << b << "thanks, press here to exit from the page Flow"
 
 
 sumInView= ask $ p << "ask for three numbers in the same page and display the result.\
@@ -152,7 +158,7 @@ onClickSubmit= [("onclick","if(window.jQuery){\n\
                            \else {this.form.submit()}")]
 radiob s n= wlabel (text s) $ setRadio s n <! onClickSubmit
 
-sumWidget= do
+sumWidget= pageFlow "sum" $ do
       n1 <- p << "Enter first number"  ++> getInt Nothing <** submitButton "enter" <++ br
       n2 <- p << "Enter second number" ++> getInt Nothing <** submitButton "enter" <++ br
       n3 <- p << "Enter third number"  ++> getInt Nothing <** submitButton "enter" <++ br
@@ -292,7 +298,7 @@ autocompList= do
 
 grid = do
   let row _= tr <<< ( (,) <$> tdborder <<< getInt (Just 0)
-                          <*> tdborder <<< getString (Just "")
+                          <*> tdborder <<< getTextBox (Just "")
                           <++ tdborder << delLink)
       addLink= a ! href (attr "#")
                  ! At.id (attr "wEditListAdd")
@@ -468,33 +474,32 @@ textEdit= do
 
 
 
-stdheader= html . body
+--stdheader= html . body
 
-stdheader1 c= docTypeHtml  $ body $
-      a ! At.style (attr "-align:center") ! href ( attr  "/html/MFlow/index.html") << h1 <<  "MFlow"
+stdheader c= docTypeHtml
+   $ El.head << (El.title << "MFlow examples"
+     <> link ! rel ( attr "stylesheet")
+             ! type_ ( attr "text/css")
+             ! href (attr "http://jqueryui.com/resources/demos/style.css"))
+   <> (body $ 
+      a ! At.style (attr "align:center;") ! href ( attr  "/html/MFlow/index.html") << h1 <<  "MFlow"
    <> br
    <> hr
-   <> (El.div ! At.style (attr "position:fixed;top:40px;left:0%\
+   <> (El.div ! At.style (attr "float:left\
                          \;width:50%\
-                         \;margin-left:10px;margin-right:10px") $
+                         \;margin-left:10px;margin-right:10px;overflow:auto;") $
           h2 <<  "Example of some features."
 --       <> h3 <<  "This demo uses warp and blaze-html"
 
        <> br <> c)
-   <> (El.div ! At.style (attr "position:fixed;top:40px;left:50%;width:50%") $
+   <> (El.div ! At.style (attr "float:right;width:45%;overflow:auto;") $
           h2 <<  "Documentation"
        <> br
        <> p  << a ! href (attr "/html/MFlow/index.html") <<  "MFlow package description and documentation"
-       <> p  << a ! href (attr "demos.blaze.hs") <<  "download demo source code"
+       <> p  << a ! href (attr "https://github.com/agocorona/MFlow/blob/master/Demos/demos-blaze.hs") <<  "download demo source code"
        <> p  << a ! href (attr "https://github.com/agocorona/MFlow/issues") <<  "bug tracker"
        <> p  << a ! href (attr "https://github.com/agocorona/MFlow") <<  "source repository"
        <> p  << a ! href (attr "http://hackage.haskell.org/package/MFlow") <<  "Hackage repository"
-       <> p  << a ! href (attr "http://haskell-web.blogspot.com.es/2012/11/mflow-now-widgets-can-express.html") <<  "MFlow: now the widgets can express requirements"
-       <> p  << a ! href (attr "http://haskell-web.blogspot.com.es/2012/12/on-spirit-of-mflow-anatomy-of-widget.html") <<  "On the \"spirit\" of MFlow. Anatomy of a Widget"
-       <> p  << a ! href (attr "http://haskell-web.blogspot.com.es/2013/01/now-example-of-use-of-active-widget.html") <<  "MFlow active widgets example"
-       <> p  << a ! href (attr "http://haskell-web.blogspot.com.es/2013/01/stateful-but-stateless-at-last-thanks.html") <<  "Stateful, but virtually stateless, thanks to event sourcing"
-       <> p  << a ! href (attr "http://haskell-web.blogspot.com.es/2012/11/i-just-added-some-templatingcontent.html") <<  "Content Management and multilanguage in MFlow"
-       <> p  << a ! href (attr "http://haskell-web.blogspot.com.es/2012/10/testing-mflow-applications_9.html") <<  "Testing MFlow applications"
-       <> p  << a ! href (attr "http://haskell-web.blogspot.com.es/2012/09/a.html") <<  "A Web app. that creates Haskel computations from form responses, that store, retrieve and execute them? It´s easy"
-       <> p  << a ! href (attr "http://haskell-web.blogspot.com.es/2012/09/announce-mflow-015.html") <<  "ANNOUNCE MFlow 0.1.5 Web app server for stateful processes with safe, composable user interfaces."
-       )
+       <> [shamlet| <script type="text/javascript" src="http://output18.rssinclude.com/output?type=js&amp;id=727700&amp;hash=8aa6c224101cac4ca2a7bebd6e28a2d7"></script>|]
+
+              ))
