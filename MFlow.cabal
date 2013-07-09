@@ -92,7 +92,7 @@ library
                    conduit -any, text -any, parsec -any, warp -any,
                    random -any,
                    blaze-html -any, blaze-markup -any,
-                   hamlet -any
+                  
 
     exposed-modules: MFlow MFlow.Wai.Blaze.Html.All
                      MFlow.Forms MFlow.Forms.Admin
@@ -109,7 +109,7 @@ executable demos-blaze
     build-depends: MFlow -any, RefSerialize -any, TCache -any, directory -any,
                    Workflow -any, base -any, blaze-html -any, bytestring -any,
                    containers == 0.4.2.1, mtl -any, old-time -any, stm -any,
-                   text -any, transformers -any, vector -any
+                   text -any, transformers -any, vector -any,  hamlet -any
     main-is: "demos-blaze.hs"
     ghc-options:
         -threaded
