@@ -1,5 +1,0 @@
-[ ( "first"   , v38 )  , ( "second"   , v38 )  ] 
-where{
- v38= Empty  ;
- 
-}
