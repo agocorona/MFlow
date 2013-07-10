@@ -1,13 +1,52 @@
+como añadir algo sin refrescar toda la pagina y que participe en la monad:
+
+puede ser usando autorefresh?
+
+autorefresh de widget w
+   w responde con este código:
+   <script> id.append (HTML) </script>
+
+growing w= do
+    id <- genNewId
+
+    let installscript=
+            "$(document).ready(function(){\n"
+               ++ "ajaxGetLink('"++id++"');"
+               ++ "ajaxPostForm('"++id++"');"
+               ++ "})\n"
+
+    st <- get
+
+    r <- getParam1 ("auto"++id) $ mfEnv st
+    case r of
+      NoParam -> do
+         requires [JScript ajaxGetLink
+                  ,JScript ajaxPostForm
+                  ,JScriptFile jqueryScript [installscript]]
+         (ftag "div" <<< insertForm w) <! [("id",id)]
+
+      Validated (x :: String) -> View $ do
+         let t= mfToken st
+         FormElm form mr <- runView w
+         st <- get
+         let HttpData ctype c s= toHttpData $ mconcat form
+         liftIO . sendFlush t $ HttpData (ctype ++ mfHttpHeaders st) (mfCookies st ++ c) s
+         put st{mfAutorefresh=True}
+         return $ FormElm [] mr
+
+
+
+
 si no matching completo de path, que de error
 
-selective update
+x selective update
 clustering via web
 trace
 
 
 autorefresh:
-  work for links and posts
-  intercept posts and links
+x  work for links and posts
+x  intercept posts and links
 
 
 adapted from: http://www.codeproject.com/Articles/341151/Simple-AJAX-POST-Form-and-AJAX-Fetch-Link-to-Modal

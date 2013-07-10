@@ -1,5 +1,5 @@
 name: MFlow
-version: 0.3.0.0
+version: 0.3.0.2
 cabal-version: >=1.8
 build-type: Simple
 license: BSD3
@@ -67,6 +67,8 @@ description: MFlow run stateful server processes. This version is the first stat
              .
              -Automatic error traces
              .
+             In this release I commented out the build of the demo/test program.
+            
 category: Web, Application Server
 author: Alberto Gómez Corona
 data-dir: ""
@@ -108,7 +110,7 @@ library
 executable demos-blaze
     build-depends: MFlow -any, RefSerialize -any, TCache -any, directory -any,
                    Workflow -any, base -any, blaze-html -any, bytestring -any,
-                   containers == 0.4.2.1, mtl -any, old-time -any, stm -any,
+                   containers -any, mtl -any, old-time -any, stm -any,
                    text -any, transformers -any, vector -any,  hamlet -any
     main-is: "demos-blaze.hs"
     ghc-options:

@@ -7,15 +7,15 @@
   (major1) == 0 && (major2) <  3 || \
   (major1) == 0 && (major2) == 3 && (minor) <= 1)
 
-/* package TCache-0.10.0.8 */
-#define VERSION_TCache "0.10.0.8"
+/* package TCache-0.10.0.10 */
+#define VERSION_TCache "0.10.0.10"
 #define MIN_VERSION_TCache(major1,major2,minor) (\
   (major1) <  0 || \
   (major1) == 0 && (major2) <  10 || \
   (major1) == 0 && (major2) == 10 && (minor) <= 0)
 
-/* package Workflow-0.8.0.5 */
-#define VERSION_Workflow "0.8.0.5"
+/* package Workflow-0.8.0.6 */
+#define VERSION_Workflow "0.8.0.6"
 #define MIN_VERSION_Workflow(major1,major2,minor) (\
   (major1) <  0 || \
   (major1) == 0 && (major2) <  8 || \
@@ -63,12 +63,12 @@
   (major1) == 1 && (major2) <  0 || \
   (major1) == 1 && (major2) == 0 && (minor) <= 4)
 
-/* package containers-0.5.2.1 */
-#define VERSION_containers "0.5.2.1"
+/* package containers-0.4.2.1 */
+#define VERSION_containers "0.4.2.1"
 #define MIN_VERSION_containers(major1,major2,minor) (\
   (major1) <  0 || \
-  (major1) == 0 && (major2) <  5 || \
-  (major1) == 0 && (major2) == 5 && (minor) <= 2)
+  (major1) == 0 && (major2) <  4 || \
+  (major1) == 0 && (major2) == 4 && (minor) <= 2)
 
 /* package directory-1.2.0.1 */
 #define VERSION_directory "1.2.0.1"
