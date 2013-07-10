@@ -481,7 +481,7 @@ stdheader c= docTypeHtml
              ! type_ ( attr "text/css")
              ! href (attr "http://jqueryui.com/resources/demos/style.css"))
    <> (body $ 
-      a ! At.style (attr "align:center;") ! href ( attr  "/html/MFlow/index.html") << h1 <<  "MFlow"
+      a ! At.style (attr "align:center;") ! href ( attr  "http://hackage.haskell.org/packages/archive/MFlow/0.3.0.1/doc/html/MFlow-Forms.html") << h1 <<  "MFlow"
    <> br
    <> hr
    <> (El.div ! At.style (attr "float:left\
