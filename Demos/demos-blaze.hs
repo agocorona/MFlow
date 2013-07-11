@@ -17,7 +17,9 @@ import Debug.Trace
 import Data.String
 import Control.Concurrent.MVar
 
-import Text.Hamlet 
+import Text.Hamlet
+
+import TestREST
 
 --
 --import Control.Monad.State
@@ -30,8 +32,11 @@ main= do
    setAdminUser "admin" "admin"
    syncWrite SyncManual
    setFilesPath ""
-   addMessageFlows  [("shop", runFlow shopCart)]
+   addMessageFlows  [("shop", runFlow shopCart)
+                    ,("navigation", runFlow $ transientNav testREST)]
+
    runNavigation "" $  transientNav mainmenu
+
 
 attr= fromString
 text = toMarkup
@@ -47,11 +52,13 @@ data Options= CountI | CountS | Radio
 
 mainmenu=   do
        setHeader stdheader
+       
        setTimeouts 100 0
        r <- ask $  do
               -- includes an style
               requires[CSSFile "http://jqueryui.com/resources/demos/style.css"]
               wcached "menu" 0 $
+                       
                b <<  "BASIC"
                ++>  br ++> wlink CountI       << b <<  "increase an Int"
                <|>  br ++> wlink CountS       << b <<  "increase a String"
@@ -103,6 +110,11 @@ mainmenu=   do
              Counter    -> counter
              Combination -> combination
              WDialog     -> wdialog1
+
+--withSource txt w= [shamlet|
+--   <iframe src= />"$(window).scrollTop($('*:contains('" ++ txt ++"').offset().top);"
+--
+--   |}
 
 wdialog1= do
    ask  wdialogw

@@ -1,7 +1,14 @@
+module TestREST where
 import MFlow.Wai.Blaze.Html.All
+import Data.Monoid
 
 -- 9 pages , each page has a restful link (page = ask)
-main= runNavigation "" $ transientNav $ do
+
+-- to run it alone:
+--main= runNavigation "" $ transientNav testREST
+
+
+testREST= do
   liftIO $ print "start/restart"
 
   setHeader $ html . body
@@ -23,4 +30,6 @@ main= runNavigation "" $ transientNav $ do
           page $ wlink ()  <<  "menu"
 
 
-cont x= p << ("page for " ++ x ++ " goto next page")
+cont x= p << "page for"
+        <> b << x
+        <> p << "goto next page"

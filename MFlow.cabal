@@ -73,7 +73,7 @@ category: Web, Application Server
 author: Alberto Gómez Corona
 data-dir: ""
 extra-source-files: Demos/demos-blaze.hs
-                  , Demos/testREST.hs
+                  , Demos/TestREST.hs
                   , src/MFlow/Hack.hs
                   , src/MFlow/Hack/Response.hs
                   , src/MFlow/Hack/XHtml.hs
@@ -114,6 +114,7 @@ executable demos-blaze
                    text -any, transformers -any, vector -any,  hamlet -any
     main-is: "demos-blaze.hs"
     ghc-options:
+        -iDemos
         -threaded
         -rtsopts
     buildable: True
