@@ -55,11 +55,12 @@ mainmenu=   do
        
        setTimeouts 100 0
        r <- ask $  do
-              -- includes an style
-              requires[CSSFile "http://jqueryui.com/resources/demos/style.css"]
               wcached "menu" 0 $
+               b <<  "DIFFERENT KINDS OF FLOWS"
+               ++> br ++>  a ! href (attr "/navigation") <<  "REST navigation"   -- ordinary Blaze.Html link
+               ++> br ++>  a ! href (attr "/shop") <<  "stateful flow: shopping"   -- ordinary Blaze.Html link
                        
-               b <<  "BASIC"
+               ++>  br ++> br ++> b <<  "BASIC"
                ++>  br ++> wlink CountI       << b <<  "increase an Int"
                <|>  br ++> wlink CountS       << b <<  "increase a String"
                <|>  br ++> wlink Select       << b <<  "select options"
@@ -74,18 +75,16 @@ mainmenu=   do
                <|>  br ++> wlink Combination  << b <<  "combination of three active widgets"
                <|>  br ++> wlink WDialog      << b <<  "modal dialog"
 
-               <++  br <>  br                 <> b <<  "DYNAMIC WIDGETS"
-               <|>  br ++> wlink Ajax         << b <<  "AJAX example"
+               <|>  br ++>  br               ++> b <<  "DYNAMIC WIDGETS"
+               ++>  br ++> wlink Ajax         << b <<  "AJAX example"
                <|>  br ++> wlink Autocomp     << b <<  "autocomplete"
                <|>  br ++> wlink AutocompList << b <<  "autocomplete List"
                <|>  br ++> wlink ListEdit     << b <<  "list edition"
                <|>  br ++> wlink Grid         << b <<  "grid"
                <|>  br ++> wlink TextEdit     << b <<  "Content Management"
-               <++  br <>  br                 <> b <<  "STATEFUL PERSISTENT FLOW"
-                 <> br <>  a ! href (attr "/shop") <<  "shopping"   -- ordinary Blaze.Html link
 
-                 <> br <>  br <> b <<  "OTHERS"
-               <|>  br ++> wlink Login        << b <<  "login/logout"
+               <|>  br ++>  br ++> b <<  "OTHERS"
+               ++>  br ++> wlink Login        << b <<  "login/logout"
                <|>  br ++> wlink PreventBack  << b <<  "Prevent going back after a transaction"
 
 

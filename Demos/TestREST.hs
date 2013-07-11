@@ -1,6 +1,8 @@
 module TestREST where
 import MFlow.Wai.Blaze.Html.All
 import Data.Monoid
+import Data.String
+
 
 -- 9 pages , each page has a restful link (page = ask)
 
@@ -9,9 +11,10 @@ import Data.Monoid
 
 
 testREST= do
+  setTimeouts 120 0
   liftIO $ print "start/restart"
 
-  setHeader $ html . body
+  setHeader header1
 
   option <- page $   wlink "a" << p << "letters " <++ p << "or"
                  <|> wlink "1" << p << "numbers"
@@ -33,3 +36,10 @@ testREST= do
 cont x= p << "page for"
         <> b << x
         <> p << "goto next page"
+
+header1 h= html << body (text h)
+  where
+  text h= a !href  (fromString "http://haskell-web.blogspot.com.es/2013/07/the-web-navigation-monad.html")
+            << "see this" <> hr <> h <> hr
+          <> a !href (fromString "/") << "main menu"
+
