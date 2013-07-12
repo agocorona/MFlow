@@ -14,42 +14,30 @@ main= do
      (Just hin, Just hout, _, _) <- 
             createProcess (proc "ghci" []){ std_in= CreatePipe, std_out = CreatePipe }
 
-     addMessageFlows [("",wstateless $ readEvalLoop)]
-     forkIO $ recloop hout
+     runNavigation "" . transientNav . page $ readEvalLoop hin hout ""
+
      wait $ run 80 waiMessageFlow
 
+readEvalLoop hin hout code = do
+    id <- genNewId
+    () <- wpush p "append" id "id.value" $ \ cmd -> do
+            wlink () << "hi"
+--           out <- liftIO $ do
+--              hPutStr hin code
+--              hFlush hin
+--              receiveLoop hout
+--           unlines1 out ++> noWidget <++ br
+    code <- getTextBox Nothing <! [("id",id)] <** submitButton "Enter"
+    readEvalLoop hin hout code
 
-readEvalLoop =
-    id <- geNewId
-    wpush "content" "append" id "id.value" $ \ cmd -> do
-           out <- liftIO $ do
-              hPutStr hin code
-              hFlush hin
-              readBuf
-           unlines1 out ++> noWidget <++ br
-    loopInput
-    where
-    loopInput= do
-       getTextBox Nothing <! [("id",id)] <** submitButton "Enter"
-       loopInput
+
+
 
 unlines1 :: [String] -> Html
 unlines1 ls= mconcat[p << l | l <- ls]
 
-bufRead= unsafePerformIO $ newMVar []
 
-readBuf=do
-          threadDelay 100000
-          r <- takeMVar bufRead
-          putMVar bufRead []
-          return r
 
-recloop hout = do
-   l <- hGetLine hout
-   print l
-   ls <- takeMVar bufRead
-   putMVar bufRead $ ls++[l]
-   recloop  hout
 
 
 receiveLoop hout = loop []

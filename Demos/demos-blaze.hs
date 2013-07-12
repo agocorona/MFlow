@@ -168,11 +168,16 @@ onClickSubmit= [("onclick","if(window.jQuery){\n\
                            \else {this.form.submit()}")]
 radiob s n= wlabel (text s) $ setRadio s n <! onClickSubmit
 
-sumWidget= pageFlow "sum" $ do
-      n1 <- p << "Enter first number"  ++> getInt Nothing <** submitButton "enter" <++ br
-      n2 <- p << "Enter second number" ++> getInt Nothing <** submitButton "enter" <++ br
-      n3 <- p << "Enter third number"  ++> getInt Nothing <** submitButton "enter" <++ br
-      p <<  ("The result is: "++show (n1 + n2 + n3))  ++>  wlink () << b << " menu"
+sumWidget=  pageFlow "sum" $ do
+      n <- (do
+           n1 <- p << "Enter first number"  ++> getInt Nothing <++ br
+           n2 <- p << "Enter second number" ++> getInt Nothing <++ br
+           n3 <- p << "Enter third number"  ++> getInt Nothing <++ br
+           return (n1+ n2 + n3))
+          -- factoring out the button
+          <**  pageFlow "button" (submitButton "submit")
+           
+      p <<  ("The result is: "++show n)  ++>  wlink () << b << " menu"
       <++ p << "you can change the numbers in the boxes to see how the result changes"
 
 
