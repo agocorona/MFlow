@@ -48,9 +48,7 @@ import MFlow.Cookies(cookieuser)
 import Data.Dynamic
 import Data.TCache.Memoization
 
-import Debug.Trace
 
-(!>)= flip trace
 
 class Generate a where
   generate :: IO a
@@ -142,7 +140,7 @@ inject exp v= do
 --  it is a substitute of 'ask' from "MFlow.Forms" for testing purposes.
 
 -- execute 'runText' to initiate threads under different load conditions.
-ask :: (Generate a, MonadIO m, Functor m, FormInput v,Typeable v) => View v m a -> FlowM v m a
+ask :: (Generate a, MonadIO m,  Functor m, FormInput v,Typeable v) => View v m a -> FlowM v m a
 ask w = do
     FormElm forms mx <- FlowM . lift $ runView  w
     r <- liftIO generate
@@ -166,7 +164,7 @@ ask w = do
 --
 -- It forces the web page rendering, since it is monadic so it can contain
 -- side effects and load effects to be tested.
-askt :: (MonadIO m,FormInput v) => (Int -> a) -> View v m a -> FlowM v m a
+askt :: (MonadIO m, FormInput v) => (Int -> a) -> View v m a -> FlowM v m a
 askt v w =  do
     FormElm forms mx <- FlowM . lift $ runView  w
     n <- getTestNumber
@@ -243,7 +241,7 @@ verify f (prop, msg)= do
 --    in  getPar form
 --
 
-waction ::(Functor m, MonadIO m,Generate a, FormInput view)
+waction :: (Functor m, MonadIO m,Generate a, FormInput view)
      => View view m a
      -> (a -> FlowM view m b)
      -> View view m b
@@ -272,14 +270,14 @@ userWidget muser formuser= do
          put st{mfToken= t'}
          return ()
    
-getUserSimple :: ( FormInput view, Typeable view
-                 , MonadIO m, Functor m)
+getUserSimple :: ( MonadIO m, FormInput view, Typeable view
+                 ,  Functor m)
               => FlowM view m String
 getUserSimple= getUser Nothing userFormLine
 
 
 getUser :: ( FormInput view, Typeable view
-           , MonadIO m, Functor m)
+           ,  Functor m,MonadIO m)
           => Maybe String
           -> View view m (Maybe (String,String), Maybe String)
           -> FlowM view m String

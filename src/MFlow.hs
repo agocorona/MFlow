@@ -54,6 +54,7 @@ Fragment based streaming: 'sendFragment'  are  provided only at this level.
               ,RecordWildCards
               ,OverloadedStrings
               ,ScopedTypeVariables
+              ,TemplateHaskell
                #-}  
 module MFlow (
 Flow, Params, HttpData(..),Processable(..)
@@ -72,6 +73,7 @@ btag, bhtml, bbody,Attribs, addAttrs
 ,setFilesPath
 -- * internal use
 ,addTokenToList,deleteTokenInList, msgScheduler,serveFile,newFlow
+
 )
 where
 import Control.Concurrent.MVar 
@@ -102,12 +104,18 @@ import MFlow.Cookies
 import Control.Monad.Trans
 import qualified Control.Exception as CE
 
+
+---- traces
+--import Text.Printf
+--import Language.Haskell.TH.Syntax(runQ,qLocation, Loc(..), Q, Exp, Quasi)
+
 import Debug.Trace
-(!>) x y = x  -- flip trace
+(!>)  = const  -- flip trace
 
 type Flow= (Token -> Workflow IO ())
 
 data HttpData = HttpData Params [Cookie] ByteString | Error WFErrors ByteString deriving (Typeable, Show)
+
 
 --instance ToHttpData HttpData where
 -- toHttpData= id
@@ -394,19 +402,31 @@ msgScheduler x  = do
 
 showError wfname token@Token{..} e= do
                let user= key token
-               let msg= e ++ ": "++twfname++ " "++tuser ++" "++ tind++" "++ show tpath ++ show tenv
+               t <- return . calendarTimeToString =<< toCalendarTime =<< getClockTime
+               let msg= errorMessage t e tuser wfname tenv
                putStrLn msg
-               logError user wfname e
+               logError  msg
 --               moveState wfname token token{tuser= "error/"++tuser token}
                fresp <- getNotFoundResponse
-               sendFlush token $ fresp (key token)  msg
+               sendFlush token $ fresp (key token)  $  Prelude.concat[ "<br/>"++ s | s <- lines msg]
 
 
+errorMessage t e u wf env=
+     "\n---------------------ERROR-------------------------\n"++
+     "TIME=" ++ t ++"\n" ++
+     e++
+     "\n\nUSER= "++
+     u++
+     "\n\nVERB= "++
+     wf++
+     "\n\nREQUEST:\n"++
+     show env
 
-logError u wf e= do
+
+logError err= do
      hSeek hlog SeekFromEnd 0
-     t <- return . calendarTimeToString =<< toCalendarTime =<< getClockTime
-     hPutStrLn hlog (","++show [u, t,wf,e])  >> hFlush hlog
+     hPutStrLn hlog err
+     hFlush hlog
 
 logFileName= "errlog"
 
@@ -424,8 +444,8 @@ defNotFoundResponse user msg=
            _       -> "The administrator has been notified"
   where
   fresp msg=
-   "<html><h4>Error 404: Page not found or error ocurred</h4><h3>" <> msg <>
-   "</h3><br/>" <> opts <> "<br/><a href=\"/\" >press here to go home</a></html>"
+   "<html><h4>Error 404: Page not found or error ocurred</h4>" <> msg <>
+   "<br/>" <> opts <> "<br/><a href=\"/\" >press here to go home</a></html>"
 
    
   paths= Prelude.map B.pack . M.keys $ unsafePerformIO getMessageFlows
@@ -729,3 +749,16 @@ mimeTable=[
     ("z",	"application/x-compress")
 
  ]
+--
+-- -- inspired by Pepe Iborra withLocTH
+--locTH :: Q Exp
+--locTH = do
+--  loc <- qLocation
+--  let loc_msg = showLoc loc
+--  [|loc_msg |]
+--
+--showLoc :: Loc -> String
+--showLoc Loc{loc_module=mod, loc_filename=filename, loc_start=start} =
+--         {- text package <> char '.' <> -}
+--         printf "%s (%s). %s" mod filename (show start)
+

@@ -12,6 +12,7 @@
              -XTypeFamilies
              -XTypeOperators
              -XOverloadedStrings
+             -XTemplateHaskell
 
 #-}
 
@@ -311,7 +312,6 @@ import qualified Data.Map as M
 import System.IO.Unsafe
 import Data.Char(isNumber,toLower)
 import Network.HTTP.Types.Header
-
 
 
 -- | Validates a form or widget result against a validating procedure
@@ -1020,8 +1020,8 @@ ask
   :: (FormInput view) =>
       View view IO a -> FlowM view IO a
 ask w =  do
-  st1 <- get
-
+ st1 <- get
+ if isJust $ mfTrace st1 then fail "" else do
   -- AJAX
   let env= mfEnv st1
       mv1= lookup "ajax" env

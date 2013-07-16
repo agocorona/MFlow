@@ -92,8 +92,8 @@ library
                    stm >2, old-time -any, vector -any, directory -any,
                    utf8-string -any, wai -any, case-insensitive -any, http-types -any,
                    conduit -any, text -any, parsec -any, warp -any,
-                   random -any,
-                   blaze-html -any, blaze-markup -any
+                   random -any,  blaze-html -any, blaze-markup -any,
+                   monadloc -any
                   
 
     exposed-modules: MFlow MFlow.Wai.Blaze.Html.All
@@ -102,6 +102,7 @@ library
                      MFlow.Wai.XHtml.All MFlow.Forms.XHtml
                      MFlow.Forms.Blaze.Html MFlow.Forms.Test
                      MFlow.Forms.Widgets
+                     
     other-modules: MFlow.Forms.Internals MFlow.Wai.Response
     exposed: True
     buildable: True
@@ -111,7 +112,9 @@ executable demos-blaze
     build-depends: MFlow -any, RefSerialize -any, TCache -any, directory -any,
                    Workflow -any, base -any, blaze-html -any, bytestring -any,
                    containers -any, mtl -any, old-time -any, stm -any,
-                   text -any, transformers -any, vector -any,  hamlet -any
+                   text -any, transformers -any, vector -any,  hamlet -any,
+                   monadloc -any
+
     main-is: "demos-blaze.hs"
     ghc-options:
         -iDemos

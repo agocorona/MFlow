@@ -21,6 +21,7 @@
              -XFlexibleContexts
              -XOverlappingInstances
              -XRecordWildCards
+             -XTemplateHaskell
 #-}
 
 module MFlow.Forms.Internals where
@@ -45,14 +46,16 @@ import Control.Monad.Identity
 import Data.List
 import System.IO.Unsafe
 import Control.Concurrent.MVar
+--
+---- for traces
+--
 
--- for traces
---import Language.Haskell.TH.Syntax(qLocation, Loc(..), Q, Exp, Quasi)
---import Text.Printf
-
+import Control.Exception as CE(catch,SomeException)
+import Control.Concurrent
+import Control.Monad.Loc
 
 import Debug.Trace
-(!>) = const --   flip trace
+(!>) = const --    flip trace
 
 instance Serialize a => Serializable a where
   serialize=  runW . showp
@@ -141,19 +144,22 @@ instance (Monad m, HandleBacktracking s m)=> Monad (BackT  m) where
      where
      loop = do
         s <- get
-        v <-  runBackT x                         -- !> "loop"
+        v <-  supervise $ runBackT x                         -- !> "loop"
         case v of
-            NoBack y  -> runBackT (f y)         -- !> "runback"
+            NoBack y  -> supervise $ runBackT (f y)         -- !> "runback"
             BackPoint y  -> do
-                 z <- runBackT (f y)            -- !> "BACK"
+                 z <- supervise $ runBackT (f y)            -- !> "BACK"
                  case z of
-                  GoBack  -> handle s >> loop            --   !> "BACKTRACKING"
+                  GoBack  -> handleb s >> loop            --   !> "BACKTRACKING"
                   other   -> return other
             GoBack  ->  return  $ GoBack
 
 class MonadState s m => HandleBacktracking s m where
-   handle :: s -> m ()
---   supervise ::    m (FailBack a) -> m (FailBack a)
+   handleb     :: s -> m ()
+   handleb = const $ return ()
+   
+   supervise ::    m (FailBack a) -> m (FailBack a)
+   supervise= id
 
 --instance Monad m => HandleBacktracking () m where
 --   handle= const $ return ()
@@ -242,40 +248,89 @@ instance Serialize a => Serialize (FormElm view a) where
 
 newtype View v m a = View { runView :: WState v m (FormElm v a)}
 
-instance Monad m => HandleBacktracking (MFlowState v) (WState v m) where
-   handle st= do
+
+instance  Monad m => HandleBacktracking (MFlowState v) (WState v m) where
+   handleb st= do
       MFlowState{..} <- get
-      case mfTrace of
-           Nothing ->
-             put  st{mfEnv= mfEnv,mfToken=mfToken, mfPath=mfPath,mfPIndex= mfPIndex, mfData=mfData,inSync=False,newAsk=False}
---           Just trace -> do
---             -- inspired by Pepe Iborra withLocTH
---             loc <- qLocation
---             let loc_msg = showLoc loc
---             put st{mfTrace= Just(loc_msg:trace)}
+      put  st{ mfEnv= mfEnv,mfToken=mfToken
+                    , mfPath=mfPath,mfPIndex= mfPIndex
+                    , mfData=mfData
+                    , mfTrace= mfTrace
+                    , inSync=False,newAsk=False}
 
 
---   supervise f= f `WF.catch` handler
+
+
+--   supervise f= do
+--      s <- get
+--      (r, s') <- lift $ runStateT f s `CMT.catch` handler s
+--      put s'
+--      return r
+   
 --      where
---      handler e= do
---              loc <- qLocation
---              let loc_msg = showLoc loc
---              modify $ \st -> st{mfTrace= Just [loc_msg++" exception: " ++show e]}
---              return GoBack
+--      handler s (e :: ErrorCall)=  return (GoBack,s{mfTrace= Just [" exception: " ++show e]}) !> $locTH
 
---showLoc :: Loc -> String
---showLoc Loc{loc_module=mod, loc_filename=filename, loc_start=start} =
---         {- text package <> char '.' <> -}
---         printf "%s (%s). %s" mod filename (show start)
-
---instance (MonadIO m, Functor m) => Quasi (StateT (MFlowState v) m) where
---    qLocation  = badIO "currentLocation"
+--instance  CMT.MonadCatchIO (FlowM v IO) where
+--    catch f hand = FlowM . BackT $ do
+--            s <- get
+--            (r,s') <- lift $ execMF f s  `CE.catch` \e -> execMF (hand e) s
+--
+--            put s'
+--            return r
+--            where
+--            execMF f s= runStateT (runBackT (runFlowM f) ) s
 
 
-badIO :: MonadIO m => String -> StateT (MFlowState v) m a
-badIO op = do
-    liftIO $ putStrLn  $ "Template Haskell error: " ++"Can't do `" ++ op ++ "' in the IO monad"
-    fail "Template Haskell failure"
+
+
+
+
+instance  MonadLoc (FlowM v IO) where
+    withLoc loc f = FlowM . BackT $ do
+       withLoc loc $ do
+            s <- get
+            (r,s') <- lift $ do
+                       (r,s') <- runStateT (runBackT (runFlowM f) ) s  `CE.catch` (handler1  loc s)
+                       case mfTrace s' of
+                            Nothing     ->  return (r,s')
+                            Just  trace ->  return(r, s'{mfTrace= Just( loc:trace)})
+            put s'
+            return r
+
+       where
+       handler1 loc s (e :: SomeException)=
+        return (GoBack, s{mfTrace= Just ["exception: " ++show e]})
+
+--instance (Serialize a,Typeable a, FormInput v) => MonadLoc (FlowM v (Workflow IO)) a where
+--    withLoc loc f =  FlowM . BackT $
+--       withLoc loc $  do
+--            s <- get
+--            (r,s') <-  lift . WF.step $ exec1d "jkkjk" ( runStateT (runBackT $ runFlowM f) s) `CMT.catch` (handler1  loc s)
+--            put s'
+--            return r
+--
+--
+--       where
+--       handler1 loc s (e :: SomeException)=
+--        return (GoBack, s{mfTrace= Just ["exception: " ++show e]}) 
+
+instance  MonadLoc (View v IO)  where
+    withLoc loc f = View $ do
+       withLoc loc $ do
+            s <- get
+            (r,s') <- lift $ do
+                       (r,s') <- runStateT (runView f) s  `CE.catch` (handler1  loc s)
+                       case mfTrace s' of
+                            Nothing     ->  return (r,s')
+                            Just  trace ->  return(r, s'{mfTrace= Just( loc:trace)})
+            put s'
+            return r
+
+       where
+       handler1 loc s (e :: SomeException)=
+        return (FormElm [] Nothing, s{mfTrace= Just ["exception: " ++show e]}) !> loc
+
+
 
 -- | the FlowM monad executes the page navigation. It perform backtracking when necessary to syncronize
 -- when the user press the back button or when the user enter an arbitrary URL. The instruction pointer
@@ -309,7 +364,7 @@ instance  (Monad m,Functor m) => Functor (View view m) where
 
   
 instance (Functor m, Monad m) => Applicative (View view m) where
-  pure a  = View $  return (FormElm  [] $ Just a)
+  pure a  = View $  return (FormElm [] $ Just a)
   View f <*> View g= View $
                    f >>= \(FormElm form1 k) ->
                    g >>= \(FormElm form2 x) ->
@@ -320,7 +375,6 @@ instance (Functor m, Monad m) => Alternative (View view m) where
   View f <|> View g= View $ do
                    FormElm form1 k <- f
                    FormElm form2 x <- g
-
                    return $ FormElm (form1 ++ form2) (k <|> x)
 
 
@@ -377,6 +431,7 @@ wcallback (View x) f = View $ do
        runView (f k)
      Nothing -> return $ FormElm form1 Nothing
 
+   
 --incLink :: MonadState (MFlowState view) m => m()
 --incLink= modify $ \st -> st{mfPIndex= if linkMatched st then mfPIndex  st + 1 else mfPIndex st
 --                ,linkMatched= False}  -- !> "<-inc"
@@ -409,7 +464,7 @@ instance MonadTrans (View view) where
   lift f = View $  (lift  f) >>= \x ->  return $ FormElm [] $ Just x
 
 instance MonadTrans (FlowM view) where
-  lift f = FlowM $ lift (lift  f) >>= \x ->  return x
+  lift f = FlowM $ lift (lift  f) -- >>= \x ->  return x
 
 instance  (Monad m)=> MonadState (MFlowState view) (View view m) where
   get = View $  get >>= \x ->  return $ FormElm [] $ Just x
@@ -486,10 +541,9 @@ goingBack = do
 -- >   payIt= liftIO $ print "paying"
 
 preventGoingBack
-  :: (Functor m, MonadIO m, FormInput v) => FlowM v m () -> FlowM v m ()
+  :: ( Functor m, MonadIO m,  FormInput v) => FlowM v m () -> FlowM v m ()
 preventGoingBack msg= do
    back <- goingBack
-   liftIO $ putStr "BACK= ">> print back
    if not back  then breturn() else do
          breturn()  -- will not go back bellond this
          clearEnv
@@ -646,7 +700,7 @@ setHeader header= do
 
 
 -- | Return the current header
-getHeader :: (Monad m) => FlowM view m (view -> view)
+getHeader :: ( Monad m) => FlowM view m (view -> view)
 getHeader= gets mfHeader
 
 -- | Set an HTTP cookie
@@ -676,7 +730,7 @@ setHttpHeader n v = do
 -- `transient` flows restart anew.
 -- persistent flows (that use `step`) restart at the las saved execution point, unless
 -- the session time has expired for the user.
-setTimeouts :: Monad m => Int -> Integer -> FlowM view m ()
+setTimeouts :: ( Monad m) => Int -> Integer -> FlowM view m ()
 setTimeouts kt st= do
  fs <- get
  put fs{ mfkillTime= kt, mfSessionTime= st}
@@ -876,7 +930,7 @@ runFlow  f t=
     liftIO $ do
        flushRec t''
        sendToMF t'' t'' -- !> "SEND"
-    loop  f t''         -- !> "LOOPAGAIN"
+    loop  f t''          !> "LOOPAGAIN"
 
 
 
@@ -895,8 +949,15 @@ runFlowOnce1  f t  =
 
   where
   backInit= do
-     modify $ \s -> s{mfEnv=[], newAsk= True}
-     breturn ()
+     s <- get   !> "BACKTRACK to BEGINNING"
+     case mfTrace s of
+       Just tr -> error $ disp tr
+
+       Nothing -> do
+         modify $ \s -> s{mfEnv=[], newAsk= True}
+         breturn ()
+     where
+     disp tr= "TRACE (error in the last line):\n\n" ++(concat $ intersperse "\n" tr)
   -- to restart the flow in case of going back before the first page of the flow
 
 

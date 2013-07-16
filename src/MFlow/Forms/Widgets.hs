@@ -7,7 +7,8 @@ to create other active widgets.
 
 {-# LANGUAGE UndecidableInstances,ExistentialQuantification
             , FlexibleInstances, OverlappingInstances, FlexibleContexts
-            , OverloadedStrings, DeriveDataTypeable , ScopedTypeVariables #-}
+            , OverloadedStrings, DeriveDataTypeable , ScopedTypeVariables
+            , TemplateHaskell #-}
 
 
 
@@ -30,7 +31,11 @@ delEdited, getEdited
 -- * Multilanguage
 ,mFieldEd, mField
 
-,autoRefresh
+-- * Ajax refreshing of widgets
+,autoRefresh,
+
+-- * Push
+wpush
 
 ) where
 import MFlow
@@ -268,7 +273,7 @@ wpush
      -> (String -> View v IO a)
      -> View v IO a
 wpush  holder modifier addId expr w = do
-    id1<- genNewId
+    id1 <- genNewId
     let sel= "$('#" <>  B.pack id1 <> "')"
     callAjax <- ajax $ \s ->  appendWidget sel ( changeMonad $ w s)
     let installevents= "$(document).ready(function(){\
@@ -586,11 +591,12 @@ insertForm w=View $ do
 
 
 
--- | Capture the form submissions and the links of the enclosed widget and send them via AJAX.
--- The response is the new presentation of the widget, that is updated. No navigation occur.
--- So a widget with autoRefresh can be used in heavyweight pages.
--- If AJAX or javascript is not available, the widget is refresh normally, via a new page.
--- The enclosed widget if has form elements, must include the form action tag, not a part of it.
+-- | Capture the form submissions and the links of the enclosed widget and send them via jQuery AJAX.
+-- The response is the new presentation of the widget, that is updated. No new page is generated
+-- but the functionality is equivalent. Only the activated widget is executed in the server and updated
+-- in the client, so a widget with autoRefresh can be used in heavyweight pages.
+-- If AJAX/JavaScript are not available, the widget is refreshed normally, via a new page.
+-- If has form elements, the enclosed widget must be a complete form and it must include the form action tag.
 -- For this purpose, autoRefresh encloses the widget in a form tag if there are form elements on it
 -- and the programmer has not enclosed them in a 'wform' element.
 autoRefresh
@@ -631,7 +637,7 @@ autoRefresh w=  do
 
   ajaxGetLink = "function ajaxGetLink(id){\n\
     \var id1= $('#'+id);\n\
-   \var ida= $('#'+id+' a');\n\
+    \var ida= $('#'+id+' a');\n\
     \ida.click(function () {\n\
     \   var pdata = $(this).attr('data-value');\n\
     \   var actionurl = $(this).attr('href');\n\

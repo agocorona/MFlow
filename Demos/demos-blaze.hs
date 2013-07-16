@@ -1,4 +1,4 @@
-{-# LANGUAGE  DeriveDataTypeable, QuasiQuotes #-}
+{-# OPTIONS  -XDeriveDataTypeable -XQuasiQuotes -F -pgmF MonadLoc #-}
 module Main where
 import MFlow.Wai.Blaze.Html.All
 import Text.Blaze.Html5 as El
@@ -20,6 +20,9 @@ import Control.Concurrent.MVar
 import Text.Hamlet
 
 import TestREST
+
+import Control.Monad.Loc
+--
 
 --
 --import Control.Monad.State
@@ -169,13 +172,14 @@ onClickSubmit= [("onclick","if(window.jQuery){\n\
 radiob s n= wlabel (text s) $ setRadio s n <! onClickSubmit
 
 sumWidget=  pageFlow "sum" $ do
-      n <- (do
+      n <- do
            n1 <- p << "Enter first number"  ++> getInt Nothing <++ br
            n2 <- p << "Enter second number" ++> getInt Nothing <++ br
            n3 <- p << "Enter third number"  ++> getInt Nothing <++ br
-           return (n1+ n2 + n3))
+           return (n1+ n2 + n3)
+
           -- factoring out the button
-          <**  pageFlow "button" (submitButton "submit")
+          <**  br ++> pageFlow "button" (submitButton "submit")
            
       p <<  ("The result is: "++show n)  ++>  wlink () << b << " menu"
       <++ p << "you can change the numbers in the boxes to see how the result changes"
@@ -260,6 +264,7 @@ preventBack= do
     preventGoingBack . ask $   p << "You already paid 100000 before"
                            ++> p << "you can no go back until the end of the buy process"
                            ++> wlink () << p << "Please press here to continue"
+                           
     ask $   p << ("you paid "++ show paid)
         ++> wlink () << p << "Press here to go to the menu or press the back button to verify that you can not pay again"
     where
@@ -409,7 +414,7 @@ shopCart  = do
    setHeader $ \html -> p << ( El.span <<
      "A persistent flow  (uses step). The process is killed after 100 seconds of inactivity \
      \but it is restarted automatically. Event If you restart the whole server, it remember the shopping cart\n\n \
-     \Defines a table with links enclosed that return ints and a link to the menu, that abandon this flow.\n\
+     \Defines a table with links that return ints and a link to the menu, that abandon this flow.\n\
      \The cart state is not stored, Only the history of events is saved. The cart is recreated by running the history of events."
 
      <> html)
@@ -419,7 +424,7 @@ shopCart  = do
    shopCart1 =  do
      o <-  step . ask $ do
              let moreexplain= p << "The second parameter of \"setTimeout\" is the time during which the cart is recorded"
-             Cart cart <- getSessionData `onNothing` return emptyCart
+             Cart cart <- getSessionData `onNothing` return  emptyCart
 
              moreexplain
               ++>

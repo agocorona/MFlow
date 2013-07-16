@@ -1,15 +1,21 @@
 -- | example of storage and query by using tcache
-{-# LANGUAGE DeriveDataTypeable #-}
-
+{-# OPTIONS -XDeriveDataTypeable -F -pgmF MonadLoc   #-}
+module Main where
 import Data.TCache
 import Data.TCache.DefaultPersistence
 import Data.TCache.IndexQuery
 import MFlow.Wai.Blaze.Html.All hiding(name, select, base)
 import Data.Typeable
 
-import Data.Serialize
-import Data.SafeCopy
+
+
+--import Data.Serialize
+--import Data.SafeCopy
 import Data.ByteString.Lazy.Char8 as BS hiding (index)
+
+
+import Control.Monad.CatchIO as CMT
+import Control.Exception(SomeException)
 
 data  MyData= MyData{name :: String} deriving (Typeable, Read, Show)  -- that is enough for file persistence
 
@@ -27,7 +33,7 @@ data  MyData= MyData{name :: String} deriving (Typeable, Read, Show)  -- that is
 --lazyB2Strict= BS.concat . BS.toChunks
 --strictB2Lazy= BS.fromChunks . []
 
-instance Indexable MyData where  key= name     -- just to notify what is the key of the register
+instance Indexable MyData where  key=  name     -- just to notify what is the key of the register
 
 
 main= do
@@ -43,21 +49,27 @@ main= do
 
 
 data Options= NewName | ListNames deriving (Show, Typeable)
-mainFlow= do
 
-     r <- ask $   p << "menu"
-             ++> wlink NewName   << p << "enter a new name"
-             <|> wlink ListNames << p << "get all the names"
+
+mainFlow= do
+     r <- ask $   do
+              p << "menu"
+               ++> wlink NewName   << p << "enter a new name"
+               <|> wlink ListNames << p <<  "List names"
+
 
      case r of
          NewName -> do
               name <- ask $ p << "what is your name?" ++> getString Nothing
-              liftIO . atomically . newDBRef $ MyData name    -- store the name in the cache (later will be written to disk automatically)
+              liftIO . atomically . newDBRef $ MyData name   -- store the name in the cache (later will be written to disk automatically)
               return()
 
          ListNames -> do
-              allnames <- liftIO . atomically $ select name $ name .>. ""
+              allnames <- liftIO . atomically $ select name $ name .>.  ""
               -- query for all the names stored in all the registers
-              ask $ p << ("list of all names= "++ show allnames) ++> wlink () << p << "click here to go to the menu"
+              (ask $ p << ("list of all names= "++  show allnames) ++> wlink () << p << "click here to go to the menu")
+
+
+
 
 

@@ -1,8 +1,9 @@
+{-# OPTIONS -F -pgmF MonadLoc #-}
 module TestREST where
 import MFlow.Wai.Blaze.Html.All
 import Data.Monoid
 import Data.String
-
+import Control.Monad.Loc
 
 -- 9 pages , each page has a restful link (page = ask)
 
@@ -29,7 +30,7 @@ testREST= do
     "a" -> do
           page $ wlink "b" << cont "a"
           page $ wlink "c" << cont "b"
-          page $ wlink "d" << cont "c"
+          page $ undefined -- wlink "d" << cont "c"
           page $ wlink ()  <<  "menu"
 
 

@@ -1,0 +1,56 @@
+{-# LINE 2 "INPUT" #-}
+{-# OPTIONS -XDeriveDataTypeable -F -pgmF MonadLoc   #-}
+module Main where
+{-# LINE 4 "INPUT" #-}
+import Data.TCache
+{-# LINE 5 "INPUT" #-}
+import Data.TCache.DefaultPersistence
+{-# LINE 6 "INPUT" #-}
+import Data.TCache.IndexQuery
+{-# LINE 7 "INPUT" #-}
+import MFlow.Wai.Blaze.Html.All hiding (name, select, base)
+{-# LINE 8 "INPUT" #-}
+import Data.Typeable
+{-# LINE 9 "INPUT" #-}
+import Control.Monad.Loc
+{-# LINE 13 "INPUT" #-}
+import Data.ByteString.Lazy.Char8 as BS hiding (index)
+ 
+{-# LINE 15 "INPUT" #-}
+data MyData = MyData{name :: String}
+            deriving (Typeable, Read, Show)
+ 
+{-# LINE 31 "INPUT" #-}
+instance Indexable MyData where
+        {-# LINE 31 "INPUT" #-}
+        key = name
+{-# LINE 34 "INPUT" #-}
+main
+  = Control.Monad.Loc.withLoc "main, Main(INPUT): (34, 7)"
+      (do Control.Monad.Loc.withLoc "main, Main(INPUT): (35, 5)" (index name)
+          Control.Monad.Loc.withLoc "main, Main(INPUT): (37, 5)" (syncWrite $ Asyncronous 10 defaultCheck 1000)
+          Control.Monad.Loc.withLoc "main, Main(INPUT): (42, 5)" (addMessageFlows [("", transient $ runFlow mainFlow)])
+          Control.Monad.Loc.withLoc "main, Main(INPUT): (43, 5)" (wait $ run 80 waiMessageFlow))
+ 
+{-# LINE 46 "INPUT" #-}
+data Options = NewName
+             | ListNames
+             deriving (Show, Typeable)
+{-# LINE 47 "INPUT" #-}
+mainFlow
+  = Control.Monad.Loc.withLoc "mainFlow, Main(INPUT): (47, 11)"
+      (do r <- Control.Monad.Loc.withLoc "mainFlow, Main(INPUT): (49, 6)" (ask $ p << "menu" ++> wlink NewName << p << "enter a new name" <|> wlink ListNames << p << "get all the names")
+          Control.Monad.Loc.withLoc "mainFlow, Main(INPUT): (53, 6)"
+            (case r of
+                 NewName -> Control.Monad.Loc.withLoc "mainFlow, Main(INPUT): (54, 21)"
+                              (do name <- Control.Monad.Loc.withLoc "mainFlow, Main(INPUT): (55, 15)" (ask $ p << "what is your name?" ++> getString Nothing)
+                                  Control.Monad.Loc.withLoc "mainFlow, Main(INPUT): (56, 15)" (liftIO . atomically . newDBRef $ MyData name)
+                                  Control.Monad.Loc.withLoc "mainFlow, Main(INPUT): (57, 15)" (return ()))
+                 ListNames -> Control.Monad.Loc.withLoc "mainFlow, Main(INPUT): (59, 23)"
+                                (do allnames <- Control.Monad.Loc.withLoc "mainFlow, Main(INPUT): (60, 15)" (liftIO . atomically $ select name $ name .>. "")
+                                    toprint <- Control.Monad.Loc.withLoc "mainFlow, Main(INPUT): (61, 15)"
+                                                 (return $
+                                                    let {-# LINE 61 "INPUT" #-}
+                                                        r = (Prelude.tail [] :: String)
+                                                      in r `seq` r)
+                                    Control.Monad.Loc.withLoc "mainFlow, Main(INPUT): (63, 15)" (ask $ p << ("list of all names= " ++ show toprint) ++> wlink () << p << "click here to go to the menu"))))
