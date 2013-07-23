@@ -58,6 +58,7 @@ import Control.Monad.Identity
 import Control.Workflow(killWF)
 
 
+
 readyJQuery="ready=function(){if(!window.jQuery){return setTimeout(ready,100)}};"
 
 jqueryScript1= "http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"
@@ -770,7 +771,6 @@ push' method w= do
     new <- gets newAsk
 
     when new  $ do
-
         killWF procname token{twfname= procname}
         let proc= transient . runFlow . ask $ w' dat
         requires [ServerProc (procname, proc),
@@ -780,15 +780,40 @@ push' method w= do
 
 
     (ftag "div" <<< noWidget) <! [("id",id)]
+      <++ ftag "div" (fromStr "status") `attrs` [("id",id++"status")]
 
   where
   w' dat= do
      modify $ \s -> s{inSync= True,newAsk=True,mfData=dat}
      w
 
+--  ajaxPush procname= "function ajaxPush(id){\n\
+--    \var id1= $('#'+id);\n\
+--    \var ida= $('#'+id+' a');\n\
+--    \   var actionurl='/"++procname++"';\n\
+--    \   var dialogOpts = {\n\
+--    \       cache: false,\n\
+--    \       type: 'GET',\n\
+--    \       url: actionurl,\n\
+--    \       data: '',\n\
+--    \       success: function (resp) {\n\
+--    \         id1."++method++"(resp);\n\
+--    \         ajaxPush(id)\n\
+--    \       },\n\
+--    \       error: function (xhr, status, error) {\n\
+--    \           var msg = $('<div>' + status + '</div>');\n\
+--    \           id1.html(msg);\n\
+--    \       }\n\
+--    \   };\n\
+--    \   $.ajax(dialogOpts);\n\
+--    \   return false;\n\
+--  \}"
 
-  ajaxPush procname= "function ajaxPush(id){\n\
+
+  ajaxPush procname=" function ajaxPush(id){\n\
+    \var cnt=0; \n\
     \var id1= $('#'+id);\n\
+    \var idstatus= $('#'+id+'status');\n\
     \var ida= $('#'+id+' a');\n\
     \   var actionurl='/"++procname++"';\n\
     \   var dialogOpts = {\n\
@@ -797,16 +822,26 @@ push' method w= do
     \       url: actionurl,\n\
     \       data: '',\n\
     \       success: function (resp) {\n\
+    \         idstatus.html('received')\n\
+    \         cnt=0;\
     \         id1."++method++"(resp);\n\
-    \         ajaxPush(id)\n\
+    \         ajaxPush1();\n\
     \       },\n\
     \       error: function (xhr, status, error) {\n\
-    \           var msg = $('<div>' + status + '</div>');\n\
-    \           id1.append(msg);\n\
+    \            cnt= cnt + 1;\n\
+    \            if (cnt > 6)\n\
+    \               idstatus.html('no more retries');\n\
+    \            else {\n\
+    \               idstatus.html('retrying');\n\
+    \               setTimeout(function() { ajaxPush1(); }, 1000);\n\
+    \            }\n\
     \       }\n\
     \   };\n\
+    \function ajaxPush1(){\n\
     \   $.ajax(dialogOpts);\n\
     \   return false;\n\
+    \ }\n\
+    \ ajaxPush1();\n\
   \}"
 
 -- | show the jQuery spinner widget. the first parameter is the configuration . Use \"()\" by default.

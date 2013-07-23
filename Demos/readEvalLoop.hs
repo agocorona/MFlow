@@ -14,7 +14,9 @@ import Data.Typeable
 
 
 import Debug.Trace
+import Data.TCache.Memoization
 
+(!>)= flip trace
 
 main= do
 --     (Just hin, Just hout, _, _) <- 
@@ -24,8 +26,8 @@ main= do
 
 
 pushIncrease= do
+ tv <- liftIO $ newTVarIO 0
  page $ do
-  tv <- liftIO $ newTVarIO 0 -- atomic (newTVar 0)
   push Html $ do
       setTimeouts 100 0
       n <- atomic $ readTVar tv
@@ -36,7 +38,6 @@ pushIncrease= do
 
 
 pushSample=  do
-  page $ wlink () << b << "press"
   tv <- liftIO $ newTVarIO $ Just "init"
   page $ push Append (disp tv) <** input tv
 
@@ -51,14 +52,14 @@ pushSample=  do
       tput tv line
 
 
-  tput tv x = atomic $ writeTVar  tv ( Just x)
+  tput tv x = atomic $ writeTVar  tv ( Just x)  !> ("PUT in " ++ addrStr tv)
 
   tget tv= atomic $ do
       mr <- readTVar tv
       case mr of
          Nothing -> retry
          Just r -> do
-          writeTVar tv Nothing
+          writeTVar tv Nothing      !> ("GEt in " ++ addrStr tv)
           return r
 
 

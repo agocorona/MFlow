@@ -125,7 +125,7 @@ waiMessageFlow req1=   do
 
      let resp= case (resp',retcookies) of
             (_,[]) -> resp'
-            (error@(Error _ _),_) -> error
+            (error@(Error _),_) -> error
             (HttpData hs co str,_) -> HttpData hs (co++ retcookies)  str
 
      return $ toResponse resp

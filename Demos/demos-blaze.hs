@@ -17,6 +17,8 @@ import Debug.Trace
 import Data.String
 import Control.Concurrent.MVar
 import Control.Concurrent.STM
+import Control.Concurrent
+import Control.Monad
 
 import Text.Hamlet
 
@@ -562,9 +564,11 @@ pushSample=  do
        ++> wlink () << b << "exit"
 
   where
+  -- the widget being pushed:
   disp tv= do
       setTimeouts 100 0
       line <- tget tv
+      liftIO $ when (line == "kill") $ myThreadId >>= killThread
       p <<  line ++> noWidget
 
   input tv= autoRefresh $ do

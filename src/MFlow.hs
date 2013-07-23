@@ -114,7 +114,7 @@ import Debug.Trace
 
 type Flow= (Token -> Workflow IO ())
 
-data HttpData = HttpData Params [Cookie] ByteString | Error WFErrors ByteString deriving (Typeable, Show)
+data HttpData = HttpData Params [Cookie] ByteString | Error  ByteString deriving (Typeable, Show)
 
 
 --instance ToHttpData HttpData where
@@ -318,7 +318,7 @@ _messageFlows= unsafePerformIO $ newMVar emptyFList
   emptyFList= M.empty  :: WorkflowList  IO Token ()
 
 -- | add a list of flows to be scheduled. Each entry in the list is a pair @(path, flow)@
-addMessageFlows wfs=  modifyMVar_ _messageFlows(\ms ->  return $ M.union ms  (M.fromList $ map flt wfs))
+addMessageFlows wfs=  modifyMVar_ _messageFlows(\ms ->  return $ M.union (M.fromList $ map flt wfs)ms)
   where flt ("",f)= (noScript,f)
         flt e= e
 
@@ -408,7 +408,7 @@ showError wfname token@Token{..} e= do
                logError  msg
 --               moveState wfname token token{tuser= "error/"++tuser token}
                fresp <- getNotFoundResponse
-               sendFlush token $ fresp (key token)  $  Prelude.concat[ "<br/>"++ s | s <- lines msg]
+               sendFlush token . Error $ fresp (key token)  $  Prelude.concat[ "<br/>"++ s | s <- lines msg]
 
 
 errorMessage t e u wf env=
@@ -437,8 +437,8 @@ hlog= unsafePerformIO $ openFile logFileName ReadWriteMode
 
 
 defNotFoundResponse user msg=
-  HttpData [("Content-Type", "text/html")] []
-     $ fresp
+--  HttpData [("Content-Type", "text/html")] []  $
+     fresp
      $ case user of
            "admin" -> pack msg
            _       -> "The administrator has been notified"
@@ -464,7 +464,7 @@ notFoundResponse=  unsafePerformIO $ newIORef defNotFoundResponse
 setNotFoundResponse :: 
     (String    
   -> String     
-  -> HttpData)  
+  -> ByteString)  
   -> IO ()
 
 setNotFoundResponse f= liftIO $ writeIORef notFoundResponse  f
