@@ -115,7 +115,7 @@ executable demos-blaze
                    text -any, transformers -any, vector -any,  hamlet -any,
                    monadloc -any
 
-    main-is: "demos-blaze.hs"
+    main-is: "demos-blaze.Loc.hs"
     ghc-options:
         -iDemos
         -threaded

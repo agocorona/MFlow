@@ -1,4 +1,4 @@
-{-# OPTIONS -F -pgmF MonadLoc #-}
+
 module TestREST where
 import MFlow.Wai.Blaze.Html.All
 import Data.Monoid
