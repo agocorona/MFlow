@@ -16,17 +16,14 @@ import System.IO.Unsafe
 import Debug.Trace
 import Data.String
 import Control.Concurrent.MVar
+import Control.Concurrent.STM
 
 import Text.Hamlet
 
 import TestREST
 
 import Control.Monad.Loc
---
 
---
---import Control.Monad.State
---import MFlow.Forms.Internals
 (!>) = const -- flip trace
 
 --test= runTest [(15,"shop")]
@@ -49,7 +46,7 @@ data Options= CountI | CountS | Radio
             | ListEdit |Shop | Action | Ajax | Select
             | CheckBoxes | PreventBack | Multicounter
             | Combination
-            | FViewMonad | Counter | WDialog
+            | FViewMonad | Counter | WDialog |Push |Trace
             deriving (Bounded, Enum,Read, Show,Typeable)
 
 
@@ -59,6 +56,12 @@ mainmenu=   do
        setTimeouts 100 0
        r <- ask $  do
               wcached "menu" 0 $
+               b <<  "PUSH"
+               ++> br ++> wlink Push << b << "Example of a widget with push"
+               <|> br ++> br ++>
+               b <<  "ERROR TRACES"
+               ++> br ++> wlink Trace << b << "Execution traces for errors"
+               <|> br ++> br ++>
                b <<  "DIFFERENT KINDS OF FLOWS"
                ++> br ++>  a ! href (attr "/navigation") <<  "REST navigation"   -- ordinary Blaze.Html link
                ++> br ++>  a ! href (attr "/shop") <<  "stateful flow: shopping"   -- ordinary Blaze.Html link
@@ -112,6 +115,8 @@ mainmenu=   do
              Counter    -> counter
              Combination -> combination
              WDialog     -> wdialog1
+             Push        -> pushSample
+             Trace       -> traceSample
 
 --withSource txt w= [shamlet|
 --   <iframe src= />"$(window).scrollTop($('*:contains('" ++ txt ++"').offset().top);"
@@ -251,8 +256,8 @@ counterWidget n= do
    <|> wlink "d" << b << " -- ")
   `wcallback`
     \op -> case op  of
-      "i" -> counterWidget (n + 1)    !> "increment"
-      "d" -> counterWidget (n - 1)    !> "decrement"
+      "i" -> counterWidget (n + 1)                        !> "increment"
+      "d" -> counterWidget (n - 1)                        !> "decrement"
 
 rpaid= unsafePerformIO $ newMVar (0 :: Int)
 
@@ -275,8 +280,8 @@ preventBack= do
 
 options= do
    r <- ask $ getSelect (setSelectedOption ""  (p <<  "select a option") <|>
-                         setOption "red"  (b <<  "red")     <|>
-                         setSelectedOption "blue" (b <<  "blue")    <|>
+                         setOption "red"  (b <<  "red")                  <|>
+                         setOption "blue" (b <<  "blue")                 <|>
                          setOption "Green"  (b <<  "Green")  )
                          <! dosummit
    ask $ p << (r ++ " selected") ++> wlink () (p <<  " menu")
@@ -451,7 +456,8 @@ loginSample= do
     ask $ p <<  "Please login with admin/admin"
             ++> userWidget (Just "admin") userLogin
     user <- getCurrentUser
-    ask $ b <<  ("user logged as " <>  user) ++> wlink ()  << p <<  " logout and go to menu"
+    ask $   b <<  ("user logged as " <>  user)
+        ++> wlink ()  << p <<  " logout and go to menu"
     logout
 
 
@@ -523,3 +529,56 @@ stdheader c= docTypeHtml
        <> [shamlet| <script type="text/javascript" src="http://output18.rssinclude.com/output?type=js&amp;id=727700&amp;hash=8aa6c224101cac4ca2a7bebd6e28a2d7"></script>|]
 
               ))
+
+traceSample= do
+  page $   h2 << "Error trace example"
+       ++> p << "MFlow now produces execution traces in case of error by making use of the backtracking mechanism"
+       ++> p << "It is more detailed than a call stack"
+       ++> p << "this example has a deliberate error"
+       ++> br
+       ++> p << "You must be logged as admin to see the trace"
+       ++> wlink () << p << "press here"
+  page $   p <<  "Please login with admin/admin"
+       ++> userWidget (Just "admin") userLogin
+  page $ p << "the trace will appear after you press the link. press one of the options available at the bottomm of the page"
+           ++> br
+           ++> wlink () << "press here"
+  page $ undefined
+
+pushSample=  do
+  tv <- liftIO $ newTVarIO $ Just "The content will be appended here"
+  page $   h2 << "push example"
+       ++> p << "The content of the text box will be appended to the push widget above."
+       ++> p << "A push widget can have links and form fields."
+       ++> p << "Since they are asynchronous the communucation must be trough mutable variables"
+       ++> p << "The input box is configured with autoRefresh"
+       ++> hr
+
+       ++> pageFlow "push" (push Append (disp tv) <** input tv)
+       **> br
+       ++> br
+       ++> wlink () << b << "exit"
+
+  where
+  disp tv= do
+      setTimeouts 100 0
+      line <- tget tv
+      p <<  line ++> noWidget
+
+  input tv= autoRefresh $ do
+      line <- getString Nothing <** submitButton "Enter"
+      tput tv line
+
+
+  tput tv x = atomic $ writeTVar  tv ( Just x)
+
+  tget tv= atomic $ do
+      mr <- readTVar tv
+      case mr of
+         Nothing -> retry
+         Just r -> do
+          writeTVar tv Nothing
+          return r
+
+atomic= liftIO . atomically
+

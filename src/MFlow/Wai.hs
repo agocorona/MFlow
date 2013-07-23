@@ -89,7 +89,7 @@ waiMessageFlow  ::  Request ->  ResourceT IO Response
 waiMessageFlow req1=   do
      let httpreq1= getParams  req1 
 
-     let cookies=getCookies  httpreq1
+     let cookies = getCookies  httpreq1
 
      (flowval , retcookies) <-  case lookup flow cookies of
               Just fl -> return  (fl, [])

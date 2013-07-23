@@ -359,7 +359,7 @@ waction f ac = do
   where
   flowToView x=
           View $ do
-              r <- runBackT $ runFlowM  x
+              r <- runSup $ runFlowM  x
               case r of
                 NoBack x ->
                      return (FormElm [] $ Just x)
@@ -488,7 +488,7 @@ setCheckBox checked v= View $ do
   put st{needForm= True}
   let env = mfEnv st
       strs= map snd $ filter ((==) n . fst) env
-      mn= if null strs then Nothing else Just $ head strs !> "head 3"
+      mn= if null strs then Nothing else Just $ head strs
       val = inSync st
   let ret= case val of                    -- !> show val of
         True  -> Just $ CheckBoxes  strs  -- !> show strs
@@ -765,7 +765,7 @@ html ++> digest =  (html `mappend`) <<< digest
 infixl 8 <!
 widget <! attribs= View $ do
       FormElm fs  mx <- runView widget
-      return $ FormElm  (head fs `attrs` attribs:tail fs) mx !> "head 4"
+      return $ FormElm  (head fs `attrs` attribs:tail fs) mx
 --      case fs of
 --        [hfs] -> return $ FormElm  [hfs `attrs` attribs] mx
 --        _ -> error $ "operator <! : malformed widget: "++ concatMap (unpack. toByteString) fs
@@ -1021,7 +1021,7 @@ ask
       View view IO a -> FlowM view IO a
 ask w =  do
  st1 <- get
- if isJust $ mfTrace st1 then fail "" else do
+ if not . null $ mfTrace st1 then fail "" else do
   -- AJAX
   let env= mfEnv st1
       mv1= lookup "ajax" env
@@ -1038,11 +1038,12 @@ ask w =  do
      let st= st1{needForm= False, inSync= False, mfRequirements= [],linkMatched=False} 
      put st
 
-     FormElm forms mx <- FlowM . lift  $ runView  w
+     FormElm forms mx <- FlowM . lift  $ runView  w    !> "ASK"
 
      st' <- get
      if notSyncInAction st' then put st'{notSyncInAction=False}>> ask w
       else if mfAutorefresh st' then resetState st st' >>  FlowM (lift  nextMessage) >> ask w
+
       else
       case mx of
        Just x -> do
@@ -1128,7 +1129,7 @@ nextMessage= do
          path= mfPath st
          inPageFlow= isJust $ mfPageIndex st  
      put st{ mfPath= npath
-           , mfPIndex= case mfPageIndex st !>  ("mfPageIndex=" ++ show (mfPageIndex st)) of
+           , mfPIndex= case mfPageIndex st of
                          Just n -> n
                          Nothing  ->
                              comparePaths  (mfPIndex st) 1 (tail path) (tail npath)
@@ -1138,10 +1139,10 @@ nextMessage= do
 
      where
      updateParams :: Bool -> Params -> Params -> Params
-     updateParams False _ req= req   !> "NOT IN PAGE FLOW"
+     updateParams False _ req= req
      updateParams True env req=
         let params= takeWhile isparam env
-            fs= fst $ head req !> "head 1"
+            fs= fst $ head req
             parms= (case findIndex (\p -> fst p == fs)  params of
                       Nothing -> params
                       Just  i -> take i params)
@@ -1220,6 +1221,7 @@ submitButton label= getParam Nothing "submit" $ Just label
 newtype AjaxSessionId= AjaxSessionId String deriving Typeable
 
 -- | Install the server code and return the client code for an AJAX interaction.
+-- It is very lightweight, It does no t need jQuery.
 --
 -- This example increases the value of a text box each time the box is clicked
 --
@@ -1308,26 +1310,26 @@ wlink x v= View $ do
           back =  True -- not $ inSync st  || (inSync st && linkMatched st)
 
       let path=   currentPath back index lpath verb ++ ('/':name)
-                                       !> (show $ mfPath st)
+                                       -- !> (show $ mfPath st)
           toSend = flink path v
 
 
       r <- if linkMatched st then return Nothing
            else
-           if isJust $ mfPageIndex st !> (show $ mfPageIndex st)
+           if isJust $ mfPageIndex st -- !> (show $ mfPageIndex st)
              then
-             case  M.lookup name $ mfLinks st !> (show $ mfLinks st)of
+             case  M.lookup name $ mfLinks st of
                  Just 0 -> do
                      modify $ \st -> st{ inSync= True}
-                     return Nothing  !> (name ++ " 0 Fail")
+                     return Nothing  -- !> (name ++ " 0 Fail")
 
                  Just n ->  do
                      modify $ \st -> st{ inSync= True,linkMatched= True
                                       , mfPIndex= index + 1
                                       , mfLinks= M.insert name (n-1) $ mfLinks st}
-                                            !> (name ++" "++ show n ++ " Match")
+                                            -- !> (name ++" "++ show n ++ " Match")
                      return $ Just x
-                 Nothing -> return Nothing  !> (name ++ " 0 Fail")
+                 Nothing -> return Nothing  -- !> (name ++ " 0 Fail")
              else
              case  index < length lpath && name== lpath !! index  of
              True -> do
@@ -1382,7 +1384,7 @@ firstOf xs= View $ do
       forms <- mapM runView  xs
       let vs  = concatMap (\(FormElm v _) ->  [mconcat v]) forms
           res = filter isJust $ map (\(FormElm _ r) -> r) forms
-          res1= if null res then Nothing else head res !> "head 2"
+          res1= if null res then Nothing else head res 
       return $ FormElm  vs res1
 
 -- | from a list of widgets, it return the validated ones.
@@ -1582,21 +1584,21 @@ pageFlow str flow=do
        put s{mfPrefix= str ++ mfPrefix s
             ,mfSequence=0
             ,mfLinks= acum M.empty $ drop (mfPIndex s) (mfPath s)
-            ,mfPageIndex= Just $ mfPIndex s }                                                      !> ("PARENT pageflow. prefix="++ str)
+            ,mfPageIndex= Just $ mfPIndex s }                                                      -- !> ("PARENT pageflow. prefix="++ str)
 
        flow <** (modify (\s' -> s'{mfSequence= mfSequence s
-                                 ,mfPrefix= mfPrefix s})
-                                                                                                                      !> ("END PARENT pageflow. prefix="++ str))
+                                 ,mfPrefix= mfPrefix s}))
+                                                                                                   -- !> ("END PARENT pageflow. prefix="++ str))
 
 
        else do
        put s{mfPrefix= str++ mfPrefix s
             ,mfLinks= acum M.empty $ drop (fromJust $ mfPageIndex s) (mfPath s)
-            ,mfSequence=0}                                                                                  !> ("CHILD pageflow. prefix="++ str)
+            ,mfSequence=0}                                                                         --  !> ("CHILD pageflow. prefix="++ str)
 
        flow <** (modify (\s' -> s'{mfSequence= mfSequence s
-                                 ,mfPrefix= mfPrefix s})
-                                                                                                                      !> ("END CHILD pageflow. prefix="++ str))
+                                 ,mfPrefix= mfPrefix s}))
+                                                                                                   -- !> ("END CHILD pageflow. prefix="++ str))
 
 
 

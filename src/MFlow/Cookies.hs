@@ -12,12 +12,11 @@ import Data.Typeable
 import Data.Maybe(fromJust)
 import Unsafe.Coerce
 import Data.Monoid
-
-
-
 import Text.Parsec
 import Control.Monad.Identity
---import Text.Parsec.Token
+
+--import Debug.Trace
+--(!>)= flip trace
 
 contentHtml= ("Content-Type", "text/html")
 
@@ -211,3 +210,4 @@ hexadecimal = do d1 <- hexDigit
 urlDecode str= case parse readEnv "" str of  -- let Parser p= readEnv in  p str
                      Left err  -> error $ "urlDecode: decode  error: " ++ show err
                      Right r  ->   r
+--               !> ("decode="++str)

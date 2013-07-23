@@ -94,7 +94,7 @@ import System.IO.Unsafe
 import Data.TCache
 import Data.TCache.DefaultPersistence  hiding(Indexable(..))
 import Data.TCache.Memoization
-import  Data.ByteString.Lazy.Char8 as B  (readFile,ByteString, concat,pack, unpack,empty,append,cons,fromChunks)
+import  Data.ByteString.Lazy.Char8 as B  (head, readFile,ByteString, concat,pack, unpack,empty,append,cons,fromChunks)
 import Data.ByteString.Lazy.Internal (ByteString(Chunk))
 import qualified Data.Map as M
 import System.IO
@@ -137,7 +137,7 @@ type Params =  [(String,String)]
 
 class Processable a where
      pwfname :: a -> String
-     pwfname s= head $ pwfPath s !> "head mf"
+     pwfname s= Prelude.head $ pwfPath s 
      pwfPath :: a -> [String]
      puser :: a -> String
      pind :: a -> String
@@ -413,13 +413,13 @@ showError wfname token@Token{..} e= do
 
 errorMessage t e u wf env=
      "\n---------------------ERROR-------------------------\n"++
-     "TIME=" ++ t ++"\n" ++
+     "TIME=" ++ t ++"\n\n" ++
      e++
      "\n\nUSER= "++
      u++
      "\n\nVERB= "++
      wf++
-     "\n\nREQUEST:\n"++
+     "\n\nREQUEST:\n\n"++
      show env
 
 
@@ -444,13 +444,13 @@ defNotFoundResponse user msg=
            _       -> "The administrator has been notified"
   where
   fresp msg=
-   "<html><h4>Error 404: Page not found or error ocurred</h4>" <> msg <>
+   "<html><h4>Error 404: Page not found or error ocurred</h4> <p style=\"font-family:courier\">" <> msg <>"</p>" <>
    "<br/>" <> opts <> "<br/><a href=\"/\" >press here to go home</a></html>"
 
    
   paths= Prelude.map B.pack . M.keys $ unsafePerformIO getMessageFlows
   opts=  "options: " <> B.concat (Prelude.map  (\s ->
-                          "<a href=\"/"<>  s <>"\">"<> s <>"</a>, ") paths)
+                          "<a href=\"/"<>  s <>"\">"<> s <>"</a>, ") $ filter (\s -> B.head s /= '_') paths)
 
 notFoundResponse=  unsafePerformIO $ newIORef defNotFoundResponse
 
@@ -513,7 +513,7 @@ setFilesPath path= writeIORef rfilesPath path
 rfilesPath= unsafePerformIO $ newIORef "files/"
 
 serveFile path'= do
-     when(let hpath= head path' in hpath == '/' || hpath =='\\') $ error noperm
+     when(let hpath= Prelude.head path' in hpath == '/' || hpath =='\\') $ error noperm
      when(not(".." `isSuffixOf` path') && ".." `isInfixOf` path') $ error noperm
      filesPath <- readIORef rfilesPath
      let path= filesPath ++ path'

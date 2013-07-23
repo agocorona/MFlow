@@ -25,13 +25,13 @@ testREST= do
           page $ wlink "2" << cont "1"
           page $ wlink "3" << cont "2"
           page $ wlink "4" << cont "3"
-          page $ wlink ()  <<  "menu"
+          page $ wlink ()  << "menu"
 
     "a" -> do
           page $ wlink "b" << cont "a"
           page $ wlink "c" << cont "b"
-          page $ undefined -- wlink "d" << cont "c"
-          page $ wlink ()  <<  "menu"
+          page $ wlink "d" << cont "c"
+          page $ wlink ()  << "menu"
 
 
 cont x= p << "page for"

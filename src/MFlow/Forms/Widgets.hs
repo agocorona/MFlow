@@ -32,11 +32,7 @@ delEdited, getEdited
 ,mFieldEd, mField
 
 -- * Ajax refreshing of widgets
-,autoRefresh,
-
--- * Push
-wpush
-
+,autoRefresh, appendUpdate, prependUpdate, push, UpdateMethod(..)
 ) where
 import MFlow
 import MFlow.Forms
@@ -57,7 +53,9 @@ import qualified Data.Map as M
 import Data.IORef
 import MFlow.Cookies
 import Data.Maybe
+import Data.Char
 import Control.Monad.Identity
+import Control.Workflow(killWF)
 
 
 readyJQuery="ready=function(){if(!window.jQuery){return setTimeout(ready,100)}};"
@@ -263,29 +261,29 @@ wEditList holderview w xs addId = do
     delEdited sel ws'
     return r
 
-wpush
-  :: (Typeable a,
-      FormInput v) =>
-     (v -> v)
-     -> String
-     -> String
-     -> String
-     -> (String -> View v IO a)
-     -> View v IO a
-wpush  holder modifier addId expr w = do
-    id1 <- genNewId
-    let sel= "$('#" <>  B.pack id1 <> "')"
-    callAjax <- ajax $ \s ->  appendWidget sel ( changeMonad $ w s)
-    let installevents= "$(document).ready(function(){\
-              \$('#"++addId++"').click(function(){"++callAjax expr ++ "});})"
-
-    requires [JScriptFile jqueryScript [installevents] ]
-
-    ws <- getEdited sel
-
-    r <-  holder  <<< firstOf ws  <! [("id",id1)]
-    delEdited sel ws
-    return r
+--wpush
+--  :: (Typeable a,
+--      FormInput v) =>
+--     (v -> v)
+--     -> String
+--     -> String
+--     -> String
+--     -> (String -> View v IO a)
+--     -> View v IO a
+--wpush  holder modifier addId expr w = do
+--    id1 <- genNewId
+--    let sel= "$('#" <>  B.pack id1 <> "')"
+--    callAjax <- ajax $ \s ->  appendWidget sel ( changeMonad $ w s)
+--    let installevents= "$(document).ready(function(){\
+--              \$('#"++addId++"').click(function(){"++callAjax expr ++ "});})"
+--
+--    requires [JScriptFile jqueryScript [installevents] ]
+--
+--    ws <- getEdited sel
+--
+--    r <-  holder  <<< firstOf ws  <! [("id",id1)]
+--    delEdited sel ws
+--    return r
 
 
 
@@ -490,7 +488,7 @@ tFieldGen  k  getcontent create =   wfreeze k 0 $ do
     content <- liftIO $ getcontent  k
     admin   <- getAdminName
     ajaxjs  <- ajax  $ \str -> do
-              let (k,s)= break (==',')    str !> str
+              let (k,s)= break (==',')    str  -- !> str
               liftIO  . create  k  $ fromStrNoEncode (tail s)
               liftIO $ flushCached k
               return "alert('saved')"
@@ -604,7 +602,23 @@ autoRefresh
      FormInput v)
   => View v m a
   -> View v m a
-autoRefresh w=  do
+autoRefresh w=  update "html" w
+
+-- | does the same than autoRefresh but append the result of each request to the bottom of the widget
+appendUpdate  :: (MonadIO m,
+     FormInput v)
+  => View v m a
+  -> View v m a
+appendUpdate= update "append"
+
+-- | does the same than autoRefresh but prepend the result of each request before the current widget content
+prependUpdate   :: (MonadIO m,
+     FormInput v)
+  => View v m a
+  -> View v m a
+prependUpdate= update "prepend"
+
+update method w= do
     id <- genNewId
 
     let installscript=
@@ -628,7 +642,7 @@ autoRefresh w=  do
          FormElm form mr <- runView $ insertForm w
          st <- get
          let HttpData ctype c s= toHttpData $ mconcat form
-         liftIO . sendFlush t $ HttpData (ctype ++ mfHttpHeaders st) (mfCookies st ++ c) s
+         liftIO . sendFlush t $ HttpData (ctype ++ ("Cache-Control", "no-cache, no-store"):mfHttpHeaders st) (mfCookies st ++ c) s
          put st{mfAutorefresh=True}
          return $ FormElm [] mr
 
@@ -646,7 +660,7 @@ autoRefresh w=  do
     \       url: actionurl+'?bustcache='+ new Date().getTime()+'&auto'+id+'=true',\n\
     \       data: pdata,\n\
     \       success: function (resp) {\n\
-    \         id1.html(resp);\n\
+    \         id1."++method++"(resp);\n\
     \         ajaxGetLink(id)\n\
     \       },\n\
     \       error: function (xhr, status, error) {\n\
@@ -672,7 +686,7 @@ autoRefresh w=  do
             \url: url,\n\
             \data: 'auto'+id+'=true&'+pdata,\n\
             \success: function (resp) {\n\
-                \id1.html(resp);\n\
+                \id1."++method++"(resp);\n\
                 \ajaxPostForm(id)\n\
             \},\n\
             \error: function (xhr, status, error) {\n\
@@ -684,6 +698,116 @@ autoRefresh w=  do
       \return false;\n\
      \}"
 
+data UpdateMethod= Append | Prepend | Html deriving Show
+
+-- | continously execute a widget and update the content.
+-- The update method specify how the update is done. 'Html' means a substitution of content.
+-- It can be used to show data updates. The widget is executed in a different process than
+--  the one of the rest of the page. Although the process is initiated with the page context,
+-- updates in the session context are not seen by the push widget
+-- To communicate with te widget, use DBRef's or TVar and the
+-- STM semantics for waiting updates using 'retry'.
+--
+--
+-- This example is a counter increased each second:
+--
+-- > pushIncrease= do
+-- >   tv <- liftIO $ newTVarIO 0
+-- >   page $ push Html $ do
+-- >       n <- atomic $ readTVar tv
+-- >       atomic $ writeTVar tv $ n + 1
+-- >       liftIO $ threadDelay 1000000
+-- >       b << (show n) ++> noWidget
+--
+--
+-- This other  simulates a console output that echoes what is entered in a text box
+-- below. It has two widgets: a push output in append mode and a text box input.
+-- The communication it uses a TVar. The push widget wait for updates in the TVar.
+-- because the second widget uses autoRefresh, all happens in the same page.
+--
+-- It is recommended to add a timeout to the push widget, like in the example:
+--
+-- >  pushSample=  do
+-- >   tv <- liftIO $ newTVarIO $ Just "init"
+-- >   page $ push Append (disp tv) <** input tv
+-- >
+-- >   where
+-- >   disp tv= do
+-- >       setTimeouts 100 0
+-- >       line <- tget tv
+-- >       p <<  line ++> noWidget
+-- >
+-- >   input tv= autoRefresh $ do
+-- >       line <- getString Nothing <** submitButton "Enter"
+-- >       tput tv line
+-- >
+-- >   tput tv x = atomic $ writeTVar  tv ( Just x)  !> "WRITE"
+-- >
+-- >   tget tv= atomic $ do
+-- >       mr <- readTVar tv
+-- >       case mr of
+-- >          Nothing -> retry
+-- >          Just r -> do
+-- >           writeTVar tv Nothing
+-- >           return r
+
+push :: FormInput v
+  => UpdateMethod
+  -> View v IO ()
+  -> View v IO ()
+push method'  w= let method= map toLower $ show method' in push' method w
+push' method w= do
+    id <- genNewId
+    st <- get
+    let token= mfToken st
+        dat= mfData st
+        procname= "_push" ++ tind token ++ id
+        installscript=
+            "$(document).ready(function(){\n"
+               ++ "ajaxPush('"++id++"');"
+               ++ "})\n"
+
+    new <- gets newAsk
+
+    when new  $ do
+
+        killWF procname token{twfname= procname}
+        let proc= transient . runFlow . ask $ w' dat
+        requires [ServerProc (procname, proc),
+                  JScript $ ajaxPush procname,
+                  JScriptFile jqueryScript [installscript]]
+
+
+
+    (ftag "div" <<< noWidget) <! [("id",id)]
+
+  where
+  w' dat= do
+     modify $ \s -> s{inSync= True,newAsk=True,mfData=dat}
+     w
+
+
+  ajaxPush procname= "function ajaxPush(id){\n\
+    \var id1= $('#'+id);\n\
+    \var ida= $('#'+id+' a');\n\
+    \   var actionurl='/"++procname++"';\n\
+    \   var dialogOpts = {\n\
+    \       cache: false,\n\
+    \       type: 'GET',\n\
+    \       url: actionurl,\n\
+    \       data: '',\n\
+    \       success: function (resp) {\n\
+    \         id1."++method++"(resp);\n\
+    \         ajaxPush(id)\n\
+    \       },\n\
+    \       error: function (xhr, status, error) {\n\
+    \           var msg = $('<div>' + status + '</div>');\n\
+    \           id1.html(msg);\n\
+    \       }\n\
+    \   };\n\
+    \   $.ajax(dialogOpts);\n\
+    \   return false;\n\
+  \}"
 
 -- | show the jQuery spinner widget. the first parameter is the configuration . Use \"()\" by default.
 -- See http://jqueryui.com/spinner

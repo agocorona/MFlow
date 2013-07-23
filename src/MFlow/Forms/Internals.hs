@@ -46,16 +46,17 @@ import Control.Monad.Identity
 import Data.List
 import System.IO.Unsafe
 import Control.Concurrent.MVar
+import Control.Workflow(WFErrors(Timeout))
 --
 ---- for traces
 --
 
-import Control.Exception as CE(catch,SomeException)
+import Control.Exception as CE(catch,SomeException,throw,fromException)
 import Control.Concurrent
 import Control.Monad.Loc
 
 import Debug.Trace
-(!>) = const --    flip trace
+(!>) = const --   flip trace
 
 instance Serialize a => Serializable a where
   serialize=  runW . showp
@@ -135,34 +136,35 @@ iCanFailBack= "B"
 repeatPlease= "G"
 noFailBack= "N"
 
-newtype BackT m a = BackT { runBackT :: m (FailBack a ) }
+newtype Sup m a = Sup { runSup :: m (FailBack a ) }
 
-instance (Monad m, HandleBacktracking s m)=> Monad (BackT  m) where
-    fail   _ = BackT . return $ GoBack
-    return x = BackT . return $ NoBack x
-    x >>= f  = BackT $ loop
-     where
-     loop = do
-        s <- get
-        v <-  supervise $ runBackT x                         -- !> "loop"
-        case v of
-            NoBack y  -> supervise $ runBackT (f y)         -- !> "runback"
-            BackPoint y  -> do
-                 z <- supervise $ runBackT (f y)            -- !> "BACK"
-                 case z of
-                  GoBack  -> handleb s >> loop            --   !> "BACKTRACKING"
-                  other   -> return other
-            GoBack  ->  return  $ GoBack
-
-class MonadState s m => HandleBacktracking s m where
-   handleb     :: s -> m ()
-   handleb = const $ return ()
+class MonadState s m => Supervise s m where
+   supBack     :: s -> m ()
+   supBack = const $ return ()
    
    supervise ::    m (FailBack a) -> m (FailBack a)
    supervise= id
 
---instance Monad m => HandleBacktracking () m where
+--instance Monad m => Supervise () m where
 --   handle= const $ return ()
+
+instance (Supervise s m)=> Monad (Sup  m) where
+    fail   _ = Sup . return $ GoBack
+    return x = Sup . return $ NoBack x
+    x >>= f  = Sup $ loop
+     where
+     loop = do
+        s <- get
+        v <-  supervise $ runSup x                         -- !> "loop"
+        case v of
+            NoBack y  -> supervise $ runSup (f y)         -- !> "runback"
+            BackPoint y  -> do
+                 z <- supervise $ runSup (f y)            -- !> "BACK"
+                 case z of
+                  GoBack  -> supBack s >> loop            --   !> "BACKTRACKING"
+                  other   -> return other
+            GoBack  ->  return  $ GoBack
+
 
 fromFailBack (NoBack  x)   = x
 fromFailBack (BackPoint  x)= x
@@ -176,32 +178,32 @@ toFailBack x= NoBack x
 -- This way when the user press the back button, the computation will execute back, to
 -- the returned code, according with the user navigation.
 breturn :: (Monad m) => a -> FlowM v m a
-breturn = flowM . BackT . return . BackPoint           -- !> "breturn"
+breturn = flowM . Sup . return . BackPoint           -- !> "breturn"
 
 
-instance (HandleBacktracking s m,MonadIO m) => MonadIO (BackT  m) where
-  liftIO f= BackT $ liftIO  f >>= \ x -> return $ NoBack x
+instance (Supervise s m,MonadIO m) => MonadIO (Sup  m) where
+  liftIO f= Sup $ liftIO  f >>= \ x -> return $ NoBack x
 
-instance (Monad m,Functor m) => Functor (BackT m) where
-  fmap f g= BackT $ do
-     mr <- runBackT g
+instance (Monad m,Functor m) => Functor (Sup m) where
+  fmap f g= Sup $ do
+     mr <- runSup g
      case mr of
       BackPoint x  -> return . BackPoint $ f x
       NoBack x     -> return . NoBack $ f x
       GoBack       -> return $ GoBack
 
 
-liftBackT f = BackT $ f  >>= \x ->  return $ NoBack x
-instance MonadTrans BackT where
-  lift f = BackT $ f  >>= \x ->  return $ NoBack x
+liftSup f = Sup $ f  >>= \x ->  return $ NoBack x
+instance MonadTrans Sup where
+  lift f = Sup $ f  >>= \x ->  return $ NoBack x
 
 
-instance (HandleBacktracking s m,MonadState s m) => MonadState s (BackT m) where
+instance (Supervise s m,MonadState s m) => MonadState s (Sup m) where
    get= lift get                                -- !> "get"
    put= lift . put
 
 type WState view m = StateT (MFlowState view) m
-type FlowMM view m=  BackT (WState view m)
+type FlowMM view m=  Sup (WState view m)
 
 data FormElm view a = FormElm [view] (Maybe a) deriving Typeable
 
@@ -249,8 +251,8 @@ instance Serialize a => Serialize (FormElm view a) where
 newtype View v m a = View { runView :: WState v m (FormElm v a)}
 
 
-instance  Monad m => HandleBacktracking (MFlowState v) (WState v m) where
-   handleb st= do
+instance  Monad m => Supervise (MFlowState v) (WState v m) where
+   supBack st= do
       MFlowState{..} <- get
       put  st{ mfEnv= mfEnv,mfToken=mfToken
                     , mfPath=mfPath,mfPIndex= mfPIndex
@@ -260,25 +262,15 @@ instance  Monad m => HandleBacktracking (MFlowState v) (WState v m) where
 
 
 
-
---   supervise f= do
---      s <- get
---      (r, s') <- lift $ runStateT f s `CMT.catch` handler s
---      put s'
---      return r
-   
---      where
---      handler s (e :: ErrorCall)=  return (GoBack,s{mfTrace= Just [" exception: " ++show e]}) !> $locTH
-
 --instance  CMT.MonadCatchIO (FlowM v IO) where
---    catch f hand = FlowM . BackT $ do
+--    catch f hand = FlowM . Sup $ do
 --            s <- get
 --            (r,s') <- lift $ execMF f s  `CE.catch` \e -> execMF (hand e) s
 --
 --            put s'
 --            return r
 --            where
---            execMF f s= runStateT (runBackT (runFlowM f) ) s
+--            execMF f s= runStateT (runSup (runFlowM f) ) s
 
 
 
@@ -286,26 +278,30 @@ instance  Monad m => HandleBacktracking (MFlowState v) (WState v m) where
 
 
 instance  MonadLoc (FlowM v IO) where
-    withLoc loc f = FlowM . BackT $ do
+    withLoc loc f = FlowM . Sup $ do
        withLoc loc $ do
             s <- get
             (r,s') <- lift $ do
-                       (r,s') <- runStateT (runBackT (runFlowM f) ) s  `CE.catch` (handler1  loc s)
+                       rs@(r,s') <- runStateT (runSup (runFlowM f) ) s
+--                                          `CE.catch`(\(e :: WFErrors) -> CE.throw e)
+                                          `CE.catch` (handler1  loc s)
                        case mfTrace s' of
-                            Nothing     ->  return (r,s')
-                            Just  trace ->  return(r, s'{mfTrace= Just( loc:trace)})
+                            []     ->  return rs
+                            trace ->  return(r, s'{mfTrace= loc:trace})
             put s'
             return r
 
        where
-       handler1 loc s (e :: SomeException)=
-        return (GoBack, s{mfTrace= Just ["exception: " ++show e]})
+       handler1 loc s (e :: SomeException)= do
+        case CE.fromException e :: Maybe WFErrors of
+           Just e  -> CE.throw e
+           Nothing -> return (GoBack, s{mfTrace= ["exception: " ++show e]})
 
 --instance (Serialize a,Typeable a, FormInput v) => MonadLoc (FlowM v (Workflow IO)) a where
---    withLoc loc f =  FlowM . BackT $
+--    withLoc loc f =  FlowM . Sup $
 --       withLoc loc $  do
 --            s <- get
---            (r,s') <-  lift . WF.step $ exec1d "jkkjk" ( runStateT (runBackT $ runFlowM f) s) `CMT.catch` (handler1  loc s)
+--            (r,s') <-  lift . WF.step $ exec1d "jkkjk" ( runStateT (runSup $ runFlowM f) s) `CMT.catch` (handler1  loc s)
 --            put s'
 --            return r
 --
@@ -319,20 +315,24 @@ instance  MonadLoc (View v IO)  where
        withLoc loc $ do
             s <- get
             (r,s') <- lift $ do
-                       (r,s') <- runStateT (runView f) s  `CE.catch` (handler1  loc s)
+                       rs@(r,s') <- runStateT (runView f) s
+--                                      `CE.catch`(\(e :: WFErrors) -> throw e)
+                                      `CE.catch` (handler1  loc s)
                        case mfTrace s' of
-                            Nothing     ->  return (r,s')
-                            Just  trace ->  return(r, s'{mfTrace= Just( loc:trace)})
+                            []     ->  return rs
+                            trace  ->  return(r, s'{mfTrace=  loc:trace})
             put s'
             return r
 
        where
-       handler1 loc s (e :: SomeException)=
-        return (FormElm [] Nothing, s{mfTrace= Just ["exception: " ++show e]}) !> loc
+       handler1 loc s (e :: SomeException)= do
+        case CE.fromException e :: Maybe WFErrors of
+           Just e  -> CE.throw e
+           Nothing -> return (FormElm [] Nothing, s{mfTrace= ["exception: " ++show e]}) -- !> loc
 
 
 
--- | the FlowM monad executes the page navigation. It perform backtracking when necessary to syncronize
+-- | the FlowM monad executes the page navigation. It perform Supracking when necessary to syncronize
 -- when the user press the back button or when the user enter an arbitrary URL. The instruction pointer
 -- is moved to the right position within the procedure to handle the request.
 --
@@ -383,7 +383,7 @@ instance  (Monad m) => Monad (View view m) where
                    FormElm form1 mk <- x
                    case mk of
                      Just k  -> do
-                        modify $ \st -> st{linkMatched= False} !> "------M--------"
+                        modify $ \st -> st{linkMatched= False} 
                         FormElm form2 mk <- runView $ f k
                         return $ FormElm (form1 ++ form2) mk
 
@@ -394,7 +394,7 @@ instance  (Monad m) => Monad (View view m) where
                    FormElm form1 mk <- x
                    case mk of
                      Just k  -> do
-                        modify $ \st -> st{linkMatched= False} !> "------M--------"
+                        modify $ \st -> st{linkMatched= False} 
                         FormElm form2 mk <- runView  f 
                         return $ FormElm (form1 ++ form2) mk
 
@@ -427,7 +427,7 @@ wcallback (View x) f = View $ do
    FormElm form1 mk <- x
    case mk of
      Just k  -> do
-       modify $ \st -> st{linkMatched= False} !> "-------C-------"
+       modify $ \st -> st{linkMatched= False} 
        runView (f k)
      Nothing -> return $ FormElm form1 Nothing
 
@@ -524,9 +524,9 @@ goingBack = do
       print $ "newAsk st=" ++ show (newAsk st)
     return $ not (inSync st) && not (newAsk st)
 
--- | Will prevent the backtrack beyond the point where 'preventGoingBack' is located.
+-- | Will prevent the Suprack beyond the point where 'preventGoingBack' is located.
 -- If the  user press the back button beyond that point, the flow parameter is executed, usually
--- it is an ask statement with a message. If the flow is not going back, it does nothing. It is a cut in backtracking
+-- it is an ask statement with a message. If the flow is not going back, it does nothing. It is a cut in Supracking
 --
 -- It is useful when an undoable transaction has been commited. For example, after a payment.
 --
@@ -585,7 +585,7 @@ data MFlowState view= MFlowState{
    mfLinks          :: M.Map String Int,
 
    mfAutorefresh   :: Bool,
-   mfTrace          :: Maybe [String]
+   mfTrace          :: [String]
    }
    deriving Typeable
 
@@ -594,7 +594,7 @@ type Void = Char
 mFlowState0 :: (FormInput view) => MFlowState view
 mFlowState0 = MFlowState 0 False  True  True  "en"
                 [] False  (error "token of mFlowState0 used")
-                0 0 [] [] stdHeader False [] M.empty  Nothing 0 False    []   ""   1 Nothing False M.empty False Nothing
+                0 0 [] [] stdHeader False [] M.empty  Nothing 0 False    []   ""   1 Nothing False M.empty False []
 
 
 -- | Set user-defined data in the context of the session.
@@ -722,15 +722,20 @@ setHttpHeader n v = do
     modify $ \st -> st{mfHttpHeaders=  (n,v):mfHttpHeaders st }
 
 
--- | Set 1) the timeout of the flow execution since the last user interaction.
--- Once passed, the flow executes from the begining. 2). In persistent flows
+-- | Set
+--  1) the timeout of the flow execution since the last user interaction.
+-- Once passed, the flow executes from the begining.
+--
+-- 2) In persistent flows
 -- it set the session state timeout for the flow, that is persistent. If the
 -- flow is not persistent, it has no effect.
+--
+-- As the other state primitives, it can be run in the Flow and in the View monad
 --
 -- `transient` flows restart anew.
 -- persistent flows (that use `step`) restart at the las saved execution point, unless
 -- the session time has expired for the user.
-setTimeouts :: ( Monad m) => Int -> Integer -> FlowM view m ()
+setTimeouts :: ( MonadState (MFlowState v) m) => Int -> Integer ->  m ()
 setTimeouts kt st= do
  fs <- get
  put fs{ mfkillTime= kt, mfSessionTime= st}
@@ -922,7 +927,7 @@ The flow is executed in a loop. When the flow is finished, it is started again
 runFlow :: (FormInput view, MonadIO m)
         => FlowM view m () -> Token -> m () 
 runFlow  f t=
-  loop (runFlowOnce1  f) t --evalStateT (runBackT . runFlowM $ breturn() >>  f)  mFlowState0{mfToken=t,mfEnv= tenv t}  >> return ()  -- >> return ()
+  loop (runFlowOnce1  f) t --evalStateT (runSup . runFlowM $ breturn() >>  f)  mFlowState0{mfToken=t,mfEnv= tenv t}  >> return ()  -- >> return ()
   where
   loop f t = do
     t' <- f t
@@ -939,7 +944,7 @@ runFlowOnce :: (FormInput view,  Monad m)
 runFlowOnce f t= runFlowOnce1 f t  >> return ()
 
 runFlowOnce1  f t  =
-  evalStateT (runBackT . runFlowM $ do
+  evalStateT (runSup . runFlowM $ do
         backInit
         f
         getToken)
@@ -949,13 +954,12 @@ runFlowOnce1  f t  =
 
   where
   backInit= do
-     s <- get   !> "BACKTRACK to BEGINNING"
+     s <- get   !> "BackInit"
      case mfTrace s of
-       Just tr -> error $ disp tr
-
-       Nothing -> do
+       [] -> do
          modify $ \s -> s{mfEnv=[], newAsk= True}
          breturn ()
+       tr -> error $ disp tr
      where
      disp tr= "TRACE (error in the last line):\n\n" ++(concat $ intersperse "\n" tr)
   -- to restart the flow in case of going back before the first page of the flow
@@ -974,10 +978,10 @@ runFlowIn
   -> FlowM view m b
 runFlowIn wf f= do
   t <- gets mfToken
-  FlowM .  BackT $ liftIO $ WF.exec1nc wf $ runFlow1 f t
+  FlowM .  Sup $ liftIO $ WF.exec1nc wf $ runFlow1 f t
 
   where
-  runFlow1 f t=   evalStateT (runBackT . runFlowM $ f)  mFlowState0{mfToken=t,mfEnv= tenv t}  -- >>= return . fromFailBack  -- >> return ()
+  runFlow1 f t=   evalStateT (runSup . runFlowM $ f)  mFlowState0{mfToken=t,mfEnv= tenv t}  -- >>= return . fromFailBack  -- >> return ()
 
 -- | to unlift a FlowM computation. useful for executing the configuration generated by runFLowIn
 -- outside of a web application
@@ -987,7 +991,7 @@ runFlowConf  f = do
   q  <- liftIO newEmptyMVar  -- `debug` (i++w++u)
   qr <- liftIO newEmptyMVar
   let t=  Token "" "" "" [] [] q  qr
-  evalStateT (runBackT . runFlowM $   f )  mFlowState0{mfToken=t} >>= return . fromFailBack   -- >> return ()
+  evalStateT (runSup . runFlowM $   f )  mFlowState0{mfToken=t} >>= return . fromFailBack   -- >> return ()
 
 
 
@@ -1007,10 +1011,10 @@ step
       -> FlowM view (Workflow m) a
 step f= do
    s <- get
-   flowM $ BackT $ do
-        (r,s') <-  lift . WF.step $ runStateT (runBackT $ runFlowM f) s
+   flowM $ Sup $ do
+        (r,s') <-  lift . WF.step $ runStateT (runSup $ runFlowM f) s
         -- when recovery of a workflow, the MFlow state is not considered
-        when( mfSequence s' /= -1) $ put s'  !> (show $ mfSequence s') -- else put  s{newAsk=True}
+        when( mfSequence s' /= -1) $ put s'  -- !> (show $ mfSequence s') -- else put  s{newAsk=True}
         return r
 
 -- | to execute transient flows as if they were persistent
@@ -1025,8 +1029,8 @@ transientNav
       -> FlowM view (Workflow IO) a
 transientNav f= do
    s <- get
-   flowM $ BackT $ do
-        (r,s') <-  lift . unsafeIOtoWF $ runStateT (runBackT $ runFlowM f) s
+   flowM $ Sup $ do
+        (r,s') <-  lift . unsafeIOtoWF $ runStateT (runSup $ runFlowM f) s
         put s'
         return r
 
@@ -1040,17 +1044,17 @@ transientNav f= do
 --      -> FlowM view (Workflow m) (WFRef (FailBack a),a)
 --stepWFRef f= do
 --   s <- get
---   flowM $ BackT $ do
---        (r,s') <-  lift . WF.stepWFRef $ runStateT (runBackT $ runFlowM f) s
+--   flowM $ Sup $ do
+--        (r,s') <-  lift . WF.stepWFRef $ runStateT (runSup $ runFlowM f) s
 --        -- when recovery of a workflow, the MFlow state is not considered
 --        when( mfSequence s' >0) $ put s'
 --        return r
 
 --step f= do
 --   s <- get
---   flowM $ BackT $ do
+--   flowM $ Sup $ do
 --        (r,s') <-   do
---               (br,s') <- runStateT (runBackT $ runFlowM f) s
+--               (br,s') <- runStateT (runSup $ runFlowM f) s
 --               case br of
 --                 NoBack r    -> WF.step $ return  r
 --                 BackPoint r -> WF.step $ return  r
@@ -1070,7 +1074,7 @@ transientNav f= do
 --      Typeable a) =>
 --      FlowM view m a
 --      -> FlowM view (Workflow m) a
---stepDebug f= BackT  $ do
+--stepDebug f= Sup  $ do
 --      s <- get
 --      (r, s') <- lift $ do
 --              (r',stat)<- do
@@ -1079,7 +1083,7 @@ transientNav f= do
 --                          True ->do (r',  s'') <- getStep 0
 --                                    return (r',s{mfEnv= mfEnv (s'' `asTypeOf`s)})
 --                          False -> return (undefined,s)
---              (r'', s''') <- WF.stepDebug  $ runStateT  (runBackT f) stat >>= \(r,s)-> return (r, s)
+--              (r'', s''') <- WF.stepDebug  $ runStateT  (runSup f) stat >>= \(r,s)-> return (r, s)
 --              return $ (r'' `asTypeOf` r', s''' )
 --     put s'
 --     return r
@@ -1163,7 +1167,7 @@ installAllRequirements= do
 
  installAllRequirements1 v []= return v
  installAllRequirements1 v rs= do
-   let typehead= case head rs !> "head i1" of {Requirement r -> typeOf  r}
+   let typehead= case head rs  of {Requirement r -> typeOf  r}
        (rs',rs'')= partition1 typehead  rs
    v' <- installRequirements2 rs'
    installAllRequirements1 (v `mappend` v') rs''
@@ -1305,10 +1309,10 @@ formPrefix index verb st form anchored= do
                False -> return (mempty,mempty)
      return $ formAction (path ++ anchor ) $  mconcat ( anchorf:form)  -- !> anchor
 
-currentPath isInBackTracking index lpath verb =
+currentPath insInBackTracking index lpath verb =
     (if null lpath then verb
-     else case isInBackTracking of
-        True   -> concat $ take index  ['/':v | v <- lpath]  !> ("index= " ++ show index)
+     else case insInBackTracking of
+        True   -> concat $ take index  ['/':v | v <- lpath]  -- !> ("index= " ++ show index)
         False  -> concat ['/':v| v <- lpath])
 
 -- | Generate a new string. Useful for creating tag identifiers and other attributes

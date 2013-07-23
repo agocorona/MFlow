@@ -86,7 +86,7 @@ source-repository head
     location: http://github.com/agocorona/MFlow
 
 library
-    build-depends: Workflow -any, transformers -any, mtl -any,
+    build-depends: Workflow -any, transformers -any, mtl -any, 
                    extensible-exceptions -any, xhtml -any, base >4.0 && <5,
                    bytestring -any, containers -any, RefSerialize -any, TCache -any,
                    stm >2, old-time -any, vector -any, directory -any,
@@ -113,7 +113,7 @@ executable demos-blaze
                    Workflow -any, base -any, blaze-html -any, bytestring -any,
                    containers -any, mtl -any, old-time -any, stm -any,
                    text -any, transformers -any, vector -any,  hamlet -any,
-                   monadloc -any
+                   monadloc -any, monadloc-pp -any
 
     main-is: "demos-blaze.hs"
     ghc-options:
