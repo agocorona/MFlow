@@ -108,7 +108,7 @@ library
     buildable: True
     hs-source-dirs: src .
 
-executable demos-blaze
+executable demos-blaze.Loc
     build-depends: MFlow -any, RefSerialize -any, TCache -any, directory -any,
                    Workflow -any, base -any, blaze-html -any, bytestring -any,
                    containers -any, mtl -any, old-time -any, stm -any,
