@@ -1,5 +1,5 @@
 {-# LINE 1 "INPUT" #-}
-{-# OPTIONS -XDeriveDataTypeable -XQuasiQuotes #-}
+{-# OPTIONS -XDeriveDataTypeable -XQuasiQuotes -F -pgmF MonadLoc  #-}
 module Main where
 {-# LINE 3 "INPUT" #-}
 import MFlow.Wai.Blaze.Html.All
@@ -373,39 +373,38 @@ stdheader c = docTypeHtml $ El.head << (El.title << "MFlow examples" <> link ! r
 {-# LINE 533 "INPUT" #-}
 traceSample
   = Control.Monad.Loc.withLoc "traceSample, Main(INPUT): (533, 14)"
-      (do Control.Monad.Loc.withLoc "traceSample, Main(INPUT): (534, 3)" (page $ h2 << "Error trace example" ++> p << "MFlow now produces execution traces in case of error by making use of the backtracking mechanism" ++> p << "It is more detailed than a call stack" ++> p << "this example has a deliberate error" ++> br ++> p << "You must be logged as admin to see the trace" ++> wlink () << p << "press here")
-          Control.Monad.Loc.withLoc "traceSample, Main(INPUT): (541, 3)" (page $ p << "Please login with admin/admin" ++> userWidget (Just "admin") userLogin)
-          Control.Monad.Loc.withLoc "traceSample, Main(INPUT): (543, 3)" (page $ p << "the trace will appear after you press the link. press one of the options available at the bottomm of the page" ++> br ++> wlink () << "press here")
-          Control.Monad.Loc.withLoc "traceSample, Main(INPUT): (546, 3)" (page $ undefined))
-{-# LINE 548 "INPUT" #-}
+      (do Control.Monad.Loc.withLoc "traceSample, Main(INPUT): (534, 3)" (page $ h2 << "Error trace example" ++> p << "MFlow now produces execution traces in case of error by making use of the backtracking mechanism" ++> p << "It is more detailed than a call stack" ++> p << "this example has a deliberate error" ++> br ++> p << "You must be logged as admin to see the trace" ++> autoRefresh wlogin **> br ++> br ++> wlink () << h2 << "press here to continue to the error trace")
+          Control.Monad.Loc.withLoc "traceSample, Main(INPUT): (545, 3)" (page $ p << "the trace will appear after you press the link. press one of the options available at the bottomm of the page" ++> br ++> wlink () << "press here")
+          Control.Monad.Loc.withLoc "traceSample, Main(INPUT): (548, 3)" (page $ undefined))
+{-# LINE 550 "INPUT" #-}
 pushSample
-  = Control.Monad.Loc.withLoc "pushSample, Main(INPUT): (548, 14)"
-      (do tv <- Control.Monad.Loc.withLoc "pushSample, Main(INPUT): (549, 3)" (liftIO $ newTVarIO $ Just "The content will be appended here")
-          Control.Monad.Loc.withLoc "pushSample, Main(INPUT): (550, 3)" (page $ h2 << "push example" ++> p << "The content of the text box will be appended to the push widget above." ++> p << "A push widget can have links and form fields." ++> p << "Since they are asynchronous the communucation must be trough mutable variables" ++> p << "The input box is configured with autoRefresh" ++> hr ++> pageFlow "push" (push Append (disp tv) <** input tv) **> br ++> br ++> wlink () << b << "exit"))
-  where {-# LINE 563 "INPUT" #-}
+  = Control.Monad.Loc.withLoc "pushSample, Main(INPUT): (550, 14)"
+      (do tv <- Control.Monad.Loc.withLoc "pushSample, Main(INPUT): (551, 3)" (liftIO $ newTVarIO $ Just "The content will be appended here")
+          Control.Monad.Loc.withLoc "pushSample, Main(INPUT): (552, 3)" (page $ h2 << "push example" ++> p << "The content of the text box will be appended to the push widget above." ++> p << "A push widget can have links and form fields." ++> p << "Since they are asynchronous the communucation must be trough mutable variables" ++> p << "The input box is configured with autoRefresh" ++> hr ++> pageFlow "push" (push Append (disp tv) <** input tv) **> br ++> br ++> wlink () << b << "exit"))
+  where {-# LINE 565 "INPUT" #-}
         disp tv
-          = Control.Monad.Loc.withLoc "pushSample, Main(INPUT): (563, 12)"
-              (do Control.Monad.Loc.withLoc "pushSample, Main(INPUT): (564, 7)" (setTimeouts 100 0)
-                  line <- Control.Monad.Loc.withLoc "pushSample, Main(INPUT): (565, 7)" (tget tv)
-                  Control.Monad.Loc.withLoc "pushSample, Main(INPUT): (566, 7)" (p << line ++> noWidget))
-        {-# LINE 568 "INPUT" #-}
+          = Control.Monad.Loc.withLoc "pushSample, Main(INPUT): (565, 12)"
+              (do Control.Monad.Loc.withLoc "pushSample, Main(INPUT): (566, 7)" (setTimeouts 100 0)
+                  line <- Control.Monad.Loc.withLoc "pushSample, Main(INPUT): (567, 7)" (tget tv)
+                  Control.Monad.Loc.withLoc "pushSample, Main(INPUT): (568, 7)" (p << line ++> noWidget))
+        {-# LINE 570 "INPUT" #-}
         input tv
           = autoRefresh $
-              Control.Monad.Loc.withLoc "pushSample, Main(INPUT): (568, 27)"
-                (do line <- Control.Monad.Loc.withLoc "pushSample, Main(INPUT): (569, 7)" (getString Nothing <** submitButton "Enter")
-                    Control.Monad.Loc.withLoc "pushSample, Main(INPUT): (570, 7)" (tput tv line))
-        {-# LINE 573 "INPUT" #-}
-        tput tv x = atomic $ writeTVar tv (Just x)
+              Control.Monad.Loc.withLoc "pushSample, Main(INPUT): (570, 27)"
+                (do line <- Control.Monad.Loc.withLoc "pushSample, Main(INPUT): (571, 7)" (getString Nothing <** submitButton "Enter")
+                    Control.Monad.Loc.withLoc "pushSample, Main(INPUT): (572, 7)" (tput tv line))
         {-# LINE 575 "INPUT" #-}
+        tput tv x = atomic $ writeTVar tv (Just x)
+        {-# LINE 577 "INPUT" #-}
         tget tv
           = atomic $
-              Control.Monad.Loc.withLoc "pushSample, Main(INPUT): (575, 21)"
-                (do mr <- Control.Monad.Loc.withLoc "pushSample, Main(INPUT): (576, 7)" (readTVar tv)
-                    Control.Monad.Loc.withLoc "pushSample, Main(INPUT): (577, 7)"
+              Control.Monad.Loc.withLoc "pushSample, Main(INPUT): (577, 21)"
+                (do mr <- Control.Monad.Loc.withLoc "pushSample, Main(INPUT): (578, 7)" (readTVar tv)
+                    Control.Monad.Loc.withLoc "pushSample, Main(INPUT): (579, 7)"
                       (case mr of
                            Nothing -> retry
-                           Just r -> Control.Monad.Loc.withLoc "pushSample, Main(INPUT): (579, 20)"
-                                       (do Control.Monad.Loc.withLoc "pushSample, Main(INPUT): (580, 11)" (writeTVar tv Nothing)
-                                           Control.Monad.Loc.withLoc "pushSample, Main(INPUT): (581, 11)" (return r))))
-{-# LINE 583 "INPUT" #-}
+                           Just r -> Control.Monad.Loc.withLoc "pushSample, Main(INPUT): (581, 20)"
+                                       (do Control.Monad.Loc.withLoc "pushSample, Main(INPUT): (582, 11)" (writeTVar tv Nothing)
+                                           Control.Monad.Loc.withLoc "pushSample, Main(INPUT): (583, 11)" (return r))))
+{-# LINE 585 "INPUT" #-}
 atomic = liftIO . atomically

@@ -537,9 +537,11 @@ traceSample= do
        ++> p << "this example has a deliberate error"
        ++> br
        ++> p << "You must be logged as admin to see the trace"
-       ++> wlink () << p << "press here"
-  page $   p <<  "Please login with admin/admin"
-       ++> userWidget (Just "admin") userLogin
+       ++> autoRefresh wlogin
+       **> br
+       ++> br
+       ++> wlink () << h2 << "press here to continue to the error trace"
+
   page $ p << "the trace will appear after you press the link. press one of the options available at the bottomm of the page"
            ++> br
            ++> wlink () << "press here"
