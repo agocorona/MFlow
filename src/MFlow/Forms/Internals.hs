@@ -51,7 +51,7 @@ import Control.Workflow(WFErrors(Timeout))
 ---- for traces
 --
 
-import Control.Exception as CE(catch,SomeException,throw,fromException)
+import Control.Exception as CE(catch,SomeException,AsyncException,throw,fromException)
 import Control.Concurrent
 import Control.Monad.Loc
 
@@ -293,9 +293,12 @@ instance  MonadLoc (FlowM v IO) where
 
        where
        handler1 loc s (e :: SomeException)= do
-        case CE.fromException e :: Maybe WFErrors of
-           Just e  -> CE.throw e
-           Nothing -> return (GoBack, s{mfTrace= ["exception: " ++show e]})
+        case (CE.fromException e :: Maybe WFErrors
+             ,CE.fromException e :: Maybe CE.AsyncException) of
+           (Just e,_)  -> CE.throw e
+           (_,Just e)  -> CE.throw e
+           (Nothing, Nothing) ->
+            return (GoBack, s{mfTrace= ["exception: " ++show e]})
 
 --instance (Serialize a,Typeable a, FormInput v) => MonadLoc (FlowM v (Workflow IO)) a where
 --    withLoc loc f =  FlowM . Sup $
@@ -326,9 +329,12 @@ instance  MonadLoc (View v IO)  where
 
        where
        handler1 loc s (e :: SomeException)= do
-        case CE.fromException e :: Maybe WFErrors of
-           Just e  -> CE.throw e
-           Nothing -> return (FormElm [] Nothing, s{mfTrace= ["exception: " ++show e]}) -- !> loc
+               case (CE.fromException e :: Maybe WFErrors
+                    ,CE.fromException e :: Maybe CE.AsyncException) of
+                       (Just e,_)  -> CE.throw e
+                       (_,Just e)  -> CE.throw e
+                       (Nothing, Nothing) ->
+                           return (FormElm [] Nothing, s{mfTrace= ["exception: " ++show e]}) -- !> loc
 
 
 

@@ -802,7 +802,7 @@ push' method w= do
     \       },\n\
     \       error: function (xhr, status, error) {\n\
     \           var msg = $('<div>' + status + '</div>');\n\
-    \           id1.html(msg);\n\
+    \           id1.append(msg);\n\
     \       }\n\
     \   };\n\
     \   $.ajax(dialogOpts);\n\
