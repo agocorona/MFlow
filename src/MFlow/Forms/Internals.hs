@@ -283,7 +283,6 @@ instance  MonadLoc (FlowM v IO) where
             s <- get
             (r,s') <- lift $ do
                        rs@(r,s') <- runStateT (runSup (runFlowM f) ) s
---                                          `CE.catch`(\(e :: WFErrors) -> CE.throw e)
                                           `CE.catch` (handler1  loc s)
                        case mfTrace s' of
                             []     ->  return rs
@@ -295,7 +294,8 @@ instance  MonadLoc (FlowM v IO) where
        handler1 loc s (e :: SomeException)= do
         case CE.fromException e :: Maybe WFErrors of
            Just e  -> CE.throw e
-           Nothing -> return (GoBack, s{mfTrace= ["exception: " ++show e]})
+           Nothing ->
+             return (GoBack, s{mfTrace= ["exception: " ++show e]})
 
 --instance (Serialize a,Typeable a, FormInput v) => MonadLoc (FlowM v (Workflow IO)) a where
 --    withLoc loc f =  FlowM . Sup $

@@ -12,6 +12,7 @@ import Data.Typeable
 import Control.Monad
 
 
+
 import Debug.Trace
 import Data.TCache.Memoization
 
@@ -21,13 +22,12 @@ main= do
 --     (Just hin, Just hout, _, _) <- 
 --            createProcess (proc "ghci" [] ){ std_in= CreatePipe, std_out = CreatePipe }
 
-     runNavigation "" $ transientNav pushIncrease -- $ readEvalLoop  hin hout 
+     runNavigation "" $ transientNav pushDecrease -- $ readEvalLoop  hin hout 
 
 
-pushIncrease= do
+pushIncrease = do
  tv <- liftIO $ newTVarIO 0
- page $ do
-  push Html 0 $ do
+ page . push Html 0 $ do
       setTimeouts 100 0   -- do nothing since the thread will kill itself.
       n <- atomic $ readTVar tv
       when (n== 100) . liftIO $ myThreadId >>= killThread
@@ -35,6 +35,20 @@ pushIncrease= do
       liftIO $ threadDelay 1000000
       b << (show n) ++> noWidget
 
+pushDecrease= do
+ tv <- liftIO $ newTVarIO 10
+
+ page . push Html 0 $ do
+      setTimeouts 100 0     -- kill  the thread if the user navigate away
+      n <- atomic $ readTVar tv
+      if (n== -1)
+        then do
+          script << "window.location='/'" ++> noWidget
+          liftIO $ myThreadId >>= killThread !> "KILLLLLLL"
+        else do
+          atomic $ writeTVar tv $ n - 1
+          liftIO $ threadDelay 1000000
+          h1 << (show n) ++> noWidget
 
 pushSample=  do
   tv <- liftIO $ newTVarIO $ Just "init"

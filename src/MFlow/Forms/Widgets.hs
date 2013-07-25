@@ -789,7 +789,7 @@ push method' wait w= push' . map toLower $ show method'
 
 
     (ftag "div" <<< noWidget) <! [("id",id)]
-      <++ ftag "div" (fromStr "status") `attrs` [("id",id++"status")]
+      <++ ftag "div" mempty `attrs` [("id",id++"status")]
 
    where
    w' dat= do
@@ -810,7 +810,7 @@ push method' wait w= push' . map toLower $ show method'
     \       data: '',\n\
     \       success: function (resp) {\n\
     \         idstatus.html('')\n\
-    \         cnt=0;\
+    \         cnt=0;\n\
     \         id1."++method++"(resp);\n\
     \         ajaxPush1();\n\
     \       },\n\
@@ -820,7 +820,7 @@ push method' wait w= push' . map toLower $ show method'
     \               idstatus.html('no more retries');\n\
     \            else {\n\
     \               idstatus.html('waiting');\n\
-    \                     setTimeout(function() { idStatus('retrying');ajaxPush1(); }, waititime);\n\
+    \                     setTimeout(function() { idstatus.html('retrying');ajaxPush1(); }, waititime);\n\
     \            }\n\
     \       }\n\
     \   };\n\

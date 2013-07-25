@@ -26,9 +26,6 @@ import TestREST
 
 import Control.Monad.Loc
 
-(!>) = const -- flip trace
-
---test= runTest [(15,"shop")]
 
 main= do
    setAdminUser "admin" "admin"
@@ -48,7 +45,7 @@ data Options= CountI | CountS | Radio
             | ListEdit |Shop | Action | Ajax | Select
             | CheckBoxes | PreventBack | Multicounter
             | Combination
-            | FViewMonad | Counter | WDialog |Push |PushInc |Trace
+            | FViewMonad | Counter | WDialog |Push |PushDec |Trace
             deriving (Bounded, Enum,Read, Show,Typeable)
 
 
@@ -60,7 +57,7 @@ mainmenu=   do
               wcached "menu" 0 $
                b <<  "PUSH"
                ++> br ++> wlink Push << b << "Example of a widget with push"
-               <|> br ++> wlink PushInc << b << "A push counter"
+               <|> br ++> wlink PushDec << b << "A push counter"
                <|> br ++> br
                  ++> b <<  "ERROR TRACES"
                ++> br ++> wlink Trace << b << "Execution traces for errors"
@@ -119,7 +116,7 @@ mainmenu=   do
              Combination -> combination
              WDialog     -> wdialog1
              Push        -> pushSample
-             PushInc     -> pushIncrease
+             PushDec     -> pushDecrease
              Trace       -> traceSample
 
 --withSource txt w= [shamlet|
@@ -255,13 +252,13 @@ counter= do
    ask $ explain ++> pageFlow "c" (counterWidget 0) <++ br <|> wlink () << p << "exit"
 
 counterWidget n= do
-  (h2 << show n !> show n
+  (h2 << show n     
    ++> wlink "i" << b << " ++ "
    <|> wlink "d" << b << " -- ")
   `wcallback`
     \op -> case op  of
-      "i" -> counterWidget (n + 1)                        !> "increment"
-      "d" -> counterWidget (n - 1)                        !> "decrement"
+      "i" -> counterWidget (n + 1)                       
+      "d" -> counterWidget (n - 1)                       
 
 rpaid= unsafePerformIO $ newMVar (0 :: Int)
 
@@ -591,30 +588,27 @@ pushSample=  do
 atomic= liftIO . atomically
 
 
-pushIncrease= do
- tv <- liftIO $ newTVarIO 30
+pushDecrease= do
+ tv <- liftIO $ newTVarIO 10
  page $
-  [shamlet|
-   <div>
-       <h2> Maxwell Smart push counter
-       <p> This example shows a counter
-       <p> To avoid unnecessary load, the push process will be killed when reaching 0
-       <p> The last push message will be an script that will redirect to the menu"
-       <h3> This message will be autodestroyed within ..
-
-  |] ++> (counter tv <++  b << "seconds")
-
+--  [shamlet|
+--   <div>
+--       <h2> Maxwell Smart push counter
+--       <p> This example shows a reverse counter
+--       <p> To avoid unnecessary load, the push process will be killed when reaching 0
+--       <p> The last push message will be an script that will redirect to the menu"
+--       <h3> This message will be autodestroyed within ..
+--
+--  |] ++>
+    (counter tv <++  b << "seconds")
 
  where
-
-
-
  counter tv = push Html 0 $ do
-      setTimeouts 100 0   -- kill  the thread if the user navigate away
-      n <- atomic $ readTVar tv
+      setTimeouts 100 0     -- kill  the thread if the user navigate away
+      n <- (atomic $ readTVar tv)
       if (n== -1)
-        then do
-          notValid $ script << "window.location='/'"
+        then  do
+          script << "window.location='/'" ++> noWidget
           liftIO $ myThreadId >>= killThread
         else do
           atomic $ writeTVar tv $ n - 1
