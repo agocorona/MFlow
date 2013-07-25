@@ -591,15 +591,15 @@ atomic= liftIO . atomically
 pushDecrease= do
  tv <- liftIO $ newTVarIO 10
  page $
---  [shamlet|
---   <div>
---       <h2> Maxwell Smart push counter
---       <p> This example shows a reverse counter
---       <p> To avoid unnecessary load, the push process will be killed when reaching 0
---       <p> The last push message will be an script that will redirect to the menu"
---       <h3> This message will be autodestroyed within ..
---
---  |] ++>
+  [shamlet|
+   <div>
+       <h2> Maxwell Smart push counter
+       <p> This example shows a reverse counter
+       <p> To avoid unnecessary load, the push process will be killed when reaching 0
+       <p> The last push message will be an script that will redirect to the menu"
+       <h3> This message will be autodestroyed within ..
+
+  |] ++>
     (counter tv <++  b << "seconds")
 
  where

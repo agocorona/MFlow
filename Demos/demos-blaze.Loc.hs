@@ -1,5 +1,5 @@
 {-# LINE 1 "INPUT" #-}
-{-# OPTIONS -XDeriveDataTypeable -XQuasiQuotes  #-}
+{-# OPTIONS -XDeriveDataTypeable -XQuasiQuotes -F -pgmF MonadLoc  #-}
 module Main where
 {-# LINE 3 "INPUT" #-}
 import MFlow.Wai.Blaze.Html.All
@@ -417,7 +417,15 @@ atomic = liftIO . atomically
 pushDecrease
   = Control.Monad.Loc.withLoc "pushDecrease, Main(INPUT): (591, 15)"
       (do tv <- Control.Monad.Loc.withLoc "pushDecrease, Main(INPUT): (592, 2)" (liftIO $ newTVarIO 10)
-          Control.Monad.Loc.withLoc "pushDecrease, Main(INPUT): (593, 2)" (page $ (counter tv <++ b << "seconds")))
+          Control.Monad.Loc.withLoc "pushDecrease, Main(INPUT): (593, 2)" (page $ [shamlet|
+   <div>
+       <h2> Maxwell Smart push counter
+       <p> This example shows a reverse counter
+       <p> To avoid unnecessary load, the push process will be killed when reaching 0
+       <p> The last push message will be an script that will redirect to the menu"
+       <h3> This message will be autodestroyed within ..
+
+  |] ++> (counter tv <++ b << "seconds")))
   where {-# LINE 606 "INPUT" #-}
         counter tv
           = push Html 0 $
