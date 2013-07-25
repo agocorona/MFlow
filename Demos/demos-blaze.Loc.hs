@@ -1,5 +1,5 @@
 {-# LINE 1 "INPUT" #-}
-{-# OPTIONS -XDeriveDataTypeable -XQuasiQuotes -F -pgmF MonadLoc  #-}
+{-# OPTIONS -XDeriveDataTypeable -XQuasiQuotes  #-}
 module Main where
 {-# LINE 3 "INPUT" #-}
 import MFlow.Wai.Blaze.Html.All
