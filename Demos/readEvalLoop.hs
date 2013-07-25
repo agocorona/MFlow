@@ -6,11 +6,10 @@ import System.IO
 import System.Process
 import Data.Monoid
 
-import Control.Concurrent.MVar
 import Control.Concurrent
-import System.IO.Unsafe
 import Control.Concurrent.STM
 import Data.Typeable
+import Control.Monad
 
 
 import Debug.Trace
@@ -22,16 +21,16 @@ main= do
 --     (Just hin, Just hout, _, _) <- 
 --            createProcess (proc "ghci" [] ){ std_in= CreatePipe, std_out = CreatePipe }
 
-     runNavigation "" $ transientNav pushSample -- $ readEvalLoop  hin hout 
+     runNavigation "" $ transientNav pushIncrease -- $ readEvalLoop  hin hout 
 
 
 pushIncrease= do
  tv <- liftIO $ newTVarIO 0
  page $ do
-  push Html $ do
-      setTimeouts 100 0
+  push Html 0 $ do
+      setTimeouts 100 0   -- do nothing since the thread will kill itself.
       n <- atomic $ readTVar tv
-
+      when (n== 100) . liftIO $ myThreadId >>= killThread
       atomic $ writeTVar tv $ n + 1
       liftIO $ threadDelay 1000000
       b << (show n) ++> noWidget
@@ -39,7 +38,7 @@ pushIncrease= do
 
 pushSample=  do
   tv <- liftIO $ newTVarIO $ Just "init"
-  page $ push Append (disp tv) <** input tv
+  page $ push Append 5000 (disp tv) {-<** input tv -}<** inputAjax tv
 
   where
   disp tv= do
@@ -47,9 +46,16 @@ pushSample=  do
       line <- tget tv
       p <<  line ++> noWidget
 
-  input tv= autoRefresh $ do
-      line <- getString Nothing <** submitButton "Enter"
-      tput tv line
+--  input tv= autoRefresh $ do
+--      line <- getString Nothing <** submitButton "Enter"
+--      tput tv line
+
+  inputAjax tv = do
+      let elemval= "document.getElementById('text1').value"
+      ajaxc <- ajax $ \line -> tput tv line >> return (fromStr "")
+      getString Nothing <! [("id","text1")]
+       <** submitButton "submit" <! [("onsubmit", ajaxc  elemval++"; return false;")] 
+
 
 
   tput tv x = atomic $ writeTVar  tv ( Just x)  !> ("PUT in " ++ addrStr tv)
@@ -68,7 +74,7 @@ atomic= liftIO . atomically
 
 
 readEvalLoop hin hout= page $
-         push Append (do
+         push Append 0 (do
                 code <-  liftIO $ hGetLine hout
                 p << (code :: String) ++> noWidget)
 
@@ -79,21 +85,10 @@ getinput hin = autoRefresh $ do
       liftIO $ do
          hPutStr hin $ line++"\n"
          hFlush hin
+         
 
 
 unlines1 :: [String] -> Html
 unlines1 ls= mconcat[p << l | l <- ls]
 
---receiveLoop hout =  loop []
--- where
--- loop xs= do
---   more <- hReady  hout
---   if more
---      then do
---        x <- hGetLine hout
---        print x
---        loop $ x:xs   !> "loop"
---      else return $ concat xs  !> "next line"
---
---
---
+

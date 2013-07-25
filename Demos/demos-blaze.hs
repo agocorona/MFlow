@@ -48,7 +48,7 @@ data Options= CountI | CountS | Radio
             | ListEdit |Shop | Action | Ajax | Select
             | CheckBoxes | PreventBack | Multicounter
             | Combination
-            | FViewMonad | Counter | WDialog |Push |Trace
+            | FViewMonad | Counter | WDialog |Push |PushInc |Trace
             deriving (Bounded, Enum,Read, Show,Typeable)
 
 
@@ -60,8 +60,9 @@ mainmenu=   do
               wcached "menu" 0 $
                b <<  "PUSH"
                ++> br ++> wlink Push << b << "Example of a widget with push"
-               <|> br ++> br ++>
-               b <<  "ERROR TRACES"
+               <|> br ++> wlink PushInc << b << "A push counter"
+               <|> br ++> br
+                 ++> b <<  "ERROR TRACES"
                ++> br ++> wlink Trace << b << "Execution traces for errors"
                <|> br ++> br ++>
                b <<  "DIFFERENT KINDS OF FLOWS"
@@ -118,6 +119,7 @@ mainmenu=   do
              Combination -> combination
              WDialog     -> wdialog1
              Push        -> pushSample
+             PushInc     -> pushIncrease
              Trace       -> traceSample
 
 --withSource txt w= [shamlet|
@@ -551,14 +553,14 @@ traceSample= do
 
 pushSample=  do
   tv <- liftIO $ newTVarIO $ Just "The content will be appended here"
-  page $   h2 << "push example"
+  page $   h2 << "Push example"
        ++> p << "The content of the text box will be appended to the push widget above."
        ++> p << "A push widget can have links and form fields."
        ++> p << "Since they are asynchronous the communucation must be trough mutable variables"
        ++> p << "The input box is configured with autoRefresh"
        ++> hr
 
-       ++> pageFlow "push" (push Append (disp tv) <** input tv)
+       ++> pageFlow "push" (push Append 5000 (disp tv) <** input tv)
        **> br
        ++> br
        ++> wlink () << b << "exit"
@@ -588,3 +590,33 @@ pushSample=  do
 
 atomic= liftIO . atomically
 
+
+pushIncrease= do
+ tv <- liftIO $ newTVarIO 30
+ page $
+  [shamlet|
+   <div>
+       <h2> Maxwell Smart push counter
+       <p> This example shows a counter
+       <p> To avoid unnecessary load, the push process will be killed when reaching 0
+       <p> The last push message will be an script that will redirect to the menu"
+       <h3> This message will be autodestroyed within ..
+
+  |] ++> (counter tv <++  b << "seconds")
+
+
+ where
+
+
+
+ counter tv = push Html 0 $ do
+      setTimeouts 100 0   -- kill  the thread if the user navigate away
+      n <- atomic $ readTVar tv
+      if (n== -1)
+        then do
+          notValid $ script << "window.location='/'"
+          liftIO $ myThreadId >>= killThread
+        else do
+          atomic $ writeTVar tv $ n - 1
+          liftIO $ threadDelay 1000000
+          h1 << (show n) ++> noWidget

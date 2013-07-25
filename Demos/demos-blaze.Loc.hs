@@ -380,7 +380,7 @@ traceSample
 pushSample
   = Control.Monad.Loc.withLoc "pushSample, Main(INPUT): (550, 14)"
       (do tv <- Control.Monad.Loc.withLoc "pushSample, Main(INPUT): (551, 3)" (liftIO $ newTVarIO $ Just "The content will be appended here")
-          Control.Monad.Loc.withLoc "pushSample, Main(INPUT): (552, 3)" (page $ h2 << "push example" ++> p << "The content of the text box will be appended to the push widget above." ++> p << "A push widget can have links and form fields." ++> p << "Since they are asynchronous the communucation must be trough mutable variables" ++> p << "The input box is configured with autoRefresh" ++> hr ++> pageFlow "push" (push Append (disp tv) <** input tv) **> br ++> br ++> wlink () << b << "exit"))
+          Control.Monad.Loc.withLoc "pushSample, Main(INPUT): (552, 3)" (page $ h2 << "push example" ++> p << "The content of the text box will be appended to the push widget above." ++> p << "A push widget can have links and form fields." ++> p << "Since they are asynchronous the communucation must be trough mutable variables" ++> p << "The input box is configured with autoRefresh" ++> hr ++> pageFlow "push" (push Append 5000 (disp tv) <** input tv) **> br ++> br ++> wlink () << b << "exit"))
   where {-# LINE 565 "INPUT" #-}
         disp tv
           = Control.Monad.Loc.withLoc "pushSample, Main(INPUT): (565, 12)"

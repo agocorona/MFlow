@@ -545,7 +545,7 @@ preventGoingBack
 preventGoingBack msg= do
    back <- goingBack
    if not back  then breturn() else do
-         breturn()  -- will not go back bellond this
+         breturn()  -- will not go back beyond this
          clearEnv
          modify $ \s -> s{newAsk= True}
          msg

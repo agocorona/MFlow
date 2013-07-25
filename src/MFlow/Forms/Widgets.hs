@@ -703,18 +703,25 @@ data UpdateMethod= Append | Prepend | Html deriving Show
 
 -- | continously execute a widget and update the content.
 -- The update method specify how the update is done. 'Html' means a substitution of content.
--- It can be used to show data updates. The widget is executed in a different process than
---  the one of the rest of the page. Although the process is initiated with the page context,
+-- The second parameter is the delay for the next retry in case of disconnection, in milliseconds.
+--
+-- It can be used to show data updates in the server. The widget is executed in a different process than
+--  the one of the rest of the page. Although the process is initiated with the session context,
 -- updates in the session context are not seen by the push widget
 -- To communicate with te widget, use DBRef's or TVar and the
 -- STM semantics for waiting updates using 'retry'.
+--
+-- Widgets in a push can have links and forms, but since they are asunchonous, they can not
+-- return validated inputs. but they can modify the server state.
+-- push ever return invalid to the calling widget, so it never
+-- triggers the advance of the navigation.
 --
 --
 -- This example is a counter increased each second:
 --
 -- > pushIncrease= do
 -- >   tv <- liftIO $ newTVarIO 0
--- >   page $ push Html $ do
+-- >   page $ push 0 Html $ do
 -- >       n <- atomic $ readTVar tv
 -- >       atomic $ writeTVar tv $ n + 1
 -- >       liftIO $ threadDelay 1000000
@@ -730,7 +737,7 @@ data UpdateMethod= Append | Prepend | Html deriving Show
 --
 -- >  pushSample=  do
 -- >   tv <- liftIO $ newTVarIO $ Just "init"
--- >   page $ push Append (disp tv) <** input tv
+-- >   page $ push Append 1000 (disp tv) <** input tv
 -- >
 -- >   where
 -- >   disp tv= do
@@ -754,10 +761,12 @@ data UpdateMethod= Append | Prepend | Html deriving Show
 
 push :: FormInput v
   => UpdateMethod
+  -> Int
   -> View v IO ()
   -> View v IO ()
-push method'  w= let method= map toLower $ show method' in push' method w
-push' method w= do
+push method' wait w= push' . map toLower $ show method'
+ where
+ push' method= do
     id <- genNewId
     st <- get
     let token= mfToken st
@@ -765,7 +774,7 @@ push' method w= do
         procname= "_push" ++ tind token ++ id
         installscript=
             "$(document).ready(function(){\n"
-               ++ "ajaxPush('"++id++"');"
+               ++ "ajaxPush('"++id++"',"++show wait++");"
                ++ "})\n"
 
     new <- gets newAsk
@@ -782,35 +791,13 @@ push' method w= do
     (ftag "div" <<< noWidget) <! [("id",id)]
       <++ ftag "div" (fromStr "status") `attrs` [("id",id++"status")]
 
-  where
-  w' dat= do
+   where
+   w' dat= do
      modify $ \s -> s{inSync= True,newAsk=True,mfData=dat}
      w
 
---  ajaxPush procname= "function ajaxPush(id){\n\
---    \var id1= $('#'+id);\n\
---    \var ida= $('#'+id+' a');\n\
---    \   var actionurl='/"++procname++"';\n\
---    \   var dialogOpts = {\n\
---    \       cache: false,\n\
---    \       type: 'GET',\n\
---    \       url: actionurl,\n\
---    \       data: '',\n\
---    \       success: function (resp) {\n\
---    \         id1."++method++"(resp);\n\
---    \         ajaxPush(id)\n\
---    \       },\n\
---    \       error: function (xhr, status, error) {\n\
---    \           var msg = $('<div>' + status + '</div>');\n\
---    \           id1.html(msg);\n\
---    \       }\n\
---    \   };\n\
---    \   $.ajax(dialogOpts);\n\
---    \   return false;\n\
---  \}"
 
-
-  ajaxPush procname=" function ajaxPush(id){\n\
+   ajaxPush procname=" function ajaxPush(id,waititime){\n\
     \var cnt=0; \n\
     \var id1= $('#'+id);\n\
     \var idstatus= $('#'+id+'status');\n\
@@ -822,7 +809,7 @@ push' method w= do
     \       url: actionurl,\n\
     \       data: '',\n\
     \       success: function (resp) {\n\
-    \         idstatus.html('received')\n\
+    \         idstatus.html('')\n\
     \         cnt=0;\
     \         id1."++method++"(resp);\n\
     \         ajaxPush1();\n\
@@ -832,8 +819,8 @@ push' method w= do
     \            if (cnt > 6)\n\
     \               idstatus.html('no more retries');\n\
     \            else {\n\
-    \               idstatus.html('retrying');\n\
-    \               setTimeout(function() { ajaxPush1(); }, 1000);\n\
+    \               idstatus.html('waiting');\n\
+    \                     setTimeout(function() { idStatus('retrying');ajaxPush1(); }, waititime);\n\
     \            }\n\
     \       }\n\
     \   };\n\

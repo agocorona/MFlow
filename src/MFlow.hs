@@ -337,7 +337,7 @@ tellToWF t@(Token _ _ _ _ _ queue qresp ) msg = do
     putMVar queue (Req msg)              -- !> (">>>>> telltowf"++ thread t)
     m <-  takeMVar qresp                 -- !> ("<<<<<< tellTowf"++ thread t)
     case m  of
-        Resp r  ->  return  r            -- !> ("recibido  tellTowf"++ thread t)
+        Resp r  ->  return  r             -- !> ("recibido  tellTowf"++ thread t)
         Fragm r -> do
                    result <- getStream   r
                    return  result
