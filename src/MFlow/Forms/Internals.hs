@@ -51,12 +51,12 @@ import Control.Workflow(WFErrors(Timeout))
 ---- for traces
 --
 
-import Control.Exception as CE(catch,SomeException,throw,fromException)
+import Control.Exception as CE(catch,SomeException,AsyncException,throw,fromException)
 import Control.Concurrent
 import Control.Monad.Loc
 
 import Debug.Trace
-(!>) = const --   flip trace
+(!>) =  const --  flip trace
 
 instance Serialize a => Serializable a where
   serialize=  runW . showp
@@ -293,9 +293,13 @@ instance  MonadLoc (FlowM v IO) where
        where
        handler1 loc s (e :: SomeException)= do
         case CE.fromException e :: Maybe WFErrors of
-           Just e  -> CE.throw e
+           Just e  -> CE.throw e !> ("TROWNF=" ++ show e)
            Nothing ->
-             return (GoBack, s{mfTrace= ["exception: " ++show e]})
+             case CE.fromException e :: Maybe AsyncException of
+                Just e -> CE.throw e !> ("TROWN ASYNCF=" ++ show e)
+                Nothing ->
+                 return (GoBack, s{mfTrace= ["exception: " ++show e]})
+
 
 --instance (Serialize a,Typeable a, FormInput v) => MonadLoc (FlowM v (Workflow IO)) a where
 --    withLoc loc f =  FlowM . Sup $
@@ -316,8 +320,7 @@ instance  MonadLoc (View v IO)  where
             s <- get
             (r,s') <- lift $ do
                        rs@(r,s') <- runStateT (runView f) s
---                                      `CE.catch`(\(e :: WFErrors) -> throw e)
-                                      `CE.catch` (handler1  loc s)
+                                             `CE.catch` (handler1  loc s)
                        case mfTrace s' of
                             []     ->  return rs
                             trace  ->  return(r, s'{mfTrace=  loc:trace})
@@ -327,8 +330,11 @@ instance  MonadLoc (View v IO)  where
        where
        handler1 loc s (e :: SomeException)= do
         case CE.fromException e :: Maybe WFErrors of
-           Just e  -> CE.throw e
-           Nothing -> return (FormElm [] Nothing, s{mfTrace= ["exception: " ++show e]}) -- !> loc
+           Just e  -> CE.throw e   !> ("TROWN=" ++ show e)
+           Nothing ->  case CE.fromException e :: Maybe AsyncException of
+                Just e -> CE.throw e !> ("TROWN ASYNC=" ++ show e)
+                Nothing ->
+                  return (FormElm [] Nothing, s{mfTrace= ["exception: " ++show e]}) -- !> loc
 
 
 
@@ -935,7 +941,7 @@ runFlow  f t=
     liftIO $ do
        flushRec t''
        sendToMF t'' t'' -- !> "SEND"
-    loop  f t''          !> "LOOPAGAIN"
+    loop  f t''          -- !> "LOOPAGAIN"
 
 
 
@@ -954,7 +960,7 @@ runFlowOnce1  f t  =
 
   where
   backInit= do
-     s <- get   !> "BackInit"
+     s <- get                       -- !> "BackInit"
      case mfTrace s of
        [] -> do
          modify $ \s -> s{mfEnv=[], newAsk= True}

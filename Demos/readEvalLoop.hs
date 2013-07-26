@@ -22,7 +22,7 @@ main= do
 --     (Just hin, Just hout, _, _) <- 
 --            createProcess (proc "ghci" [] ){ std_in= CreatePipe, std_out = CreatePipe }
 
-     runNavigation "" $ transientNav pushDecrease -- $ readEvalLoop  hin hout 
+     runNavigation "" $ transientNav pushSample -- $ readEvalLoop  hin hout 
 
 
 pushIncrease = do
@@ -52,23 +52,26 @@ pushDecrease= do
 
 pushSample=  do
   tv <- liftIO $ newTVarIO $ Just "init"
-  page $ push Append 5000 (disp tv) {-<** input tv -}<** inputAjax tv
+  page $ push Append 5000 (disp tv) <** input tv   -- <** inputAjax tv
 
   where
   disp tv= do
       setTimeouts 100 0
       line <- tget tv
-      p <<  line ++> noWidget
 
---  input tv= autoRefresh $ do
---      line <- getString Nothing <** submitButton "Enter"
---      tput tv line
+      liftIO $ when (line == ".") $ print "KILL" >> myThreadId >>= killThread
+      liftIO $ print "NOT KILLED"
+      p <<  line ++> noWidget !> (show line)
 
-  inputAjax tv = do
-      let elemval= "document.getElementById('text1').value"
-      ajaxc <- ajax $ \line -> tput tv line >> return (fromStr "")
-      getString Nothing <! [("id","text1")]
-       <** submitButton "submit" <! [("onsubmit", ajaxc  elemval++"; return false;")] 
+  input tv= autoRefresh $ do
+      line <- getString Nothing <** submitButton "Enter"
+      tput tv line
+
+--  inputAjax tv = do
+--      let elemval= "document.getElementById('text1').value"
+--      ajaxc <- ajax $ \line -> tput tv line >> return (fromStr "")
+--      getString Nothing <! [("id","text1")]
+--       <** submitButton "submit" <! [("onsubmit", ajaxc  elemval++"; return false;")] 
 
 
 

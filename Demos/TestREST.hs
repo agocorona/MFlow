@@ -13,7 +13,6 @@ import Control.Monad.Loc
 
 testREST= do
   setTimeouts 120 0
-  liftIO $ print "start/restart"
 
   setHeader header1
 

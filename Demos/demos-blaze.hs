@@ -604,12 +604,11 @@ pushDecrease= do
 
  where
  counter tv = push Html 0 $ do
-      setTimeouts 100 0     -- kill  the thread if the user navigate away
+      setTimeouts 2 0     -- kill  the thread if the user navigate away
       n <- (atomic $ readTVar tv)
       if (n== -1)
         then  do
           script << "window.location='/'" ++> noWidget
-          liftIO $ myThreadId >>= killThread
         else do
           atomic $ writeTVar tv $ n - 1
           liftIO $ threadDelay 1000000

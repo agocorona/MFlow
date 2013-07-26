@@ -1038,7 +1038,7 @@ ask w =  do
      let st= st1{needForm= False, inSync= False, mfRequirements= [],linkMatched=False} 
      put st
 
-     FormElm forms mx <- FlowM . lift  $ runView  w    !> "ASK"
+     FormElm forms mx <- FlowM . lift  $ runView  w    -- !> "ASK"
 
      st' <- get
      if notSyncInAction st' then put st'{notSyncInAction=False}>> ask w
@@ -1059,14 +1059,14 @@ ask w =  do
 
        Nothing ->
          if  not (inSync st')  && not (newAsk st')
-                                                        !> ("pageIndex="++ show (mfPageIndex st'))
-                                                        !> ("insinc="++show (inSync st'))
-                                                        !> ("newask="++show (newAsk st'))
-                                                        !> ("mfPIndex="++ show( mfPIndex st'))
+--                                                        !> ("pageIndex="++ show (mfPageIndex st'))
+--                                                        !> ("insinc="++show (inSync st'))
+--                                                        !> ("newask="++show (newAsk st'))
+--                                                        !> ("mfPIndex="++ show( mfPIndex st'))
           then do
             let index = mfPIndex st'
                 nindex= if index== 0 then 1 else index - 1
-            put st'{mfPIndex= nindex}  !> "BACKTRACK"
+            put st'{mfPIndex= nindex}                     -- !> "BACKTRACK"
             fail ""
           else do
              reqs <-  FlowM $ lift installAllRequirements
@@ -1147,9 +1147,10 @@ nextMessage= do
                       Nothing -> params
                       Just  i -> take i params)
                     ++  req
-        in parms !> "IN PAGE FLOW"  !>  ("parms=" ++ show parms )
-                                    !>  ("env=" ++ show env)
-                                    !>  ("req=" ++ show req)
+        in parms
+--                 !> "IN PAGE FLOW"  !>  ("parms=" ++ show parms )
+--                                    !>  ("env=" ++ show env)
+--                                    !>  ("req=" ++ show req)
 
 
 
@@ -1334,9 +1335,9 @@ wlink x v= View $ do
              case  index < length lpath && name== lpath !! index  of
              True -> do
                   modify $ \s -> s{inSync= True
-                                  , linkMatched= True, mfPIndex= index+1 }  !> (name ++ "<-" ++show index++ " MATCHED")
+                                  , linkMatched= True, mfPIndex= index+1 }  -- !> (name ++ "<-" ++show index++ " MATCHED")
                   return $ Just x
-             False ->  return Nothing !> (name++"<-" ++show index++ " "++(if index < length lpath then lpath !! index else ""))
+             False ->  return Nothing                                        -- !> (name++"<-" ++show index++ " "++(if index < length lpath then lpath !! index else ""))
 
       return $ FormElm [toSend] r
 

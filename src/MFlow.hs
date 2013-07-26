@@ -82,7 +82,7 @@ import GHC.Conc(unsafeIOToSTM)
 import Data.Typeable
 import Data.Maybe(isJust, isNothing, fromMaybe, fromJust)
 import Data.Char(isSeparator)
-import Data.List(isPrefixOf,isSuffixOf,isInfixOf, elem , span, (\\))
+import Data.List(isPrefixOf,isSuffixOf,isInfixOf, elem , span, (\\),intersperse)
 import Control.Monad(when)
 
 import Data.Monoid
@@ -142,9 +142,6 @@ class Processable a where
      puser :: a -> String
      pind :: a -> String
      getParams :: a -> Params
---     getServer ::a -> String
---     getPath :: a -> String
---     getPort :: a -> Int
 
 instance Processable Token where
      pwfname = twfname
@@ -389,7 +386,6 @@ msgScheduler x  = do
                  deleteTokenInList token
           Left AlreadyRunning -> return ()                    -- !> ("already Running " ++ wfname)
           Left Timeout -> do
-
               hFlush stdout                                      !>  "TIMEOUT in msgScheduler"
               return()
           Left (WFException e)-> showError wfname token e
@@ -403,30 +399,32 @@ msgScheduler x  = do
 showError wfname token@Token{..} e= do
                let user= key token
                t <- return . calendarTimeToString =<< toCalendarTime =<< getClockTime
-               let msg= errorMessage t e tuser wfname tenv
-               putStrLn msg
+               let msg= errorMessage t e tuser (Prelude.concat $ intersperse "/" tpath) tenv
+
                logError  msg
 --               moveState wfname token token{tuser= "error/"++tuser token}
                fresp <- getNotFoundResponse
                sendFlush token . Error $ fresp (key token)  $  Prelude.concat[ "<br/>"++ s | s <- lines msg]
 
 
-errorMessage t e u wf env=
-     "\n---------------------ERROR-------------------------\n"++
-     "TIME=" ++ t ++"\n\n" ++
+errorMessage t e u path env=
+     "\n---------------------ERROR-------------------------\
+     \\nTIME=" ++ t ++"\n\n" ++
      e++
-     "\n\nUSER= "++
-     u++
-     "\n\nVERB= "++
-     wf++
+     "\n\nUSER= " ++ u ++
+     "\n\nPATH= " ++ path ++
      "\n\nREQUEST:\n\n"++
      show env
 
+line= unsafePerformIO $ newMVar ()
 
 logError err= do
+     takeMVar line
+     putStrLn err
      hSeek hlog SeekFromEnd 0
      hPutStrLn hlog err
      hFlush hlog
+     putMVar line ()
 
 logFileName= "errlog"
 

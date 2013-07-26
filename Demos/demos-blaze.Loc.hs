@@ -1,5 +1,5 @@
 {-# LINE 1 "INPUT" #-}
-{-# OPTIONS -XDeriveDataTypeable -XQuasiQuotes  #-}
+{-# OPTIONS -XDeriveDataTypeable -XQuasiQuotes   #-}
 module Main where
 {-# LINE 3 "INPUT" #-}
 import MFlow.Wai.Blaze.Html.All
@@ -430,15 +430,11 @@ pushDecrease
         counter tv
           = push Html 0 $
               Control.Monad.Loc.withLoc "pushDecrease, Main(INPUT): (606, 29)"
-                (do Control.Monad.Loc.withLoc "pushDecrease, Main(INPUT): (607, 7)" (setTimeouts 100 0)
+                (do Control.Monad.Loc.withLoc "pushDecrease, Main(INPUT): (607, 7)" (setTimeouts 2 0)
                     n <- Control.Monad.Loc.withLoc "pushDecrease, Main(INPUT): (608, 7)" ((atomic $ readTVar tv))
                     Control.Monad.Loc.withLoc "pushDecrease, Main(INPUT): (609, 7)"
-                      (if (n == (-1)) then
-                         Control.Monad.Loc.withLoc "pushDecrease, Main(INPUT): (610, 15)"
-                           (do Control.Monad.Loc.withLoc "pushDecrease, Main(INPUT): (611, 11)" (script << "window.location='/'" ++> noWidget)
-                               Control.Monad.Loc.withLoc "pushDecrease, Main(INPUT): (612, 11)" (liftIO $ myThreadId >>= killThread))
-                         else
-                         Control.Monad.Loc.withLoc "pushDecrease, Main(INPUT): (613, 14)"
-                           (do Control.Monad.Loc.withLoc "pushDecrease, Main(INPUT): (614, 11)" (atomic $ writeTVar tv $ n - 1)
-                               Control.Monad.Loc.withLoc "pushDecrease, Main(INPUT): (615, 11)" (liftIO $ threadDelay 1000000)
-                               Control.Monad.Loc.withLoc "pushDecrease, Main(INPUT): (616, 11)" (h1 << (show n) ++> noWidget))))
+                      (if (n == (-1)) then Control.Monad.Loc.withLoc "pushDecrease, Main(INPUT): (610, 15)" (do Control.Monad.Loc.withLoc "pushDecrease, Main(INPUT): (611, 11)" (script << "window.location='/'" ++> noWidget)) else
+                         Control.Monad.Loc.withLoc "pushDecrease, Main(INPUT): (612, 14)"
+                           (do Control.Monad.Loc.withLoc "pushDecrease, Main(INPUT): (613, 11)" (atomic $ writeTVar tv $ n - 1)
+                               Control.Monad.Loc.withLoc "pushDecrease, Main(INPUT): (614, 11)" (liftIO $ threadDelay 1000000)
+                               Control.Monad.Loc.withLoc "pushDecrease, Main(INPUT): (615, 11)" (h1 << (show n) ++> noWidget))))
