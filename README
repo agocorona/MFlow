@@ -26,7 +26,7 @@ It is designed for applications that can be run with no deployment with runghc i
 
 This release (0.3) includes:
 
- - /RESTful/ URLs
+ - /RESTful/ URLs 
 
  - Automatic independent refreshing of widgets via Ajax. (see http://haskell-web.blogspot.com.es/2013/06/and-finally-widget-auto-refreshing.html)
 
