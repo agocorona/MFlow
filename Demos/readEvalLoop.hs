@@ -22,7 +22,7 @@ main= do
 --     (Just hin, Just hout, _, _) <- 
 --            createProcess (proc "ghci" [] ){ std_in= CreatePipe, std_out = CreatePipe }
 
-     runNavigation "" $ transientNav pushSample -- $ readEvalLoop  hin hout 
+     runNavigation "" $ readEvalLoop  hin hout 
 
 
 pushIncrease = do
@@ -94,7 +94,6 @@ readEvalLoop hin hout= page $
          push Append 0 (do
                 code <-  liftIO $ hGetLine hout
                 p << (code :: String) ++> noWidget)
-
          <** getinput hin
 
 getinput hin = autoRefresh $ do

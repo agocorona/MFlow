@@ -93,7 +93,7 @@ library
                    utf8-string -any, wai -any, case-insensitive -any, http-types -any,
                    conduit -any, text -any, parsec -any, warp -any,
                    random -any,  blaze-html -any, blaze-markup -any,
-                   monadloc -any
+                   monadloc -any, hamlet -any
                   
 
     exposed-modules: MFlow MFlow.Wai.Blaze.Html.All
@@ -102,8 +102,9 @@ library
                      MFlow.Wai.XHtml.All MFlow.Forms.XHtml
                      MFlow.Forms.Blaze.Html MFlow.Forms.Test
                      MFlow.Forms.Widgets
+                     MFlow.Forms.Internals
                      
-    other-modules: MFlow.Forms.Internals MFlow.Wai.Response
+    other-modules:  MFlow.Wai.Response
     exposed: True
     buildable: True
     hs-source-dirs: src .

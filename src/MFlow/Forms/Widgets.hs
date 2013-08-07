@@ -16,8 +16,10 @@ to create other active widgets.
 module MFlow.Forms.Widgets (
 -- * JQueryUi widgets
 datePicker, getSpinner, wautocomplete, wdialog,
+
 -- * User Management
 userFormOrName,maybeLogout,
+
 -- * Active widgets
 wEditList,wautocompleteList
 , wautocompleteEdit,
@@ -25,6 +27,7 @@ wEditList,wautocompleteList
 -- * Editing widgets
 delEdited, getEdited
 ,prependWidget,appendWidget,setWidget
+
 -- * Content Management
 ,tField, tFieldEd, tFieldGen
 
@@ -94,7 +97,6 @@ maybeLogout= do
           fromStr " " ++> ((wlink () (fromStr "logout")) <![("onclick",cmd "''")]) `waction` const logout
       else noWidget
 
---- active widgets
 
 data Medit view m a = Medit (M.Map B.ByteString [(String,View view m a)])
 instance (Typeable view, Typeable a)
@@ -621,6 +623,8 @@ prependUpdate= update "prepend"
 
 update method w= do
     id <- genNewId
+    st <- get
+    let t = mfkillTime st -1
 
     let installscript=
             "$(document).ready(function(){\n"
@@ -628,15 +632,14 @@ update method w= do
                ++ "ajaxPostForm('"++id++"');"
                ++ "})\n"
 
-    st <- get
-
-    r <- getParam1 ("auto"++id) $ mfEnv st
+    r <- getParam1 ("auto"++id) $ mfEnv st           -- !> ("TIMEOUT="++ show t)
     case r of
       NoParam -> do
-         requires [JScript ajaxGetLink
+         requires [JScript $ timeoutscript t
+                  ,JScript ajaxGetLink
                   ,JScript ajaxPostForm
                   ,JScriptFile jqueryScript [installscript]]
-         (ftag "div" <<< insertForm w) <! [("id",id)]
+         (ftag "div" <<< insertForm w) <! [("id",id)] 
 
       Validated (x :: String) -> View $ do
          let t= mfToken st
@@ -648,15 +651,20 @@ update method w= do
          return $ FormElm [] mr
 
   where
-  -- | adapted from http://www.codeproject.com/Articles/341151/Simple-AJAX-POST-Form-and-AJAX-Fetch-Link-to-Modal
 
+  timeoutscript t=
+     "\nvar hadtimeout=false;\n\
+     \setTimeout(function() {hadtimeout=true; }, "++show (t*1000)++");\n"
+
+  -- | adapted from http://www.codeproject.com/Articles/341151/Simple-AJAX-POST-Form-and-AJAX-Fetch-Link-to-Modal
   ajaxGetLink = "function ajaxGetLink(id){\n\
     \var id1= $('#'+id);\n\
     \var ida= $('#'+id+' a');\n\
     \ida.click(function () {\n\
-    \   var pdata = $(this).attr('data-value');\n\
-    \   var actionurl = $(this).attr('href');\n\
-    \   var dialogOpts = {\n\
+    \if (hadtimeout == true) return true;\n\
+    \var pdata = $(this).attr('data-value');\n\
+    \var actionurl = $(this).attr('href');\n\
+    \var dialogOpts = {\n\
     \       type: 'GET',\n\
     \       url: actionurl+'?bustcache='+ new Date().getTime()+'&auto'+id+'=true',\n\
     \       data: pdata,\n\
@@ -669,8 +677,8 @@ update method w= do
     \           id1.html(msg);\n\
     \       }\n\
     \   };\n\
-    \   $.ajax(dialogOpts);\n\
-    \   return false;\n\
+    \$.ajax(dialogOpts);\n\
+    \return false;\n\
     \});\n\
   \}"
 
@@ -678,6 +686,7 @@ update method w= do
     \var id1= $('#'+id);\n\
     \var idform= $('#'+id+' form');\n\
     \idform.submit(function (event) {\n\
+        \if (hadtimeout == true) return true;\n\
         \event.preventDefault();\n\
         \var $form = $(this);\n\
         \var url = $form.attr('action');\n\
@@ -820,7 +829,7 @@ push method' wait w= push' . map toLower $ show method'
     \               idstatus.html('no more retries');\n\
     \            else {\n\
     \               idstatus.html('waiting');\n\
-    \                     setTimeout(function() { idstatus.html('retrying');ajaxPush1(); }, waititime);\n\
+    \               setTimeout(function() { idstatus.html('retrying');ajaxPush1(); }, waititime);\n\
     \            }\n\
     \       }\n\
     \   };\n\

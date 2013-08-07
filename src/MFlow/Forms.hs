@@ -254,16 +254,20 @@ cachedWidget, wcached, wfreeze,
 ,btag,bhtml,bbody
 
 -- * Normalization
-, flatten, normalize
+,flatten, normalize
 
 -- * Running the flow monad
-,runFlow, transientNav,runFlowOnce,runFlowIn,runFlowConf,MFlow.Forms.Internals.step, goingBack,breturn, preventGoingBack
+,runFlow, transientNav,runFlowOnce,runFlowIn
+,runFlowConf,MFlow.Forms.Internals.step
+-- * controlling backtracking
+,goingBack,returnIfForward, breturn, preventGoingBack
 
 -- * Setting parameters
 ,setHeader
+,addHeader
+,getHeader
 ,setSessionData
 ,getSessionData
-,getHeader
 ,setTimeouts
 
 -- * Cookies
@@ -282,8 +286,8 @@ cachedWidget, wcached, wfreeze,
 ,FailBack
 ,fromFailBack
 ,toFailBack
--- * The monster of the deep
-,MFlowState
+,getRawParam
+
 )
 where
 
@@ -555,6 +559,8 @@ getTextBox
      Maybe a ->  View view m a
 getTextBox ms  = getParam Nothing "text" ms
 
+-- | return the value of a parameter from the environment
+getRawParam p=   gets mfEnv >>=   getParam1 p >>= return . valToMaybe
 
 getParam
   :: (FormInput view,
@@ -828,6 +834,15 @@ isLogged= do
    rus <-  return . tuser =<< gets mfToken
    return . not $ rus ==  anonymous
 
+-- | return the result if going forward
+--
+-- If the process is backtraking, it does not validate,
+-- in order to continue the backtracking
+returnIfForward :: (Monad m, FormInput view) => b -> View view m b
+returnIfForward x = do
+     back <- goingBack
+     if back then noWidget else return x
+
 -- | It creates a widget for user login\/registering. If a user name is specified
 -- in the first parameter, it is forced to login\/password as this specific user.
 -- If this user was already logged, the widget return the user without asking.
@@ -841,8 +856,8 @@ userWidget :: ( MonadIO m, Functor m
 userWidget muser formuser= do
    user <- getCurrentUser
    if muser== Just user || isNothing muser && user/= anonymous
-         then return user
-         else formuser `validate` val muser `waction` login1 
+         then returnIfForward user
+         else formuser `validate` val muser `wcallback` login1 
    where
    val _ (Nothing,_) = return . Just $ fromStr "Plese fill in the user/passwd to login, or user/passwd/passwd to register"
 
@@ -876,32 +891,31 @@ userWidget muser formuser= do
 
 
 login uname= do
- st <- get
- let t = mfToken st
-     u = tuser t
- if u == uname then return () else do
-     let t'= t{tuser= uname}
-     moveState (twfname t) t t'
-     put st{mfToken= t'}
-     liftIO $ deleteTokenInList t
-     liftIO $ addTokenToList t'
+-- st <- get
+-- let t = mfToken st
+--     u = tuser t
+-- if u == uname then return () else do
+--     let t'= t{tuser= uname}
+--     moveState (twfname t) t t'
+--     put st{mfToken= t'}
+--     liftIO $ deleteTokenInList t
+--     liftIO $ addTokenToList t'
      setCookie cookieuser   uname "/"  (Just $ 365*24*60*60) 
-     return ()
+
 
 
 
 -- | logout. The user is reset to the `anonymous` user
 logout :: (MonadIO m, MonadState (MFlowState view) m) => m ()
 logout= do
-     st <- get
-     let t = mfToken st
-         t'= t{tuser= anonymous}
-     if tuser t == anonymous then return () else do
-         moveState (twfname t) t t'
-         put st{mfToken= t'}
-         liftIO $ deleteTokenInList t
-         liftIO $ addTokenToList t'
-
+--     st <- get
+--     let t = mfToken st
+--         t'= t{tuser= anonymous}
+--     if tuser t == anonymous then return () else do
+--         moveState (twfname t) t t'
+--         put st{mfToken= t'}
+--         liftIO $ deleteTokenInList t
+--         liftIO $ addTokenToList t'
          setCookie cookieuser   anonymous "/" (Just $ -1000)
 
 -- | If not logged, perform login. otherwise return the user
@@ -924,6 +938,23 @@ getUser :: ( FormInput view, Typeable view)
           -> FlowM view IO String
 getUser mu form= ask $ userWidget mu form
 
+-- | Authentication against `userRegister`ed users.
+-- to be used with `validate`
+userValidate :: (FormInput view,MonadIO m) => (UserStr,PasswdStr) -> m (Maybe view)
+userValidate (u,p) =
+    let user= eUser{userName=u}
+    in liftIO $ atomically
+     $ withSTMResources [user]
+     $ \ mu -> case mu of
+         [Nothing] -> resources{toReturn= err }
+         [Just (User _ pass )] -> resources{toReturn= 
+               case pass==p  of
+                 True -> Nothing
+                 False -> err
+               }
+
+     where
+     err= Just . fromStr $ "Username or password invalid"
 
 -- | Join two widgets in the same page
 -- the resulting widget, when `ask`ed with it, return a 2 tuple of their validation results
@@ -1038,24 +1069,23 @@ ask w =  do
      let st= st1{needForm= False, inSync= False, mfRequirements= [],linkMatched=False} 
      put st
 
-     FormElm forms mx <- FlowM . lift  $ runView  w    -- !> "ASK"
+     FormElm forms mx <- FlowM . lift  $ runView  w
 
      st' <- get
      if notSyncInAction st' then put st'{notSyncInAction=False}>> ask w
-      else if mfAutorefresh st' then resetState st st' >>  FlowM (lift  nextMessage) >> ask w
+
 
       else
-      case mx of
+      case mx  of
        Just x -> do
-
-         put st'{newAsk= True , mfEnv=[]
+         put st'{newAsk= True  , mfEnv=[]
                 ,mfPageIndex=Nothing
                 ,mfPIndex= case isJust $ mfPageIndex st' of
                             True -> length (mfPath st') -1
                             False -> mfPIndex st'
          }
 
-         breturn x
+         breturn x                                       -- !> "RETURN"
 
        Nothing ->
          if  not (inSync st')  && not (newAsk st')
@@ -1067,9 +1097,13 @@ ask w =  do
             let index = mfPIndex st'
                 nindex= if index== 0 then 1 else index - 1
             put st'{mfPIndex= nindex}                     -- !> "BACKTRACK"
-            fail ""
+            fail ""                                       -- !> "FAIL**********"
+          else if mfAutorefresh st' then do
+                     resetState st st'
+                     FlowM (lift  nextMessage)
+                     ask w                              --  !> "EN AUTOREFRESH"
           else do
-             reqs <-  FlowM $ lift installAllRequirements
+             reqs <-  FlowM $ lift installAllRequirements     -- !> "REPEAT"
              let header= mfHeader st'
                  t= mfToken st'
              cont <- case (needForm st') of
@@ -1084,7 +1118,7 @@ ask w =  do
 
              resetState st st'              
 
-             FlowM $ lift  nextMessage
+             FlowM $ lift  nextMessage       -- !> "NEXTMESSAGE"
              ask w
     where
     resetState st st'=
@@ -1122,17 +1156,16 @@ nextMessage= do
          t1= mfkillTime st
          t2= mfSessionTime st
      msg <- liftIO ( receiveReqTimeout t1 t2  t)
-     let req= getParams msg
+     let req=   getParams msg
          env=   updateParams inPageFlow (mfEnv st) req -- !> show req
-         npath=  pwfPath msg
-
-         path= mfPath st
+         npath= pwfPath msg
+         path=  mfPath st
          inPageFlow= isJust $ mfPageIndex st  
      put st{ mfPath= npath
            , mfPIndex= case mfPageIndex st of
                          Just n -> n
-                         Nothing  ->
-                             comparePaths  (mfPIndex st) 1 (tail path) (tail npath)
+                         Nothing ->
+                             comparePaths (mfPIndex st) 1 (tail path) (tail npath)
 --           , mfPageIndex= Nothing
            , mfEnv= env }
 
@@ -1335,7 +1368,7 @@ wlink x v= View $ do
              case  index < length lpath && name== lpath !! index  of
              True -> do
                   modify $ \s -> s{inSync= True
-                                  , linkMatched= True, mfPIndex= index+1 }  -- !> (name ++ "<-" ++show index++ " MATCHED")
+                                 ,linkMatched= True, mfPIndex= index+1 }  -- !> (name ++ "<-" ++show index++ " MATCHED")
                   return $ Just x
              False ->  return Nothing                                        -- !> (name++"<-" ++show index++ " "++(if index < length lpath then lpath !! index else ""))
 

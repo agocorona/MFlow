@@ -1,0 +1,33 @@
+
+module ListEdit ( wlistEd) where
+
+import MFlow.Wai.Blaze.Html.All
+import Text.Blaze.Html5 as El
+import Text.Blaze.Html5.Attributes as At hiding (step)
+import Data.String
+
+attr= fromString
+
+wlistEd= do
+   r <-  ask  $   addLink
+              ++> br
+              ++> (wEditList El.div getString1   ["hi", "how are you"] "wEditListAdd")
+              <++ br
+              <** submitButton "send"
+
+   ask $   p << (show r ++ " returned")
+       ++> wlink () (p <<  " back to menu")
+
+
+   where
+   addLink = a ! At.id  (attr "wEditListAdd")
+               ! href (attr "#")
+               $ b << "add"
+   delBox  =  input ! type_   (attr "checkbox")
+                    ! checked (attr "")
+                    ! onclick (attr "this.parentNode.parentNode.removeChild(this.parentNode)")
+   getString1 mx= El.div  <<< delBox ++> getString  mx <++ br
+
+-- to run it alone:
+--main= runNavigation "" $ transientNav wListEd
+
