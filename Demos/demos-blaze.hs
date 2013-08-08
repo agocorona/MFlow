@@ -130,10 +130,6 @@ mainmenu=   do
              Trace       -> traceSample          `showSource`  "TraceSample.hs"
 
 
-   
-
-
-
 showSource w filename = do
       host <- getRawParam "Host" `onNothing` return "mflowdemo.herokuapp.com/"
       let path=  attr $ "http://" <> host <> ('/':filename)
