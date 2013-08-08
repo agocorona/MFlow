@@ -1,5 +1,5 @@
 {-# LINE 1 "INPUT" #-}
-{-# OPTIONS -XDeriveDataTypeable -XQuasiQuotes    #-}
+{-# OPTIONS -XDeriveDataTypeable -XQuasiQuotes   #-}
 module Main where
 {-# LINE 3 "INPUT" #-}
 import MFlow.Wai.Blaze.Html.All
@@ -134,7 +134,7 @@ mainmenu
 {-# LINE 137 "INPUT" #-}
 showSource w filename
   = Control.Monad.Loc.withLoc "showSource, Main(INPUT): (137, 25)"
-      (do host <- Control.Monad.Loc.withLoc "showSource, Main(INPUT): (138, 7)" (getRawParam "Host" `onNothing` return "localhost")
+      (do host <- Control.Monad.Loc.withLoc "showSource, Main(INPUT): (138, 7)" (getRawParam "Host" `onNothing` return "mflowdemo.herokuapp.com/")
           let {-# LINE 139 "INPUT" #-}
               path = attr $ "http://" <> host <> ('/' : filename)
           Control.Monad.Loc.withLoc "showSource, Main(INPUT): (140, 7)" (addHeader $ source path)

@@ -135,7 +135,7 @@ mainmenu=   do
 
 
 showSource w filename = do
-      host <- getRawParam "Host" `onNothing` return "http://mflowdemo.herokuapp.com/"
+      host <- getRawParam "Host" `onNothing` return "mflowdemo.herokuapp.com/"
       let path=  attr $ "http://" <> host <> ('/':filename)
       addHeader $ source path
       w

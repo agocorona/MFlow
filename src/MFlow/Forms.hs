@@ -1167,7 +1167,7 @@ nextMessage= do
                          Nothing ->
                              comparePaths (mfPIndex st) 1 (tail path) (tail npath)
 --           , mfPageIndex= Nothing
-           , mfEnv= env } !> show req
+           , mfEnv= env }                        -- !> show req
 
 
      where
