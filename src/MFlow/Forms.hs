@@ -1157,7 +1157,7 @@ nextMessage= do
          t2= mfSessionTime st
      msg <- liftIO ( receiveReqTimeout t1 t2  t)
      let req=   getParams msg
-         env=   updateParams inPageFlow (mfEnv st) req -- !> show req
+         env=   updateParams inPageFlow (mfEnv st) req
          npath= pwfPath msg
          path=  mfPath st
          inPageFlow= isJust $ mfPageIndex st  
@@ -1167,7 +1167,7 @@ nextMessage= do
                          Nothing ->
                              comparePaths (mfPIndex st) 1 (tail path) (tail npath)
 --           , mfPageIndex= Nothing
-           , mfEnv= env }
+           , mfEnv= env } !> show req
 
 
      where

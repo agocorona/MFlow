@@ -55,8 +55,8 @@ import Control.Exception as CE(catch,SomeException,AsyncException,throw,fromExce
 import Control.Concurrent
 import Control.Monad.Loc
 
---import Debug.Trace
---(!>) =    flip trace
+import Debug.Trace
+(!>) =    flip trace
 
 
 data FailBack a = BackPoint a | NoBack a | GoBack   deriving (Show,Typeable)
