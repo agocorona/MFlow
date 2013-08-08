@@ -68,11 +68,13 @@ Flow, Params, HttpData(..),Processable(..)
 -- * ByteString tags
 -- | very basic but efficient tag formatting
 btag, bhtml, bbody,Attribs, addAttrs
-
+-- * user
+, userRegister, setAdminUser, getAdminName
 -- * static files
 ,setFilesPath
 -- * internal use
 ,addTokenToList,deleteTokenInList, msgScheduler,serveFile,newFlow
+,UserStr,PasswdStr, User(..),eUser
 
 )
 where
@@ -82,7 +84,7 @@ import GHC.Conc(unsafeIOToSTM)
 import Data.Typeable
 import Data.Maybe(isJust, isNothing, fromMaybe, fromJust)
 import Data.Char(isSeparator)
-import Data.List(isPrefixOf,isSuffixOf,isInfixOf, elem , span, (\\))
+import Data.List(isPrefixOf,isSuffixOf,isInfixOf, elem , span, (\\),intersperse)
 import Control.Monad(when)
 
 import Data.Monoid
@@ -103,69 +105,12 @@ import Control.Workflow
 import MFlow.Cookies
 import Control.Monad.Trans
 import qualified Control.Exception as CE
+import Data.RefSerialize hiding (empty)
 
+import System.Posix.Internals
 
----- traces
---import Text.Printf
---import Language.Haskell.TH.Syntax(runQ,qLocation, Loc(..), Q, Exp, Quasi)
-
-import Debug.Trace
-(!>)  = const  -- flip trace
-
-type Flow= (Token -> Workflow IO ())
-
-data HttpData = HttpData Params [Cookie] ByteString | Error WFErrors ByteString deriving (Typeable, Show)
-
-
---instance ToHttpData HttpData where
--- toHttpData= id
---
---instance ToHttpData ByteString where
--- toHttpData bs= HttpData [] [] bs
-
-instance Monoid HttpData where
- mempty= HttpData [] [] empty
- mappend (HttpData h c s) (HttpData h' c' s')= HttpData (h++h') (c++ c') $ mappend s s'
-
--- | List of (wfname, workflow) pairs, to be scheduled depending on the message's pwfname
-type ProcList = WorkflowList IO Token ()
-
-
-data Req  = forall a.( Processable a, Typeable a)=> Req a   deriving Typeable
-
-type Params =  [(String,String)]
-
-class Processable a where
-     pwfname :: a -> String
-     pwfname s= Prelude.head $ pwfPath s 
-     pwfPath :: a -> [String]
-     puser :: a -> String
-     pind :: a -> String
-     getParams :: a -> Params
---     getServer ::a -> String
---     getPath :: a -> String
---     getPort :: a -> Int
-
-instance Processable Token where
-     pwfname = twfname
-     pwfPath = tpath
-     puser = tuser
-     pind = tind
-     getParams = tenv
-
-instance Processable  Req   where 
-    pwfname (Req x)= pwfname x
-    pwfPath (Req x)= pwfPath x
-    puser (Req x)= puser x
-    pind (Req x)= pind x   
-    getParams (Req x)= getParams  x
---    getServer (Req x)= getServer  x
---    getPath (Req x)= getPath  x
---    getPort (Req x)= getPort  x
-
-data Resp  = Fragm HttpData
-           | EndFragm HttpData
-           | Resp HttpData
+--import Debug.Trace
+--(!>)  =   flip trace
 
 
 -- | a Token identifies a flow that handle messages. The scheduler compose a Token with every `Processable`
@@ -174,8 +119,8 @@ data Token = Token{twfname,tuser, tind :: String , tpath :: [String], tenv:: Par
 
 instance Indexable  Token  where
      key (Token w u i _ _ _ _  )=
-          if u== anonymous then  u++ i   -- ++ "@" ++ w
-                           else  u       -- ++ "@" ++ w
+          if u== anonymous then  u ++ i   -- ++ "@" ++ w
+                          else  u       -- ++ "@" ++ w
 
 instance Show Token where
      show t = "Token " ++ key t
@@ -215,13 +160,68 @@ getToken msg=  do
       let mqs = M.lookup ( i  ++ w  ++ u) qmap
       case mqs of
               Nothing  -> do
-                 q <-   newEmptyMVar  -- `debug` (i++w++u)
-                 qr <-  newEmptyMVar
+                 q  <- newEmptyMVar  -- `debug` (i++w++u)
+                 qr <- newEmptyMVar
                  let token= Token w u i ppath penv q qr
                  addTokenToList token
                  return token
 
-              Just token-> return token{tpath= ppath, tenv= penv}
+              Just token -> return token{tpath= ppath, tenv= penv}
+
+
+type Flow= (Token -> Workflow IO ())
+
+data HttpData = HttpData Params [Cookie] ByteString | Error  ByteString deriving (Typeable, Show)
+
+
+--instance ToHttpData HttpData where
+-- toHttpData= id
+--
+--instance ToHttpData ByteString where
+-- toHttpData bs= HttpData [] [] bs
+
+instance Monoid HttpData where
+ mempty= HttpData [] [] empty
+ mappend (HttpData h c s) (HttpData h' c' s')= HttpData (h++h') (c++ c') $ mappend s s'
+
+-- | List of (wfname, workflow) pairs, to be scheduled depending on the message's pwfname
+type ProcList = WorkflowList IO Token ()
+
+
+data Req  = forall a.( Processable a, Typeable a)=> Req a   deriving Typeable
+
+type Params =  [(String,String)]
+
+class Processable a where
+     pwfname :: a -> String
+     pwfname s= Prelude.head $ pwfPath s 
+     pwfPath :: a -> [String]
+     puser :: a -> String
+     pind :: a -> String
+     getParams :: a -> Params
+
+instance Processable Token where
+     pwfname = twfname
+     pwfPath = tpath
+     puser = tuser
+     pind = tind
+     getParams = tenv
+
+instance Processable  Req   where 
+    pwfname (Req x)= pwfname x
+    pwfPath (Req x)= pwfPath x
+    puser (Req x)= puser x
+    pind (Req x)= pind x   
+    getParams (Req x)= getParams  x
+--    getServer (Req x)= getServer  x
+--    getPath (Req x)= getPath  x
+--    getPort (Req x)= getPort  x
+
+data Resp  = Fragm HttpData
+           | EndFragm HttpData
+           | Resp HttpData
+
+
 
 
 -- | The anonymous user
@@ -247,7 +247,7 @@ sendFlush t msg= flushRec t >> send t msg     -- !> "sendFlush "
 sendFragment ::  Token  -> HttpData -> IO()
 sendFragment (Token _ _ _ _ _ _ qresp) msg=   putMVar qresp  . Fragm $  msg
 
-{-# DEPRECATED sendEndFragment "use send to end a fragmented response instead" #-}
+{-# DEPRECATED sendEndFragment "use \"send\" to end a fragmented response instead" #-}
 sendEndFragment ::   Token  -> HttpData -> IO()
 sendEndFragment (Token _ _ _ _ _ _ qresp  ) msg=  putMVar qresp  $ EndFragm   msg
 
@@ -257,18 +257,17 @@ receive t= receiveReq t >>= return  . fromReq
 
 flushRec t@(Token _ _ _ _ _ queue _)= do
    empty <-  isEmptyMVar  queue
-   when (not empty) $ takeMVar queue >> return ()
+   when (not empty) $ takeMVar queue >> return ()    -- !> "flushRec"
 
 
 receiveReq ::  Token -> IO Req
-receiveReq t@(Token _ _ _ _ _ queue _)=   readMVar queue  -- !> (">>>>>> receive "++ thread t)
+receiveReq t@(Token _ _ _ _ _ queue  _)=   readMVar queue   -- !> (">>>>>> receiveReq "++ thread t)
 
 fromReq :: Typeable a => Req -> a
 fromReq  (Req x) = x' where
       x'= case cast x of
            Nothing -> error $ "receive: received type: "++ show (typeOf x) ++ " does not match the desired type:" ++ show (typeOf  x')
            Just y  -> y
-
 
 
 receiveReqTimeout :: Int
@@ -318,7 +317,7 @@ _messageFlows= unsafePerformIO $ newMVar emptyFList
   emptyFList= M.empty  :: WorkflowList  IO Token ()
 
 -- | add a list of flows to be scheduled. Each entry in the list is a pair @(path, flow)@
-addMessageFlows wfs=  modifyMVar_ _messageFlows(\ms ->  return $ M.union ms  (M.fromList $ map flt wfs))
+addMessageFlows wfs=  modifyMVar_ _messageFlows(\ms ->  return $ M.union (M.fromList $ map flt wfs)ms)
   where flt ("",f)= (noScript,f)
         flt e= e
 
@@ -332,19 +331,18 @@ thread t= show(unsafePerformIO  myThreadId) ++ " "++ show (twfname t)
 
 sendToMF Token{..} msg= putMVar tsendq $ Req msg
 
---tellToWF :: (Typeable a,  Typeable c, Processable a) => Token -> a -> IO c
-tellToWF t@(Token _ _ _ _ _ queue qresp ) msg = do  
-    putMVar queue (Req msg)              -- !> (">>>>> telltowf"++ thread t)
-    m <-  takeMVar qresp                 -- !> ("<<<<<< tellTowf"++ thread t)
+--recFromMF :: (Typeable a,  Typeable c, Processable a) => Token -> a -> IO c
+recFromMF Token{..}  = do  
+    m <-  takeMVar trecq                  -- !> ("<<<<<< recFromMF"++ thread t)
     case m  of
-        Resp r  ->  return  r            -- !> ("recibido  tellTowf"++ thread t)
+        Resp r  ->  return  r              -- !> ("recibido  recFromMF"++ thread t)
         Fragm r -> do
                    result <- getStream   r
                    return  result
 
     where
     getStream r =  do
-         mr <-  takeMVar qresp 
+         mr <-  takeMVar trecq 
          case mr of
             Fragm h -> do
                  rest <- unsafeInterleaveIO $  getStream  h
@@ -371,31 +369,34 @@ msgScheduler
   => a  -> IO (HttpData, ThreadId)
 msgScheduler x  = do
   token <- getToken x
-  let wfname= takeWhile (/='/') $ pwfname x
+  let wfname = takeWhile (/='/') $ pwfname x
+  sendToMF token x
   th <- startMessageFlow wfname token
-  r  <- tellToWF token  x                         --  !> let HttpData _ _ r1=r in unpack r1 
+  r  <- recFromMF token                          -- !> let HttpData _ _ r1=r in unpack r1 
   return (r,th)
   where
   --start the flow if not started yet
   startMessageFlow wfname token = 
    forkIO $ do
         wfs <- getMessageFlows
-        r <- startWF wfname  token   wfs                      -- !>( "init wf " ++ wfname)
+        r   <- startWF wfname  token   wfs          -- !>( "init wf " ++ wfname)
         case r of
           Left NotFound -> do
                  (sendFlush token =<<  serveFile  (pwfname x))
                     `CE.catch`\(e:: CE.SomeException) -> showError wfname token (show e)
 --               sendFlush token (Error NotFound $ "Not found: " <> pack wfname)
                  deleteTokenInList token
+
           Left AlreadyRunning -> return ()                    -- !> ("already Running " ++ wfname)
+
           Left Timeout -> do
-
-              hFlush stdout                                      !>  "TIMEOUT in msgScheduler"
-              return()
-          Left (WFException e)-> showError wfname token e
-
-
-
+              hFlush stdout                                       -- !>  ("TIMEOUT in msgScheduler" ++ (show $ unsafePerformIO myThreadId))
+              deleteTokenInList token
+             
+          Left (WFException e)-> do
+              showError wfname token e
+              deleteTokenInList token                       -- !> "DELETETOKEN"
+              
           Right _ ->  delMsgHistory token >> return ()      -- !> ("finished " ++ wfname)
 
 
@@ -403,30 +404,33 @@ msgScheduler x  = do
 showError wfname token@Token{..} e= do
                let user= key token
                t <- return . calendarTimeToString =<< toCalendarTime =<< getClockTime
-               let msg= errorMessage t e tuser wfname tenv
-               putStrLn msg
+               let msg= errorMessage t e tuser (Prelude.concat $ intersperse "/" tpath) tenv
+
                logError  msg
 --               moveState wfname token token{tuser= "error/"++tuser token}
                fresp <- getNotFoundResponse
-               sendFlush token $ fresp (key token)  $  Prelude.concat[ "<br/>"++ s | s <- lines msg]
+               admin <- getAdminName
+               sendFlush token . Error $ fresp (user== admin)  $  Prelude.concat[ "<br/>"++ s | s <- lines msg]
 
 
-errorMessage t e u wf env=
-     "\n---------------------ERROR-------------------------\n"++
-     "TIME=" ++ t ++"\n\n" ++
+errorMessage t e u path env=
+     "\n---------------------ERROR-------------------------\
+     \\nTIME=" ++ t ++"\n\n" ++
      e++
-     "\n\nUSER= "++
-     u++
-     "\n\nVERB= "++
-     wf++
+     "\n\nUSER= " ++ u ++
+     "\n\nPATH= " ++ path ++
      "\n\nREQUEST:\n\n"++
      show env
 
+line= unsafePerformIO $ newMVar ()
 
 logError err= do
+     takeMVar line
+     putStrLn err
      hSeek hlog SeekFromEnd 0
      hPutStrLn hlog err
      hFlush hlog
+     putMVar line ()
 
 logFileName= "errlog"
 
@@ -435,13 +439,62 @@ logFileName= "errlog"
 -- | The handler of the error log
 hlog= unsafePerformIO $ openFile logFileName ReadWriteMode
 
+------ USER MANAGEMENT -------
 
-defNotFoundResponse user msg=
-  HttpData [("Content-Type", "text/html")] []
-     $ fresp
-     $ case user of
-           "admin" -> pack msg
-           _       -> "The administrator has been notified"
+--instance Serialize a => Serializable a where
+--  serialize=  runW . showp
+--  deserialize=   runR readp
+
+data User= User
+            { userName :: String
+            , upassword :: String
+            } deriving (Read, Show, Typeable)
+
+eUser= User (error1 "username") (error1 "password")
+
+error1 s= error $ s ++ " undefined"
+
+userPrefix= "user/"
+instance Indexable User where
+   key User{userName= user}= keyUserName user
+
+-- | Return  the key name of an user
+keyUserName n= userPrefix++n
+
+instance Serialize a => Serializable a where
+  serialize= runW . showp
+  deserialize= runR  readp
+
+-- | Register an user/password 
+userRegister :: MonadIO m => String -> String  -> m (DBRef User)
+userRegister user password  = liftIO . atomically $ newDBRef $ User user password
+
+
+data Config = Config UserStr deriving (Read, Show, Typeable)
+
+keyConfig= "mflow.config"
+instance Indexable Config where key _= keyConfig
+rconf= getDBRef keyConfig
+
+
+type UserStr= String
+type PasswdStr= String
+
+setAdminUser :: MonadIO m => UserStr -> PasswdStr -> m ()
+setAdminUser user password= liftIO $  atomically $ do
+  newDBRef $ User user password
+  writeDBRef rconf $ Config user
+
+getAdminName :: MonadIO m => m UserStr
+getAdminName= liftIO $ atomically ( readDBRef rconf `onNothing` error "admin user not set" ) >>= \(Config u) -> return u
+
+
+--------------- ERROR RESPONSES --------
+
+defNotFoundResponse isAdmin msg= fresp $
+     case isAdmin of
+           True -> pack msg
+           _    -> "The administrator has been notified"
   where
   fresp msg=
    "<html><h4>Error 404: Page not found or error ocurred</h4> <p style=\"font-family:courier\">" <> msg <>"</p>" <>
@@ -457,20 +510,22 @@ notFoundResponse=  unsafePerformIO $ newIORef defNotFoundResponse
 -- | set the  404 "not found" response.
 --
 -- The parameter is as follows:
---    (String     The user identifier. The username when logged
+--    (Bool        Either if the user is Administrator or not
 --  -> String      The error string
 --  -> HttpData)   The response. See `defNotFoundResponse` code for an example
 
 setNotFoundResponse :: 
-    (String    
+    (Bool    
   -> String     
-  -> HttpData)  
+  -> ByteString)  
   -> IO ()
 
 setNotFoundResponse f= liftIO $ writeIORef notFoundResponse  f
 getNotFoundResponse= liftIO $ readIORef notFoundResponse
 
--- basic bytestring  tags
+--------------- BASIC BYTESTRING TAGS -------------------
+
+
 type Attribs= [(String,String)]
 -- | Writes a XML tag in a ByteString. It is the most basic form of formatting. For
 -- more sophisticated formatting , use "MFlow.Forms.XHtml" or "MFlow.Forms.HSP".
@@ -499,7 +554,7 @@ addAttrs (Chunk "<" (Chunk tag rest)) rs=
 addAttrs other _ = error  $ "addAttrs: byteString is not a tag: " ++ show other
 
 
---- basic file server ----
+------------------- FILE SERVER -----------
 
 -- | Set the path of the files in the web server. The links to the files are relative to it.
 -- The files are cached (memoized) according with the "Data.TCache" policies in the program space. This avoid the blocking of
@@ -507,8 +562,8 @@ addAttrs other _ = error  $ "addAttrs: byteString is not a tag: " ++ show other
 -- in the context of heavy concurrence.
 -- It uses 'Data.TCache.Memoization'. 
 -- The caching-uncaching follows the `setPersist` criteria
-setFilesPath :: String -> IO ()
-setFilesPath path= writeIORef rfilesPath path
+setFilesPath :: MonadIO m => String -> m ()
+setFilesPath path= liftIO $ writeIORef rfilesPath path
 
 rfilesPath= unsafePerformIO $ newIORef "files/"
 
@@ -531,11 +586,11 @@ serveFile path'= do
    ioerr x= \(e :: CE.IOException) ->  x
    setMime x= ("Content-Type",x)
 
+--------------------- FLOW ID GENERATOR ------------
+
 data NFlow= NFlow !Integer deriving (Read, Show, Typeable)
 
-instance Serializable NFlow where
-  serialize= B.pack . show
-  deserialize= read . B.unpack
+
 
 instance Indexable NFlow where
   key _= "Flow"

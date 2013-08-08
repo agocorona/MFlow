@@ -6,59 +6,83 @@ import System.IO
 import System.Process
 import Data.Monoid
 
-import Control.Concurrent.MVar
 import Control.Concurrent
-import System.IO.Unsafe
 import Control.Concurrent.STM
 import Data.Typeable
+import Control.Monad
+
 
 
 import Debug.Trace
+import Data.TCache.Memoization
 
+(!>)= flip trace
 
 main= do
 --     (Just hin, Just hout, _, _) <- 
 --            createProcess (proc "ghci" [] ){ std_in= CreatePipe, std_out = CreatePipe }
 
-     runNavigation "" $ transientNav pushSample -- $ readEvalLoop  hin hout 
+     runNavigation "" $ readEvalLoop  hin hout 
 
 
-pushIncrease= do
- page $ do
-  tv <- liftIO $ newTVarIO 0 -- atomic (newTVar 0)
-  push Html $ do
-      setTimeouts 100 0
+pushIncrease = do
+ tv <- liftIO $ newTVarIO 0
+ page . push Html 0 $ do
+      setTimeouts 100 0   -- do nothing since the thread will kill itself.
       n <- atomic $ readTVar tv
-
+      when (n== 100) . liftIO $ myThreadId >>= killThread
       atomic $ writeTVar tv $ n + 1
       liftIO $ threadDelay 1000000
       b << (show n) ++> noWidget
 
+pushDecrease= do
+ tv <- liftIO $ newTVarIO 10
+
+ page . push Html 0 $ do
+      setTimeouts 100 0     -- kill  the thread if the user navigate away
+      n <- atomic $ readTVar tv
+      if (n== -1)
+        then do
+          script << "window.location='/'" ++> noWidget
+          liftIO $ myThreadId >>= killThread !> "KILLLLLLL"
+        else do
+          atomic $ writeTVar tv $ n - 1
+          liftIO $ threadDelay 1000000
+          h1 << (show n) ++> noWidget
 
 pushSample=  do
-  page $ wlink () << b << "press"
   tv <- liftIO $ newTVarIO $ Just "init"
-  page $ push Append (disp tv) <** input tv
+  page $ push Append 5000 (disp tv) <** input tv   -- <** inputAjax tv
 
   where
   disp tv= do
       setTimeouts 100 0
       line <- tget tv
-      p <<  line ++> noWidget
+
+      liftIO $ when (line == ".") $ print "KILL" >> myThreadId >>= killThread
+      liftIO $ print "NOT KILLED"
+      p <<  line ++> noWidget !> (show line)
 
   input tv= autoRefresh $ do
       line <- getString Nothing <** submitButton "Enter"
       tput tv line
 
+--  inputAjax tv = do
+--      let elemval= "document.getElementById('text1').value"
+--      ajaxc <- ajax $ \line -> tput tv line >> return (fromStr "")
+--      getString Nothing <! [("id","text1")]
+--       <** submitButton "submit" <! [("onsubmit", ajaxc  elemval++"; return false;")] 
 
-  tput tv x = atomic $ writeTVar  tv ( Just x)
+
+
+  tput tv x = atomic $ writeTVar  tv ( Just x)  !> ("PUT in " ++ addrStr tv)
 
   tget tv= atomic $ do
       mr <- readTVar tv
       case mr of
          Nothing -> retry
          Just r -> do
-          writeTVar tv Nothing
+          writeTVar tv Nothing      !> ("GEt in " ++ addrStr tv)
           return r
 
 
@@ -67,10 +91,9 @@ atomic= liftIO . atomically
 
 
 readEvalLoop hin hout= page $
-         push Append (do
+         push Append 0 (do
                 code <-  liftIO $ hGetLine hout
                 p << (code :: String) ++> noWidget)
-
          <** getinput hin
 
 getinput hin = autoRefresh $ do
@@ -78,21 +101,10 @@ getinput hin = autoRefresh $ do
       liftIO $ do
          hPutStr hin $ line++"\n"
          hFlush hin
+         
 
 
 unlines1 :: [String] -> Html
 unlines1 ls= mconcat[p << l | l <- ls]
 
---receiveLoop hout =  loop []
--- where
--- loop xs= do
---   more <- hReady  hout
---   if more
---      then do
---        x <- hGetLine hout
---        print x
---        loop $ x:xs   !> "loop"
---      else return $ concat xs  !> "next line"
---
---
---
+

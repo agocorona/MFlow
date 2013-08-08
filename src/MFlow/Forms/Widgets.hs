@@ -16,8 +16,10 @@ to create other active widgets.
 module MFlow.Forms.Widgets (
 -- * JQueryUi widgets
 datePicker, getSpinner, wautocomplete, wdialog,
+
 -- * User Management
 userFormOrName,maybeLogout,
+
 -- * Active widgets
 wEditList,wautocompleteList
 , wautocompleteEdit,
@@ -25,6 +27,7 @@ wEditList,wautocompleteList
 -- * Editing widgets
 delEdited, getEdited
 ,prependWidget,appendWidget,setWidget
+
 -- * Content Management
 ,tField, tFieldEd, tFieldGen
 
@@ -56,6 +59,7 @@ import Data.Maybe
 import Data.Char
 import Control.Monad.Identity
 import Control.Workflow(killWF)
+
 
 
 readyJQuery="ready=function(){if(!window.jQuery){return setTimeout(ready,100)}};"
@@ -93,7 +97,6 @@ maybeLogout= do
           fromStr " " ++> ((wlink () (fromStr "logout")) <![("onclick",cmd "''")]) `waction` const logout
       else noWidget
 
---- active widgets
 
 data Medit view m a = Medit (M.Map B.ByteString [(String,View view m a)])
 instance (Typeable view, Typeable a)
@@ -620,6 +623,8 @@ prependUpdate= update "prepend"
 
 update method w= do
     id <- genNewId
+    st <- get
+    let t = mfkillTime st -1
 
     let installscript=
             "$(document).ready(function(){\n"
@@ -627,15 +632,14 @@ update method w= do
                ++ "ajaxPostForm('"++id++"');"
                ++ "})\n"
 
-    st <- get
-
-    r <- getParam1 ("auto"++id) $ mfEnv st
+    r <- getParam1 ("auto"++id) $ mfEnv st           -- !> ("TIMEOUT="++ show t)
     case r of
       NoParam -> do
-         requires [JScript ajaxGetLink
+         requires [JScript $ timeoutscript t
+                  ,JScript ajaxGetLink
                   ,JScript ajaxPostForm
                   ,JScriptFile jqueryScript [installscript]]
-         (ftag "div" <<< insertForm w) <! [("id",id)]
+         (ftag "div" <<< insertForm w) <! [("id",id)] 
 
       Validated (x :: String) -> View $ do
          let t= mfToken st
@@ -647,15 +651,20 @@ update method w= do
          return $ FormElm [] mr
 
   where
-  -- | adapted from http://www.codeproject.com/Articles/341151/Simple-AJAX-POST-Form-and-AJAX-Fetch-Link-to-Modal
 
+  timeoutscript t=
+     "\nvar hadtimeout=false;\n\
+     \setTimeout(function() {hadtimeout=true; }, "++show (t*1000)++");\n"
+
+  -- | adapted from http://www.codeproject.com/Articles/341151/Simple-AJAX-POST-Form-and-AJAX-Fetch-Link-to-Modal
   ajaxGetLink = "function ajaxGetLink(id){\n\
     \var id1= $('#'+id);\n\
     \var ida= $('#'+id+' a');\n\
     \ida.click(function () {\n\
-    \   var pdata = $(this).attr('data-value');\n\
-    \   var actionurl = $(this).attr('href');\n\
-    \   var dialogOpts = {\n\
+    \if (hadtimeout == true) return true;\n\
+    \var pdata = $(this).attr('data-value');\n\
+    \var actionurl = $(this).attr('href');\n\
+    \var dialogOpts = {\n\
     \       type: 'GET',\n\
     \       url: actionurl+'?bustcache='+ new Date().getTime()+'&auto'+id+'=true',\n\
     \       data: pdata,\n\
@@ -668,8 +677,8 @@ update method w= do
     \           id1.html(msg);\n\
     \       }\n\
     \   };\n\
-    \   $.ajax(dialogOpts);\n\
-    \   return false;\n\
+    \$.ajax(dialogOpts);\n\
+    \return false;\n\
     \});\n\
   \}"
 
@@ -677,6 +686,7 @@ update method w= do
     \var id1= $('#'+id);\n\
     \var idform= $('#'+id+' form');\n\
     \idform.submit(function (event) {\n\
+        \if (hadtimeout == true) return true;\n\
         \event.preventDefault();\n\
         \var $form = $(this);\n\
         \var url = $form.attr('action');\n\
@@ -702,18 +712,25 @@ data UpdateMethod= Append | Prepend | Html deriving Show
 
 -- | continously execute a widget and update the content.
 -- The update method specify how the update is done. 'Html' means a substitution of content.
--- It can be used to show data updates. The widget is executed in a different process than
---  the one of the rest of the page. Although the process is initiated with the page context,
+-- The second parameter is the delay for the next retry in case of disconnection, in milliseconds.
+--
+-- It can be used to show data updates in the server. The widget is executed in a different process than
+--  the one of the rest of the page. Although the process is initiated with the session context,
 -- updates in the session context are not seen by the push widget
 -- To communicate with te widget, use DBRef's or TVar and the
 -- STM semantics for waiting updates using 'retry'.
+--
+-- Widgets in a push can have links and forms, but since they are asunchonous, they can not
+-- return validated inputs. but they can modify the server state.
+-- push ever return invalid to the calling widget, so it never
+-- triggers the advance of the navigation.
 --
 --
 -- This example is a counter increased each second:
 --
 -- > pushIncrease= do
 -- >   tv <- liftIO $ newTVarIO 0
--- >   page $ push Html $ do
+-- >   page $ push 0 Html $ do
 -- >       n <- atomic $ readTVar tv
 -- >       atomic $ writeTVar tv $ n + 1
 -- >       liftIO $ threadDelay 1000000
@@ -729,7 +746,7 @@ data UpdateMethod= Append | Prepend | Html deriving Show
 --
 -- >  pushSample=  do
 -- >   tv <- liftIO $ newTVarIO $ Just "init"
--- >   page $ push Append (disp tv) <** input tv
+-- >   page $ push Append 1000 (disp tv) <** input tv
 -- >
 -- >   where
 -- >   disp tv= do
@@ -753,10 +770,12 @@ data UpdateMethod= Append | Prepend | Html deriving Show
 
 push :: FormInput v
   => UpdateMethod
+  -> Int
   -> View v IO ()
   -> View v IO ()
-push method'  w= let method= map toLower $ show method' in push' method w
-push' method w= do
+push method' wait w= push' . map toLower $ show method'
+ where
+ push' method= do
     id <- genNewId
     st <- get
     let token= mfToken st
@@ -764,13 +783,12 @@ push' method w= do
         procname= "_push" ++ tind token ++ id
         installscript=
             "$(document).ready(function(){\n"
-               ++ "ajaxPush('"++id++"');"
+               ++ "ajaxPush('"++id++"',"++show wait++");"
                ++ "})\n"
 
     new <- gets newAsk
 
     when new  $ do
-
         killWF procname token{twfname= procname}
         let proc= transient . runFlow . ask $ w' dat
         requires [ServerProc (procname, proc),
@@ -780,15 +798,18 @@ push' method w= do
 
 
     (ftag "div" <<< noWidget) <! [("id",id)]
+      <++ ftag "div" mempty `attrs` [("id",id++"status")]
 
-  where
-  w' dat= do
+   where
+   w' dat= do
      modify $ \s -> s{inSync= True,newAsk=True,mfData=dat}
      w
 
 
-  ajaxPush procname= "function ajaxPush(id){\n\
+   ajaxPush procname=" function ajaxPush(id,waititime){\n\
+    \var cnt=0; \n\
     \var id1= $('#'+id);\n\
+    \var idstatus= $('#'+id+'status');\n\
     \var ida= $('#'+id+' a');\n\
     \   var actionurl='/"++procname++"';\n\
     \   var dialogOpts = {\n\
@@ -797,16 +818,26 @@ push' method w= do
     \       url: actionurl,\n\
     \       data: '',\n\
     \       success: function (resp) {\n\
+    \         idstatus.html('')\n\
+    \         cnt=0;\n\
     \         id1."++method++"(resp);\n\
-    \         ajaxPush(id)\n\
+    \         ajaxPush1();\n\
     \       },\n\
     \       error: function (xhr, status, error) {\n\
-    \           var msg = $('<div>' + status + '</div>');\n\
-    \           id1.html(msg);\n\
+    \            cnt= cnt + 1;\n\
+    \            if (cnt > 6)\n\
+    \               idstatus.html('no more retries');\n\
+    \            else {\n\
+    \               idstatus.html('waiting');\n\
+    \               setTimeout(function() { idstatus.html('retrying');ajaxPush1(); }, waititime);\n\
+    \            }\n\
     \       }\n\
     \   };\n\
+    \function ajaxPush1(){\n\
     \   $.ajax(dialogOpts);\n\
     \   return false;\n\
+    \ }\n\
+    \ ajaxPush1();\n\
   \}"
 
 -- | show the jQuery spinner widget. the first parameter is the configuration . Use \"()\" by default.

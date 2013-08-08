@@ -51,71 +51,12 @@ import Control.Workflow(WFErrors(Timeout))
 ---- for traces
 --
 
-import Control.Exception as CE(catch,SomeException,throw,fromException)
+import Control.Exception as CE(catch,SomeException,AsyncException,throw,fromException)
 import Control.Concurrent
 import Control.Monad.Loc
 
-import Debug.Trace
-(!>) = const --   flip trace
-
-instance Serialize a => Serializable a where
-  serialize=  runW . showp
-  deserialize=   runR readp
-
-type UserStr= String
-type PasswdStr= String
-
-data User= User
-            { userName :: String
-            , upassword :: String
-            } deriving (Read, Show, Typeable)
-
-eUser= User (error1 "username") (error1 "password")
-
-error1 s= error $ s ++ " undefined"
-
-userPrefix= "user/"
-instance Indexable User where
-   key User{userName= user}= keyUserName user
-
--- | Return  the key name of an user
-keyUserName n= userPrefix++n
-
--- | Register an user/password 
-userRegister :: MonadIO m => String -> String  -> m (DBRef User)
-userRegister user password  = liftIO . atomically $ newDBRef $ User user password
-
--- | Authentication against `userRegister`ed users.
--- to be used with `validate`
-userValidate :: (FormInput view,MonadIO m) => (UserStr,PasswdStr) -> m (Maybe view)
-userValidate (u,p) =
-    let user= eUser{userName=u}
-    in liftIO $ atomically
-     $ withSTMResources [user]
-     $ \ mu -> case mu of
-         [Nothing] -> resources{toReturn= err }
-         [Just (User _ pass )] -> resources{toReturn= 
-               case pass==p  of
-                 True -> Nothing
-                 False -> err
-               }
-
-     where
-     err= Just . fromStr $ "Username or password invalid"
-
-data Config = Config UserStr deriving (Read, Show, Typeable)
-
-keyConfig= "mflow.config"
-instance Indexable Config where key _= keyConfig
-rconf= getDBRef keyConfig
-
-setAdminUser :: MonadIO m => UserStr -> PasswdStr -> m ()
-setAdminUser user password= liftIO $  atomically $ do
-  newDBRef $ User user password
-  writeDBRef rconf $ Config user
-
-getAdminName :: MonadIO m => m UserStr
-getAdminName= liftIO $ atomically ( readDBRef rconf `onNothing` error "admin user not set" ) >>= \(Config u) -> return u
+--import Debug.Trace
+--(!>) =    flip trace
 
 
 data FailBack a = BackPoint a | NoBack a | GoBack   deriving (Show,Typeable)
@@ -283,10 +224,9 @@ instance  MonadLoc (FlowM v IO) where
             s <- get
             (r,s') <- lift $ do
                        rs@(r,s') <- runStateT (runSup (runFlowM f) ) s
---                                          `CE.catch`(\(e :: WFErrors) -> CE.throw e)
                                           `CE.catch` (handler1  loc s)
                        case mfTrace s' of
-                            []     ->  return rs
+                            []    ->  return rs
                             trace ->  return(r, s'{mfTrace= loc:trace})
             put s'
             return r
@@ -294,8 +234,13 @@ instance  MonadLoc (FlowM v IO) where
        where
        handler1 loc s (e :: SomeException)= do
         case CE.fromException e :: Maybe WFErrors of
-           Just e  -> CE.throw e
-           Nothing -> return (GoBack, s{mfTrace= ["exception: " ++show e]})
+           Just e  -> CE.throw e     -- !> ("TROWNF=" ++ show e)
+           Nothing ->
+             case CE.fromException e :: Maybe AsyncException of
+                Just e -> CE.throw e -- !> ("TROWN ASYNCF=" ++ show e)
+                Nothing ->
+                 return (GoBack, s{mfTrace= [show e]})
+
 
 --instance (Serialize a,Typeable a, FormInput v) => MonadLoc (FlowM v (Workflow IO)) a where
 --    withLoc loc f =  FlowM . Sup $
@@ -304,7 +249,6 @@ instance  MonadLoc (FlowM v IO) where
 --            (r,s') <-  lift . WF.step $ exec1d "jkkjk" ( runStateT (runSup $ runFlowM f) s) `CMT.catch` (handler1  loc s)
 --            put s'
 --            return r
---
 --
 --       where
 --       handler1 loc s (e :: SomeException)=
@@ -316,8 +260,7 @@ instance  MonadLoc (View v IO)  where
             s <- get
             (r,s') <- lift $ do
                        rs@(r,s') <- runStateT (runView f) s
---                                      `CE.catch`(\(e :: WFErrors) -> throw e)
-                                      `CE.catch` (handler1  loc s)
+                                             `CE.catch` (handler1  loc s)
                        case mfTrace s' of
                             []     ->  return rs
                             trace  ->  return(r, s'{mfTrace=  loc:trace})
@@ -327,8 +270,12 @@ instance  MonadLoc (View v IO)  where
        where
        handler1 loc s (e :: SomeException)= do
         case CE.fromException e :: Maybe WFErrors of
-           Just e  -> CE.throw e
-           Nothing -> return (FormElm [] Nothing, s{mfTrace= ["exception: " ++show e]}) -- !> loc
+           Just e  -> CE.throw e                -- !> ("TROWN=" ++ show e)
+           Nothing ->
+             case CE.fromException e :: Maybe AsyncException of
+                Just e -> CE.throw e            -- !> ("TROWN ASYNC=" ++ show e)
+                Nothing ->
+                  return (FormElm [] Nothing, s{mfTrace= [show e]}) -- !> loc
 
 
 
@@ -516,12 +463,9 @@ changeMonad w= View . StateT $ \s ->
 -- However this is very specialized. Normally the back button detection is not necessary.
 -- In a persistent flow (with step) even this default entry option would be completely automatic,
 -- since the process would restar at the last page visited. No setting is necessary.
-goingBack :: (MonadIO m,MonadState (MFlowState view) m) => m Bool
+goingBack :: MonadState (MFlowState view) m => m Bool
 goingBack = do
     st <- get
-    liftIO $ do
-      print $"Insync=" ++ show (inSync st)
-      print $ "newAsk st=" ++ show (newAsk st)
     return $ not (inSync st) && not (newAsk st)
 
 -- | Will prevent the Suprack beyond the point where 'preventGoingBack' is located.
@@ -545,7 +489,7 @@ preventGoingBack
 preventGoingBack msg= do
    back <- goingBack
    if not back  then breturn() else do
-         breturn()  -- will not go back bellond this
+         breturn()  -- will not go back beyond this
          clearEnv
          modify $ \s -> s{newAsk= True}
          msg
@@ -703,6 +647,11 @@ setHeader header= do
 getHeader :: ( Monad m) => FlowM view m (view -> view)
 getHeader= gets mfHeader
 
+-- | Add another header embedded in the previous one
+addHeader new= do
+  fhtml <- getHeader
+  setHeader $ fhtml . new
+  
 -- | Set an HTTP cookie
 setCookie :: MonadState (MFlowState view) m
           => String  -- ^ name
@@ -837,7 +786,7 @@ class (Monoid view,Typeable view)   => FormInput view where
 cachedWidget :: (MonadIO m,Typeable view
          , FormInput view, Typeable a,  Executable m )
         => String  -- ^ The key of the cached object for the retrieval
-        -> Int     -- ^ Timeout of the caching. Zero means sessionwide
+        -> Int     -- ^ Timeout of the caching. Zero means the whole server run
         -> View view Identity a   -- ^ The cached widget, in the Identity monad
         -> View view m a          -- ^ The cached result
 cachedWidget key t mf =  View .  StateT $ \s ->  do
@@ -845,6 +794,7 @@ cachedWidget key t mf =  View .  StateT $ \s ->  do
         let((FormElm  _ mx2), s2)  = execute $ runStateT  ( runView mf)    s{mfSeqCache= sec,mfCached=True}
         let s''=  s{inSync = inSync s2
                    ,mfRequirements=mfRequirements s2
+                   ,mfPath= mfPath s2
                    ,mfSeqCache= mfSeqCache s + mfSeqCache s2 - sec}
         return $ (mfSeqCache s'') `seq`  ((FormElm form mx2), s'')
         -- !> ("enter: "++show (mfSeqCache s) ++" exit: "++ show ( mfSeqCache s2))
@@ -934,12 +884,12 @@ runFlow  f t=
     let t''= t'{tpath=[twfname t']}
     liftIO $ do
        flushRec t''
-       sendToMF t'' t'' -- !> "SEND"
-    loop  f t''          !> "LOOPAGAIN"
+       sendToMF t'' t''  -- !> "SEND"
+    loop  f t''          -- !> "LOOPAGAIN"
 
 
 
-runFlowOnce :: (FormInput view,  Monad m)
+runFlowOnce :: (MonadIO m, FormInput view,  Monad m)
         => FlowM view m () -> Token -> m ()
 runFlowOnce f t= runFlowOnce1 f t  >> return ()
 
@@ -954,12 +904,14 @@ runFlowOnce1  f t  =
 
   where
   backInit= do
-     s <- get   !> "BackInit"
+     s <- get                       -- !> "BackInit"
      case mfTrace s of
        [] -> do
          modify $ \s -> s{mfEnv=[], newAsk= True}
          breturn ()
-       tr -> error $ disp tr
+       tr -> do
+         th <- liftIO myThreadId
+         error $ show th ++ disp tr
      where
      disp tr= "TRACE (error in the last line):\n\n" ++(concat $ intersperse "\n" tr)
   -- to restart the flow in case of going back before the first page of the flow
