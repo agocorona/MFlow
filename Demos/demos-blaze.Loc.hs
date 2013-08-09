@@ -1,5 +1,5 @@
 {-# LINE 1 "INPUT" #-}
-{-# OPTIONS -XDeriveDataTypeable -XQuasiQuotes  #-}
+{-# OPTIONS -XDeriveDataTypeable -XQuasiQuotes   #-}
 module Main where
 {-# LINE 3 "INPUT" #-}
 import MFlow.Wai.Blaze.Html.All hiding (article)
@@ -104,23 +104,25 @@ data Options = CountI
 {-# LINE 64 "INPUT" #-}
 mainmenu
   = Control.Monad.Loc.withLoc "mainmenu, Main(INPUT): (64, 13)"
-      (do Control.Monad.Loc.withLoc "mainmenu, Main(INPUT): (65, 8)" (setHeader stdheader)
-          Control.Monad.Loc.withLoc "mainmenu, Main(INPUT): (66, 8)" (setTimeouts 100 0)
-          r <- Control.Monad.Loc.withLoc "mainmenu, Main(INPUT): (67, 8)"
+      (do host <- Control.Monad.Loc.withLoc "mainmenu, Main(INPUT): (65, 8)" (getRawParam "Host" `onNothing` return "mflowdemo.herokuapp.com/")
+          Control.Monad.Loc.withLoc "mainmenu, Main(INPUT): (66, 8)" (setSessionData host)
+          Control.Monad.Loc.withLoc "mainmenu, Main(INPUT): (67, 8)" (setHeader $ stdheader)
+          Control.Monad.Loc.withLoc "mainmenu, Main(INPUT): (68, 8)" (setTimeouts 100 0)
+          r <- Control.Monad.Loc.withLoc "mainmenu, Main(INPUT): (69, 8)"
                  (ask $
                     wcached "menu" 0 $
                       b << "PUSH" ++> (li <<< wlink Push << b << "Push example" <++ b << " A push widget in append mode receives input froma text box with autorefresh" <> article pushl) <|> (li <<< wlink PushDec << b << "A push counter" <++ b << " Show a countdown. Then goes to the main menu" <> article pushdec) <|> br ++> br ++> b << "ERROR TRACES" ++> (li <<< wlink Trace << b << " Execution traces for errors" <++ b << " produces an error and show the complete execution trace" <> article errorTrace) <|> br ++> br ++> b << "DIFFERENT KINDS OF FLOWS" ++>
                         (li $
-                           Control.Monad.Loc.withLoc "mainmenu, Main(INPUT): (83, 26)"
-                             (do Control.Monad.Loc.withLoc "mainmenu, Main(INPUT): (83, 29)" (a ! href (attr "/navigation") << " REST navigation")
-                                 Control.Monad.Loc.withLoc "mainmenu, Main(INPUT): (84, 29)" (b << " Navigates trough  menus and a sucession of GET pages")
-                                 Control.Monad.Loc.withLoc "mainmenu, Main(INPUT): (85, 29)" (article navigation)))
+                           Control.Monad.Loc.withLoc "mainmenu, Main(INPUT): (85, 26)"
+                             (do Control.Monad.Loc.withLoc "mainmenu, Main(INPUT): (85, 29)" (a ! href (attr "/navigation") << " REST navigation")
+                                 Control.Monad.Loc.withLoc "mainmenu, Main(INPUT): (86, 29)" (b << " Navigates trough  menus and a sucession of GET pages")
+                                 Control.Monad.Loc.withLoc "mainmenu, Main(INPUT): (87, 29)" (article navigation)))
                         ++>
                         (li $
-                           Control.Monad.Loc.withLoc "mainmenu, Main(INPUT): (86, 26)"
-                             (do Control.Monad.Loc.withLoc "mainmenu, Main(INPUT): (86, 29)" (a ! href (attr "/shop") << " Stateful flow: shopping")
-                                 Control.Monad.Loc.withLoc "mainmenu, Main(INPUT): (87, 29)" (b << " Add articles to a persistent shopping cart")
-                                 Control.Monad.Loc.withLoc "mainmenu, Main(INPUT): (88, 29)" (article stateful)))
+                           Control.Monad.Loc.withLoc "mainmenu, Main(INPUT): (88, 26)"
+                             (do Control.Monad.Loc.withLoc "mainmenu, Main(INPUT): (88, 29)" (a ! href (attr "/shop") << " Stateful flow: shopping")
+                                 Control.Monad.Loc.withLoc "mainmenu, Main(INPUT): (89, 29)" (b << " Add articles to a persistent shopping cart")
+                                 Control.Monad.Loc.withLoc "mainmenu, Main(INPUT): (90, 29)" (article stateful)))
                         ++> br
                         ++> br
                         ++> b
@@ -156,7 +158,7 @@ mainmenu
                         << "OTHERS"
                         ++> (li <<< wlink Login << b << "login/logout" <++ b << " Example of using the login and/or logout")
                         <|> (li <<< wlink PreventBack << b << "Prevent going back after a transaction" <++ b << " Control backtracking to avoid navigating back to undo something that can not be undone. For example, a payment" <> article preventbackl))
-          Control.Monad.Loc.withLoc "mainmenu, Main(INPUT): (147, 8)"
+          Control.Monad.Loc.withLoc "mainmenu, Main(INPUT): (149, 8)"
             (case r of
                  CountI -> clickn 0 `showSource` "IncreaseInt.hs"
                  CountS -> clicks "1" `showSource` "IncreaseString.hs"
@@ -180,61 +182,63 @@ mainmenu
                  Push -> pushSample `showSource` "PushSample.hs"
                  PushDec -> pushDecrease `showSource` "PushDecrease.hs"
                  Trace -> traceSample `showSource` "TraceSample.hs"))
-{-# LINE 171 "INPUT" #-}
+{-# LINE 173 "INPUT" #-}
 space = preEscapedToMarkup "&nbsp;"
-{-# LINE 172 "INPUT" #-}
-article link = space <> a ! href (attr link) << i << "(article)"
 {-# LINE 174 "INPUT" #-}
-pushdec = "http://haskell-web.blogspot.com.es/2013/07/maxwell-smart-push-counter.html"
-{-# LINE 175 "INPUT" #-}
-pushl = "http://haskell-web.blogspot.com.es/2013/07/new-push-widgets-for-presentation-of.html"
+article link = space <> a ! href (attr link) << i << "(article)"
 {-# LINE 176 "INPUT" #-}
-errorTrace = "http://haskell-web.blogspot.com.es/2013/07/automatic-error-trace-generation-in.html"
+pushdec = "http://haskell-web.blogspot.com.es/2013/07/maxwell-smart-push-counter.html"
 {-# LINE 177 "INPUT" #-}
-navigation = "http://haskell-web.blogspot.com.es/2013/07/the-web-navigation-monad.html"
+pushl = "http://haskell-web.blogspot.com.es/2013/07/new-push-widgets-for-presentation-of.html"
 {-# LINE 178 "INPUT" #-}
-combinationl = "http://haskell-web.blogspot.com.es/2013/06/and-finally-widget-auto-refreshing.html"
+errorTrace = "http://haskell-web.blogspot.com.es/2013/07/automatic-error-trace-generation-in.html"
 {-# LINE 179 "INPUT" #-}
-pageflow = "http://haskell-web.blogspot.com.es/2013/06/the-promising-land-of-monadic-formlets.html"
+navigation = "http://haskell-web.blogspot.com.es/2013/07/the-web-navigation-monad.html"
 {-# LINE 180 "INPUT" #-}
-callbacks = "http://haskell-web.blogspot.com.es/2013/06/callbacks-in-mflow.html"
+combinationl = "http://haskell-web.blogspot.com.es/2013/06/and-finally-widget-auto-refreshing.html"
 {-# LINE 181 "INPUT" #-}
-gridl = "http://haskell-web.blogspot.com.es/2013/01/now-example-of-use-of-active-widget.html"
+pageflow = "http://haskell-web.blogspot.com.es/2013/06/the-promising-land-of-monadic-formlets.html"
 {-# LINE 182 "INPUT" #-}
-editList = "http://haskell-web.blogspot.com.es/2012/12/on-spirit-of-mflow-anatomy-of-widget.html"
+callbacks = "http://haskell-web.blogspot.com.es/2013/06/callbacks-in-mflow.html"
 {-# LINE 183 "INPUT" #-}
-stateful = "http://haskell-web.blogspot.com.es/2013/04/more-on-session-management-in-mflow.html"
+gridl = "http://haskell-web.blogspot.com.es/2013/01/now-example-of-use-of-active-widget.html"
 {-# LINE 184 "INPUT" #-}
-preventbackl = "http://haskell-web.blogspot.com.es/2013/04/controlling-backtracking-in-mflow.html"
+editList = "http://haskell-web.blogspot.com.es/2012/12/on-spirit-of-mflow-anatomy-of-widget.html"
 {-# LINE 185 "INPUT" #-}
-ajaxl = "http://hackage.haskell.org/packages/archive/MFlow/0.3.1.0/doc/html/MFlow-Forms.html#g:17"
+stateful = "http://haskell-web.blogspot.com.es/2013/04/more-on-session-management-in-mflow.html"
+{-# LINE 186 "INPUT" #-}
+preventbackl = "http://haskell-web.blogspot.com.es/2013/04/controlling-backtracking-in-mflow.html"
 {-# LINE 187 "INPUT" #-}
+ajaxl = "http://hackage.haskell.org/packages/archive/MFlow/0.3.1.0/doc/html/MFlow-Forms.html#g:17"
+{-# LINE 190 "INPUT" #-}
 showSource w filename
-  = Control.Monad.Loc.withLoc "showSource, Main(INPUT): (187, 25)"
-      (do host <- Control.Monad.Loc.withLoc "showSource, Main(INPUT): (188, 7)" (getRawParam "Host" `onNothing` return "mflowdemo.herokuapp.com/")
-          let {-# LINE 189 "INPUT" #-}
-              path = attr $ "http://" <> host <> ('/' : filename)
-          Control.Monad.Loc.withLoc "showSource, Main(INPUT): (190, 7)" (addHeader $ source path)
-          Control.Monad.Loc.withLoc "showSource, Main(INPUT): (191, 7)" (w))
-  where {-# LINE 193 "INPUT" #-}
+  = Control.Monad.Loc.withLoc "showSource, Main(INPUT): (190, 25)"
+      (do host <- Control.Monad.Loc.withLoc "showSource, Main(INPUT): (191, 7)" (getSessionData `onNothing` error "host must have been set")
+          let {-# LINE 192 "INPUT" #-}
+              path = attr $ "http://" <> host <> filename
+          Control.Monad.Loc.withLoc "showSource, Main(INPUT): (193, 7)" (addHeader $ source path)
+          Control.Monad.Loc.withLoc "showSource, Main(INPUT): (194, 7)" (w))
+  where {-# LINE 196 "INPUT" #-}
         source path html
           = El.div $
-              Control.Monad.Loc.withLoc "showSource, Main(INPUT): (194, 18)"
-                (do Control.Monad.Loc.withLoc "showSource, Main(INPUT): (195, 14)" (html)
-                    Control.Monad.Loc.withLoc "showSource, Main(INPUT): (196, 14)" (br)
-                    Control.Monad.Loc.withLoc "showSource, Main(INPUT): (197, 14)" (br)
-                    Control.Monad.Loc.withLoc "showSource, Main(INPUT): (198, 14)" (hr)
-                    Control.Monad.Loc.withLoc "showSource, Main(INPUT): (199, 14)" (h3 $ text "SOURCE CODE:")
-                    Control.Monad.Loc.withLoc "showSource, Main(INPUT): (200, 14)" (iframe ! At.style sty ! At.height (attr "400") ! At.src path $ b $ text "no iframes"))
-        {-# LINE 204 "INPUT" #-}
+              Control.Monad.Loc.withLoc "showSource, Main(INPUT): (197, 18)"
+                (do Control.Monad.Loc.withLoc "showSource, Main(INPUT): (198, 14)" (html)
+                    Control.Monad.Loc.withLoc "showSource, Main(INPUT): (199, 14)" (br)
+                    Control.Monad.Loc.withLoc "showSource, Main(INPUT): (200, 14)" (br)
+                    Control.Monad.Loc.withLoc "showSource, Main(INPUT): (201, 14)" (hr)
+                    Control.Monad.Loc.withLoc "showSource, Main(INPUT): (202, 14)" (h3 $ text "SOURCE CODE:")
+                    Control.Monad.Loc.withLoc "showSource, Main(INPUT): (203, 14)" (iframe ! At.style sty ! At.height (attr "400") ! At.src path $ b $ text "no iframes"))
+        {-# LINE 207 "INPUT" #-}
         sty = attr "float:left;width:100%;margin-left:5px;margin-right:10px;overflow:auto;"
-{-# LINE 208 "INPUT" #-}
+{-# LINE 211 "INPUT" #-}
 traceSample
-  = Control.Monad.Loc.withLoc "traceSample, Main(INPUT): (208, 14)"
-      (do Control.Monad.Loc.withLoc "traceSample, Main(INPUT): (209, 3)" (page $ h2 << "Error trace example" ++> p << "MFlow now produces execution traces in case of error by making use of the backtracking mechanism" ++> p << "It is more detailed than a call stack" ++> p << "this example has a deliberate error" ++> br ++> p << "You must be logged as admin to see the trace" ++> wlink () << p << "pres here")
-          Control.Monad.Loc.withLoc "traceSample, Main(INPUT): (217, 3)" (page $ p << "Please login with admin/admin" ++> userWidget (Just "admin") userLogin)
-          u <- Control.Monad.Loc.withLoc "traceSample, Main(INPUT): (220, 3)" (getCurrentUser)
-          Control.Monad.Loc.withLoc "traceSample, Main(INPUT): (221, 3)" (page $ p << "The trace will appear after you press the link. press one of the options available at the bottom of the page" ++> p << ("user=" ++ u) ++> br ++> wlink () << "press here")
-          Control.Monad.Loc.withLoc "traceSample, Main(INPUT): (224, 3)" (page $ error $ "this is the error"))
-{-# LINE 227 "INPUT" #-}
+  = Control.Monad.Loc.withLoc "traceSample, Main(INPUT): (211, 14)"
+      (do Control.Monad.Loc.withLoc "traceSample, Main(INPUT): (212, 3)" (page $ h2 << "Error trace example" ++> p << "MFlow now produces execution traces in case of error by making use of the backtracking mechanism" ++> p << "It is more detailed than a call stack" ++> p << "this example has a deliberate error" ++> br ++> p << "You must be logged as admin to see the trace" ++> wlink () << p << "pres here")
+          Control.Monad.Loc.withLoc "traceSample, Main(INPUT): (220, 3)" (page $ p << "Please login with admin/admin" ++> userWidget (Just "admin") userLogin)
+          u <- Control.Monad.Loc.withLoc "traceSample, Main(INPUT): (223, 3)" (getCurrentUser)
+          Control.Monad.Loc.withLoc "traceSample, Main(INPUT): (224, 3)" (page $ p << "The trace will appear after you press the link. press one of the options available at the bottom of the page" ++> p << ("user=" ++ u) ++> br ++> wlink () << "press here")
+          Control.Monad.Loc.withLoc "traceSample, Main(INPUT): (227, 3)" (page $ error $ "this is the error"))
+{-# LINE 230 "INPUT" #-}
 stdheader c = docTypeHtml $ El.head << (El.title << "MFlow examples" <> link ! rel (attr "stylesheet") ! type_ (attr "text/css") ! href (attr "http://jqueryui.com/resources/demos/style.css")) <> (body $ a ! At.style (attr "align:center;") ! href (attr "http://hackage.haskell.org/packages/archive/MFlow/0.3.0.1/doc/html/MFlow-Forms.html") << h1 << "MFlow examples" <> br <> hr <> (El.div ! At.style (attr "float:left;width:50%;margin-left:10px;margin-right:10px;overflow:auto;") $ br <> c) <> (El.div ! At.style (attr "float:right;width:45%;overflow:auto;") $ br <> p << a ! href (attr "/html/MFlow/index.html") << "MFlow package description and documentation" <> p << a ! href (attr "https://github.com/agocorona/MFlow/blob/master/Demos") << "see demos source code" <> p << a ! href (attr "https://github.com/agocorona/MFlow/issues") << "bug tracker" <> p << a ! href (attr "https://github.com/agocorona/MFlow") << "source repository" <> p << a ! href (attr "http://hackage.haskell.org/package/MFlow") << "Hackage repository"))
+  where {-# LINE 261 "INPUT" #-}
+        sty = attr "float:left;width:100%;margin-left:5px;margin-right:10px;overflow:auto;"

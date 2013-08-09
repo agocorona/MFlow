@@ -62,7 +62,9 @@ data Options= CountI | CountS | Radio
 
 
 mainmenu=   do
-       setHeader stdheader 
+       host <- getRawParam "Host" `onNothing` return "mflowdemo.herokuapp.com/"
+       setSessionData host
+       setHeader $ stdheader 
        setTimeouts 100 0
        r <- ask $  wcached "menu" 0 $
                b <<  "PUSH"
@@ -184,9 +186,10 @@ stateful= "http://haskell-web.blogspot.com.es/2013/04/more-on-session-management
 preventbackl= "http://haskell-web.blogspot.com.es/2013/04/controlling-backtracking-in-mflow.html"
 ajaxl= "http://hackage.haskell.org/packages/archive/MFlow/0.3.1.0/doc/html/MFlow-Forms.html#g:17"
 
+
 showSource w filename = do
-      host <- getRawParam "Host" `onNothing` return "mflowdemo.herokuapp.com/"
-      let path=  attr $ "http://" <> host <> ('/':filename)
+      host <- getSessionData `onNothing` error "host must have been set"
+      let path=  attr $ "http://" <> host <> filename
       addHeader $ source path
       w
       where
@@ -224,7 +227,7 @@ traceSample= do
   page $   error $ "this is the error"
 
 
-stdheader c= docTypeHtml
+stdheader  c= docTypeHtml
    $ El.head << (El.title << "MFlow examples"
      <> link ! rel   ( attr "stylesheet")
              ! type_ ( attr "text/css")
@@ -247,5 +250,15 @@ stdheader c= docTypeHtml
        <> p  << a ! href (attr "https://github.com/agocorona/MFlow/issues") <<  "bug tracker"
        <> p  << a ! href (attr "https://github.com/agocorona/MFlow") <<  "source repository"
        <> p  << a ! href (attr "http://hackage.haskell.org/package/MFlow") <<  "Hackage repository"
-
-              ))
+--       <> (h3 $ do
+--             text "SOURCE CODE:"
+--             iframe ! At.style sty
+--                    ! At.height (attr "400")
+--                    ! At.src (attr $   "http://" <> host <> ('/':"demos-blaze.hs"))
+--                    $ b $ text "no iframes")
+                ))
+   where
+   sty= attr "float:left\
+                \;width:100%\
+                \;margin-left:5px;margin-right:10px;overflow:auto;"
+            
