@@ -536,7 +536,7 @@ getTextBox
 getTextBox ms  = getParam Nothing "text" ms
 
 -- | return the value of a parameter from the environment
-getRawParam p=   gets mfEnv >>=   getParam1 p >>= return . valToMaybe
+getRawParam p=   gets mfEnv  >>=  getParam1 p >>= return . valToMaybe
 
 getParam
   :: (FormInput view,

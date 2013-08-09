@@ -327,7 +327,6 @@ getMessageFlows = readMVar _messageFlows
 --class ToHttpData a  where
 --    toHttpData :: a -> HttpData  
 
-thread t= show(unsafePerformIO  myThreadId) ++ " "++ show (twfname t)
 
 sendToMF Token{..} msg= putMVar tsendq $ Req msg
 

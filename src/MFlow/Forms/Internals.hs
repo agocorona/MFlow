@@ -54,7 +54,7 @@ import Control.Workflow(WFErrors(Timeout))
 import Control.Exception as CE(catch,SomeException,AsyncException,throw,fromException)
 import Control.Concurrent
 import Control.Monad.Loc
-
+--
 --import Debug.Trace
 --(!>) =    flip trace
 
@@ -1044,28 +1044,6 @@ transientNav f= do
 
 
 
---getParam1 :: (Monad m, MonadState (MFlowState v) m, Typeable a, Read a, FormInput v)
---          => String -> Params -> [v] ->  m (FormElm v a)
---getParam1 par req form=  r
--- where
--- r= case lookup  par req of
---    Just x -> do
---        modify $ \s -> s{inSync= True}
---        maybeRead x                        -- !> x
---    Nothing  -> return $ FormElm form Nothing
--- getType ::  m (FormElm v a) -> a
--- getType= undefined
--- x= getType r
--- maybeRead str= do
---   if typeOf x == (typeOf  ( undefined :: String))
---         then return . FormElm form . Just  $ unsafeCoerce str
---         else case readsPrec 0 $ str of
---              [(x,"")] ->  return . FormElm form  $ Just x
---              _ -> do
---
---                   let err= inred . fromStr $ "can't read \"" ++ str ++ "\" as type " ++  show (typeOf x)
---                   return $ FormElm  (form++[err]) Nothing
-
 data ParamResult v a= NoParam | NotValidated String v | Validated a deriving (Read, Show)
 
 getParam1 :: (Monad m, MonadState (MFlowState v) m, Typeable a, Read a, FormInput v)
@@ -1075,8 +1053,8 @@ getParam1 par req =  r
  r= case lookup  par req of
     Just x -> do
         modify $ \s -> s{inSync= True}
-        maybeRead x                        -- !> x
-    Nothing  -> return  NoParam
+        maybeRead x 
+    Nothing  -> return  NoParam 
  getType ::  m (ParamResult v a) -> a
  getType= undefined
  x= getType r
