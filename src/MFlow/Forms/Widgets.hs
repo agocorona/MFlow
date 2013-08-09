@@ -14,8 +14,11 @@ to create other active widgets.
 
 
 module MFlow.Forms.Widgets (
+-- * Ajax refreshing of widgets
+autoRefresh, appendUpdate, prependUpdate, push, UpdateMethod(..)
+
 -- * JQueryUi widgets
-datePicker, getSpinner, wautocomplete, wdialog,
+,datePicker, getSpinner, wautocomplete, wdialog,
 
 -- * User Management
 userFormOrName,maybeLogout,
@@ -34,8 +37,6 @@ delEdited, getEdited
 -- * Multilanguage
 ,mFieldEd, mField
 
--- * Ajax refreshing of widgets
-,autoRefresh, appendUpdate, prependUpdate, push, UpdateMethod(..)
 ) where
 import MFlow
 import MFlow.Forms

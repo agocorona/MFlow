@@ -360,13 +360,13 @@ instance (Monad m, Functor m, Monoid a) => Monoid (View v m a) where
 
 -- | It is a callback in the view monad. The callback rendering substitutes the widget rendering
 -- when the latter is validated, without afecting the rendering of other widgets. This allow
--- the simultaneous execution of different behaviours in different widgets simultaneously in the
+-- the simultaneous execution of different behaviours in different widgets in the
 -- same page. The inspiration is the callback primitive in the Seaside Web Framework
 -- that allows similar functionality (See <http://www.seaside.st>)
 --
 -- This is the visible difference with 'waction' callbacks, which execute a
 -- a flow in the FlowM monad that takes complete control of the navigation, while wactions are
--- executed whithin the same ask statement.
+-- executed whithin the same page.
 wcallback
   :: Monad m =>
      View view m a -> (a -> View view m b) -> View view m b
@@ -795,6 +795,8 @@ cachedWidget key t mf =  View .  StateT $ \s ->  do
         let s''=  s{inSync = inSync s2
                    ,mfRequirements=mfRequirements s2
                    ,mfPath= mfPath s2
+                   ,mfPIndex= mfPIndex s2
+                   ,mfPageIndex= mfPageIndex s2
                    ,mfSeqCache= mfSeqCache s + mfSeqCache s2 - sec}
         return $ (mfSeqCache s'') `seq`  ((FormElm form mx2), s'')
         -- !> ("enter: "++show (mfSeqCache s) ++" exit: "++ show ( mfSeqCache s2))

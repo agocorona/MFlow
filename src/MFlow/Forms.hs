@@ -55,26 +55,6 @@ To use them, add then to the exported modules and execute cabal install
 It is designed for applications that can be run with no deployment with runghc in order
 to speed up the development process. see <http://haskell-web.blogspot.com.es/2013/05/a-web-application-in-tweet.html>
 
-This release (0.3) includes:
-
- - /RESTful/ URLs
-
- - Automatic independent refreshing of widgets via Ajax. (see <http://haskell-web.blogspot.com.es/2013/06/and-finally-widget-auto-refreshing.html>)
-
- - Now each widget can be monadic so it can express his own behaviour and can run its own independent page flow. (see <http://haskell-web.blogspot.com.es/2013/06/the-promising-land-of-monadic-formlets.html>)
-
- - Per-widget callbacks, used in page flows, that change the rendering of the widget (see <http://haskell-web.blogspot.com.es/2013/06/callbacks-in-mflow.html>)
-
- - Widgets in modal and non modal dialogs  (using jQuery dialog)
-
- - Other wrappers for jQuery widgets as MFlow widgets: spinner, datepicker
-
-The version 0.2 added better WAI integration, higher level dynamic Widgets, content management, multilanguage, blaze-html support,
-stateful ajax for server-side control, user-defined data in sessions and widget requirements for automatic installation of scripts, CSS and server flows.
-
-The version  0.1 added transparent back button management, cached widgets, callbacks, modifiers, heterogeneous formatting, AJAX,
-and WAI integration.
-
 This module implement  stateful processes (flows) that are optionally persistent.
 This means that they automatically store and recover his execution state. They are executed by the MFlow app server.
 defined in the "MFlow" module.
@@ -132,19 +112,27 @@ be combined as such.
 
 * NEW IN THIS RELEASE
 
+
+{@Auto-Refresh@] Using `autoRefresh`, Dynamic widgets can refresh themselves with new information without forcing a refresh of the whole page
+
+[@Push@]  With `push` a widget can push new content to the browser when something in the server happens
+
+[@Error traces@] using the monadloc package, now each runtime error (in a monadic statement) has a complete execution trace.
+
+* IN PREVIOUS RELEASES
+
 [@RESTful URLs@] Now each page is directly reachable by means of a intuitive, RESTful url, whose path is composed by the sucession
 of links clicked to reach such page and such point in the procedure. Just what you would expect.
 
 [@Page flows@] each widget-formlet can have its own independent behaviour within the page. They can
 refresh independently trough AJAX by means of 'autoRefresh'. Additionally, 'pageFlow' initiates the page flow mode or a
 subpage flow by adding a well know indetifier prefix for links and form parameters.
-'wdialog' present a widget within a modal or non modal jQuery dialog. while a monadic
+
+[@Modal Dialogs@] 'wdialog' present a widget within a modal or non modal jQuery dialog. while a monadic
 widget-formlet can add different form elements depending on the user responses, 'wcallback' can
 substitute the widget by other. (See 'Demos/demos.blaze.hs' for some examples)
 
 [@JQuery widgets@] with MFlow interface: 'getSpinner', 'datePicker', 'wdialog'
-
-* IN PREVIOUS RELEASES
 
 [@WAI interface@] Now MFlow works with Snap and other WAI developments. Include "MFlow.Wai" or "MFlow.Wai.Blaze.Html.All" to use it.
 
@@ -373,6 +361,7 @@ waction f ac = do
                      modify $ \s ->s{notSyncInAction= True}
                      return (FormElm [] Nothing)
 
+-- | change the rendering and the return value of a page. This is superseeded by page flows.
 wmodify :: (Monad m, FormInput v)
         => View v m a
         -> ([v] -> Maybe a -> WState v m ([v], Maybe b))
@@ -381,20 +370,6 @@ wmodify formt act = View $ do
    FormElm f mx <- runView  formt 
    (f',mx') <-  act f mx
    return $ FormElm f' mx'
-
-
---
---instance (FormInput view, FormLet a m view , FormLet b m view )
---          => FormLet (a,b) m view  where
---  digest  mxy  = do
---      let (x,y)= case mxy of Nothing -> (Nothing, Nothing); Just (x,y)-> (Just x, Just y)
---      (,) <$> digest x   <*> digest  y
---
---instance (FormInput view, FormLet a m view , FormLet b m view,FormLet c m view )
---          => FormLet (a,b,c) m view  where
---  digest  mxy  = do
---      let (x,y,z)= case mxy of Nothing -> (Nothing, Nothing, Nothing); Just (x,y,z)-> (Just x, Just y,Just z)
---      (,,) <$> digest x  <*> digest  y  <*> digest  z
 
 -- | Display a text box and return a non empty String
 getString  :: (FormInput view,Monad m) =>
@@ -421,6 +396,7 @@ getPassword :: (FormInput view,
 getPassword = getParam Nothing "password" Nothing
 
 newtype Radio a= Radio a
+
 -- | Implement a radio button that perform a submit when pressed.
 -- the parameter is the name of the radio group
 setRadioActive :: (FormInput view,  MonadIO m,
