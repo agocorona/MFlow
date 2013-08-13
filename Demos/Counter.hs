@@ -1,6 +1,7 @@
 
 module Counter ( counter, counterWidget) where
 import MFlow.Wai.Blaze.Html.All
+import Menu
 import Data.Monoid
 import Data.String
 
@@ -16,7 +17,7 @@ counter= do
         <> p << "But while the seaside case the callback update the widget object, in this case"
         <> p << "the callback call generates a new copy of the counter with the value modified."
 
-   ask $   explain
+   askm  $   explain
        ++> pageFlow "c" (counterWidget 0) <++ br
        <|> wlink () << p << "exit"
 
@@ -30,5 +31,5 @@ counterWidget n=
           "d" -> counterWidget (n - 1)
 
 
--- to run it alone:
+-- to run it alone, change askm by ask and uncomment this:
 --main= runNavigation "" $ transientNav counter

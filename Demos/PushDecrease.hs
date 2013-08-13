@@ -2,6 +2,7 @@
 module PushDecrease ( pushDecrease) where
 
 import MFlow.Wai.Blaze.Html.All
+import Menu
 import Control.Concurrent.STM
 import Text.Hamlet
 import Control.Concurrent
@@ -12,7 +13,7 @@ atomic= liftIO . atomically
 pushDecrease= do
  tv <- liftIO $ newTVarIO 10
 
- page $
+ pagem $
       [shamlet|
        <div>
            <h2> Maxwell Smart push counter

@@ -3,6 +3,7 @@
 module ShopCart ( shopCart) where
 
 import MFlow.Wai.Blaze.Html.All
+import Menu
 import Data.Typeable
 import qualified Data.Vector as V
 import Text.Blaze.Html5 as El
@@ -18,7 +19,8 @@ newtype Cart= Cart (V.Vector Int) deriving Typeable
 emptyCart= Cart $ V.fromList [0,0,0]
 
 shopCart  = do
-
+   setTimeouts 120 0
+   setHeader stdheader
    addHeader $ \html -> p << ( El.span <<
      "A persistent flow  (uses step). The process is killed after 100 seconds of inactivity \
      \but it is restarted automatically. Event If you restart the whole server, it remember the shopping cart\n\n \
@@ -30,7 +32,7 @@ shopCart  = do
    shopCart1
    where
    shopCart1 =  do
-     o <-  step . ask $ do
+     o <-  step . askm $ do
              let moreexplain= p << "The second parameter of \"setTimeout\" is the time during which the cart is recorded"
              Cart cart <- getSessionData `onNothing` return  emptyCart
 

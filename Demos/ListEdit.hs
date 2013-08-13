@@ -2,6 +2,7 @@
 module ListEdit ( wlistEd) where
 
 import MFlow.Wai.Blaze.Html.All
+import Menu
 import Text.Blaze.Html5 as El
 import Text.Blaze.Html5.Attributes as At hiding (step)
 import Data.String
@@ -9,13 +10,13 @@ import Data.String
 attr= fromString
 
 wlistEd= do
-   r <-  ask  $   addLink
+   r <-  askm   $   addLink
               ++> br
               ++> (wEditList El.div getString1   ["hi", "how are you"] "wEditListAdd")
               <++ br
               <** submitButton "send"
 
-   ask $   p << (show r ++ " returned")
+   askm  $   p << (show r ++ " returned")
        ++> wlink () (p <<  " back to menu")
 
 
@@ -28,6 +29,6 @@ wlistEd= do
                     ! onclick (attr "this.parentNode.parentNode.removeChild(this.parentNode)")
    getString1 mx= El.div  <<< delBox ++> getString  mx <++ br
 
--- to run it alone:
+-- to run it alone, change askm by ask and uncomment this:
 --main= runNavigation "" $ transientNav wListEd
 

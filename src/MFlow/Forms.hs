@@ -248,7 +248,7 @@ cachedWidget, wcached, wfreeze,
 ,runFlow, transientNav,runFlowOnce,runFlowIn
 ,runFlowConf,MFlow.Forms.Internals.step
 -- * controlling backtracking
-,goingBack,returnIfForward, breturn, preventGoingBack
+,goingBack,returnIfForward, breturn, preventGoingBack, retry
 
 -- * Setting parameters
 ,setHeader
@@ -256,6 +256,7 @@ cachedWidget, wcached, wfreeze,
 ,getHeader
 ,setSessionData
 ,getSessionData
+,delSessionData
 ,setTimeouts
 
 -- * Cookies
@@ -549,7 +550,7 @@ getParam look type1 mvalue = View $ do
     tolook <- case look of
        Nothing  -> genNewId  
        Just n -> return n
-    let nvalue x= case x of
+    let nvalue x = case x of
            Nothing  -> ""
            Just v   ->
                case cast v of
@@ -818,6 +819,12 @@ returnIfForward :: (Monad m, FormInput view) => b -> View view m b
 returnIfForward x = do
      back <- goingBack
      if back then noWidget else return x
+
+-- | forces backtracking if the widget validates, because a previous page handle this widget response
+-- . This is useful for recurrent cached widgets that are present in multiple pages. For example
+-- in the case of menus or common options. The widget must be cached with no timeout.
+retry :: Monad m => View v m a -> View v m ()
+retry w=  w >> modify (\st -> st{inSync=False})
 
 -- | It creates a widget for user login\/registering. If a user name is specified
 -- in the first parameter, it is forced to login\/password as this specific user.

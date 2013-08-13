@@ -555,7 +555,7 @@ mFlowState0 = MFlowState 0 False  True  True  "en"
 -- >      html' <- getHistory
 -- >      setHistory $ html' `mappend` html
 
-setSessionData ::  (Typeable a,MonadState (MFlowState view) m) => a ->m ()  
+setSessionData ::  (Typeable a,MonadState (MFlowState view) m) => a -> m ()  
 setSessionData  x=
   modify $ \st -> st{mfData= M.insert  (typeOf x ) (unsafeCoerce x) (mfData st)}
 
@@ -912,8 +912,8 @@ runFlowOnce1  f t  =
          modify $ \s -> s{mfEnv=[], newAsk= True}
          breturn ()
        tr -> do
-         th <- liftIO myThreadId
-         error $ show th ++ disp tr
+
+         error $ disp tr
      where
      disp tr= "TRACE (error in the last line):\n\n" ++(concat $ intersperse "\n" tr)
   -- to restart the flow in case of going back before the first page of the flow

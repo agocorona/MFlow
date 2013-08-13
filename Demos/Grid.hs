@@ -2,17 +2,18 @@
 module Grid ( grid) where
 
 import MFlow.Wai.Blaze.Html.All
+import Menu
 import Data.String
 import Text.Blaze.Html5.Attributes as At hiding (step)
 
 attr= fromString
 
 grid = do
-  r <- ask $   addLink
+  r <- askm  $   addLink
            ++> wEditList table  row ["",""] "wEditListAdd"
            <** submitButton "submit"
            
-  ask $   p << (show r ++ " returned")
+  askm  $   p << (show r ++ " returned")
       ++> wlink () (p <<  " back to menu")
       
   where
@@ -30,5 +31,5 @@ grid = do
              
   tdborder= td ! At.style  (attr "border: solid 1px")
 
--- to run it alone:
+-- to run it alone, change askm by ask and uncomment this:
 --main= runNavigation "" $ transientNav grid

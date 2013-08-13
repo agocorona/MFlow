@@ -2,9 +2,10 @@
 module IncreaseString ( clicks) where
 
 import MFlow.Wai.Blaze.Html.All
+import Menu
 
 clicks s= do
-   s' <- ask $  p << b <<  "increase a String"
+   s' <- askm  $  p << b <<  "increase a String"
              ++> p << b <<  "press the back button to go back to the menu"
              ++>(getString (Just s)
              <* submitButton "submit")
@@ -12,5 +13,5 @@ clicks s= do
    clicks $ s'++ "1"
 
 
--- to run it alone:
+-- to run it alone, change askm by ask and uncomment this:
 --main= runNavigation "" $ transientNav clicks "1"

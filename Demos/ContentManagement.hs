@@ -1,6 +1,7 @@
 
 module ContentManagement ( textEdit) where
 import MFlow.Wai.Blaze.Html.All
+import Menu
 import Text.Blaze.Html5 as El
 import Text.Blaze.Html5.Attributes as At hiding (step)
 import Data.Monoid
@@ -14,16 +15,16 @@ textEdit= do
 
 
 
-    ask $   p << b <<  "An example of content management"
+    askm  $   p << b <<  "An example of content management"
         ++> first
         ++> second
         ++> wlink ()  << p <<  "click here to edit it"
 
 
-    ask $   p <<  "Please login with admin/admin to edit it"
+    askm  $   p <<  "Please login with admin/admin to edit it"
         ++> userWidget (Just "admin") userLogin
 
-    ask $   p <<  "Now you can click the fields and edit them"
+    askm  $   p <<  "Now you can click the fields and edit them"
         ++> p << b <<  "to save an edited field, double click on it"
         ++> tFieldEd "first"  first
         **> tFieldEd "second" second
@@ -31,16 +32,16 @@ textEdit= do
 
     logout
 
-    ask $   p <<  "the user sees the edited content. He can not edit"
+    askm  $   p <<  "the user sees the edited content. He can not edit"
         ++> tFieldEd "first"  first
         **> tFieldEd "second" second
         **> wlink ()  << p <<  "click to continue"
 
-    ask $   p <<  "When texts are fixed,the edit facility and the original texts can be removed. The content is indexed by the field key"
+    askm  $   p <<  "When texts are fixed,the edit facility and the original texts can be removed. The content is indexed by the field key"
         ++> tField "first"
         **> tField "second"
         **> p << "End of edit field demo" ++> wlink ()  << p <<  "click here to go to menu"
 
 
--- to run it alone:
+-- to run it alone, change askm by ask and uncomment this:
 --main= runNavigation "" $ transientNav textEdit

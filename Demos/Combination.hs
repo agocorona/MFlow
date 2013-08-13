@@ -1,12 +1,13 @@
 
 module Combination ( combination, wlogin) where
 import MFlow.Wai.Blaze.Html.All
+import Menu
 import Counter(counterWidget)
 import Data.String
 
 text= fromString
 
-combination =  ask $ do
+combination =  askm  $ do
      p << "Three active widgets in the same page with autoRefresh. Each widget refresh itself \
           \with Ajax. If Ajax is not active, they will refresh by sending a new page."
      ++> hr
@@ -54,7 +55,7 @@ radiob s n= wlabel (text s) $ setRadio s n <! onClickSubmit
 
 
 
--- | If not logged, it present a page flow which ask for the user name, then the password if not logged
+-- | If not logged, it present a page flow which askm  for the user name, then the password if not logged
 --
 -- If logged, it present the user name and a link to logout
 --
@@ -82,6 +83,6 @@ focus = [("onload","this.focus()")]
 
 
 
--- to run it alone:
+-- to run it alone, change askm by ask and uncomment this:
 --main= runNavigation "" $ transientNav  combination
 

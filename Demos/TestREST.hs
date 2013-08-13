@@ -1,10 +1,11 @@
 
 module TestREST where
 import MFlow.Wai.Blaze.Html.All
+import Menu
 import Data.Monoid
 import Data.String
 
--- 9 pages , each page has a restful link (page = ask)
+-- 9 pagems , each pagem has a restful link (pagem = ask)
 
 -- to run it alone:
 --main= runNavigation "" $ transientNav testREST
@@ -15,25 +16,25 @@ testREST= do
 
   addHeader header1
 
-  option <- page $   wlink "a" << p << "letters " <++ p << "or"
+  option <- pagem $   wlink "a" << p << "letters " <++ p << "or"
                  <|> wlink "1" << p << "numbers"
 
   case option of
     "1" -> do
-          page $ wlink "2" << contentFor "1"
-          page $ wlink "3" << contentFor "2"
-          page $ wlink "4" << contentFor "3"
-          page $ wlink ()  << "menu"
+          pagem $ wlink "2" << contentFor "1"
+          pagem $ wlink "3" << contentFor "2"
+          pagem $ wlink "4" << contentFor "3"
+          pagem $ wlink ()  << "menu"
 
     "a" -> do
-          page $ wlink "b" << contentFor "a"
-          page $ wlink "c" << contentFor "b"
-          page $ wlink "d" << contentFor "c"
-          page $ wlink ()  << "menu"
+          pagem $ wlink "b" << contentFor "a"
+          pagem $ wlink "c" << contentFor "b"
+          pagem $ wlink "d" << contentFor "c"
+          pagem $ wlink ()  << "menu"
 
 
 contentFor x=
-        p << "page for"
+        p << "pagem for"
         <> b << x
         <> p << "goto next page"
 

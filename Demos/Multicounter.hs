@@ -2,6 +2,7 @@
 module Multicounter ( multicounter) where
 
 import MFlow.Wai.Blaze.Html.All
+import Menu
 import Data.Monoid
 import Data.String
 import Counter(counterWidget)
@@ -10,7 +11,7 @@ text= fromString
 attr= fromString
 
 multicounter=
- ask $   explain
+ askm  $   explain
      ++> add (counterWidget 0) [1..4]
      <|> wlink () << p << "exit"
 
@@ -26,5 +27,5 @@ multicounter=
  add widget list= firstOf [autoRefresh $ pageFlow (show i) widget <++ hr | i <- list]
 
 
--- to run it alone:
+-- to run it alone, change askm by ask and uncomment this:
 --main= runNavigation "" $ transientNav multicounter
