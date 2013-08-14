@@ -632,15 +632,6 @@ setHeader header= do
   fs <- get
   put fs{mfHeader= header}
 
-----addHeader added= do
-----     h <- gets mfHeader
-----     let h' added html = h $ added <> html
-----     setHeader $ h' added
-----
-----addFooter added= do
-----     h <- gets mfHeader
-----     let h' added html = h $ html <> added
-----     setHeader $ h' added
 
 
 -- | Return the current header
@@ -650,7 +641,7 @@ getHeader= gets mfHeader
 -- | Add another header embedded in the previous one
 addHeader new= do
   fhtml <- getHeader
-  setHeader $ fhtml . new
+  setHeader $  fhtml . new
   
 -- | Set an HTTP cookie
 setCookie :: MonadState (MFlowState view) m
@@ -711,17 +702,7 @@ normalize f=  View .  StateT $ \s ->do
        (FormElm fs mx, s') <-  runStateT  ( runView f) $ unsafeCoerce s
        return  (FormElm (map toByteString fs ) mx,unsafeCoerce s')
 
---class ToByteString a where
---  toByteString :: a -> ByteString
---
---instance ToByteString a => ToHttpData a where
---  toHttpData = toHttpData . toByteString
---
---instance ToByteString ByteString where
---  toByteString= id
---
---instance ToByteString String where
---  toByteString  =  pack
+
 
 -- | Minimal interface for defining the basic form and link elements. The core of MFlow is agnostic
 -- about the rendering package used. Every formatting (either HTML or not) used with MFlow must have an
@@ -770,19 +751,19 @@ class (Monoid view,Typeable view)   => FormInput view where
 --, permanently or for a certain time. this is very useful for complex widgets that present information. Specially it they must access to databases.
 --
 -- @
--- import MFlow.Wai.XHtm.All
+-- import MFlow.Wai.Blaze.Html.All
 -- import Some.Time.Library
 -- addMessageFlows [(noscript, time)]
 -- main= run 80 waiMessageFlow
 -- time=do  ask $ cachedWidget \"time\" 5
---            $ wlink () bold << \"the time is \" ++ show (execute giveTheTime) ++ \" click here\"
---          time
+--              $ wlink () b << \"the time is \" ++ show (execute giveTheTime) ++ \" click here\"
+--              time
 -- @
 --
 -- this pseudocode would update the time every 5 seconds. The execution of the IO computation
 -- giveTheTime must be executed inside the cached widget to avoid unnecesary IO executions.
 --
--- NOTE: cached widgets are shared by all users
+-- NOTE: the rendering of cached widgets are shared by all users
 cachedWidget :: (MonadIO m,Typeable view
          , FormInput view, Typeable a,  Executable m )
         => String  -- ^ The key of the cached object for the retrieval
@@ -818,7 +799,7 @@ wcached= cachedWidget
 -- It is faster than `cachedWidget`.
 -- It is not restricted to the Identity monad.
 --
--- NOTE: cached widgets are shared by all users
+-- NOTE: the content of freezed widgets are shared by all users
 wfreeze :: (MonadIO m,Typeable view
          , FormInput view, Typeable a,  Executable m )
         => String  -- ^ The key of the cached object for the retrieval
@@ -833,37 +814,7 @@ wfreeze key t mf = View .  StateT $ \s -> do
           (r,s) <- runStateT (runView mf) s
           return (r,mfRequirements s, mfSeqCache s,mfAjax s)
 
---
----- | FormLet class
---class (Functor m, MonadIO m) => FormLet  a  m view where
---   digest :: Maybe a
---          -> View view m a
 
---wrender
---  :: Widget a1 a m v => a1 -> StateT (MFlowState v) m ([v], Maybe a)
---
---wrender x =do
---         (FormElm frm x) <-  runView (widget x)
---         return (frm, x)
-
--- Minimal definition: either (wrender and wget) or widget
---class (Functor m, MonadIO m) => Widget  a b m view |  a -> b view where
---   wrender :: a -> WState view m [view]
---   wrender x =do
---         (FormElm frm (_ :: Maybe b)) <-  runView (widget x)
---         return frm
---   wget :: a -> WState view m (Maybe b)
---   wget x=  runView (widget x) >>= \(FormElm _ mx) -> return mx
-
---   widget :: a  -> View view m b
---   widget x = View $  do
---       form <- wrender x  
---       got  <- wget x  
---       return $ FormElm form got
-
-
---instance FormLet  a m view => Widget (Maybe a) a m view  where
---   widget = digest
 
 {- | Execute the Flow, in the @FlowM view m@ monad. It is used as parameter of `hackMessageFlow`
 `waiMessageFlow` or `addMessageFlows`
@@ -921,9 +872,11 @@ runFlowOnce1  f t  =
 
 -- | Run a persistent flow inside the current flow. It is identified by the procedure and
 -- the string identifier.
--- unlike the normal flows, that are infinite loops, runFlowIn executes a finite flow
--- once executed, in subsequent executions the flow will return the stored result
--- without asking again. This is useful for asking/storing/retrieving user defined configurations.
+-- unlike the normal flows, that run within infinite loops, runFlowIn executes once
+-- once executed, in subsequent executions, the flow will get the intermediate responses from te log
+-- and will return the result
+-- without asking again. This is useful for asking/storing/retrieving user defined configurations by
+-- means of web formularies.
 runFlowIn
   :: (MonadIO m,
       FormInput view)
@@ -938,7 +891,7 @@ runFlowIn wf f= do
   runFlow1 f t=   evalStateT (runSup . runFlowM $ f)  mFlowState0{mfToken=t,mfEnv= tenv t}  -- >>= return . fromFailBack  -- >> return ()
 
 -- | to unlift a FlowM computation. useful for executing the configuration generated by runFLowIn
--- outside of a web application
+-- outside of the web flow (FlowM) monad
 runFlowConf :: (FormInput view, MonadIO m) 
         => FlowM view m a ->  m a  
 runFlowConf  f = do
@@ -955,6 +908,10 @@ clearEnv= do
   st <- get
   put st{ mfEnv= []}
 
+
+-- | stores the result of the flow in a  persistent log. When restarted, it get the result
+-- from the log and it does not execute it again. When no results are in the log, the computation
+-- is executed. It is equivalent to 'Control.Workflow.step' but in the FlowM monad.
 step
   :: (Serialize a,
       Typeable view,
@@ -972,6 +929,7 @@ step f= do
         return r
 
 -- | to execute transient flows as if they were persistent
+-- it can be used instead of step, but it does not log the response. it ever executes the computation
 --
 -- > transient $ runFlow f === runFlow $ transientNav f
 transientNav

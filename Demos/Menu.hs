@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------------
 --
--- Module      :  Demos.Menu
+-- Module      :  Menu
 -- Copyright   :
 -- License     :  BSD3
 --
@@ -38,8 +38,8 @@ data Options= CountI | CountS | Radio
             | Login | TextEdit |Grid | Autocomp | AutocompList
             | ListEdit |Shop | Action | Ajax | Select
             | CheckBoxes | PreventBack | Multicounter
-            | Combination
-            | FViewMonad | Counter | WDialog |Push |PushDec |Trace
+            | Combination | ShopCart
+            | FViewMonad | Counter | WDialog |Push |PushDec |Trace | RESTNav
             deriving (Bounded, Enum,Read, Show,Typeable)
 
 mainMenu= wcached "menu" 0 $
@@ -59,15 +59,16 @@ mainMenu= wcached "menu" 0 $
    <|> br ++> br ++>
    b <<  "DIFFERENT KINDS OF FLOWS"
                
-   ++> (li $ do a ! href (attr "/navigation") <<  " REST navigation"
-                b << " Navigates trough  menus and a sucession of GET pages"
-                article navigation)
-                            
-   ++> (li $ do a ! href (attr "/shop") <<  " Stateful flow: shopping"
-                b << " Add articles to a persistent shopping cart"
-                article stateful)
+   ++> (li <<< wlink RESTNav  << b <<  " REST navigation"
+                <++ b << " Navigates trough  menus and a sucession of GET pages"
+                <>  article navigation)
+
+
+   <|> (li <<< wlink ShopCart  << b <<   "Stateful flow: shopping"
+                <++ b << " Add articles to a persistent shopping cart"
+                <>  article stateful)
                        
-   ++>  br ++> br ++> b <<  "BASIC"
+   <|>  br ++> br ++> b <<  "BASIC"
                
    ++>  (li <<< wlink CountI       << b <<  "Increase an Int"
                        <++ b << " A loop that increases the Int value of a text box")
@@ -82,9 +83,9 @@ mainMenu= wcached "menu" 0 $
            
    <|>  (li <<< wlink Radio        << b <<  "Radio buttons")
 
-   <++  br <>  br                 <> b <<  "WIDGET ACTIONS & CALLBACKS"
+   <++  br <>  br                 <> b <<  "PAGE FLOWS with MONADIC WIDGETS, ACTIONS & CALLBACKS"
                
-   <|>  (li <<< wlink Action       << b <<  "Example of action, executed when a widget is validated")
+   <|>  (li <<< wlink Action      << b <<  "Example of action, executed when a widget is validated")
 
    <|>  (li <<< wlink FViewMonad   << b <<  "in page flow: sum of three numbers"
                  <++ b << " Page flows are monadic widgets that modifies themselves in the page"

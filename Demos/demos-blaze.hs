@@ -1,4 +1,4 @@
-{-# OPTIONS  -XDeriveDataTypeable -XQuasiQuotes  -F -pgmF MonadLoc #-}
+{-# OPTIONS  -XDeriveDataTypeable -XQuasiQuotes  #-}
 module Main where
 import MFlow.Wai.Blaze.Html.All 
 import Text.Blaze.Html5 as El
@@ -39,59 +39,58 @@ import Radio
 import SumView
 
 import Debug.Trace
+import Control.Workflow
 (!>)= flip trace
 
 main= do
    setAdminUser "admin" "admin"
    syncWrite SyncManual
    setFilesPath "Demos/"
-   addMessageFlows  [("shop"      , runFlow $ shopCart  `showSource` "ShopCart.hs")
-                    ,("navigation", runFlow $ transientNav testREST `showSource` "TestREST.hs")]
-
-   runNavigation "" $  transientNav mainmenu
+   runNavigation ""  mainmenu
 
 
 attr= fromString
 
 
-newtype Server= Server String deriving Typeable
+mainmenu ::FlowM Html (Workflow IO) ()
 mainmenu =  do
        setHeader $ stdheader 
-       setTimeouts 100 0
-       
-       r <- ask $ (El.div ! At.style (attr "background-color:#EEEEEE;float:left\
+       setTimeouts 300 0
+       let trans= transientNav
+       r <- transientNav . ask $ (El.div ! At.style (attr "background-color:#EEEEEE;float:left\
                          \;width:30%\
                          \;margin-left:10px;margin-right:10px;overflow:auto;")
                        <<< br ++>  mainMenu) 
                  <++ (El.div ! At.style (attr "float:right;width:65%;overflow:auto;") << mainmenuLinks)
 
-
-
        case r of
-             CountI    ->  clickn 0              `showSource`  "IncreaseInt.hs"
-             CountS    ->  clicks "1"            `showSource`  "IncreaseString.hs"
-             Action    ->  actions 1             `showSource`  "actions.hs"
-             Ajax      ->  ajaxsample            `showSource`  "AjaxSample.hs"
-             Select    ->  options               `showSource`  "Options.hs"
-             CheckBoxes -> checkBoxes            `showSource`  "CheckBoxes.hs"
-             TextEdit  ->  textEdit              `showSource`  "TextEdit.hs"
-             Grid      ->  grid                  `showSource`  "Grid.hs"
-             Autocomp  ->  autocomplete1         `showSource`  "Autocomplete.hs"
-             AutocompList -> autocompList        `showSource`  "AutoCompList.hs"
-             ListEdit  ->  wlistEd               `showSource`  "ListEdit.hs"
-             Radio     ->  radio                 `showSource`  "Radio.hs"
-             Login     ->  loginSample           `showSource`  "LoginSample.hs"
-             PreventBack -> preventBack          `showSource`  "PreventGoingBack.hs"
-             Multicounter-> multicounter         `showSource`  "Multicounter.hs"
-             FViewMonad  -> sumInView            `showSource`  "SumView.hs"
-             Counter    -> counter               `showSource`  "Counter.hs"
-             Combination -> combination          `showSource`  "Combination.hs"
-             WDialog     -> wdialog1             `showSource`  "Dialog.hs"
-             Push        -> pushSample           `showSource`  "PushSample.hs"
-             PushDec     -> pushDecrease         `showSource`  "PushDecrease.hs"
-             Trace       -> traceSample          `showSource`  "TraceSample.hs"
+             CountI    ->  trans $ clickn 0              `showSource`  "IncreaseInt.hs"
+             CountS    ->  trans $ clicks "1"            `showSource`  "IncreaseString.hs"
+             Action    ->  trans $ actions               `showSource`  "actions.hs"
+             Ajax      ->  trans $ ajaxsample            `showSource`  "AjaxSample.hs"
+             Select    ->  trans $ options               `showSource`  "Options.hs"
+             CheckBoxes -> trans $ checkBoxes            `showSource`  "CheckBoxes.hs"
+             TextEdit  ->  trans $ textEdit              `showSource`  "TextEdit.hs"
+             Grid      ->  trans $ grid                  `showSource`  "Grid.hs"
+             Autocomp  ->  trans $ autocomplete1         `showSource`  "Autocomplete.hs"
+             AutocompList -> trans $ autocompList        `showSource`  "AutoCompList.hs"
+             ListEdit  ->  trans $ wlistEd               `showSource`  "ListEdit.hs"
+             Radio     ->  trans $ radio                 `showSource`  "Radio.hs"
+             Login     ->  trans $ loginSample           `showSource`  "LoginSample.hs"
+             PreventBack -> trans $ preventBack          `showSource`  "PreventGoingBack.hs"
+             Multicounter-> trans $ multicounter         `showSource`  "Multicounter.hs"
+             FViewMonad  -> trans $ sumInView            `showSource`  "SumView.hs"
+             Counter     -> trans $ counter              `showSource`  "Counter.hs"
+             Combination -> trans $ combination          `showSource`  "Combination.hs"
+             WDialog     -> trans $ wdialog1             `showSource`  "Dialog.hs"
+             Push        -> trans $ pushSample           `showSource`  "PushSample.hs"
+             PushDec     -> trans $ pushDecrease         `showSource`  "PushDecrease.hs"
+             Trace       -> trans $ traceSample          `showSource`  "TraceSample.hs"
+             RESTNav     -> trans $ testREST             `showSource`  "TestREST.hs"
+             ShopCart    -> shopCart                     `showSource`  "ShopCart.hs"
 
-mainmenuLinks= do
+
+mainmenuLinks= do  -- using the blaze-html monad
        br
        p  << a ! href (attr "/html/MFlow/index.html") <<  "MFlow package description and documentation"
        p  << a ! href (attr "https://github.com/agocorona/MFlow/blob/master/Demos") <<  "see demos source code"

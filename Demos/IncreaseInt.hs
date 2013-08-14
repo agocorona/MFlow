@@ -7,6 +7,7 @@ import Menu
 -- |+| add a widget before and after another and return both results.
 -- in this case, a link wraps a form field
 
+clickn :: Int -> FlowM Html IO ()
 clickn n= do
    r <- askm  $ p << b <<  "increase an Int"
             ++> wlink "menu"  << p <<  "menu"      

@@ -7,17 +7,15 @@ import Data.String
 
 -- 9 pagems , each pagem has a restful link (pagem = ask)
 
--- to run it alone:
+-- to run it alone, replace askm by ask and uncomment the following line
 --main= runNavigation "" $ transientNav testREST
 
 
 testREST= do
   setTimeouts 120 0
 
-  addHeader header1
-
-  option <- pagem $   wlink "a" << p << "letters " <++ p << "or"
-                 <|> wlink "1" << p << "numbers"
+  option <- pagem $   wlink "a" << b << "letters " <++ i << " or"
+                 <|> wlink "1" << b << " numbers"
 
   case option of
     "1" -> do
@@ -34,13 +32,7 @@ testREST= do
 
 
 contentFor x=
-        p << "pagem for"
+        p << "page for"
         <> b << x
         <> p << "goto next page"
-
-header1 h= html << body (text h)
-  where
-  text h= a ! href (fromString "http://haskell-web.blogspot.com.es/2013/07/the-web-navigation-monad.html")
-            << "see this" <> hr <> h <> hr
-          <> a ! href (fromString "/") << "main menu"
 

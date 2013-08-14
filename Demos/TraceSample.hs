@@ -23,5 +23,5 @@ traceSample= do
         ++> wlink () << "press here"
   pagem $   error $ "this is the error"
 
--- to run it alone:
+-- to run it alone, replace askm by ask and uncomment the following line
 --main= runNavigation "" $ transientNav traceSample
