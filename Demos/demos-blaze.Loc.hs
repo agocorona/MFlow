@@ -82,20 +82,16 @@ main
 attr = fromString
  
 {-# LINE 55 "INPUT" #-}
-newtype Server = Server String
-               deriving Typeable
- 
-{-# LINE 56 "INPUT" #-}
 mainmenu :: FlowM Html (Workflow IO) ()
-{-# LINE 57 "INPUT" #-}
+{-# LINE 56 "INPUT" #-}
 mainmenu
-  = Control.Monad.Loc.withLoc "mainmenu, Main(INPUT): (57, 13)"
-      (do Control.Monad.Loc.withLoc "mainmenu, Main(INPUT): (58, 8)" (setHeader $ stdheader)
-          Control.Monad.Loc.withLoc "mainmenu, Main(INPUT): (59, 8)" (setTimeouts 300 0)
-          let {-# LINE 60 "INPUT" #-}
+  = Control.Monad.Loc.withLoc "mainmenu, Main(INPUT): (56, 13)"
+      (do Control.Monad.Loc.withLoc "mainmenu, Main(INPUT): (57, 8)" (setHeader $ stdheader)
+          Control.Monad.Loc.withLoc "mainmenu, Main(INPUT): (58, 8)" (setTimeouts 300 0)
+          let {-# LINE 59 "INPUT" #-}
               trans = transientNav
-          r <- Control.Monad.Loc.withLoc "mainmenu, Main(INPUT): (61, 8)" (transientNav . ask $ (El.div ! At.style (attr "background-color:#EEEEEE;float:left;width:30%;margin-left:10px;margin-right:10px;overflow:auto;") <<< br ++> mainMenu) <++ (El.div ! At.style (attr "float:right;width:65%;overflow:auto;") << mainmenuLinks))
-          Control.Monad.Loc.withLoc "mainmenu, Main(INPUT): (67, 8)"
+          r <- Control.Monad.Loc.withLoc "mainmenu, Main(INPUT): (60, 8)" (transientNav . ask $ (El.div ! At.style (attr "background-color:#EEEEEE;float:left;width:30%;margin-left:10px;margin-right:10px;overflow:auto;") <<< br ++> mainMenu) <++ (El.div ! At.style (attr "float:right;width:65%;overflow:auto;") << mainmenuLinks))
+          Control.Monad.Loc.withLoc "mainmenu, Main(INPUT): (66, 8)"
             (case r of
                  CountI -> trans $ clickn 0 `showSource` "IncreaseInt.hs"
                  CountS -> trans $ clicks "1" `showSource` "IncreaseString.hs"
@@ -121,25 +117,25 @@ mainmenu
                  Trace -> trans $ traceSample `showSource` "TraceSample.hs"
                  RESTNav -> trans $ testREST `showSource` "TestREST.hs"
                  ShopCart -> shopCart `showSource` "ShopCart.hs"))
-{-# LINE 94 "INPUT" #-}
+{-# LINE 93 "INPUT" #-}
 mainmenuLinks
-  = Control.Monad.Loc.withLoc "mainmenuLinks, Main(INPUT): (94, 16)"
-      (do Control.Monad.Loc.withLoc "mainmenuLinks, Main(INPUT): (95, 8)" (br)
-          Control.Monad.Loc.withLoc "mainmenuLinks, Main(INPUT): (96, 8)" (p << a ! href (attr "/html/MFlow/index.html") << "MFlow package description and documentation")
-          Control.Monad.Loc.withLoc "mainmenuLinks, Main(INPUT): (97, 8)" (p << a ! href (attr "https://github.com/agocorona/MFlow/blob/master/Demos") << "see demos source code")
-          Control.Monad.Loc.withLoc "mainmenuLinks, Main(INPUT): (98, 8)" (p << a ! href (attr "https://github.com/agocorona/MFlow/issues") << "bug tracker")
-          Control.Monad.Loc.withLoc "mainmenuLinks, Main(INPUT): (99, 8)" (p << a ! href (attr "https://github.com/agocorona/MFlow") << "source repository")
-          Control.Monad.Loc.withLoc "mainmenuLinks, Main(INPUT): (100, 8)" (p << a ! href (attr "http://hackage.haskell.org/package/MFlow") << "Hackage repository"))
-{-# LINE 104 "INPUT" #-}
+  = Control.Monad.Loc.withLoc "mainmenuLinks, Main(INPUT): (93, 16)"
+      (do Control.Monad.Loc.withLoc "mainmenuLinks, Main(INPUT): (94, 8)" (br)
+          Control.Monad.Loc.withLoc "mainmenuLinks, Main(INPUT): (95, 8)" (p << a ! href (attr "/html/MFlow/index.html") << "MFlow package description and documentation")
+          Control.Monad.Loc.withLoc "mainmenuLinks, Main(INPUT): (96, 8)" (p << a ! href (attr "https://github.com/agocorona/MFlow/blob/master/Demos") << "see demos source code")
+          Control.Monad.Loc.withLoc "mainmenuLinks, Main(INPUT): (97, 8)" (p << a ! href (attr "https://github.com/agocorona/MFlow/issues") << "bug tracker")
+          Control.Monad.Loc.withLoc "mainmenuLinks, Main(INPUT): (98, 8)" (p << a ! href (attr "https://github.com/agocorona/MFlow") << "source repository")
+          Control.Monad.Loc.withLoc "mainmenuLinks, Main(INPUT): (99, 8)" (p << a ! href (attr "http://hackage.haskell.org/package/MFlow") << "Hackage repository"))
+{-# LINE 103 "INPUT" #-}
 showSource w filename
-  = Control.Monad.Loc.withLoc "showSource, Main(INPUT): (104, 25)"
-      (do Control.Monad.Loc.withLoc "showSource, Main(INPUT): (105, 7)" (setSessionData filename)
-          Control.Monad.Loc.withLoc "showSource, Main(INPUT): (106, 7)" (w))
-{-# LINE 110 "INPUT" #-}
+  = Control.Monad.Loc.withLoc "showSource, Main(INPUT): (103, 25)"
+      (do Control.Monad.Loc.withLoc "showSource, Main(INPUT): (104, 7)" (setSessionData filename)
+          Control.Monad.Loc.withLoc "showSource, Main(INPUT): (105, 7)" (w))
+{-# LINE 109 "INPUT" #-}
 traceSample
-  = Control.Monad.Loc.withLoc "traceSample, Main(INPUT): (110, 14)"
-      (do Control.Monad.Loc.withLoc "traceSample, Main(INPUT): (111, 3)" (page $ h2 << "Error trace example" ++> p << "MFlow now produces execution traces in case of error by making use of the backtracking mechanism" ++> p << "It is more detailed than a call stack" ++> p << "this example has a deliberate error" ++> br ++> p << "You must be logged as admin to see the trace" ++> wlink () << p << "pres here")
-          Control.Monad.Loc.withLoc "traceSample, Main(INPUT): (119, 3)" (page $ p << "Please login with admin/admin" ++> userWidget (Just "admin") userLogin)
-          u <- Control.Monad.Loc.withLoc "traceSample, Main(INPUT): (122, 3)" (getCurrentUser)
-          Control.Monad.Loc.withLoc "traceSample, Main(INPUT): (123, 3)" (page $ p << "The trace will appear after you press the link. press one of the options available at the bottom of the page" ++> p << ("user=" ++ u) ++> br ++> wlink () << "press here")
-          Control.Monad.Loc.withLoc "traceSample, Main(INPUT): (126, 3)" (page $ error $ "this is the error"))
+  = Control.Monad.Loc.withLoc "traceSample, Main(INPUT): (109, 14)"
+      (do Control.Monad.Loc.withLoc "traceSample, Main(INPUT): (110, 3)" (pagem $ h2 << "Error trace example" ++> p << "MFlow now produces execution traces in case of error by making use of the backtracking mechanism" ++> p << "It is more detailed than a call stack" ++> p << "this example has a deliberate error" ++> br ++> p << "You must be logged as admin to see the trace" ++> wlink () << p << "pres here")
+          Control.Monad.Loc.withLoc "traceSample, Main(INPUT): (118, 3)" (pagem $ p << "Please login with admin/admin" ++> userWidget (Just "admin") userLogin)
+          u <- Control.Monad.Loc.withLoc "traceSample, Main(INPUT): (121, 3)" (getCurrentUser)
+          Control.Monad.Loc.withLoc "traceSample, Main(INPUT): (122, 3)" (pagem $ p << "The trace will appear after you press the link. press one of the options available at the bottom of the page" ++> p << ("user=" ++ u) ++> br ++> wlink () << "press here")
+          Control.Monad.Loc.withLoc "traceSample, Main(INPUT): (125, 3)" (pagem $ error $ "this is the error"))
