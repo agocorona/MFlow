@@ -1,4 +1,7 @@
-MFlow is a Web Framework
+MFlow is am application server and Web Framework for stateful and persistent Web applications that run in a navigation monad with backtracking that provides services of routing and state persistence. 
+Each link or form in the page return type safe responses. The navigation is also type safe since it is a monadic procedure with type-safe components. The page is composed of reusable type-safe components called widgets that may change their rendering depending o the user responses by autorefreshing, without using JavaScript.
+
+Since the navigation is monadic, any navigation sequence can be reusable. Deployment and configuation is reduced to zero. The elements can work together if they typecheck.
 
 The goals of MFlow are:
 
@@ -20,7 +23,7 @@ MFlow try to solve the first requirements using an innovative approach. The rout
 
 At any moment the flow can respond to the back button or to any RESTful path that the user may paste in the navigation bar. If the procedure is waiting for another different page, the FlowM monad backtrack until the path partially match. From this position on, the execution goes forward until the rest of the path match.  Thus, no matter the previous state of the server process, it recover the state of execution appropriate for the request. This way the server process is virtually stateless for any GET request. However, it is possible to store a session state, which may backtrack or not when the navigation goes back and forth. It is up to the programmer. Synchronization between server state and web browser state is supported out-of-the-box.
 
-When the state matters, and user interactions can last for long, such are shopping carts etc. It uses a log for thread state persistence. The server process shut itself down after a programmer defined timeout. Once a new request of the same user arrive, the log is used to recover the process state. There is no need to store a snapshot of every continuation, just the result of each step.
+When the state matters, and user interactions can last for long, such are shopping carts, it uses a log for thread state persistence. The server process shut itself down after a programmer defined timeout. Once a new request of the same user arrive, the log is used to recover the process state. There is no need to store a snapshot of every continuation, just the result of each step.
 
 State consistence and transactions are given by the TCache package. It is data cache within the STM monad (Software Transactional Memory).  Serialization and deserialization of data is programmer defined, so it can adapt it to any database, although any other database interface can be used. Default persistence in files comes out of the box for rapid development purposes.
 
