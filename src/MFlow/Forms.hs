@@ -204,7 +204,7 @@ FlowM, View(..), FormElm(..), FormInput(..)
 ,getCurrentUser,getUserSimple, getUser, userFormLine, userLogin,logout, userWidget,getLang, login,
 userName,
 -- * User interaction 
-ask, page, askt, clearEnv, wstateless, transfer, pageFlow, 
+ask, page, askt, clearEnv, wstateless, pageFlow,  
 -- * formLets 
 -- | They usually produce the HTML form elements (depending on the FormInput instance used)
 -- It is possible to modify their attributes with the `<!` operator.
@@ -245,7 +245,7 @@ cachedWidget, wcached, wfreeze,
 ,flatten, normalize
 
 -- * Running the flow monad
-,runFlow, transientNav,runFlowOnce,runFlowIn
+,runFlow, transientNav, runFlowOnce, runFlowIn
 ,runFlowConf,MFlow.Forms.Internals.step
 -- * controlling backtracking
 ,goingBack,returnIfForward, breturn, preventGoingBack, retry
@@ -874,15 +874,15 @@ userWidget muser formuser= do
 
 
 login uname= do
--- st <- get
--- let t = mfToken st
---     u = tuser t
--- if u == uname then return () else do
---     let t'= t{tuser= uname}
---     moveState (twfname t) t t'
---     put st{mfToken= t'}
---     liftIO $ deleteTokenInList t
---     liftIO $ addTokenToList t'
+ st <- get
+ let t = mfToken st
+     u = tuser t
+ if u == uname then return () else do
+     let t'= t{tuser= uname}
+     moveState (twfname t) t t'
+     put st{mfToken= t'}
+     liftIO $ deleteTokenInList t
+     liftIO $ addTokenToList t'
      setCookie cookieuser   uname "/"  (Just $ 365*24*60*60) 
 
 
@@ -891,14 +891,14 @@ login uname= do
 -- | logout. The user is reset to the `anonymous` user
 logout :: (MonadIO m, MonadState (MFlowState view) m) => m ()
 logout= do
---     st <- get
---     let t = mfToken st
---         t'= t{tuser= anonymous}
---     if tuser t == anonymous then return () else do
---         moveState (twfname t) t t'
---         put st{mfToken= t'}
---         liftIO $ deleteTokenInList t
---         liftIO $ addTokenToList t'
+     st <- get
+     let t = mfToken st
+         t'= t{tuser= anonymous}
+     if tuser t == anonymous then return () else do
+         moveState (twfname t) t t'
+         put st{mfToken= t'}
+         liftIO $ deleteTokenInList t
+         liftIO $ addTokenToList t'
          setCookie cookieuser   anonymous "/" (Just $ -1000)
 
 -- | If not logged, perform login. otherwise return the user
@@ -1202,14 +1202,7 @@ wstateless w = transient $ runFlow loop
 --         return r
 --      loop
 
--- | transfer control to another flow.
-transfer :: MonadIO m => String -> FlowM v m ()
-transfer flowname =do
-         t <- gets mfToken
-         let t'= t{twfname= flowname}
-         liftIO  $ do
-             (r,_) <- msgScheduler t'
-             sendFlush t r
+
 
 
 -- | Wrap a widget with form element within a form-action element.
@@ -1409,30 +1402,26 @@ manyOf :: (FormInput view, MonadIO m, Functor m)=> [View view m a]  -> View view
 manyOf xs= whidden () *> (View $ do 
       forms <- mapM runView  xs
       let vs  = concatMap (\(FormElm v _) ->  [mconcat v]) forms
-          
           res1= catMaybes $ map (\(FormElm _ r) -> r) forms
+      return . FormElm vs $  Just res1)
 
-       
-      return $ FormElm  vs $  Just res1)
-
-
-(>:>) :: (Monad m)=> View v m a -> View v m [a]  -> View v m [a]
-(>:>) w ws= View $ do
+(>:>) :: Monad m => View v m a -> View v m [a]  -> View v m [a]
+(>:>) w ws = View $ do
     FormElm fs mxs <- runView $  ws
     FormElm f1 mx  <- runView w
     return $ FormElm (f1++ fs)
          $ case( mx,mxs) of
              (Just x, Just xs) -> Just $ x:xs
-             (Nothing, mxs) -> mxs
-             (Just x, _) -> Just [x]
+             (Nothing, mxs)    -> mxs
+             (Just x, _)       -> Just [x]
 
 -- | Intersperse a widget in a list of widgets. the results is a 2-tuple of both types.
 --
 -- it has a infix priority @infixr 5@
 (|*>) :: (MonadIO m, Functor m,Monoid view)
             => View view m r
-            -> [View view m r']
-            -> View view m (Maybe r,Maybe r')
+           -> [View view m r']
+           -> View view m (Maybe r,Maybe r')
 (|*>) x xs= View $ do
   FormElm fxs rxs <-  runView $ firstOf  xs
   FormElm fx rx   <- runView $  x

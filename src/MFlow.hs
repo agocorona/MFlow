@@ -83,9 +83,9 @@ import Data.IORef
 import GHC.Conc(unsafeIOToSTM)
 import Data.Typeable
 import Data.Maybe(isJust, isNothing, fromMaybe, fromJust)
-import Data.Char(isSeparator)
+import Data.Char(isSeparator) 
 import Data.List(isPrefixOf,isSuffixOf,isInfixOf, elem , span, (\\),intersperse)
-import Control.Monad(when)
+import Control.Monad(when) 
 
 import Data.Monoid
 import Control.Concurrent(forkIO,threadDelay,killThread, myThreadId, ThreadId)
@@ -369,9 +369,9 @@ msgScheduler
 msgScheduler x  = do
   token <- getToken x
   let wfname = takeWhile (/='/') $ pwfname x
-  sendToMF token x
-  th <- startMessageFlow wfname token
-  r  <- recFromMF token                          -- !> let HttpData _ _ r1=r in unpack r1 
+  sendToMF token x                                 
+  th <- startMessageFlow wfname token     
+  r  <- recFromMF token                            --  !> let HttpData _ _ r1=r in unpack r1 
   return (r,th)
   where
   --start the flow if not started yet
@@ -394,6 +394,7 @@ msgScheduler x  = do
              
           Left (WFException e)-> do
               showError wfname token e
+              moveState wfname token token{tuser= "error/"++tuser token}
               deleteTokenInList token                       -- !> "DELETETOKEN"
               
           Right _ ->  delMsgHistory token >> return ()      -- !> ("finished " ++ wfname)

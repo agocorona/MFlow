@@ -30,20 +30,23 @@ database= do
 
      case r of
          NewText -> do
+         
               text <- askm $ p << "insert the text" ++> getMultilineText "" <++ br
                            <** submitButton "enter"
+
               n <- allTexts >>= return . length
+
               liftIO . atomically . newDBRef $ MyData n text   -- store the name in the cache (later will be written to disk automatically)
               return()
 
          ListTexts -> do
+
               -- query for all the names stored in all the registers
               all <- allTexts
 
               askm $   h3 << "list of all texts"
                    ++> mconcat[p <<  t | t <- all]
                    ++> wlink () << p << "click here to go to the database menu"
-
 
      database
      where

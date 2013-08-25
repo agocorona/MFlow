@@ -31,7 +31,7 @@ import Control.Applicative
 import Data.Monoid
 import Control.Monad.Trans
 import Control.Monad.State
-import Data.ByteString.Lazy.Char8 as B(ByteString,cons,pack,unpack,append,empty,fromChunks)
+import Data.ByteString.Lazy.Char8 as B(ByteString,cons,append, pack, unpack,empty,fromChunks)
 import Data.Typeable
 import Data.RefSerialize hiding((<|>))
 import Data.TCache
@@ -42,21 +42,23 @@ import Data.Dynamic
 import qualified Data.Map as M
 import Unsafe.Coerce
 import Control.Workflow as WF
+import qualified Control.Workflow.Stat as S
+import Data.Persistent.IDynamic
 import Control.Monad.Identity
 import Data.List
 import System.IO.Unsafe
 import Control.Concurrent.MVar
-import Control.Workflow(WFErrors(Timeout))
+
 --
 ---- for traces
 --
 
-import Control.Exception as CE(catch,SomeException,AsyncException,throw,fromException)
+import Control.Exception as CE
 import Control.Concurrent
 import Control.Monad.Loc
---
+
 --import Debug.Trace
---(!>) =    flip trace
+--(!>) = flip trace
 
 
 data FailBack a = BackPoint a | NoBack a | GoBack   deriving (Show,Typeable)
@@ -64,14 +66,14 @@ data FailBack a = BackPoint a | NoBack a | GoBack   deriving (Show,Typeable)
 
 instance (Serialize a) => Serialize (FailBack a ) where
    showp (BackPoint x)= insertString (pack iCanFailBack) >> showp x
-   showp (NoBack x)= insertString (pack noFailBack) >> showp x
-   showp GoBack = insertString (pack repeatPlease)
+   showp (NoBack x)   = insertString (pack noFailBack) >> showp x
+   showp GoBack       = insertString (pack repeatPlease)
 
    readp = choice [icanFailBackp,repeatPleasep,noFailBackp]
     where
-    noFailBackp   = {-# SCC "deserialNoBack" #-} symbol noFailBack >> readp >>= return . NoBack
-    icanFailBackp = {-# SCC "deserialBackPoint" #-} symbol iCanFailBack >> readp >>= return . BackPoint
-    repeatPleasep = {-# SCC "deserialbackPlease" #-}  symbol repeatPlease  >> return  GoBack
+    noFailBackp   = symbol noFailBack >> readp >>= return . NoBack      
+    icanFailBackp = symbol iCanFailBack >> readp >>= return . BackPoint 
+    repeatPleasep = symbol repeatPlease  >> return  GoBack          
 
 iCanFailBack= "B"
 repeatPlease= "G"
@@ -109,7 +111,6 @@ instance (Supervise s m)=> Monad (Sup  m) where
 
 fromFailBack (NoBack  x)   = x
 fromFailBack (BackPoint  x)= x
-
 toFailBack x= NoBack x
 
 {-# NOINLINE breturn  #-}
@@ -212,9 +213,6 @@ instance  Monad m => Supervise (MFlowState v) (WState v m) where
 --            return r
 --            where
 --            execMF f s= runStateT (runSup (runFlowM f) ) s
-
-
-
 
 
 
@@ -330,23 +328,26 @@ instance  (Monad m) => Monad (View view m) where
                    FormElm form1 mk <- x
                    case mk of
                      Just k  -> do
-                        modify $ \st -> st{linkMatched= False} 
+                        st <- get
+--                        let clear = mfClear st
+                        put st{linkMatched= False} -- ,mfClear= False} 
                         FormElm form2 mk <- runView $ f k
+--                        let form= if clear then mempty else form1
                         return $ FormElm (form1 ++ form2) mk
 
                      Nothing -> 
                         return $ FormElm form1 Nothing
                         
-    View x >> f = View $ do
-                   FormElm form1 mk <- x
-                   case mk of
-                     Just k  -> do
-                        modify $ \st -> st{linkMatched= False} 
-                        FormElm form2 mk <- runView  f 
-                        return $ FormElm (form1 ++ form2) mk
+--    View x >> f = View $ do
+--                   FormElm form1 mk <- x
+--                   case mk of
+--                     Just k  -> do
+--                        modify $ \st -> st{linkMatched= False,mfClear= False} 
+--                        FormElm form2 mk <- runView  f 
+--                        return $ FormElm (form1 ++ form2) mk
 
-                     Nothing -> 
-                        return $ FormElm form1 Nothing
+--                     Nothing -> 
+--                        return $ FormElm form1 Nothing
 
     return = View .  return . FormElm  [] . Just
 --    fail msg= View . return $ FormElm [fromStr msg] Nothing
@@ -378,7 +379,9 @@ wcallback (View x) f = View $ do
        runView (f k)
      Nothing -> return $ FormElm form1 Nothing
 
-   
+--clear :: MonadState (MFlowState v) m => m()
+--clear= modify $ \s -> s{mfClear= True}
+
 --incLink :: MonadState (MFlowState view) m => m()
 --incLink= modify $ \st -> st{mfPIndex= if linkMatched st then mfPIndex  st + 1 else mfPIndex st
 --                ,linkMatched= False}  -- !> "<-inc"
@@ -488,11 +491,12 @@ preventGoingBack
   :: ( Functor m, MonadIO m,  FormInput v) => FlowM v m () -> FlowM v m ()
 preventGoingBack msg= do
    back <- goingBack
-   if not back  then breturn() else do
-         breturn()  -- will not go back beyond this
-         clearEnv
-         modify $ \s -> s{newAsk= True}
-         msg
+   if not back  then breturn()  else do
+             breturn()  -- will not go back beyond this
+             clearEnv
+             modify $ \s -> s{newAsk= True}
+             msg
+             
 
 
 
@@ -521,7 +525,6 @@ data MFlowState view= MFlowState{
 
    -- Link management
    mfPath           :: [String],
-
    mfPrefix         :: String,
    mfPIndex         :: Int,
    mfPageIndex      :: Maybe Int,
@@ -530,6 +533,7 @@ data MFlowState view= MFlowState{
 
    mfAutorefresh   :: Bool,
    mfTrace          :: [String]
+--   mfClear          :: Bool
    }
    deriving Typeable
 
@@ -538,7 +542,7 @@ type Void = Char
 mFlowState0 :: (FormInput view) => MFlowState view
 mFlowState0 = MFlowState 0 False  True  True  "en"
                 [] False  (error "token of mFlowState0 used")
-                0 0 [] [] stdHeader False [] M.empty  Nothing 0 False    []   ""   1 Nothing False M.empty False []
+                0 0 [] [] stdHeader False [] M.empty  Nothing 0 False    []   ""   1 Nothing False M.empty False [] -- False
 
 
 -- | Set user-defined data in the context of the session.
@@ -872,8 +876,8 @@ runFlowOnce1  f t  =
 
 -- | Run a persistent flow inside the current flow. It is identified by the procedure and
 -- the string identifier.
--- unlike the normal flows, that run within infinite loops, runFlowIn executes once
--- once executed, in subsequent executions, the flow will get the intermediate responses from te log
+-- unlike the normal flows, that run within infinite loops, runFlowIn executes once.
+-- In subsequent executions, the flow will get the intermediate responses from te log
 -- and will return the result
 -- without asking again. This is useful for asking/storing/retrieving user defined configurations by
 -- means of web formularies.
@@ -883,17 +887,85 @@ runFlowIn
   => String
   -> FlowM  view  (Workflow IO)  b
   -> FlowM view m b
-runFlowIn wf f= do
-  t <- gets mfToken
-  FlowM .  Sup $ liftIO $ WF.exec1nc wf $ runFlow1 f t
+runFlowIn wf f= FlowM . Sup $ do
+      st <- get     
+      let t = mfToken st
+      (r,st') <- liftIO $ exec1nc wf $ runFlow1 st f t
+      put st{mfPath= mfPath st'}
+      case r of
+        GoBack ->  delWF  wf ()
+      return r
 
   where
-  runFlow1 f t=   evalStateT (runSup . runFlowM $ f)  mFlowState0{mfToken=t,mfEnv= tenv t}  -- >>= return . fromFailBack  -- >> return ()
+  runFlow1 st f t= runStateT (runSup . runFlowM $ f) st
+
+--exec1bnc :: String ->  Workflow IO a ->   IO  a
+--exec1bnc wf f= liftIO $ do
+-- ei <- getState  wf f ()
+-- case ei of
+--  Left err -> CE.throw err
+--  Right (name, _, stat) -> do
+--     let vers = reverse $ dropWhile isback $ reverse $ S.versions stat !> (unpack $ runW $ showp (S.versions stat))
+--         stat'= stat{S.versions= vers, S.state= length vers} !> (unpack $ runW $ showp vers)
+--     atomically $ writeDBRef (S.self stat) stat'
+--     writeResource stat'
+--     runWF1 name f  stat' False
+--    `CE.catch`
+--      (\(e :: CE.SomeException) -> liftIO $ do
+----             let name=  keyWF wf ()
+--             clearRunningFlag name  --`debug` ("exception"++ show e)
+--             CE.throw e )
+--    `finally`
+--      (liftIO . atomically .
+--           when(S.recover stat) $ do
+--              let ref= S.self stat
+--              s <- readDBRef ref `onNothing` error ("step: not found: "++ S.wfName stat)
+--              writeDBRef ref s{S.recover= False,S.versions= reverse $ S.versions s})
+--
+-- where
+--
+--
+--isback x= serializedEqual x (pack "G ")
+--
+--
+--dropBacks  _ []= []
+--dropBacks nbacks (x:xs)=
+--  case isback x of
+--    True  -> dropBacks (nbacks+1) xs
+--    False -> if nbacks== 0 then x:dropBacks 0 xs
+--                           else dropBacks 0 xs
+--switchWF
+--  :: (MonadIO m,
+--      FormInput view)
+--  => String
+--  -> FlowM  view  (Workflow IO)  b
+--  -> FlowM view m b
+--switchWF wf f= FlowM . Sup $ do
+--      st <- get     
+--      let t = mfToken st
+--      (r,st') <- liftIO $ WF.exec1 wf $ runFlow1 st f t
+--      put st{mfPath= mfPath st'}
+--      return r
+
+--switchWF wf f= do
+--  liftIO $ addMessageFlows [(wf,runFlow f)]
+--  transfer wf
+--
+--  where
+--  runFlow1 st f t= runStateT (runSup . runFlowM $ f) st
+
+-- | transfer control to another flow. (experimental)
+--transfer :: MonadIO m => String -> FlowM v m ()
+--transfer flowname = do
+--         t <- gets mfToken
+--         let t'= t{twfname= flowname}
+--         liftIO  $ do
+--             (r,_) <- msgScheduler t'
+--             sendFlush t r
 
 -- | to unlift a FlowM computation. useful for executing the configuration generated by runFLowIn
 -- outside of the web flow (FlowM) monad
-runFlowConf :: (FormInput view, MonadIO m) 
-        => FlowM view m a ->  m a  
+runFlowConf :: (FormInput view, MonadIO m) => FlowM view m a ->  m a  
 runFlowConf  f = do
   q  <- liftIO newEmptyMVar  -- `debug` (i++w++u)
   qr <- liftIO newEmptyMVar
@@ -932,6 +1004,7 @@ step f= do
 -- it can be used instead of step, but it does not log the response. it ever executes the computation
 --
 -- > transient $ runFlow f === runFlow $ transientNav f
+
 transientNav
   :: (Serialize a,
       Typeable view,
@@ -939,12 +1012,14 @@ transientNav
       Typeable a) =>
       FlowM view IO a
       -> FlowM view (Workflow IO) a
-transientNav f= do
-   s <- get
-   flowM $ Sup $ do
-        (r,s') <-  lift . unsafeIOtoWF $ runStateT (runSup $ runFlowM f) s
-        put s'
-        return r
+transientNav= MFlow.Forms.Internals.step
+
+--transientNav f= do
+--   s <- get
+--   flowM $ Sup $ do
+--        (r,s') <-  lift . unsafeIOtoWF $ runStateT (runSup $ runFlowM f) s
+--        put s'
+--        return r
 
 --stepWFRef
 --  :: (Serialize a,
