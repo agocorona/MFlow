@@ -42,8 +42,6 @@ import Data.Dynamic
 import qualified Data.Map as M
 import Unsafe.Coerce
 import Control.Workflow as WF
-import qualified Control.Workflow.Stat as S
-import Data.Persistent.IDynamic
 import Control.Monad.Identity
 import Data.List
 import System.IO.Unsafe
