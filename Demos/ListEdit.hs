@@ -7,7 +7,7 @@ import Text.Blaze.Html5 as El
 import Text.Blaze.Html5.Attributes as At hiding (step)
 import Data.String
 
-attr= fromString
+
 
 wlistEd= do
    r <-  askm   $   addLink

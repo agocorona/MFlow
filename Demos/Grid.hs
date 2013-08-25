@@ -6,7 +6,7 @@ import Menu
 import Data.String
 import Text.Blaze.Html5.Attributes as At hiding (step)
 
-attr= fromString
+--attr= fromString
 
 grid = do
   r <- askm  $   addLink

@@ -5,7 +5,7 @@ import Menu
 import Counter(counterWidget)
 import Data.String
 
-text= fromString
+--text= fromString
 
 combination =  askm  $ do
      p << "Three active widgets in the same page with autoRefresh. Each widget refresh itself \
@@ -61,22 +61,23 @@ radiob s n= wlabel (text s) $ setRadio s n <! onClickSubmit
 --
 -- normally to be used with autoRefresh and pageFlow when used with other widgets.
 wlogin :: View Html IO ()
-wlogin=  (do
-    username <- getCurrentUser
-    if username /= anonymous
-     then return username
-     else do
-      name <- getString Nothing <! hint "username" <++ br
-      pass <- getPassword <! focus <** submitButton "login" <++ br
-      val  <- userValidate (name,pass)
-      case val of
-        Just msg -> notValid msg
-        Nothing  -> login name >> return name)
-
+wlogin=  do
+   do
+       username <- getCurrentUser
+       if username /= anonymous
+         then return username
+         else do
+          name <- getString Nothing <! hint "username" <++ br
+          pass <- getPassword <! focus <** submitButton "login" <++ br
+          val  <- userValidate (name,pass)
+          case val of
+            Just msg -> notValid msg
+            Nothing  -> login name >> return name
+       
    `wcallback` (\name -> b << ("logged as " ++ name)
-                     ++> p << ("navigate away of this page before logging out")
+                     ++> p << "navigate away of this page before logging out"
                      ++>  wlink "logout"  << b << " logout")
-   `wcallback`  const (logout >>  wlogin)
+   `wcallback`  const (logout >> wlogin)
 
 focus = [("onload","this.focus()")]
 

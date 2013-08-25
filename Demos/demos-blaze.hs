@@ -1,9 +1,9 @@
-{-# OPTIONS  -XDeriveDataTypeable -XQuasiQuotes  #-}
+{-# OPTIONS  -XDeriveDataTypeable -XQuasiQuotes #-} --  -F -pgmF MonadLoc #-}
 module Main where
-import MFlow.Wai.Blaze.Html.All 
+import MFlow.Wai.Blaze.Html.All hiding (name)
 import Text.Blaze.Html5 as El
-import Text.Blaze.Html5.Attributes as At hiding (step)
-
+import Text.Blaze.Html5.Attributes as At hiding (step,name)
+import Data.TCache.IndexQuery
 import Data.Typeable
 
 import Data.Monoid
@@ -37,59 +37,57 @@ import PushSample
 import Grid
 import Radio
 import SumView
+import MCounter
+import Database
 
 import Debug.Trace
-import Control.Workflow
+
 (!>)= flip trace
 
+--attr= fromString
+
+
+
 main= do
+   index idnumber   -- for the database example
    setAdminUser "admin" "admin"
    syncWrite SyncManual
+
    setFilesPath "Demos/"
-   runNavigation ""  mainmenu
-
-
-attr= fromString
-
-
-mainmenu ::FlowM Html (Workflow IO) ()
-mainmenu =  do
+   runNavigation "" $ do
        setHeader $ stdheader 
-       setTimeouts 300 0
-       let trans= transientNav
-       r <- transientNav . ask $ (El.div ! At.style (attr "background-color:#EEEEEE;float:left\
-                         \;width:30%\
-                         \;margin-left:10px;margin-right:10px;overflow:auto;")
-                       <<< br ++>  mainMenu) 
-                 <++ (El.div ! At.style (attr "float:right;width:65%;overflow:auto;") << mainmenuLinks)
+       setTimeouts 200 $ 60 * 60
+
+       r <- step . ask $ (divmenu  <<< br ++>  mainMenu) 
+                <++ (El.div ! At.style (attr "float:right;width:65%;overflow:auto;") << mainmenuLinks)
 
        case r of
-             CountI    ->  trans $ clickn 0              `showSource`  "IncreaseInt.hs"
-             CountS    ->  trans $ clicks "1"            `showSource`  "IncreaseString.hs"
-             Action    ->  trans $ actions               `showSource`  "actions.hs"
-             Ajax      ->  trans $ ajaxsample            `showSource`  "AjaxSample.hs"
-             Select    ->  trans $ options               `showSource`  "Options.hs"
-             CheckBoxes -> trans $ checkBoxes            `showSource`  "CheckBoxes.hs"
-             TextEdit  ->  trans $ textEdit              `showSource`  "TextEdit.hs"
-             Grid      ->  trans $ grid                  `showSource`  "Grid.hs"
-             Autocomp  ->  trans $ autocomplete1         `showSource`  "Autocomplete.hs"
-             AutocompList -> trans $ autocompList        `showSource`  "AutoCompList.hs"
-             ListEdit  ->  trans $ wlistEd               `showSource`  "ListEdit.hs"
-             Radio     ->  trans $ radio                 `showSource`  "Radio.hs"
-             Login     ->  trans $ loginSample           `showSource`  "LoginSample.hs"
-             PreventBack -> trans $ preventBack          `showSource`  "PreventGoingBack.hs"
-             Multicounter-> trans $ multicounter         `showSource`  "Multicounter.hs"
-             FViewMonad  -> trans $ sumInView            `showSource`  "SumView.hs"
-             Counter     -> trans $ counter              `showSource`  "Counter.hs"
-             Combination -> trans $ combination          `showSource`  "Combination.hs"
-             WDialog     -> trans $ wdialog1             `showSource`  "Dialog.hs"
-             Push        -> trans $ pushSample           `showSource`  "PushSample.hs"
-             PushDec     -> trans $ pushDecrease         `showSource`  "PushDecrease.hs"
-             Trace       -> trans $ traceSample          `showSource`  "TraceSample.hs"
-             RESTNav     -> trans $ testREST             `showSource`  "TestREST.hs"
-             ShopCart    -> shopCart                     `showSource`  "ShopCart.hs"
-
-
+             CountI    ->     step  (clickn 0)           `showSource`  "IncreaseInt.hs"
+             CountS    ->     step  (clicks "1")         `showSource`  "IncreaseString.hs"
+             Action    ->     step  actions              `showSource`  "Actions.hs"
+             Ajax      ->     step  ajaxsample           `showSource`  "AjaxSample.hs"
+             Select    ->     step  options              `showSource`  "Options.hs"
+             CheckBoxes ->    step  checkBoxes           `showSource`  "CheckBoxes.hs"
+             TextEdit  ->     step  textEdit             `showSource`  "TextEdit.hs"
+             Grid      ->     step  grid                 `showSource`  "Grid.hs"
+             Autocomp  ->     step  autocomplete1        `showSource`  "Autocomplete.hs"
+             AutocompList ->  step  autocompList         `showSource`  "AutoCompList.hs"
+             ListEdit  ->     step  wlistEd              `showSource`  "ListEdit.hs"
+             Radio     ->     step  radio                `showSource`  "Radio.hs"
+             Login     ->     step  loginSample          `showSource`  "LoginSample.hs"
+             PreventBack ->   step  preventBack          `showSource`  "PreventGoingBack.hs"
+             Multicounter->   step  multicounter         `showSource`  "Multicounter.hs"
+             FViewMonad  ->   step  sumInView            `showSource`  "SumView.hs"
+             Counter     ->   step  counter              `showSource`  "Counter.hs"
+             Combination ->   step  combination          `showSource`  "Combination.hs"
+             WDialog     ->   step  wdialog1             `showSource`  "Dialog.hs"
+             Push        ->   step  pushSample           `showSource`  "PushSample.hs"
+             PushDec     ->   step  pushDecrease         `showSource`  "PushDecrease.hs"
+             Trace       ->   step  traceSample          `showSource`  "TraceSample.hs"
+             RESTNav     ->   step  testREST             `showSource`  "TestREST.hs"
+             Database    ->   step  database             `showSource`  "Database.hs"
+             ShopCart    ->  shopCart                   `showSource` "ShopCart.hs"
+             MCounter    ->  mcounter                   `showSource` "MCounter.hs"
 mainmenuLinks= do  -- using the blaze-html monad
        br
        p  << a ! href (attr "/html/MFlow/index.html") <<  "MFlow package description and documentation"
@@ -100,14 +98,10 @@ mainmenuLinks= do  -- using the blaze-html monad
 
 
 
-showSource w filename = do
-      setSessionData filename
-      w
 
-     
-
+-- | to run it on heroku, traceSample is included since heroku does not run the monadloc preprocessor
 traceSample= do
-  pagem $   h2 << "Error trace example"
+  pagem $ h2 << "Error trace example"
        ++> p << "MFlow now produces execution traces in case of error by making use of the backtracking mechanism"
        ++> p << "It is more detailed than a call stack"
        ++> p << "this example has a deliberate error"
@@ -116,13 +110,13 @@ traceSample= do
        ++> wlink () << p << "pres here"
 
   pagem $   p <<  "Please login with admin/admin"
-       ++> userWidget (Just "admin") userLogin
+        ++> userWidget (Just "admin") userLogin
 
   u <- getCurrentUser
-  pagem $   p << "The trace will appear after you press the link. press one of the options available at the bottom of the page"
+  pagem $  p << "The trace will appear after you press the link. press one of the options available at the bottom of the page"
        ++> p << ("user="++ u) ++> br
        ++> wlink () << "press here"
-  pagem $   error $ "this is the error"
+  pagem $  error $ "this is the error"
 
 
 

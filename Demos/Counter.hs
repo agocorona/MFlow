@@ -5,21 +5,22 @@ import Menu
 import Data.Monoid
 import Data.String
 
-attr= fromString
-text= fromString
+--attr= fromString
+--text= fromString
 
 counter= do
-   let explain=
+   
+   askm  $   explain
+       ++> pageFlow "c" (counterWidget 0) <++ br
+       <|> wlink () << p << "exit"
+   where
+   explain=
         p << "This example emulates the"
         <> a ! href (attr "http://www.seaside.st/about/examples/counter") << "seaside counter example"
         <> p << "This widget uses a callback to permit an independent"
         <> p << "execution flow for each widget." <> a ! href (attr "/noscript/multicounter") << "Multicounter" <> (text " instantiate various counter widgets")
         <> p << "But while the seaside case the callback update the widget object, in this case"
         <> p << "the callback call generates a new copy of the counter with the value modified."
-
-   askm  $   explain
-       ++> pageFlow "c" (counterWidget 0) <++ br
-       <|> wlink () << p << "exit"
 
 counterWidget n= 
       (h2 << show n     

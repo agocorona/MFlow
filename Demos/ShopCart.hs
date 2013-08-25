@@ -18,37 +18,47 @@ data ShopOptions= IPhone | IPod | IPad deriving (Bounded, Enum, Show,Read , Type
 newtype Cart= Cart (V.Vector Int) deriving Typeable
 emptyCart= Cart $ V.fromList [0,0,0]
 
-shopCart  =  do
-     o <-  step . askm $ do
+shopCart= shopCart1
 
+shopCart1  =  do
+     setHeader  stdheader 
+     setTimeouts 200 $ 60*60
+     prod <-
+        step . askm $ do
              Cart cart <- getSessionData `onNothing` return  emptyCart
 
              moreexplain
-              ++>
+              ++> 
               (table ! At.style (attr "border:1;width:20%;margin-left:auto;margin-right:auto")
               <<< caption <<  "choose an item"
               ++> thead << tr << ( th << b <<   "item" <> th << b <<  "times chosen")
               ++> (tbody
                   <<< tr ! rowspan (attr "2") << td << linkHome
-                  ++> (tr <<< td <<< wlink  IPhone (b <<  "iphone") <++  td << ( b <<  show ( cart V.! 0))
-                  <|>  tr <<< td <<< wlink  IPod   (b <<  "ipod")   <++  td << ( b <<  show ( cart V.! 1))
-                  <|>  tr <<< td <<< wlink  IPad   (b <<  "ipad")   <++  td << ( b <<  show ( cart V.! 2)))
+                  ++> (tr <<< td <<< wlink  IPhone (b <<  "iphone")
+                          <++  tdc << ( b <<  show ( cart V.! 0))
+                  <|>  tr <<< td <<< wlink  IPod   (b <<  "ipod")
+                          <++  tdc << ( b <<  show ( cart V.! 1))
+                  <|>  tr <<< td <<< wlink  IPad   (b <<  "ipad")
+                          <++  tdc << ( b <<  show ( cart V.! 2)))
                   <++  tr << td <<  linkHome
                   ))
-     let i =fromEnum o
-     Cart cart <- getSessionData `onNothing` return emptyCart
+
+                  
+     let i = fromEnum prod
+     Cart cart <- getSessionData `onNothing` return  emptyCart
      setSessionData . Cart $ cart V.// [(i, cart V.!  i + 1 )]
-     shopCart
+     shopCart1
 
     where
+    tdc= td ! At.style (attr "text-align:center")
     linkHome= a ! href  (attr $ "/" ++ noScript) << b <<  "home"
     attr= fromString
     moreexplain= do
      p $ El.span <<
-         "A persistent flow  (uses step). The process is killed after 100 seconds of inactivity \
+         "A persistent flow  (uses step). The process is killed after the timeout set by setTimeouts \
          \but it is restarted automatically. Event If you restart the whole server, it remember the shopping cart\n\n \
-         \Defines a table with links that return ints and a link to the menu, that abandon this flow.\n\
-         \The cart state is not stored, Only the history of events is saved. The cart is recreated by running the history of events."
+         \.Defines a table with links that return ints and a link to the menu, that abandon this flow.\n\
+         \.The cart state is not stored, Only the history of events is saved. The cart is recreated by running the history of events."
 
      p << "The second parameter of \"setTimeout\" is the time during which the cart is recorded"
 

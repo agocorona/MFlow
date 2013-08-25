@@ -9,11 +9,11 @@ rpaid= unsafePerformIO $ newMVar (0 :: Int)
 
 
 preventBack= do
-    askm  $ wlink () << b << "press here to pay 100000 $ "
+    askm  $ wlink "don't care" << b << "press here to pay 100000 $ "
     payIt
     paid  <- liftIO $ readMVar rpaid
-    preventGoingBack . askm  $   p << "You already paid 100000 before"
-                           ++> p << "you can no go back until the end of the buy process"
+    preventGoingBack . askm  $ p << "You already paid 100000 before"
+                           ++> p << "you can not go back until the end of the buy process"
                            ++> wlink () << p << "Please press here to continue"
                            
     askm  $   p << ("you paid "++ show paid)

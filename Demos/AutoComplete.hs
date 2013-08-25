@@ -12,7 +12,7 @@ autocomplete1= do
    askm  $ p << ( show r ++ " selected")  ++> wlink () (p <<  " menu")
 
    where
-   filter1 s = return $ filter (isPrefixOf s) ["red","reed rose","green","green grass","blue","blues"]
+   filter1 s = return $ filter (isPrefixOf s) ["red","red rose","green","green grass","blue","blues"]
 
 hint s= [("placeholder",s)]
 
