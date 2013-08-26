@@ -60,8 +60,8 @@ It is designed for applications that can be run with no deployment with runghc i
 • Other jQuery widgets as MFlow widgets 
 • WAI integration
 • Basic content management and multilanguage
-• blaze-html support, 
-• Ajax, 
+• blaze-html support
+• Ajax
 • User-defined data in sessions 
 • Widget requirements for automatic installation of scripts, CSS and server flows. 
 • Transparent back button management
