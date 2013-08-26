@@ -2,7 +2,7 @@
 
 MFlow is am application server and Web Framework for stateful and persistent Web applications that run in a navigation monad with backtracking that provides services of routing and state persistence. 
 
-MFlow is the only Web Framework that uses matching requests and backtracking as he mechanism for browser-server synchronization.
+MFlow is the only Web Framework that uses matching requests and backtracking as the mechanism for browser-server synchronization.
 
 Each link or form in the page return type safe responses. The navigation is also type safe since it is encoded within a monadic procedure in haskell, and server and browser are ever in sync. The page is composed of reusable type-safe components called widgets that may change their rendering depending o the user responses by autorefreshing, without using JavaScript.
 
