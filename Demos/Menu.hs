@@ -52,7 +52,7 @@ mainMenu= wcached "menu" 0 $
    ++> br ++> br
    ++>b <<  "DATABASE"
    ++> (li <<< wlink Database << b << "Database"
-                     <++ b << " Store, retrieve and edit lines of text in persistent storage ")
+                     <++ b << " Create, Store and retrieve lines of text from Amazon SimpleDB storage ")
    <|> br 
    ++> b <<  "PUSH"
    ++> (li <<< wlink Push << b << "Push example"

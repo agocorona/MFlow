@@ -49,9 +49,9 @@ import Debug.Trace
 
 
 main= do
-   index idnumber   -- for the database example
+   setAmazonSimpleDB  -- for the database example
+   index idnumber     -- for the database example
    setAdminUser "admin" "admin"
-   syncWrite SyncManual
 
    setFilesPath "Demos/"
    runNavigation "" $ do

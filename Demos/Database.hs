@@ -29,11 +29,11 @@ data Options= NewText | ListTexts deriving (Show, Typeable)
 
 
 -- to run it alone, change askm by ask, remove Menu.hs and uncomment this:
-main=   do
-  setAmazonSimpleDB
-  syncWrite  $ Asyncronous 1 defaultCheck  1000
-  index idnumber
-  runNavigation "" $ transientNav database
+--main=   do
+--  setAmazonSimpleDB
+--  syncWrite  $ Asyncronous 1 defaultCheck  1000
+--  index idnumber
+--  runNavigation "" $ transientNav database
 
      
 database= do
