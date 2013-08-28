@@ -123,5 +123,4 @@ executable demos-blaze.Loc
     hs-source-dirs: Demos
     other-modules: MCounter
     ghc-options: -iDemos -threaded -rtsopts
-    cabal-options: --force-reinstalls
 
