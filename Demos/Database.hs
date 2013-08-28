@@ -51,18 +51,20 @@ database= do
               n <- allTexts >>= return . length
 
               liftIO . atomically . newDBRef $ MyData n text  -- store the name in the cache (later will be written to disk automatically)
-              return()
+              listtests
 
-         ListTexts -> do
-
+         ListTexts -> listtests
+     where
+     listtests= do
               -- query for all the names stored in all the registers
               all <- allTexts
               ask $    h3 << "list of all texts"
                    ++> mconcat[p <<  t | t <- all]
-                   ++> wlink () << p << "click here to go to the database menu"
+                   ++> wlink () << p << "click here to go to the  menu"
+                   <++ b << "or the back button for a new database action"
 
 
-     where
+
      allTexts= liftIO . atomically $ select textdata $ idnumber .>=. (0 :: Int)
 
 --cfg= Configuration  Timestamp (Credentials   (fromString "AKIAJWBDJ62SZ5JGJQUQ")
