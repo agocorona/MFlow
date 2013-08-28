@@ -37,7 +37,7 @@ data Options= NewText | ListTexts deriving (Show, Typeable)
 
      
 database= do
-     r <- ask $   p << "menu"
+     r <- askm $   p << "menu"
                ++> wlink NewText   << p << "enter a new text"
                <|> wlink ListTexts << p <<  "All texts"
 
@@ -45,7 +45,7 @@ database= do
      case r of
          NewText -> do
          
-              text <- ask $ p << "insert the text" ++> getMultilineText "" <++ br
+              text <- askm $ p << "insert the text" ++> getMultilineText "" <++ br
                            <** submitButton "enter"
 
               n <- allTexts >>= return . length
@@ -58,7 +58,7 @@ database= do
      listtests= do
               -- query for all the names stored in all the registers
               all <- allTexts
-              ask $    h3 << "list of all texts"
+              askm $    h3 << "list of all texts"
                    ++> mconcat[p <<  t | t <- all]
                    ++> wlink () << p << "click here to go to the  menu"
                    <++ b << "or the back button for a new database action"
@@ -74,7 +74,7 @@ domain = fromString "mflowdemo"
 
 setAmazonSimpleDB= withSocketsDo $ do
  cfg <- baseConfiguration
--- simpleAws cfg sdbCfg $ deleteDomain domain
+ simpleAws cfg sdbCfg $ deleteDomain domain
  simpleAws cfg sdbCfg $ createDomain domain
  setDefaultPersist $ Persist{
    readByKey= \key -> withSocketsDo $do
