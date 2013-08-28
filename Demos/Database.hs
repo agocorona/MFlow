@@ -67,8 +67,6 @@ database= do
 
      allTexts= liftIO . atomically $ select textdata $ idnumber .>=. (0 :: Int)
 
---cfg= Configuration  Timestamp (Credentials   (fromString "AKIAJWBDJ62SZ5JGJQUQ")
---                          (fromString "Ni8C0gJHPcbwYovjQwNE+Rqri7RhXJHYL8WalqB+")) ( defaultLog Debug)
 sdbCfg =  defServiceConfig
 
 --

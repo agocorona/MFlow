@@ -78,9 +78,9 @@ import Debug.Trace
 {-# LINE 51 "INPUT" #-}
 main
   = Control.Monad.Loc.withLoc "main, Main(INPUT): (51, 7)"
-      (do Control.Monad.Loc.withLoc "main, Main(INPUT): (52, 4)" (index idnumber)
-          Control.Monad.Loc.withLoc "main, Main(INPUT): (53, 4)" (setAdminUser "admin" "admin")
-          Control.Monad.Loc.withLoc "main, Main(INPUT): (54, 4)" (syncWrite SyncManual)
+      (do Control.Monad.Loc.withLoc "main, Main(INPUT): (52, 4)" (setAmazonSimpleDB)
+          Control.Monad.Loc.withLoc "main, Main(INPUT): (53, 4)" (index idnumber)
+          Control.Monad.Loc.withLoc "main, Main(INPUT): (54, 4)" (setAdminUser "admin" "admin")
           Control.Monad.Loc.withLoc "main, Main(INPUT): (56, 4)" (setFilesPath "Demos/")
           Control.Monad.Loc.withLoc "main, Main(INPUT): (57, 4)"
             (runNavigation "" $
@@ -98,7 +98,7 @@ main
                             CheckBoxes -> step checkBoxes `showSource` "CheckBoxes.hs"
                             TextEdit -> step textEdit `showSource` "TextEdit.hs"
                             Grid -> step grid `showSource` "Grid.hs"
-                            Autocomp -> step autocomplete1 `showSource` "Autocomplete.hs"
+                            Autocomp -> step autocomplete1 `showSource` "AutoComplete.hs"
                             AutocompList -> step autocompList `showSource` "AutoCompList.hs"
                             ListEdit -> step wlistEd `showSource` "ListEdit.hs"
                             Radio -> step radio `showSource` "Radio.hs"
