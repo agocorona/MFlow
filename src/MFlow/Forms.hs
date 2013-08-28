@@ -286,7 +286,8 @@ import Data.TCache.Memoization
 import MFlow
 import MFlow.Forms.Internals
 import MFlow.Cookies
-import Data.ByteString.Lazy.Char8 as B(ByteString,cons,pack,unpack,append,empty,fromChunks) 
+import Data.ByteString.Lazy.Char8 as B(ByteString,cons,pack,unpack,append,empty,fromChunks)
+import qualified Data.Text as T
 import Data.List
 --import qualified Data.CaseInsensitive as CI
 import Data.Typeable
@@ -575,17 +576,18 @@ getCurrentName= do
 
 
 -- | Display a multiline text box and return its content
-getMultilineText :: (FormInput view,
-      Monad m) =>
-      String ->  View view m String
+getMultilineText :: (FormInput view
+                 ,  Monad m)
+                 => String
+                 ->  View view m T.Text
 getMultilineText nvalue = View $ do
     tolook <- genNewId
     env <- gets mfEnv
     r <- getParam1 tolook env
     case r of
        Validated x        -> return $ FormElm [ftextarea tolook  (show x) ] $ Just x
-       NotValidated s err -> return $ FormElm [ftextarea tolook  s ] $ Nothing
-       NoParam            -> return $ FormElm [ftextarea tolook  nvalue ] $ Nothing
+       NotValidated s err -> return $ FormElm [ftextarea tolook  s ]  Nothing
+       NoParam            -> return $ FormElm [ftextarea tolook  nvalue ]  Nothing
 
       
 --instance  (MonadIO m, Functor m, FormInput view) => FormLet Bool m view where

@@ -117,7 +117,7 @@ executable demos-blaze.Loc
                    directory -any, Workflow -any, base -any, blaze-html -any,
                    bytestring -any, containers -any, mtl -any, old-time -any,
                    stm -any, text -any, transformers -any, vector -any, hamlet -any,
-                   monadloc -any
+                   monadloc -any, aws -any
     main-is: demos-blaze.Loc.hs
     buildable: True
     hs-source-dirs: Demos

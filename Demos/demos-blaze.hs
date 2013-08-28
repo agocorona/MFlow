@@ -70,7 +70,7 @@ main= do
              CheckBoxes ->    step  checkBoxes           `showSource`  "CheckBoxes.hs"
              TextEdit  ->     step  textEdit             `showSource`  "TextEdit.hs"
              Grid      ->     step  grid                 `showSource`  "Grid.hs"
-             Autocomp  ->     step  autocomplete1        `showSource`  "Autocomplete.hs"
+             Autocomp  ->     step  autocomplete1        `showSource`  "AutoComplete.hs"
              AutocompList ->  step  autocompList         `showSource`  "AutoCompList.hs"
              ListEdit  ->     step  wlistEd              `showSource`  "ListEdit.hs"
              Radio     ->     step  radio                `showSource`  "Radio.hs"

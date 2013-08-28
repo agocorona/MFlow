@@ -14,8 +14,9 @@ mcounter  = do
               op <- h2 << show n    
                      ++> wlink "i" << b << " ++ "
                      <|> wlink "d" << b << " -- "
-              return(op,n)
-      
+
+              return(op,n)  -- unlike in the case of the shopping example where the shopcart is not logged
+                            -- here the state is smaller (the Int counter) anc can be logged      
  case op  of
           "i" -> setSessionData  (n + 1)                     
           "d" -> setSessionData  (n - 1)

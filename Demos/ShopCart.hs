@@ -57,6 +57,8 @@ shopCart1  =  do
      p $ El.span <<
          "A persistent flow  (uses step). The process is killed after the timeout set by setTimeouts \
          \but it is restarted automatically. Event If you restart the whole server, it remember the shopping cart\n\n \
+         \The shopping cart is not logged, just the products bought returned by step are logged. The shopping cart\
+         \is rebuild from the events (that is an example of event sourcing.\n\n\
          \.Defines a table with links that return ints and a link to the menu, that abandon this flow.\n\
          \.The cart state is not stored, Only the history of events is saved. The cart is recreated by running the history of events."
 

@@ -46,6 +46,7 @@ import Control.Monad.Identity
 import Data.List
 import System.IO.Unsafe
 import Control.Concurrent.MVar
+import qualified Data.Text as T
 
 --
 ---- for traces
@@ -1090,9 +1091,10 @@ getParam1 par req =  r
  getType= undefined
  x= getType r
  maybeRead str= do
-   if typeOf x == (typeOf  ( undefined :: String))
-         then return . Validated $ unsafeCoerce str
-         else case readsPrec 0 $ str of
+   let typeofx = typeOf x
+   if typeofx == typeOf  ( undefined :: String)   then return . Validated $ unsafeCoerce str
+    else if typeofx == typeOf (undefined :: T.Text) then return . Validated . unsafeCoerce . T.pack $ str
+    else case readsPrec 0 $ str of
               [(x,"")] ->  return $ Validated x
               _ -> do
 

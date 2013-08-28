@@ -76,11 +76,13 @@ mainMenu= wcached "menu" 0 $
 
 
    <|> (li <<< wlink ShopCart  << b <<   "Stateful flow: shopping"
-                <++ b << " Add articles to a persistent shopping cart"
+                <++ b << " Add articles to a persistent shopping cart stored in the session log."
+                <>  text << " getSessionData is read in the View monad to get the most recent shopping cart\
+                            \even when the back button has been pressed"
                 <>  article stateful)
 
    <|> (li <<< wlink MCounter << b <<   "Stateful flow: Counter"
-                <++ b << " a persistent counter")
+                <++ b << " a persistent counter. It uses the same mechanism than shopping, but it is a more simple example")
                        
    <|>  br ++> br ++> b <<  "BASIC"
                
