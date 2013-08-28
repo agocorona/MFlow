@@ -63,8 +63,6 @@ database= do
                    ++> wlink () << p << "click here to go to the  menu"
                    <++ b << "or the back button for a new database action"
 
-
-
      allTexts= liftIO . atomically $ select textdata $ idnumber .>=. (0 :: Int)
 
 sdbCfg =  defServiceConfig

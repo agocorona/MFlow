@@ -98,7 +98,7 @@ source-repository head
 library
     build-depends: Workflow -any, transformers -any, mtl -any,
                    extensible-exceptions -any, xhtml -any, base >4.0 && <5,
-                   bytestring -any, containers -any, RefSerialize -any, TCache -any,
+                   bytestring -any, containers -any, RefSerialize -any, TCache >= 0.10.1.0,
                    stm >2, old-time -any, vector -any, directory -any,
                    utf8-string -any, wai -any, case-insensitive -any, http-types -any,
                    conduit -any, text -any, parsec -any, warp -any, random -any,
@@ -113,7 +113,7 @@ library
     other-modules:  MFlow.Wai.Response
 
 executable demos-blaze.Loc
-    build-depends: MFlow -any, RefSerialize -any, TCache -any,
+    build-depends: MFlow -any, RefSerialize -any, TCache >= 0.10.1.0,
                    directory -any, Workflow -any, base -any, blaze-html -any,
                    bytestring -any, containers -any, mtl -any, old-time -any,
                    stm -any, text -any, transformers -any, vector -any, hamlet -any,

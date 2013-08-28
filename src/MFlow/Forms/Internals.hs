@@ -166,7 +166,8 @@ instance Serialize a => Serialize (FormElm view a) where
 --
 --  The rendering of each statement is added to the previous. If you want to avoid this, use 'wcallback'
 --
---  The execution is stopped when the statement has a formlet-widget that does not validate.
+--  The execution is stopped when the statement has a formlet-widget that does not validate and
+-- return an invalid response (So it will present the page again if no other widget in the expression validates).
 --
 --  The monadic code is executed from the beginning each time the page is presented or refreshed
 --
@@ -188,7 +189,7 @@ instance Serialize a => Serialize (FormElm view a) where
 --
 --  Here if  @formlet2@ do not validate, @ioaction2@ is not executed. But if @formLet1@ validates and the
 --  page is refreshed two times (because @formlet2@ has failed, see above),then @ioaction1@ is executed two times.
-
+--  use 'cachedByKey' if you want to avoid repeated IO executions.
 newtype View v m a = View { runView :: WState v m (FormElm v a)}
 
 

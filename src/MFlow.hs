@@ -214,8 +214,7 @@ instance Processable  Req   where
     pind (Req x)= pind x   
     getParams (Req x)= getParams  x
 --    getServer (Req x)= getServer  x
---    getPath (Req x)= getPath  x
---    getPort (Req x)= getPort  x
+--    getPort (Req x)= getPort  x 
 
 data Resp  = Fragm HttpData
            | EndFragm HttpData
