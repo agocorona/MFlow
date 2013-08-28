@@ -72,7 +72,7 @@ domain = fromString "mflowdemo"
 
 setAmazonSimpleDB= withSocketsDo $ do
  cfg <- baseConfiguration
- simpleAws cfg sdbCfg $ deleteDomain domain
+-- simpleAws cfg sdbCfg $ deleteDomain domain
  simpleAws cfg sdbCfg $ createDomain domain
  setDefaultPersist $ Persist{
    readByKey= \key -> withSocketsDo $do
