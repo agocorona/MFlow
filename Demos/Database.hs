@@ -72,7 +72,7 @@ database= do
 sdbCfg =  defServiceConfig
 
 --
-domain = fromString "mflowdemotest"
+domain = fromString "mflowdemo"
 
 
 
