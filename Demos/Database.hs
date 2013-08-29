@@ -23,7 +23,7 @@ instance Indexable MyData where
    key=  show . idnumber    -- just to notify what is the key of the register
    defPath = const ""
 
-data Options= NewText | ListTexts deriving (Show, Typeable)
+data Options= NewText  | Exit deriving (Show, Typeable)
 
 
 -- to run it alone,  remove Menu.hs and uncomment this:
@@ -38,7 +38,8 @@ data Options= NewText | ListTexts deriving (Show, Typeable)
 
      
 database= do
-     r <- askm menu
+     all <- allTexts
+     r <- askm $ listtexts all
 
      case r of
          NewText -> do
@@ -46,24 +47,23 @@ database= do
               text <- askm $ p << "insert the text" ++> getMultilineText "" <++ br
                            <** submitButton "enter"
 
-              n <- allTexts >>= return . length
 
-              liftIO . atomically . newDBRef $ MyData n text  -- store the name in the cache (later will be written to disk automatically)
-              listtests 
 
-         ListTexts -> listtests
+              liftIO . atomically . newDBRef $ MyData (length all) text  -- store the name in the cache (later will be written to disk automatically)
+              database 
+
+         Exit -> return ()
      where
      menu=     p << "menu"
                ++> wlink NewText   << p << "enter a new text"
-               <|> wlink ListTexts << p <<  "All texts"
+               <|> wlink Exit << p << "exit to the main menu"
 
-     listtests= do
+     listtexts all = do
               -- query for all the names stored in all the registers
-              all <- allTexts
-              askm $    h3 << "list of all texts"
+
+              h3 << "list of all texts"
                    ++> mconcat[p <<  t | t <- all]
                    ++> menu
-                   <|> wlink () << p << "click here to go to the  menu"
                    <++ b << "or the back button for a new database action"
 
 
