@@ -26,19 +26,19 @@ instance Indexable MyData where
 data Options= NewText | ListTexts deriving (Show, Typeable)
 
 
--- to run it alone, change askm by ask, remove Menu.hs and uncomment this:
---main=   do
+-- to run it alone,  remove Menu.hs and uncomment this:
+
+-- askm= ask
+
+--main= do
 --  setAmazonSimpleDB
---  syncWrite  $ Asyncronous 1 defaultCheck  1000
+--  syncWrite  $ Asyncronous 120 defaultCheck  1000
 --  index idnumber
 --  runNavigation "" $ transientNav database
 
      
 database= do
-     r <- askm $   p << "menu"
-               ++> wlink NewText   << p << "enter a new text"
-               <|> wlink ListTexts << p <<  "All texts"
-
+     r <- askm menu
 
      case r of
          NewText -> do
@@ -49,33 +49,39 @@ database= do
               n <- allTexts >>= return . length
 
               liftIO . atomically . newDBRef $ MyData n text  -- store the name in the cache (later will be written to disk automatically)
-              listtests
+              listtests 
 
          ListTexts -> listtests
      where
+     menu=     p << "menu"
+               ++> wlink NewText   << p << "enter a new text"
+               <|> wlink ListTexts << p <<  "All texts"
+
      listtests= do
               -- query for all the names stored in all the registers
               all <- allTexts
               askm $    h3 << "list of all texts"
                    ++> mconcat[p <<  t | t <- all]
-                   ++> wlink () << p << "click here to go to the  menu"
+                   ++> menu
+                   <|> wlink () << p << "click here to go to the  menu"
                    <++ b << "or the back button for a new database action"
+
 
      allTexts= liftIO . atomically $ select textdata $ idnumber .>=. (0 :: Int)
 
 sdbCfg =  defServiceConfig
 
 --
-domain = fromString "mflowdemo"
+domain = fromString "mflowdemotest"
 
 
 
 setAmazonSimpleDB= withSocketsDo $ do
  cfg <- baseConfiguration
 -- simpleAws cfg sdbCfg $ deleteDomain domain
- simpleAws cfg sdbCfg $ createDomain domain
+-- simpleAws cfg sdbCfg $ createDomain domain
  setDefaultPersist $ Persist{
-   readByKey= \key -> withSocketsDo $do
+   readByKey= \key -> withSocketsDo $ do
        r <- simpleAws cfg sdbCfg $ getAttributes (T.pack key) domain
        case r of
         GetAttributesResponse [ForAttribute _ text] -> return $ Just   $ fromChunks [encodeUtf8 text]

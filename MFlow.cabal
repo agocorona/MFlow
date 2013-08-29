@@ -87,9 +87,8 @@ extra-source-files: Demos/demos-blaze.hs Demos/TestREST.hs
                     Demos/PreventGoingBack.hs Demos/Counter.hs Demos/PushDecrease.hs
                     Demos/Dialog.hs Demos/PushSample.hs Demos/Grid.hs Demos/Radio.hs
                     Demos/SumView.hs src/MFlow/Hack.hs src/MFlow/Hack/Response.hs
-                    Demos/MCounter.hs
-                    src/MFlow/Hack/XHtml.hs src/MFlow/Hack/XHtml/All.hs
-                    src/MFlow/Forms/HSP.hs
+                    Demos/MCounter.hs src/MFlow/Hack/XHtml.hs
+                    src/MFlow/Hack/XHtml/All.hs src/MFlow/Forms/HSP.hs
 
 source-repository head
     type: git
@@ -98,11 +97,12 @@ source-repository head
 library
     build-depends: Workflow -any, transformers -any, mtl -any,
                    extensible-exceptions -any, xhtml -any, base >4.0 && <5,
-                   bytestring -any, containers -any, RefSerialize -any, TCache >= 0.10.1.0,
-                   stm >2, old-time -any, vector -any, directory -any,
-                   utf8-string -any, wai -any, case-insensitive -any, http-types -any,
-                   conduit -any, text -any, parsec -any, warp -any, random -any,
-                   blaze-html -any, blaze-markup -any, monadloc -any, hamlet -any
+                   bytestring -any, containers -any, RefSerialize -any,
+                   TCache >=0.10.1.0, stm >2, old-time -any, vector -any,
+                   directory -any, utf8-string -any, wai -any, case-insensitive -any,
+                   http-types -any, conduit -any, text -any, parsec -any, warp -any,
+                   random -any, blaze-html -any, blaze-markup -any, monadloc -any,
+                   hamlet -any
     exposed-modules: MFlow MFlow.Wai.Blaze.Html.All MFlow.Forms
                      MFlow.Forms.Admin MFlow.Cookies MFlow.Wai MFlow.Wai.XHtml.All
                      MFlow.Forms.XHtml MFlow.Forms.Blaze.Html MFlow.Forms.Test
@@ -113,7 +113,7 @@ library
     other-modules:  MFlow.Wai.Response
 
 executable demos-blaze.Loc
-    build-depends: MFlow -any, RefSerialize -any, TCache >= 0.10.1.0,
+    build-depends: MFlow -any, RefSerialize -any, TCache >=0.10.1.0,
                    directory -any, Workflow -any, base -any, blaze-html -any,
                    bytestring -any, containers -any, mtl -any, old-time -any,
                    stm -any, text -any, transformers -any, vector -any, hamlet -any,
@@ -121,6 +121,6 @@ executable demos-blaze.Loc
     main-is: demos-blaze.Loc.hs
     buildable: True
     hs-source-dirs: Demos
-    other-modules: MCounter
+    other-modules: BlogPersistent MCounter
     ghc-options: -iDemos -threaded -rtsopts
 
