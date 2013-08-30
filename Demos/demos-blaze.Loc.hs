@@ -1,4 +1,4 @@
-{-# LINE 1 "demos-blaze.hs" #-}
+{-# LINE 1 "INPUT" #-}
 {-# OPTIONS -XDeriveDataTypeable -XQuasiQuotes -XOverloadedStrings  #-}
 module Main where
 {-# LINE 3 "INPUT" #-}
@@ -119,7 +119,7 @@ main
                             Database -> step database `showSource` "Database.hs"
                             ShopCart -> shopCart `showSource` "ShopCart.hs"
                             MCounter -> mcounter `showSource` "MCounter.hs"
-                            MFlowPersist -> step mFlowPersistent `showSource` "MFLowPersistent.hs"))))
+                            MFlowPersist -> step mFlowPersistent `showSource` "MFlowPersistent.hs"))))
 {-# LINE 99 "INPUT" #-}
 mainmenuLinks
   = Control.Monad.Loc.withLoc "mainmenuLinks, Main(INPUT): (99, 16)"
