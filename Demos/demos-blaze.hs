@@ -92,7 +92,7 @@ main= do
              Database    ->   step  database             `showSource`  "Database.hs"
              ShopCart    ->  shopCart                   `showSource` "ShopCart.hs"
              MCounter    ->  mcounter                   `showSource` "MCounter.hs"
-             MFlowPersist -> step mFlowPersistent      `showSource` "MFLowPersistent.hs"
+             MFlowPersist -> step mFlowPersistent      `showSource` "MFlowPersistent.hs"
 
 
 

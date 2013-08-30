@@ -1,8 +1,12 @@
 -- This example ilustrate the use of MFlow with Persistent
 -- The code is taken from http://www.yesodweb.com/book/persistent by modifying the first example
--- Note how little additions are necessary to change a console oriented application to a MFlow application
 --
--- Additionally you can press the back button, change the form input and see how the responses match
+-- The example has a navigation of four pages and you can go forward and backward
+-- Note how little additions are necessary to change a console oriented application to a Web
+-- application with MFlow. While the flow looks like an ordinary imperative program, yo can go
+-- back and forth and to introduce any bookmark without producing navigation errors.
+--
+-- You can press the back button, change the form input and see how the responses match
 -- the expected register values.
 
 {-# LANGUAGE EmptyDataDecls    #-}

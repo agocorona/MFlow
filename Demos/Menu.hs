@@ -165,8 +165,8 @@ mainMenu= wcached "menu" 0 $ ul <<<(
                           \. For example, a payment"
                  <> article preventbackl)
    )
-space=  "&nbsp;"
-article link=  space <> a ! href ( link) <<  i "(article)"
+
+article link=  " " <> a ! href ( link) <<  i "(article)"
 
 yesodweb= "http://www.yesodweb.com/book/persistent"
 amazonarticle= "http://haskell-web.blogspot.com.es/2013/08/using-amazon-web-services-with-tcache.html"
@@ -234,6 +234,6 @@ getSource file = liftIO $ cachedByKey file 0 $ do
    source <- readFile $ "Demos/" ++ file
    return . preEscapedToHtml
                 $  "<font size=2>"
-                ++ hscolour HTML defaultColourPrefs True True file False source
+                ++ hscolour HTML defaultColourPrefs False True file False source
                 ++ "</font>"
 
