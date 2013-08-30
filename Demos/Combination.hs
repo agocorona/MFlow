@@ -5,7 +5,7 @@ import Menu
 import Counter(counterWidget)
 import Data.String
 
---text= fromString
+text= fromString
 
 combination =  askm  $ do
      p << "Three active widgets in the same page with autoRefresh. Each widget refresh itself \

@@ -5,6 +5,7 @@ import MFlow.Wai.Blaze.Html.All hiding (select)
 import Data.Typeable
 import Data.TCache.IndexQuery
 import Data.TCache.DefaultPersistence
+import Data.TCache.Memoization
 import Data.Monoid
 import Menu
 import Data.String
@@ -44,7 +45,7 @@ database= do
      case r of
          NewText -> do
          
-              text <- askm $ p << "insert the text" ++> getMultilineText "" <++ br
+              text <- askm $   p << "insert the text" ++> getMultilineText "" <++ br
                            <** submitButton "enter"
 
 
@@ -54,32 +55,27 @@ database= do
 
          Exit -> return ()
      where
-     menu=     p << "menu"
-               ++> wlink NewText   << p << "enter a new text"
-               <|> wlink Exit << p << "exit to the main menu"
+     menu=   wlink NewText   << p << "enter a new text" <|>
+             wlink Exit      << p << "exit to the main menu"
 
-     listtexts all = do
-              -- query for all the names stored in all the registers
-
-              h3 << "list of all texts"
-                   ++> mconcat[p <<  t | t <- all]
-                   ++> menu
-                   <++ b << "or the back button for a new database action"
+     listtexts all  =  do
+           h3 << "list of all texts"
+           ++> mconcat[p <<  t | t <- all]
+           ++> menu
+           <++ b << "or the back button for a new database action"
 
 
-     allTexts= liftIO . atomically $ select textdata $ idnumber .>=. (0 :: Int)
+     allTexts= liftIO . atomically . select textdata $ idnumber .>=. (0 :: Int)
 
 sdbCfg =  defServiceConfig
 
 --
 domain = fromString "mflowdemo"
 
-
-
 setAmazonSimpleDB= withSocketsDo $ do
  cfg <- baseConfiguration
 -- simpleAws cfg sdbCfg $ deleteDomain domain
--- simpleAws cfg sdbCfg $ createDomain domain
+ simpleAws cfg sdbCfg $ createDomain domain
  setDefaultPersist $ Persist{
    readByKey= \key -> withSocketsDo $ do
        r <- simpleAws cfg sdbCfg $ getAttributes (T.pack key) domain
@@ -91,9 +87,10 @@ setAmazonSimpleDB= withSocketsDo $ do
        simpleAws cfg sdbCfg
                      $ putAttributes  (T.pack key)  [ForAttribute tdata (SetAttribute (T.concat $ map decodeUtf8 $ toChunks str) True)] domain
        return (),
-   delete= \key    ->withSocketsDo $ do
+   delete= \ key  -> withSocketsDo $ do
      simpleAws cfg sdbCfg $ deleteAttributes (T.pack key)  [ForAttribute tdata DeleteAttribute] domain
      return ()
      }
 
 tdata= fromString "textdata"
+

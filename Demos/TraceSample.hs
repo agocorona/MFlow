@@ -6,7 +6,7 @@ import Menu
 import Control.Monad.Loc
 
 traceSample= do
-  pagem $   h2 << "Error trace example"
+  pagem $  h2 << "Error trace example"
        ++> p << "MFlow now produces execution traces in case of error by making use of the backtracking mechanism"
        ++> p << "It is more detailed than a call stack"
        ++> p << "this example has a deliberate error"

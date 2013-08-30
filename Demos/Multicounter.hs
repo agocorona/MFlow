@@ -7,8 +7,8 @@ import Data.Monoid
 import Data.String
 import Counter(counterWidget)
 
---text= fromString
---attr= fromString
+text= fromString
+attr= fromString
 
 multicounter=
  askm  $   explain

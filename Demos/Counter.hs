@@ -5,8 +5,8 @@ import Menu
 import Data.Monoid
 import Data.String
 
---attr= fromString
---text= fromString
+attr= fromString
+text= fromString
 
 counter= do
    

@@ -1,10 +1,11 @@
-{-# OPTIONS  -XDeriveDataTypeable -XQuasiQuotes #-} --  -F -pgmF MonadLoc #-}
+{-# OPTIONS  -XDeriveDataTypeable -XQuasiQuotes -XOverloadedStrings #-} --  -F -pgmF MonadLoc #-}
 module Main where
 import MFlow.Wai.Blaze.Html.All hiding (name)
 import Text.Blaze.Html5 as El
 import Text.Blaze.Html5.Attributes as At hiding (step,name)
 import Data.TCache.IndexQuery
 import Data.Typeable
+
 
 import Data.Monoid
 import Data.String
@@ -39,6 +40,7 @@ import Radio
 import SumView
 import MCounter
 import Database
+import MFlowPersistent
 
 import Debug.Trace
 
@@ -49,8 +51,9 @@ import Debug.Trace
 
 
 main= do
-   setAmazonSimpleDB-- for the database example
-   index idnumber   -- for the database example
+   setAmazonSimpleDB-- for the Database example
+   index idnumber   -- for the Database example
+--   migratesqlite          -- for the MFlowPersistent example
    setAdminUser "admin" "admin"
    syncWrite  $ Asyncronous 120 defaultCheck  1000
 
@@ -60,7 +63,7 @@ main= do
        setTimeouts 200 $ 60 * 60
 
        r <- step . ask $ (divmenu  <<< br ++>  mainMenu) 
-                <++ (El.div ! At.style (attr "float:right;width:65%;overflow:auto;") << mainmenuLinks)
+                <++ (El.div ! At.style ( "float:right;width:65%;overflow:auto;") << mainmenuLinks)
 
        case r of
              CountI    ->     step  (clickn 0)           `showSource`  "IncreaseInt.hs"
@@ -89,34 +92,38 @@ main= do
              Database    ->   step  database             `showSource`  "Database.hs"
              ShopCart    ->  shopCart                   `showSource` "ShopCart.hs"
              MCounter    ->  mcounter                   `showSource` "MCounter.hs"
+             MFlowPersist -> step mFlowPersistent      `showSource` "MFLowPersistent.hs"
+
+
+
 mainmenuLinks= do  -- using the blaze-html monad
        br
-       p  << a ! href (attr "/html/MFlow/index.html") <<  "MFlow package description and documentation"
-       p  << a ! href (attr "https://github.com/agocorona/MFlow/blob/master/Demos") <<  "see demos source code"
-       p  << a ! href (attr "https://github.com/agocorona/MFlow/issues") <<  "bug tracker"
-       p  << a ! href (attr "https://github.com/agocorona/MFlow") <<  "source repository"
-       p  << a ! href (attr "http://hackage.haskell.org/package/MFlow") <<  "Hackage repository"
+       p  $ a ! href ( "/html/MFlow/index.html") $ "MFlow package description and documentation"
+       p  $ a ! href ( "https://github.com/agocorona/MFlow/blob/master/Demos") $  "see demos source code"
+       p  $ a ! href ( "https://github.com/agocorona/MFlow/issues") $  "bug tracker"
+       p  $ a ! href ( "https://github.com/agocorona/MFlow") $  "source repository"
+       p  $ a ! href ( "http://hackage.haskell.org/package/MFlow") $  "Hackage repository"
 
 
 
 
 -- | to run it on heroku, traceSample is included since heroku does not run the monadloc preprocessor
 traceSample= do
-  pagem $ h2 << "Error trace example"
-       ++> p << "MFlow now produces execution traces in case of error by making use of the backtracking mechanism"
-       ++> p << "It is more detailed than a call stack"
-       ++> p << "this example has a deliberate error"
+  pagem $ h2  "Error trace example"
+       ++> p  "MFlow now produces execution traces in case of error by making use of the backtracking mechanism"
+       ++> p  "It is more detailed than a call stack"
+       ++> p  "this example has a deliberate error"
        ++> br
-       ++> p << "You must be logged as admin to see the trace"
-       ++> wlink () << p << "pres here"
+       ++> p "You must be logged as admin to see the trace"
+       ++> wlink () << p "pres here"
 
-  pagem $   p <<  "Please login with admin/admin"
+  pagem $   p "Please login with admin/admin"
         ++> userWidget (Just "admin") userLogin
 
   u <- getCurrentUser
-  pagem $  p << "The trace will appear after you press the link. press one of the options available at the bottom of the page"
+  pagem $  p "The trace will appear after you press the link. press one of the options available at the bottom of the page"
        ++> p << ("user="++ u) ++> br
-       ++> wlink () << "press here"
+       ++> wlink () "press here"
   pagem $  error $ "this is the error"
 
 

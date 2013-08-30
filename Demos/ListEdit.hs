@@ -1,4 +1,4 @@
-
+{-# LANGUAGE OverloadedStrings #-}
 module ListEdit ( wlistEd) where
 
 import MFlow.Wai.Blaze.Html.All
@@ -17,16 +17,16 @@ wlistEd= do
               <** submitButton "send"
 
    askm  $   p << (show r ++ " returned")
-       ++> wlink () (p <<  " back to menu")
+       ++> wlink () (p " back to menu")
 
 
    where
-   addLink = a ! At.id  (attr "wEditListAdd")
-               ! href (attr "#")
-               $ b << "add"
-   delBox  =  input ! type_   (attr "checkbox")
-                    ! checked (attr "")
-                    ! onclick (attr "this.parentNode.parentNode.removeChild(this.parentNode)")
+   addLink = a ! At.id  "wEditListAdd"
+               ! href  "#"
+               $ b "add"
+   delBox  =  input ! type_    "checkbox"
+                    ! checked  ""
+                    ! onclick  "this.parentNode.parentNode.removeChild(this.parentNode)"
    getString1 mx= El.div  <<< delBox ++> getString  mx <++ br
 
 -- to run it alone, change askm by ask and uncomment this:
