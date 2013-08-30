@@ -55,7 +55,7 @@ mainMenu= wcached "menu" 0 $ ul <<<(
    ++> (li <<< wlink MFlowPersist << b "Persistent"
                      <++ b " illustrates the use of MFlow with "
                      <> a  "Persistent" ! href yesodweb
-                     <> "(In this example sqlite backend is used)" ")
+                     <> "(In this example sqlite backend is used) ")
    <|> br
    ++> b "DATABASE"
    ++> (li <<< wlink Database << b "Database"
