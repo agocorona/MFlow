@@ -24,7 +24,7 @@ instance Indexable MyData where
    key=  show . idnumber    -- just to notify what is the key of the register
    defPath = const ""
 
-data Options= NewText  | Exit deriving (Show, Typeable)
+data Options= NewText | Exit deriving (Show, Typeable)
 
 
 -- to run it alone,  remove Menu.hs and uncomment this:
@@ -44,11 +44,8 @@ database= do
 
      case r of
          NewText -> do
-         
               text <- askm $   p << "insert the text" ++> getMultilineText "" <++ br
                            <** submitButton "enter"
-
-
 
               liftIO . atomically . newDBRef $ MyData (length all) text  -- store the name in the cache (later will be written to disk automatically)
               database 
@@ -72,11 +69,11 @@ sdbCfg =  defServiceConfig
 --
 domain = fromString "mflowdemo"
 
-setAmazonSimpleDB= withSocketsDo $ do
+setAmazonSimpleDB = withSocketsDo $ do
  cfg <- baseConfiguration
 -- simpleAws cfg sdbCfg $ deleteDomain domain
  simpleAws cfg sdbCfg $ createDomain domain
- setDefaultPersist $ Persist{
+ setDefaultPersist $  Persist{
    readByKey= \key -> withSocketsDo $ do
        r <- simpleAws cfg sdbCfg $ getAttributes (T.pack key) domain
        case r of

@@ -51,13 +51,15 @@ data Options= CountI | CountS | Radio
 
 mainMenu= wcached "menu" 0 $ ul <<<(
    li << b "About this menu" ++> article menuarticle
-   ++> br ++> br
+   ++> br
+   ++> br
+   ++> b "DATABASE"
    ++> (li <<< wlink MFlowPersist << b "Persistent"
                      <++ b " illustrates the use of MFlow with "
                      <> a  "Persistent" ! href yesodweb
-                     <> "(In this example sqlite backend is used) ")
+                     <> " (In this example sqlite backend is used) "
+                     <> article persistentarticle)
    <|> br
-   ++> b "DATABASE"
    ++> (li <<< wlink Database << b "Database"
                      <++ b " Create, Store and retrieve lines of text from Amazon SimpleDB storage "
                      <> article amazonarticle)
@@ -164,10 +166,12 @@ mainMenu= wcached "menu" 0 $ ul <<<(
                  <++ b " Control backtracking to avoid navigating back to undo something that can not be undone\
                           \. For example, a payment"
                  <> article preventbackl)
+
    )
 
 article link=  " " <> a ! href ( link) <<  i "(article)"
 
+persistentarticle= "http://haskell-web.blogspot.com.es/2013/08/mflow-using-persistent-with-sqlite.html"
 yesodweb= "http://www.yesodweb.com/book/persistent"
 amazonarticle= "http://haskell-web.blogspot.com.es/2013/08/using-amazon-web-services-with-tcache.html"
 pushdec= "http://haskell-web.blogspot.com.es/2013/07/maxwell-smart-push-counter.html"
@@ -212,11 +216,17 @@ stdheader  c= docTypeHtml $ do
      link ! rel   "stylesheet"
           ! type_ "text/css"
           ! href ( "http://jqueryui.com/resources/demos/style.css")
+     script
+          "(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){\
+          \(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),\
+          \m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)\
+          \})(window,document,'script','//www.google-analytics.com/analytics.js','ga');\
+          \ga('create', 'UA-95693-6', 'mflowdemo.herokuapp.com');\
+          \ga('send', 'pageview');"
    body $ do
       a ! At.style "align:center;"
         ! href     "http://hackage.haskell.org/packages/archive/MFlow/0.3.0.1/doc/html/MFlow-Forms.html"
         $ h1 $     "MFlow examples"
-      p $ "NOTE: heroku from time to time delete the database and the persistent flow state of these examples"
       hr
       c
 

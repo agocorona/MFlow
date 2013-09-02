@@ -1025,13 +1025,14 @@ askt v w =  ask w
 --
 -- 'ask' also synchronizes the execution of the flow with the user page navigation by
 
--- * Backtracking (invoking previous 'ask' staement in the flow) when detecting mismatches between get and post parameters and what is expected by the widgets
+-- * Backtracking (invoking previous 'ask' staement in the flow) when detecting mismatches between
+-- get and post parameters and what is expected by the widgets
 -- until a total or partial match is found.
 --
--- * Advancing in the flow by mathing a single requests with one or more sucessive ask statements
+-- * Advancing in the flow by matching a single requests with one or more sucessive ask statements
 --
 -- Backtracking and advancing can occur in a single request, so the flow in any state can reach any
--- other state in the flow if the request satisfy the parameters required.
+-- other state in the flow if the request has the required parameters.
 ask
   :: (FormInput view) =>
       View view IO a -> FlowM view IO a

@@ -70,7 +70,7 @@ mFlowPersistent = do
 
     userId <- runSQL  $ insert $ Person name $ Just age
 
-    post <- askm $ getString $ Just "your post"
+    post <- askm $ getString Nothing <! hint "your post" <** submitButton "enter"
     runSQL  $ insert $ BlogPost post userId
 
     oneUserPost <- runSQL  $ selectList [BlogPostAuthorId ==. userId] [LimitTo 1]
