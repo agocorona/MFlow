@@ -89,19 +89,20 @@ extra-source-files: Demos/demos-blaze.hs Demos/TestREST.hs
                     Demos/SumView.hs src/MFlow/Hack.hs src/MFlow/Hack/Response.hs
                     Demos/MCounter.hs src/MFlow/Hack/XHtml.hs
                     src/MFlow/Hack/XHtml/All.hs src/MFlow/Forms/HSP.hs
- 
+
 source-repository head
     type: git
     location: http://github.com/agocorona/MFlow
- 
+
 library
     build-depends: Workflow -any, transformers -any, mtl -any,
                    extensible-exceptions -any, xhtml -any, base >4.0 && <5,
-                   bytestring -any, containers -any, RefSerialize -any, TCache -any,
-                   stm >2, old-time -any, vector -any, directory -any,
-                   utf8-string -any, wai -any, case-insensitive -any, http-types -any,
-                   conduit -any, text -any, parsec -any, warp -any, random -any,
-                   blaze-html -any, blaze-markup -any, monadloc -any, hamlet -any
+                   bytestring -any, containers -any, RefSerialize -any,
+                   TCache -any, stm >2, old-time -any, vector -any,
+                   directory -any, utf8-string -any, wai -any, case-insensitive -any,
+                   http-types -any, conduit -any, text -any, parsec -any, warp -any,
+                   random -any, blaze-html -any, blaze-markup -any, monadloc -any,
+                   hamlet -any
     exposed-modules: MFlow MFlow.Wai.Blaze.Html.All MFlow.Forms
                      MFlow.Forms.Admin MFlow.Cookies MFlow.Wai MFlow.Wai.XHtml.All
                      MFlow.Forms.XHtml MFlow.Forms.Blaze.Html MFlow.Forms.Test
@@ -109,18 +110,18 @@ library
     exposed: True
     buildable: True
     hs-source-dirs: src .
-    other-modules: TCachePersistent MFlow.Wai.Response
- 
+    other-modules:  MFlow.Wai.Response
+
 executable demos-blaze.Loc
     build-depends: MFlow -any, RefSerialize -any, TCache -any,
                    directory -any, Workflow -any, base -any, blaze-html -any,
                    bytestring -any, containers -any, mtl -any, old-time -any,
                    stm -any, text -any, transformers -any, vector -any, hamlet -any,
                    monadloc -any, aws -any, network -any, hscolour -any,
-                   persistent-template -any, persistent-sqlite -any, persistent -any
+                   persistent-template, persistent-sqlite, persistent
     main-is: demos-blaze.Loc.hs
     buildable: True
     hs-source-dirs: Demos
-    other-modules: TCachePersistent MFlowPersistent MCounter
+    other-modules: MFlowPersistent MCounter
     ghc-options: -iDemos -threaded -rtsopts
- 
+
