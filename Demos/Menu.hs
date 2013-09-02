@@ -11,7 +11,7 @@
 -- | This is the menu shared by all the demo modules of demos-blaze.hs
 --
 -----------------------------------------------------------------------------
-{-# LANGUAGE DeriveDataTypeable, OverloadedStrings #-}
+{-# LANGUAGE DeriveDataTypeable, OverloadedStrings , QuasiQuotes #-}
 module Menu where
 import Data.Typeable
 import MFlow.Wai.Blaze.Html.All hiding (article, source)
@@ -22,6 +22,7 @@ import Data.String
 import Data.TCache.Memoization
 import Language.Haskell.HsColour
 import Language.Haskell.HsColour.Colourise
+import Text.Hamlet
 
 newtype Filename= Filename String deriving Typeable
 
@@ -216,18 +217,23 @@ stdheader  c= docTypeHtml $ do
      link ! rel   "stylesheet"
           ! type_ "text/css"
           ! href ( "http://jqueryui.com/resources/demos/style.css")
-     script
-          "(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){\
-          \(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),\
-          \m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)\
-          \})(window,document,'script','//www.google-analytics.com/analytics.js','ga');\
-          \ga('create', 'UA-95693-6', 'mflowdemo.herokuapp.com');\
-          \ga('send', 'pageview');"
    body $ do
       a ! At.style "align:center;"
         ! href     "http://hackage.haskell.org/packages/archive/MFlow/0.3.0.1/doc/html/MFlow-Forms.html"
         $ h1 $     "MFlow examples"
       hr
+      [shamlet|
+         <script>
+          (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+          (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+          })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+          ga('create', 'UA-95693-6', 'mflowdemo.herokuapp.com');
+          ga('send', 'pageview');
+
+      |]
+
       c
 
    where
