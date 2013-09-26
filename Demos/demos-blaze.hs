@@ -51,10 +51,10 @@ import Debug.Trace
 
 
 main= do
-   setAmazonSDBPersist "testmflowdemo" -- for the Database example
+   setAmazonSDBPersist "mflowdemo" -- for the Database example
    index idnumber                      -- for the Database example
    setAdminUser adminname adminname
-   userRegister edadmin edadmin
+--   userRegister edadmin edadmin
    syncWrite  $ Asyncronous 120 defaultCheck  1000
 
    setFilesPath "Demos/"
