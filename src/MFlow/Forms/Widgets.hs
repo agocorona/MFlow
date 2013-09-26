@@ -32,7 +32,7 @@ delEdited, getEdited
 ,prependWidget,appendWidget,setWidget
 
 -- * Content Management
-,tField, tFieldEd, tFieldGen
+,tField, tFieldEd, htmlEdit
 
 -- * Multilanguage
 ,mFieldEd, mField
@@ -221,7 +221,6 @@ setWidget sel w= modifyWidget sel "html" w
 -- This example add or delete editable text boxes, with two initial boxes   with
 -- /hi/, /how are you/ as values. Tt uses blaze-html:
 --
-
 -- >  r <-  ask  $   addLink
 -- >              ++> br
 -- >              ++> (El.div `wEditList`  getString1 $  ["hi", "how are you"]) "addid"
@@ -298,9 +297,10 @@ wautocomplete
   -> (String -> IO a)   -- ^ Autocompletion procedure: will receive a prefix and return a list of strings
   -> View v m String
 wautocomplete mv autocomplete  = do
+    text1 <- genNewId
     ajaxc <- ajax $ \u -> do
                           r <- liftIO $ autocomplete u
-                          return $ jaddtoautocomp r
+                          return $ jaddtoautocomp text1 r
 
 
     requires [JScriptFile jqueryScript [] -- [events]
@@ -309,18 +309,18 @@ wautocomplete mv autocomplete  = do
 
 
     getString mv <!  [("type", "text")
-                     ,("id", "text1")
-                     ,("oninput",ajaxc "$('#text1').attr('value')" )
+                     ,("id", text1)
+                     ,("oninput",ajaxc $ "$('#"++text1++"').attr('value')" )
                      ,("autocomplete", "off")]
 
 
     where
-    jaddtoautocomp us= "$('#text1').autocomplete({ source: " <> B.pack( show us) <> "  });"
+    jaddtoautocomp text1 us= "$('#"<>B.pack text1<>"').autocomplete({ source: " <> B.pack( show us) <> "  });"
 
 
 -- | Produces a text box. It gives a autocompletion list to the textbox. When return
 -- is pressed in the textbox, the box content is used to create a widget of a kind defined
--- by the user, which will be situated above of the textbox. When submitted, the result of this widget is the content
+-- by the user, which will be situated above of the textbox. When submitted, the result is the content
 -- of the created widgets (the validated ones).
 --
 -- 'wautocompleteList' is an specialization of this widget, where
@@ -341,18 +341,19 @@ wautocompleteEdit
     -> (Maybe String  -> View v Identity a)   -- ^ the widget to add, initialized with the string entered in the box
     -> [String]                               -- ^ initial set of values
     -> View v m [a]                           -- ^ resulting widget
-wautocompleteEdit phold   autocomplete  elem values= do
+wautocompleteEdit phold autocomplete  elem values= do
     id1 <- genNewId
+    let textx= id1++"text"
     let sel= "$('#" <> B.pack id1 <> "')"
     ajaxc <- ajax $ \(c:u) ->
-              case c of
+              case c  of
                 'f' -> prependWidget sel (elem $ Just u)
                 _   -> do
                           r <- liftIO $ autocomplete u
-                          return $ jaddtoautocomp r
+                          return $ jaddtoautocomp textx r
 
 
-    requires [JScriptFile jqueryScript [events ajaxc] -- [events]
+    requires [JScriptFile jqueryScript  [events textx ajaxc]
              ,CSSFile jqueryCSS
              ,JScriptFile jqueryUI []]
 
@@ -362,29 +363,29 @@ wautocompleteEdit phold   autocomplete  elem values= do
       ++> manyOf (ws' ++ (map (changeMonad . elem . Just) values)))
       <++ ftag "input" mempty
              `attrs` [("type", "text")
-                     ,("id", "text1")
+                     ,("id", textx)
                      ,("placeholder", phold)
-                     ,("oninput",ajaxc "'n'+$('#text1').attr('value')" )
+                     ,("oninput", ajaxc $ "'n'+$('#"++textx++"').val()" )
                      ,("autocomplete", "off")]
     delEdited sel ws'
     return r
     where
-    events ajaxc=
+    events textx ajaxc=
          "$(document).ready(function(){   \
-         \  $('#text1').keydown(function(){ \
+         \  $('#"++textx++"').keydown(function(){ \
          \   if(event.keyCode == 13){  \
-             \   var v= $('#text1').attr('value'); \
+             \   var v= $('#"++textx++"').val(); \
              \   if(event.preventDefault) event.preventDefault();\
              \   else if(event.returnValue) event.returnValue = false;" ++
                  ajaxc "'f'+v"++";"++
-             "   $('#text1').val('');\
+             "   $('#"++textx++"').val('');\
          \  }\
          \ });\
          \});"
 
-    jaddtoautocomp us= "$('#text1').autocomplete({ source: " <> B.pack( show us) <> "  });"
+    jaddtoautocomp textx us= "$('#"<>B.pack textx<>"').autocomplete({ source: " <> B.pack( show us) <> "  });"
 
--- | A specialization of 'selectAutocompleteEdit' which make appear each option choosen with
+-- | A specialization of 'wutocompleteEdit' which make appear each chosen option with
 -- a checkbox that deletes the element when uncheched. The result, when submitted, is the list of selected elements.
 wautocompleteList
   :: (Functor m, MonadIO m, Executable m, FormInput v) =>
@@ -400,36 +401,56 @@ wautocompleteList phold serverproc values=
                            ++> whidden( fromJust x)
 
 ------- Templating and localization ---------
+type Key= String
+data TField  = TField Key B.ByteString  deriving (Read, Show,Typeable)
 
-writetField    k s=  atomically $ writetFieldSTM k s
-
-writetFieldSTM k s=  do
-             phold <- readDBRef tFields `onNothing` return (M.fromList [])
-             let r= M.insert k  (toByteString s) phold
-             writeDBRef tFields   r
-
-readtField text k= atomically $ do
-       hs<- readDBRef tFields `onNothing` return (M.fromList [])
-       let mp=  M.lookup k hs
-       case mp of
-         Just c  -> return   $ fromStrNoEncode $ B.unpack c
-         Nothing -> writetFieldSTM k  text >> return  text
-
-type TFields  = M.Map String B.ByteString
-instance Indexable TFields where
-    key _= "texts"
+instance Indexable TField where
+    key (TField k _)= k
     defPath _= "texts/"
 
-tFields :: DBRef TFields
-tFields =  getDBRef "texts"
 
-type Key= String
+instance Serializable TField where
+    serialize= B.pack . show
+    deserialize= read . B.unpack
+    setPersist = const $  Just filePersist
 
--- | A widget that display the content of an  html, But if logged as administrator,
+writetField k s= atomically $ writeDBRef (getDBRef k) $ TField k $ toByteString s
+
+
+readtField text k= atomically $ do
+   let ref = getDBRef k
+   mr <- readDBRef ref
+   case mr of
+    Just (TField k v) -> return $ fromStrNoEncode $ B.unpack v
+    Nothing -> do
+        writeDBRef ref  $ TField k $ toByteString text
+        return text
+
+
+htmlEdit :: (Monad m, FormInput v) =>  [String] -> UserStr -> View v m a -> View v m a
+htmlEdit buttons jsuser w = do
+  id <- genNewId
+
+  let installHtmlField=
+          "\nfunction installHtmlField(muser,cookieuser,name,buttons){\n\
+            \if(muser== '' || document.cookie.search(cookieuser+'='+muser) != -1)\n\
+                 \ bkLib.onDomLoaded(function() {\n\
+                 \   var myNicEditor = new nicEditor({buttonList : buttons});\n\
+                 \   myNicEditor.panelInstance(name);\n\
+                 \})};\n"
+      install= "installHtmlField('"++jsuser++"','"++cookieuser++"','"++id++"',"++show buttons++");\n"
+
+  requires [JScriptFile nicEditUrl [installHtmlField,install]]
+  w <! [("id",id)]
+
+nicEditUrl= "http://js.nicedit.com/nicEdit-latest.js"
+
+
+-- | A widget that display the content of an  html, But if the user has edition privileges,
 -- it permits to edit it in place. So the editor could see the final appearance
--- of what he write in the page.
+-- of what he writes.
 --
--- When the administrator double click in the paragraph, the content is saved and
+-- When the user  click the save, the content is saved and
 -- identified by the key. Then, from now on, all the users will see the saved
 -- content instead of the code content.
 --
@@ -437,83 +458,68 @@ type Key= String
 -- a configurable version (`tFieldGen`). The content of the element and the formatting
 -- is cached in memory, so the display is, theoretically, very fast.
 --
--- THis is an example of how to use the content management primitives (in demos.blaze.hs):
---
--- > textEdit= do
--- >   setHeader $ \t -> html << body << t
--- >
--- >   let first=  p << i <<
--- >                  (El.span << text "this is a page with"
--- >                  <> b << text " two " <> El.span << text "paragraphs")
--- >
--- >       second= p << i << text "This is the original text of the second paragraph"
--- >
--- >       pageEditable =  (tFieldEd "first"  first)
--- >                   **> (tFieldEd "second" second)
--- >
--- >   ask $   first
--- >       ++> second
--- >       ++> wlink () (p << text "click here to edit it")
--- >
--- >   ask $ p << text "Please login with admin/admin to edit it"
--- >           ++> userWidget (Just "admin") userLogin
--- >
--- >   ask $   p << text "now you can click the field and edit them"
--- >       ++> p << b << text "to save the edited field, double click on it"
--- >       ++> pageEditable
--- >       **> wlink () (p << text "click here to see it as a normal user")
--- >
--- >   logout
--- >
--- >   ask $   p << text "the user sees the edited content. He can not edit"
--- >       ++> pageEditable
--- >       **> wlink () (p << text "click to continue")
--- >
--- >   ask $   p << text "When text are fixed,the edit facility and the original texts can be removed. The content is indexed by the field key"
--- >       ++> tField "first"
--- >       **> tField "second"
--- >       **> p << text "End of edit field demo" ++> wlink () (p << text "click here to go to menu")
+
 tFieldEd
   :: (Functor m,  MonadIO m, Executable m,
       FormInput v) =>
-      Key -> v -> View v m ()
-tFieldEd  k text=
-   tFieldGen k  (readtField text) writetField
+      UserStr -> Key -> v -> View v m ()
+tFieldEd  muser k text= wfreeze k 0 $  do
+   content <- liftIO $ readtField text k
+   nam     <- genNewId
+   let ipanel= nam++"panel"
+       name= nam++"-"++k
+       install= "installEditField('"++muser++"','"++cookieuser++"','"++name++"','"++ipanel++"');\n"
+       getTexts :: (Token -> IO ())
+       getTexts token= do
+         let (k,s):_ = tenv token
+         liftIO $ do
+           writetField k  $ (fromStrNoEncode s `asTypeOf` content)
+           flushCached k
+           sendFlush token $ HttpData [] [] ""
+           return()
+
+   requires [JScriptFile nicEditUrl [install]
+            ,JScript     ajaxSendText
+            ,JScript     installEditField
+            ,JScriptFile jqueryScript []
+            ,ServerProc  ("_texts",  transient getTexts)]
+
+   (ftag "div" mempty `attrs` [("id",ipanel)]) ++>
+    wraw (ftag "span" content `attrs` [("id", name)])
+
+   where
+
+   installEditField=
+          "\nfunction installEditField(muser,cookieuser,name,ipanel){\n\
+            \if(muser== '' || document.cookie.search(cookieuser+'='+muser) != -1)\n\
+                 \ bkLib.onDomLoaded(function() {\n\
+                 \   var myNicEditor = new nicEditor({fullPanel : true, onSave : function(content, id, instance) {\
+                 \        ajaxSendText(id,content);\n\
+                 \      }});\n\
+                 \   myNicEditor.addInstance(name);\n\
+                 \   myNicEditor.setPanel(ipanel);\n\
+                 \})};\n"
+
+   ajaxSendText = "\nfunction ajaxSendText(id,content){\n\
+        \var arr= id.split('-');\n\
+        \var k= arr[1];\n\
+        \$.ajax({\n\
+        \       type: 'POST',\n\
+        \       url: '/_texts',\n\
+        \       data: k + '='+ encodeURIComponent(content),\n\
+        \       success: function (resp) {},\n\
+        \       error: function (xhr, status, error) {\n\
+        \                var msg = $('<div>' + xhr + '</div>');\n\
+        \                id1.html(msg);\n\
+        \       }\n\
+        \   });\n\
+        \alert ('saved');\n\
+        \return false;\n\
+        \};\n"
 
 
--- | Like 'tFieldEd' with user-configurable storage.
-tFieldGen :: (MonadIO m,Functor m, Executable m
-        ,FormInput v)
-        => Key
-        -> (Key -> IO  v)  -- ^ the read procedure, user defined
-        -> (Key ->v  -> IO())   -- ^ the write procedure, user defiend
-        -> View v m ()
-tFieldGen  k  getcontent create =   wfreeze k 0 $ do
-    content <- liftIO $ getcontent  k
-    admin   <- getAdminName
-    ajaxjs  <- ajax  $ \str -> do
-              let (k,s)= break (==',')    str  -- !> str
-              liftIO  . create  k  $ fromStrNoEncode (tail s)
-              liftIO $ flushCached k
-              return "alert('saved')"
-    attribs <- do
-            name <- genNewId
-            -- Need to check the user in the browser because the widget is wfreeze'd
-            let ifUserAdmin= "if(document.cookie.search('"++cookieuser++"="++admin++"') != -1)"
-                nikeditor= "var myNicEditor = new nicEditor();"
-                callback=ifUserAdmin ++
-                  "bkLib.onDomLoaded(function() {\
-                     \    myNicEditor.addInstance('"++name++"');\
-                     \});"
-                param= ("'"++k  ++ "'+','+ document.getElementById('"++name++"').innerHTML")
 
-            requires  [JScriptFile "http://js.nicedit.com/nicEdit-latest.js" [nikeditor, callback]]
-
-            return [("id", name),("ondblclick",  ifUserAdmin ++ ajaxjs param)]
-
-    wraw $  (ftag "span" content `attrs` attribs)
-
--- | Read the field value and present it without edition.
+-- | Read the cached field value and present it without edition.
 tField :: (MonadIO m,Functor m, Executable m
        ,  FormInput v)
        => Key
@@ -524,9 +530,9 @@ tField  k    =  wfreeze k 0 $ do
 
 -- | A multilanguage version of tFieldEd. For a field with @key@ it add a suffix with the
 -- two characters of the language used.
-mFieldEd k content= do
+mFieldEd  muser k content= do
   lang <- getLang
-  tFieldEd (k ++ ('-':lang)) content
+  tFieldEd  muser (k ++ ('-':lang)) content
 
 -- | A multilanguage version of tField
 mField k= do
@@ -693,7 +699,7 @@ update method w= do
         \var url = $form.attr('action');\n\
         \var pdata = $form.serialize();\n\
         \$.ajax({\n\
-            \type: 'GET',\n\
+            \type: 'POST',\n\
             \url: url,\n\
             \data: 'auto'+id+'=true&'+pdata,\n\
             \success: function (resp) {\n\
@@ -795,8 +801,6 @@ push method' wait w= push' . map toLower $ show method'
         requires [ServerProc (procname, proc),
                   JScript $ ajaxPush procname,
                   JScriptFile jqueryScript [installscript]]
-
-
 
     (ftag "div" <<< noWidget) <! [("id",id)]
       <++ ftag "div" mempty `attrs` [("id",id++"status")]

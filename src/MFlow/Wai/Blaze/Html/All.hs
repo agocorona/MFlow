@@ -15,15 +15,11 @@
 module MFlow.Wai.Blaze.Html.All (
  module Data.TCache
 ,module MFlow
-,module MFlow.Wai
 ,module MFlow.Forms
 ,module MFlow.Forms.Widgets
 ,module MFlow.Forms.Blaze.Html
 ,module MFlow.Forms.Admin
-,module Network.Wai
-,module Network.Wai.Handler.Warp
 ,module Control.Applicative
---,module Text.Blaze.Internal
 ,module Text.Blaze.Html5
 ,module Text.Blaze.Html5.Attributes
 ,module Control.Monad.IO.Class
@@ -53,23 +49,7 @@ import System.Environment
 import Data.Maybe(fromMaybe)
 import Data.Char(isNumber)
 
----- | run a transient flow (see 'transient'). The port is read from the first exectution parameter
----- if no parameter, it is read from the PORT environment variable.
----- if this does not exist, the port 80 is used.
---runServerTransient :: FormInput view => FlowM view IO () -> IO Bool
---runServerTransient f= do
---    addMessageFlows[("", transient $ runFlow f)]
---    porti <- getPort
---    wait $ run porti waiMessageFlow
---
----- | a more grandiloquent name for runServerTransient
-----
----- > runNavigation= runServerTransient
---runNavigation :: FormInput view => FlowM view IO () -> IO Bool
---runNavigation= runServerTransient
-
-
--- The port is read from the first exectution parameter
+-- | The port is read from the first exectution parameter
 -- if no parameter, it is read from the PORT environment variable.
 -- if this does not exist, the port 80 is used.
 getPort= do
@@ -94,12 +74,3 @@ runNavigation n f= do
     porti <- getPort
     wait $ run porti waiMessageFlow
     
-
-
----- | a more grandiloquent synonym of runServerTransient
-----
----- > runPersNavigation= runServer
---runPersistentNavigation :: FormInput view => FlowM view (Workflow IO) () -> IO Bool
---runPersistentNavigation= runServer
-
-

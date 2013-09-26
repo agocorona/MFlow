@@ -31,7 +31,8 @@ import Control.Applicative
 import Data.Monoid
 import Control.Monad.Trans
 import Control.Monad.State
-import Data.ByteString.Lazy.Char8 as B(ByteString,cons,append, pack, unpack,empty,fromChunks)
+import qualified Data.ByteString.Lazy.Char8 as B
+import qualified Data.ByteString.Char8 as SB
 import Data.Typeable
 import Data.RefSerialize hiding((<|>))
 import Data.TCache
@@ -56,17 +57,17 @@ import Control.Exception as CE
 import Control.Concurrent
 import Control.Monad.Loc
 
---import Debug.Trace
---(!>) = flip trace
+import Debug.Trace
+(!>) = flip trace
 
 
 data FailBack a = BackPoint a | NoBack a | GoBack   deriving (Show,Typeable)
 
 
 instance (Serialize a) => Serialize (FailBack a ) where
-   showp (BackPoint x)= insertString (pack iCanFailBack) >> showp x
-   showp (NoBack x)   = insertString (pack noFailBack) >> showp x
-   showp GoBack       = insertString (pack repeatPlease)
+   showp (BackPoint x)= insertString (B.pack iCanFailBack) >> showp x
+   showp (NoBack x)   = insertString (B.pack noFailBack) >> showp x
+   showp GoBack       = insertString (B.pack repeatPlease)
 
    readp = choice [icanFailBackp,repeatPleasep,noFailBackp]
     where
@@ -514,7 +515,7 @@ data MFlowState view= MFlowState{
    mfkillTime       :: Int,
    mfSessionTime    :: Integer,
    mfCookies        :: [Cookie],
-   mfHttpHeaders    :: Params,
+   mfHttpHeaders    :: [(SB.ByteString,SB.ByteString)],
    mfHeader         :: view -> view,
    mfDebug          :: Bool,
    mfRequirements   :: [Requirement],
@@ -649,18 +650,18 @@ addHeader new= do
   
 -- | Set an HTTP cookie
 setCookie :: MonadState (MFlowState view) m
-          => String  -- ^ name
+          =>  String  -- ^ name
           -> String  -- ^ value
           -> String  -- ^ path
           -> Maybe Integer  -- ^ Max-Age in seconds. Nothing for a session cookie
           -> m ()
 setCookie n v p me= do
-    modify $ \st -> st{mfCookies= (n,v,p,fmap  show me):mfCookies st }
+    modify $ \st -> st{mfCookies= (SB.pack n,SB.pack v,SB.pack p, fmap  (SB.pack . show) me):mfCookies st }
 
 -- | Set an HTTP Response header
 setHttpHeader :: MonadState (MFlowState view) m
-          => String  -- ^ name
-          -> String  -- ^ value
+           => SB.ByteString  -- ^ name
+          -> SB.ByteString  -- ^ value
           -> m ()
 setHttpHeader n v = do
     modify $ \st -> st{mfHttpHeaders=  (n,v):mfHttpHeaders st }
@@ -701,7 +702,7 @@ type Value= String
 type Checked= Bool
 type OnClick= Maybe String
 
-normalize :: (Monad m, FormInput v) => View v m a -> View ByteString m a
+normalize :: (Monad m, FormInput v) => View v m a -> View B.ByteString m a
 normalize f=  View .  StateT $ \s ->do
        (FormElm fs mx, s') <-  runStateT  ( runView f) $ unsafeCoerce s
        return  (FormElm (map toByteString fs ) mx,unsafeCoerce s')
@@ -715,7 +716,7 @@ normalize f=  View .  StateT $ \s ->do
 -- See "MFlow.Forms.Blaze.Html for the instance for blaze-html. "MFlow.Forms.XHtml" for the instance
 -- for @Text.XHtml@ and MFlow.Forms.HSP for the instance for Haskell Server Pages.
 class (Monoid view,Typeable view)   => FormInput view where
-    toByteString :: view -> ByteString
+    toByteString :: view -> B.ByteString
     toHttpData :: view -> HttpData
     fromStr :: String -> view
     fromStrNoEncode :: String -> view
@@ -806,17 +807,17 @@ wcached= cachedWidget
 -- NOTE: the content of freezed widgets are shared by all users
 wfreeze :: (MonadIO m,Typeable view
          , FormInput view, Typeable a,  Executable m )
-        => String  -- ^ The key of the cached object for the retrieval
-        -> Int     -- ^ Timeout of the caching. Zero means sessionwide
+        => String          -- ^ The key of the cached object for the retrieval
+        -> Int             -- ^ Timeout of the caching. Zero means sessionwide
         -> View view m a   -- ^ The cached widget
-        -> View view m a          -- ^ The cached result
+        -> View view m a   -- ^ The cached result
 wfreeze key t mf = View .  StateT $ \s -> do
-        ((FormElm  f mx), req,seq,ajax) <- cachedByKey key t $ proc mf s{mfCached=True}
-        return ((FormElm  f mx), s{mfRequirements=req,mfSeqCache= seq,mfAjax=ajax})
+        (FormElm  f mx, req,seq,ajax) <- cachedByKey key t $ proc mf s{mfCached=True}
+        return ((FormElm f mx), s{mfRequirements=req ,mfSeqCache= seq,mfAjax=ajax})
         where
         proc mf s= do
           (r,s) <- runStateT (runView mf) s
-          return (r,mfRequirements s, mfSeqCache s,mfAjax s)
+          return (r,mfRequirements s, mfSeqCache s, mfAjax s)
 
 
 
@@ -840,7 +841,7 @@ runFlow  f t=
     t' <- f t
     let t''= t'{tpath=[twfname t']}
     liftIO $ do
-       flushRec t''
+       flushRec t'' 
        sendToMF t'' t''  -- !> "SEND"
     loop  f t''          -- !> "LOOPAGAIN"
 
@@ -995,10 +996,11 @@ step
 step f= do
    s <- get
    flowM $ Sup $ do
-        (r,s') <-  lift . WF.step $ runStateT (runSup $ runFlowM f) s
+        (r,s') <- lift . WF.step $ runStateT (runSup $ runFlowM f) s
+                  
         -- when recovery of a workflow, the MFlow state is not considered
         when( mfSequence s' /= -1) $ put s'  -- !> (show $ mfSequence s') -- else put  s{newAsk=True}
-        return r
+        return r  
 
 -- | to execute transient flows as if they were persistent
 -- it can be used instead of step, but it does not log the response. it ever executes the computation
@@ -1093,8 +1095,8 @@ getParam1 par req =  r
  x= getType r
  maybeRead str= do
    let typeofx = typeOf x
-   if typeofx == typeOf  ( undefined :: String)   then return . Validated $ unsafeCoerce str
-    else if typeofx == typeOf (undefined :: T.Text) then return . Validated . unsafeCoerce . T.pack $ str
+   if typeofx == typeOf  ( undefined :: String)   then return . Validated $ unsafeCoerce  str
+    else if typeofx == typeOf (undefined :: T.Text) then return . Validated . unsafeCoerce  $ T.pack str
     else case readsPrec 0 $ str of
               [(x,"")] ->  return $ Validated x
               _ -> do
@@ -1111,24 +1113,25 @@ getParam1 par req =  r
 -- procedure to be called with the list of requirements.
 -- Varios widgets in the page can require the same element, MFlow will install it once.
 requires rs =do
-    st <- get
+    st <- get 
     let l = mfRequirements st
 --    let rs'= map Requirement rs \\ l
     put st {mfRequirements= l ++ map Requirement rs}
 
 
 
-data Requirement= forall a.(Typeable a,Requirements a) => Requirement a deriving Typeable
+data Requirement= forall a.(Show a,Typeable a,Requirements a) => Requirement a deriving Typeable
 
 class Requirements  a where
    installRequirements :: (Monad m,FormInput view) => [a] ->  m view
 
-
+instance Show Requirement where
+   show (Requirement a)= show a ++ "\n"
 
 installAllRequirements :: ( Monad m, FormInput view) =>  WState view m view
 installAllRequirements= do
  rs <- gets mfRequirements
- installAllRequirements1 mempty rs
+ installAllRequirements1 mempty rs 
  where
 
  installAllRequirements1 v []= return v
@@ -1181,10 +1184,6 @@ loadcss content=
   \document.getElementsByTagName('head')[0].appendChild(fileref);"
 
 
-
-
-
-
 data WebRequirement= JScriptFile
                             String
                             [String]   -- ^ Script URL and the list of scripts to be executed when loaded
@@ -1192,7 +1191,7 @@ data WebRequirement= JScriptFile
                    | CSS String        -- ^ a String with a CSS description
                    | JScript String                -- ^ a string with a valid JavaScript
                    | ServerProc (String, Flow)     -- ^ a server procedure
-                   deriving(Typeable,Eq,Ord,Show)
+                     deriving(Typeable,Eq,Ord,Show)
 
 instance Eq (String, Flow) where
    (x,_) == (y,_)= x == y
@@ -1209,7 +1208,7 @@ instance Requirements WebRequirement where
 
 installWebRequirements ::  (Monad m,FormInput view) =>[WebRequirement] -> m view
 installWebRequirements rs= do
-  let s =  aggregate  $ sort rs
+  let s =  aggregate  $ sort rs 
 
   return $ ftag "script" (fromStrNoEncode  s)
   where
@@ -1217,8 +1216,8 @@ installWebRequirements rs= do
 
 
   aggregate (r@(JScriptFile f c) : r'@(JScriptFile f' c'):rs)
-         | f==f'= aggregate $ JScriptFile f (nub  c++c'):rs
-         | otherwise= strRequirement r++aggregate (r':rs)
+         | f==f' = aggregate $ JScriptFile f (nub $ c++c'):rs
+         | otherwise= strRequirement r ++ aggregate (r':rs)
 
   aggregate (r:r':rs)
          | r== r' = aggregate $ r:rs
@@ -1281,7 +1280,9 @@ currentPath insInBackTracking index lpath verb =
         True   -> concat $ take index  ['/':v | v <- lpath]  -- !> ("index= " ++ show index)
         False  -> concat ['/':v| v <- lpath])
 
--- | Generate a new string. Useful for creating tag identifiers and other attributes
+-- | Generate a new string. Useful for creating tag identifiers and other attributes.
+--
+-- if the page is refreshed, the identifiers generated are the same.
 genNewId :: MonadState (MFlowState view) m =>  m String
 genNewId=  do
   st <- get
@@ -1295,4 +1296,17 @@ genNewId=  do
     True  -> do
       let n = mfSeqCache st
       put $ st{mfSeqCache=n+1}
+      return $  'c' : (show n)
+
+-- | get the next ideitifier that will be created by genNewId
+getNextId :: MonadState (MFlowState view) m =>  m String
+getNextId=  do
+  st <- get
+  case mfCached st of
+    False -> do
+      let n= mfSequence st
+          prefseq=  mfPrefix st
+      return $ 'p':show n++prefseq
+    True  -> do
+      let n = mfSeqCache st
       return $  'c' : (show n)

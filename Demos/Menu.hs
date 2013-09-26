@@ -24,19 +24,27 @@ import Language.Haskell.HsColour
 import Language.Haskell.HsColour.Colourise
 import Text.Hamlet
 
+
 newtype Filename= Filename String deriving Typeable
+
+adminname= "admin"
+edadmin= "editor"
 
 -- present the widget w decorated with the main menu on the left and the source code at the bottom
 askm w= ask $ do
    Filename filename <- getSessionData `onNothing` error "source filename not set"
-   (divmenu <<< br ++> retry mainMenu) 
-    **> (El.div ! At.style ( "float:right;width:65%;overflow:auto;") <<< source filename w)
-
-divmenu= El.div ! At.style ( "background-color:#EEEEEE;float:left\
+   tFieldEd edadmin "head" "set Header"
+       <++ hr
+       **> (divmenu <<< br ++> retry mainMenu)
+       **> (El.div ! At.style "float:right;width:65%;overflow:auto;"
+       <<< widgetAndSource filename w)
+  
+divmenu= El.div
+     ! At.style ( "background-color:#EEEEEE;float:left\
                  \;width:30%\
                  \;margin-left:10px;margin-right:10px;overflow:auto;")
 
-divsample= El.div ! At.style ( "background-color:#FFEEEE;")
+
 
 pagem= askm
 
@@ -50,7 +58,9 @@ data Options= CountI | CountS | Radio
             | Database | MFlowPersist
             deriving (Bounded, Enum,Read, Show,Typeable)
 
-mainMenu= wcached "menu" 0 $ ul <<<(
+mainMenu :: View Html IO Options
+mainMenu= wcached "menu" 0 $
+  ul <<<(
    li << b "About this menu" ++> article menuarticle
    ++> br
    ++> br
@@ -60,8 +70,7 @@ mainMenu= wcached "menu" 0 $ ul <<<(
                      <> a  "Persistent" ! href yesodweb
                      <> " (In this example sqlite backend is used) "
                      <> article persistentarticle)
-   <|> br
-   ++> (li <<< wlink Database << b "Database"
+   <|> (li <<< wlink Database << b "Database"
                      <++ b " Create, Store and retrieve lines of text from Amazon SimpleDB storage "
                      <> article amazonarticle)
    <|> br 
@@ -86,13 +95,14 @@ mainMenu= wcached "menu" 0 $ ul <<<(
                 <++ b " Navigates trough  menus and a sucession of GET pages"
                 <> article navigation)
 
-   <|> (li <<< wlink ShopCart  << b "Stateful flow: shopping"
+
+   <|> (li <<< wlink ShopCart  << b "Stateful persistent flow: shopping"
                 <++ b " Add articles to a persistent shopping cart stored in the session log."
                 <> i " getSessionData is read in the View monad to get the most recent shopping cart\
                             \even when the back button has been pressed"
                 <> article stateful)
 
-   <|> (li <<< wlink MCounter << b "Stateful flow: Counter"
+   <|> (li <<< wlink MCounter << b "Persistent stateful flow: Counter"
                 <++ b " a persistent counter. It uses the same mechanism than shopping, but it is a more simple example")
                        
    <|>  br ++> br ++> b "BASIC"
@@ -189,19 +199,21 @@ preventbackl= "http://haskell-web.blogspot.com.es/2013/04/controlling-backtracki
 ajaxl= "http://hackage.haskell.org/packages/archive/MFlow/0.3.1.0/doc/html/MFlow-Forms.html#g:17"
 menuarticle= "http://haskell-web.blogspot.com.es/2013/08/how-to-handle-menus-and-other.html"
 
-source filename w = do
+widgetAndSource filename w = do
       source <- getSource filename
-      El.div <<< (divsample <<< w)
-             <++ (do   -- Blaze-html monad
+      El.div <<< h1 "Running example"
+             ++> "(in the ligth red box):"
+             ++> (divsample <<< w)
+             <** tFieldEd edadmin (filename ++ "top") "top text"
+             <** tFieldEd edadmin (filename ++ "bottom") "botom text"
+
+
+             <++  do -- Blaze-html monad
                   br
                   hr
-                  h3 $ "SOURCE CODE:"
-                  source)
---                  iframe
---                    ! At.style sty
---                    ! At.height ( "400")
---                    ! At.src path
---                    $ b $ text "no iframes")
+                  h1 $ "Source code:"
+                  source
+
       where
       host = "mflowdemo.herokuapp.com/"
       path = "http://" <> host <> "source/" <> filename
@@ -211,17 +223,15 @@ source filename w = do
                 \;width:100%\
                 \;margin-left:5px;margin-right:10px;overflow:auto;"
 
+divsample= El.div ! At.style ( "background-color:#FFEEEE;")
+
 stdheader  c= docTypeHtml $ do
    El.head $ do
      El.title "MFlow examples"
      link ! rel   "stylesheet"
           ! type_ "text/css"
           ! href ( "http://jqueryui.com/resources/demos/style.css")
-   body $ do
-      a ! At.style "align:center;"
-        ! href     "http://hackage.haskell.org/packages/archive/MFlow/0.3.0.1/doc/html/MFlow-Forms.html"
-        $ h1 $     "MFlow examples"
-      hr
+   body  $ do
       [shamlet|
          <script>
           (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){

@@ -4,11 +4,8 @@ import MFlow.Wai.Blaze.Html.All
 import Data.Typeable
 import qualified Control.Workflow as WF -- delete
 
-runServerAt port proc= do
-  addMessageFlows  [("example",  transient . runFlow $ proc )]
-  wait $ run port waiMessageFlow
 
-main= runServerAt 80 mainFlow
+main= runNavigation "" $ transientNav mainFlow
 
 data Opts= Sum | Navigation deriving (Typeable, Show)
 

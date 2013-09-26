@@ -63,10 +63,10 @@ Flow, Params, HttpData(..),Processable(..)
 ,flushRec, receive, receiveReq, receiveReqTimeout, send, sendFlush, sendFragment
 , sendEndFragment, sendToMF
 -- * Flow configuration
-,addMessageFlows,getMessageFlows, transient, stateless,anonymous
+,addMessageFlows,getMessageFlows,delMessageFlow, transient, stateless,anonymous
 ,noScript,hlog, setNotFoundResponse,getNotFoundResponse,
 -- * ByteString tags
--- | very basic but efficient tag formatting
+-- | very basic but efficient bytestring tag formatting
 btag, bhtml, bbody,Attribs, addAttrs
 -- * user
 , userRegister, setAdminUser, getAdminName
@@ -96,8 +96,9 @@ import System.IO.Unsafe
 import Data.TCache
 import Data.TCache.DefaultPersistence  hiding(Indexable(..))
 import Data.TCache.Memoization
-import  Data.ByteString.Lazy.Char8 as B  (head, readFile,ByteString, concat,pack, unpack,empty,append,cons,fromChunks)
+import qualified Data.ByteString.Lazy.Char8 as B  (head, readFile,ByteString, concat,pack, unpack,empty,append,cons,fromChunks)
 import Data.ByteString.Lazy.Internal (ByteString(Chunk))
+import qualified Data.ByteString.Char8 as SB
 import qualified Data.Map as M
 import System.IO
 import System.Time
@@ -106,11 +107,11 @@ import MFlow.Cookies
 import Control.Monad.Trans
 import qualified Control.Exception as CE
 import Data.RefSerialize hiding (empty)
-
+import qualified Data.Text as T
 import System.Posix.Internals
 
---import Debug.Trace
---(!>)  =   flip trace
+import Debug.Trace
+(!>)  =   flip trace
 
 
 -- | a Token identifies a flow that handle messages. The scheduler compose a Token with every `Processable`
@@ -118,9 +119,9 @@ import System.Posix.Internals
 data Token = Token{twfname,tuser, tind :: String , tpath :: [String], tenv:: Params, tsendq :: MVar Req, trecq :: MVar Resp}  deriving  Typeable
 
 instance Indexable  Token  where
-     key (Token w u i _ _ _ _  )=
-          if u== anonymous then  u ++ i   -- ++ "@" ++ w
-                          else  u       -- ++ "@" ++ w
+     key (Token w u i _ _ _ _  )=  i
+--          if u== anonymous then  u ++ i   -- ++ "@" ++ w
+--                          else  u       -- ++ "@" ++ w
 
 instance Show Token where
      show t = "Token " ++ key t
@@ -141,8 +142,8 @@ instance Read Token where
      readsPrec _ str= error $ "parse error in Token read from: "++ str
 
 instance Serializable Token  where
-  serialize  = pack . show
-  deserialize= read . unpack
+  serialize  = B.pack . show
+  deserialize= read . B.unpack
 
 iorefqmap= unsafePerformIO  . newMVar $ M.empty
 
@@ -171,7 +172,7 @@ getToken msg=  do
 
 type Flow= (Token -> Workflow IO ())
 
-data HttpData = HttpData Params [Cookie] ByteString | Error  ByteString deriving (Typeable, Show)
+data HttpData = HttpData [(SB.ByteString,SB.ByteString)]  [Cookie] ByteString | Error  ByteString deriving (Typeable, Show)
 
 
 --instance ToHttpData HttpData where
@@ -181,7 +182,7 @@ data HttpData = HttpData Params [Cookie] ByteString | Error  ByteString deriving
 -- toHttpData bs= HttpData [] [] bs
 
 instance Monoid HttpData where
- mempty= HttpData [] [] empty
+ mempty= HttpData [] [] B.empty
  mappend (HttpData h c s) (HttpData h' c' s')= HttpData (h++h') (c++ c') $ mappend s s'
 
 -- | List of (wfname, workflow) pairs, to be scheduled depending on the message's pwfname
@@ -284,7 +285,7 @@ delMsgHistory t = do
       
 
 
--- | executes a simple monadic computation that receive the params and return a response
+-- | executes a simple request-response computation that receive the params and return a response
 --
 -- It is used with `addMessageFlows`
 --
@@ -322,6 +323,8 @@ addMessageFlows wfs=  modifyMVar_ _messageFlows(\ms ->  return $ M.union (M.from
 
 -- | return the list of the scheduler
 getMessageFlows = readMVar _messageFlows
+
+delMessageFlow wfname= modifyMVar_ _messageFlows (\ms -> return $ M.delete wfname ms)
 
 --class ToHttpData a  where
 --    toHttpData :: a -> HttpData  
@@ -393,23 +396,22 @@ msgScheduler x  = do
              
           Left (WFException e)-> do
               showError wfname token e
-              moveState wfname token token{tuser= "error/"++tuser token}
+              moveState wfname token token{tind= "error/"++tuser token}
               deleteTokenInList token                       -- !> "DELETETOKEN"
+              
               
           Right _ ->  delMsgHistory token >> return ()      -- !> ("finished " ++ wfname)
 
 
 
 showError wfname token@Token{..} e= do
-               let user= key token
                t <- return . calendarTimeToString =<< toCalendarTime =<< getClockTime
                let msg= errorMessage t e tuser (Prelude.concat $ intersperse "/" tpath) tenv
 
                logError  msg
---               moveState wfname token token{tuser= "error/"++tuser token}
                fresp <- getNotFoundResponse
                admin <- getAdminName
-               sendFlush token . Error $ fresp (user== admin)  $  Prelude.concat[ "<br/>"++ s | s <- lines msg]
+               sendFlush token . Error $ fresp (tuser== admin)  $  Prelude.concat[ "<br/>"++ s | s <- lines msg]
 
 
 errorMessage t e u path env=
@@ -418,7 +420,7 @@ errorMessage t e u path env=
      e++
      "\n\nUSER= " ++ u ++
      "\n\nPATH= " ++ path ++
-     "\n\nREQUEST:\n\n"++
+     "\n\nREQUEST:\n\n" ++
      show env
 
 line= unsafePerformIO $ newMVar ()
@@ -485,14 +487,18 @@ setAdminUser user password= liftIO $  atomically $ do
   writeDBRef rconf $ Config user
 
 getAdminName :: MonadIO m => m UserStr
-getAdminName= liftIO $ atomically ( readDBRef rconf `onNothing` error "admin user not set" ) >>= \(Config u) -> return u
+getAdminName=  liftIO  $ do
+     cu <- atomically $ readDBRef rconf
+     case cu of
+      Nothing -> setAdminUser "admin" "admin" >> getAdminName
+      Just (Config u) -> return u
 
 
 --------------- ERROR RESPONSES --------
 
 defNotFoundResponse isAdmin msg= fresp $
      case isAdmin of
-           True -> pack msg
+           True -> B.pack msg
            _    -> "The administrator has been notified"
   where
   fresp msg=
@@ -529,11 +535,11 @@ type Attribs= [(String,String)]
 -- | Writes a XML tag in a ByteString. It is the most basic form of formatting. For
 -- more sophisticated formatting , use "MFlow.Forms.XHtml" or "MFlow.Forms.HSP".
 btag :: String -> Attribs  -> ByteString -> ByteString
-btag t rs v= "<" `append` pt `append` attrs rs `append` ">" `append` v `append`"</"`append` pt `append` ">"
+btag t rs v= "<" <> pt <> attrs rs <> ">" <> v <> "</" <> pt <> ">"
  where
- pt= pack t
+ pt= B.pack t
  attrs []= B.empty
- attrs rs=  pack $ concatMap(\(n,v) -> (' ' :   n) ++ "=\"" ++ v++ "\"" ) rs
+ attrs rs=  B.pack $ concatMap(\(n,v) -> (' ' :   n) ++ "=\"" ++ v++ "\"" ) rs
 
 -- |
 -- > bhtml ats v= btag "html" ats v
@@ -548,7 +554,7 @@ bbody ats v= btag "body" ats v
 
 addAttrs :: ByteString -> Attribs -> ByteString
 addAttrs (Chunk "<" (Chunk tag rest)) rs=
-   Chunk "<"(Chunk tag  (pack $ concatMap(\(n,v) -> (' ' :   n) ++ "=" ++  v ) rs))  <> rest
+   Chunk "<"(Chunk tag  (B.pack $ concatMap(\(n,v) -> (' ' :   n) ++ "=" ++  v ) rs))  <> rest
 
 addAttrs other _ = error  $ "addAttrs: byteString is not a tag: " ++ show other
 
@@ -602,7 +608,7 @@ newFlow=  do
         atomically $ do 
                     NFlow n <- readDBRef rflow `onNothing` return (NFlow 0)
                     writeDBRef rflow . NFlow $ n+1
-                    return . show $ t + n
+                    return . SB.pack . show $ t + n
 
 
 mimeTable=[

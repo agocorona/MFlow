@@ -1,7 +1,7 @@
 {-# OPTIONS -XScopedTypeVariables  -XOverloadedStrings #-}
 
 module MFlow.Cookies
-(Cookie,contentHtml,urlDecode,cookieuser,cookieHeaders,getCookies)
+(Cookie,contentHtml,cookieuser,cookieHeaders,getCookies)
 where
 import Control.Monad(MonadPlus(..), guard, replicateM_, when)
 import Data.Char
@@ -14,29 +14,31 @@ import Unsafe.Coerce
 import Data.Monoid
 import Text.Parsec
 import Control.Monad.Identity
+import Data.ByteString.Char8 as B
 
 --import Debug.Trace
 --(!>)= flip trace
 
+contentHtml :: (ByteString, ByteString)
 contentHtml= ("Content-Type", "text/html")
 
-type Cookie=  (String,String,String,Maybe String)
+type Cookie=  (B.ByteString,B.ByteString,B.ByteString,Maybe B.ByteString)
 
 cookieuser :: String
 cookieuser= "cookieuser"
 
---getCookies :: Params -> Params
+
 getCookies httpreq=
      case  lookup "Cookie" $ httpreq of
-             Just str  -> splitCookies str
+             Just str  -> splitCookies str :: [(B.ByteString, B.ByteString)]
              Nothing   -> []
 
 cookieHeaders cs =  Prelude.map (\c-> ( "Set-Cookie", showCookie c)) cs
 
-showCookie ::  Cookie -> String
-showCookie (n,v,p,me) = n <> "="  <> v  <>
-                       ";path="  <> p  <>
-                        showMaxAge me
+showCookie ::  Cookie -> B.ByteString
+showCookie (n,v,p,me) =  n <> "="  <>  v  <>
+                       ";path="  <>  p  <>
+                        showMaxAge  me
 
     where
     showMaxAge Nothing =  ""
@@ -60,17 +62,17 @@ showCookie (n,v,p,me) = n <> "="  <> v  <>
 
 splitCookies cookies  = f cookies []  
     where
-    f s r | null s  = r
+    f s r | B.null s  = r
     f xs0 r =
       let
-          xs   = dropWhile (==' ') xs0
-          name = takeWhile (/='=') xs
-          xs1  = dropWhile (/='=') xs
-          xs2  = dropWhile (=='=') xs1
-          val  = takeWhile (/=';') xs2
-          xs3  = dropWhile (/=';') xs2
-          xs4  = dropWhile (==';') xs3
-          xs5  = dropWhile (==' ') xs4
+          xs   = B.dropWhile (==' ') xs0
+          name = B.takeWhile (/='=') xs
+          xs1  = B.dropWhile (/='=') xs
+          xs2  = B.dropWhile (=='=') xs1
+          val  = B.takeWhile (/=';') xs2
+          xs3  = B.dropWhile (/=';') xs2
+          xs4  = B.dropWhile (==';') xs3
+          xs5  = B.dropWhile (==' ') xs4
       in  f xs5 ((name,val):r)
 
 -----------------------------
@@ -207,7 +209,7 @@ hexadecimal = do d1 <- hexDigit
 --         toInt d                = error ("hex2int: illegal hex digit " ++ [d])
 
 --urlDecode :: String -> [([(String, String)],String)]
-urlDecode str= case parse readEnv "" str of  -- let Parser p= readEnv in  p str
-                     Left err  -> error $ "urlDecode: decode  error: " ++ show err
-                     Right r  ->   r
+--urlDecode str= case parse readEnv "" str of  -- let Parser p= readEnv in  p str
+--                     Left err  -> error $ "urlDecode: decode  error: " ++ show err
+--                     Right r  ->   r
 --               !> ("decode="++str)

@@ -62,9 +62,8 @@ radiob s n= wlabel (text s) $ setRadio s n <! onClickSubmit
 -- normally to be used with autoRefresh and pageFlow when used with other widgets.
 wlogin :: View Html IO ()
 wlogin=  do
-   do
-       username <- getCurrentUser
-       if username /= anonymous
+   username <- getCurrentUser
+   if username /= anonymous
          then return username
          else do
           name <- getString Nothing <! hint "username" <++ br

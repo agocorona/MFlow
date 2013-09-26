@@ -271,6 +271,7 @@ cachedWidget, wcached, wfreeze,
 ,requires
 -- * Utility
 ,genNewId
+,getNextId
 ,changeMonad
 ,FailBack
 ,fromFailBack
@@ -284,7 +285,7 @@ import Data.RefSerialize hiding ((<|>))
 import Data.TCache
 import Data.TCache.Memoization
 import MFlow
-import MFlow.Forms.Internals
+import MFlow.Forms.Internals 
 import MFlow.Cookies
 import Data.ByteString.Lazy.Char8 as B(ByteString,cons,pack,unpack,append,empty,fromChunks)
 import qualified Data.Text as T
@@ -568,11 +569,11 @@ getParam look type1 mvalue = View $ do
        
 
 
-getCurrentName :: MonadState (MFlowState view) m =>  m String
-getCurrentName= do
-     st <- get
-     let parm = mfSequence st
-     return $ "p"++show parm
+--getCurrentName :: MonadState (MFlowState view) m =>  m String
+--getCurrentName= do
+--     st <- get
+--     let parm = mfSequence st
+--     return $ "p"++show parm
 
 
 -- | Display a multiline text box and return its content
@@ -876,30 +877,31 @@ userWidget muser formuser= do
 
 
 login uname= do
- st <- get
- let t = mfToken st
-     u = tuser t
- if u == uname then return () else do
-     let t'= t{tuser= uname}
-     moveState (twfname t) t t'
-     put st{mfToken= t'}
-     liftIO $ deleteTokenInList t
-     liftIO $ addTokenToList t'
-     setCookie cookieuser   uname "/"  (Just $ 365*24*60*60) 
-
-
-
+    back <- goingBack
+    if back then return () else do
+     st <- get
+     let t = mfToken st
+         u = tuser t
+     if u == uname then return () else do
+         let t'= t{tuser= uname}
+    --     moveState (twfname t) t t'
+         put st{mfToken= t'}
+--         liftIO $ deleteTokenInList t
+         liftIO $ addTokenToList t'
+         setCookie cookieuser   uname "/"  (Just $ 365*24*60*60)
 
 -- | logout. The user is reset to the `anonymous` user
 logout :: (MonadIO m, MonadState (MFlowState view) m) => m ()
 logout= do
+    back <- goingBack
+    if back then return () else do
      st <- get
      let t = mfToken st
          t'= t{tuser= anonymous}
      if tuser t == anonymous then return () else do
-         moveState (twfname t) t t'
+--         moveState (twfname t) t t'
          put st{mfToken= t'}
-         liftIO $ deleteTokenInList t
+--         liftIO $ deleteTokenInList t
          liftIO $ addTokenToList t'
          setCookie cookieuser   anonymous "/" (Just $ -1000)
 
@@ -1245,7 +1247,7 @@ newtype AjaxSessionId= AjaxSessionId String deriving Typeable
 -- >          ++> getInt (Just 0) <! [("id","text1"),("onclick", ajaxc elemval)]
 ajax :: (MonadIO m)
      => (String ->  View v m ByteString)  -- ^ user defined procedure, executed in the server.Receives the value of the javascript expression and must return another javascript expression that will be executed in the web browser
-     ->  View v m (String -> String)      -- ^ returns a function that accept a javascript expression and return a javascript event handler expression that invoques the ajax server procedure
+     ->  View v m (String -> String)      -- ^ returns a function that accept a javascript expression and return a javascript event handler expression that invokes the ajax server procedure
 ajax  f =  do
      requires[JScript ajaxScript]
      t <- gets mfToken
@@ -1356,14 +1358,15 @@ wlink x v= View $ do
 
 
 
--- | When some user interface int return some response to the server, but it is not produced by
--- a form or a link, but for example by an script, @returning@ notify the type checker.
+-- | When some user interface return some response to the server, but it is not produced by
+-- a form or a link, but for example by an script, @returning@  convert this code into a
+-- widget.
 --
 -- At runtime the parameter is read from the environment and validated.
 --
 -- . The parameter is the visualization code, that accept a serialization function that generate
 -- the server invocation string, used by the visualization to return the value by means
--- of a link or a @window.location@ statement in javasCript
+-- of an script, usually.
 returning :: (Typeable a, Read a, Show a,Monad m, FormInput view) 
          => ((a->String) ->view) -> View view m a
 returning expr=View $ do

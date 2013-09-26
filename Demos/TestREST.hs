@@ -5,21 +5,27 @@ import Menu
 import Data.Monoid
 import Data.String
 
--- 9 pagems , each pagem has a restful link (pagem = ask)
+-- A menu with two branches, each one is a sucession of pages
 
--- to run it alone, replace askm by ask and uncomment the following line
---main= runNavigation "" $ transientNav testREST
+-- 9 pages , each page has a restful link (pagem = ask)
+
+-- to run it alone,  delete "import Menu" and uncomment the next lines
+
+-- main= runNavigation "" $ transientNav testREST
+
+-- pagem= page
 
 
 testREST= do
-  setTimeouts 120 0
+--  setTimeouts 120 0
 
-  option <- pagem $   wlink "a" << b << "letters " <++ i << " or"
-                 <|> wlink "1" << b << " numbers"
+  option <- pagem $  h2 << "Choose between:"
+                 ++> wlink "a" << b << "letters " <++ i << " or "
+                 <|> wlink "1" << b << "numbers"
 
   case option of
     "1" -> do
-          pagem $ wlink "2" << contentFor "1"
+          pagem $ wlink "2" << contentFor "1" 
           pagem $ wlink "3" << contentFor "2"
           pagem $ wlink "4" << contentFor "3"
           pagem $ wlink ()  << "menu"
@@ -31,8 +37,9 @@ testREST= do
           pagem $ wlink ()  << "menu"
 
 
-contentFor x=
+contentFor x= do
         p << "page for"
-        <> b << x
-        <> p << "goto next page"
+        b << x
+        p << "goto next page"
+        p << "or press the back button for the previous page"
 

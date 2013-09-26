@@ -51,19 +51,21 @@ import Debug.Trace
 
 
 main= do
-   setAmazonSimpleDB-- for the Database example
-   index idnumber   -- for the Database example
---   migratesqlite          -- for the MFlowPersistent example
-   setAdminUser "admin" "admin"
+   setAmazonSDBPersist "testmflowdemo" -- for the Database example
+   index idnumber                      -- for the Database example
+   setAdminUser adminname adminname
+   userRegister edadmin edadmin
    syncWrite  $ Asyncronous 120 defaultCheck  1000
 
    setFilesPath "Demos/"
    runNavigation "" $ do
        setHeader $ stdheader 
-       setTimeouts 200 $ 60 * 60
+       setTimeouts 400 $ 60 * 60
 
-       r <- step . ask $ (divmenu  <<< br ++>  mainMenu) 
-                <++ (El.div ! At.style ( "float:right;width:65%;overflow:auto;") << mainmenuLinks)
+       r <- step . ask $   tFieldEd edadmin "head" "set Header" <++ hr
+                       **> (divmenu  <<< br ++>  mainMenu) 
+                       <** (El.div ! At.style "float:right;width:65%;overflow:auto;"
+                       <<< tFieldEd edadmin "intro" "enter intro text")
 
        case r of
              CountI    ->     step  (clickn 0)           `showSource`  "IncreaseInt.hs"
@@ -72,7 +74,7 @@ main= do
              Ajax      ->     step  ajaxsample           `showSource`  "AjaxSample.hs"
              Select    ->     step  options              `showSource`  "Options.hs"
              CheckBoxes ->    step  checkBoxes           `showSource`  "CheckBoxes.hs"
-             TextEdit  ->     step  textEdit             `showSource`  "TextEdit.hs"
+             TextEdit  ->     step  textEdit             `showSource`  "ContentManagement.hs"
              Grid      ->     step  grid                 `showSource`  "Grid.hs"
              Autocomp  ->     step  autocomplete1        `showSource`  "AutoComplete.hs"
              AutocompList ->  step  autocompList         `showSource`  "AutoCompList.hs"
@@ -90,19 +92,11 @@ main= do
              Trace       ->   step  traceSample          `showSource`  "TraceSample.hs"
              RESTNav     ->   step  testREST             `showSource`  "TestREST.hs"
              Database    ->   step  database             `showSource`  "Database.hs"
-             ShopCart    ->  shopCart                   `showSource` "ShopCart.hs"
-             MCounter    ->  mcounter                   `showSource` "MCounter.hs"
-             MFlowPersist -> step mFlowPersistent      `showSource` "MFlowPersistent.hs"
+             ShopCart    ->   shopCart                   `showSource` "ShopCart.hs"
+             MCounter    ->   mcounter                   `showSource` "MCounter.hs"
+             MFlowPersist ->  step mFlowPersistent       `showSource` "MFlowPersistent.hs"
 
 
-
-mainmenuLinks= do  -- using the blaze-html monad
-       br
-       p  $ a ! href ( "/html/MFlow/index.html") $ "MFlow package description and documentation"
-       p  $ a ! href ( "https://github.com/agocorona/MFlow/blob/master/Demos") $  "see demos source code"
-       p  $ a ! href ( "https://github.com/agocorona/MFlow/issues") $  "bug tracker"
-       p  $ a ! href ( "https://github.com/agocorona/MFlow") $  "source repository"
-       p  $ a ! href ( "http://hackage.haskell.org/package/MFlow") $  "Hackage repository"
 
 
 

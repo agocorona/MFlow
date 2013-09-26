@@ -38,17 +38,21 @@ import MFlow.Cookies
 import Data.Monoid
 import MFlow.Wai.Response
 import Network.Wai
-import Network.HTTP.Types hiding (urlDecode)
+import Network.HTTP.Types -- hiding (urlDecode)
 import Data.Conduit
 import Data.Conduit.Lazy
 import qualified Data.Conduit.List as CList
 import Data.CaseInsensitive
 import System.Time
-import qualified Data.Text as T
+import qualified Data.Text as T 
 
+
+
+
+--import Debug.Trace
+--(!>) = flip trace
 
 flow=  "flow"
-
 
 instance Processable Request  where
    pwfPath  env=  if Prelude.null sc then [noScript] else Prelude.map T.unpack sc
@@ -62,7 +66,7 @@ instance Processable Request  where
    
    puser env = fromMaybe anonymous $ fmap SB.unpack $ lookup ( mk $SB.pack cookieuser) $ requestHeaders env
                     
-   pind env= fromMaybe (error ": No FlowID") $ fmap SB.unpack $ lookup  (mk $ SB.pack flow) $ requestHeaders env
+   pind env= fromMaybe (error ": No FlowID") $ fmap SB.unpack $ lookup  (mk flow) $ requestHeaders env
    getParams=    mkParams1 . requestHeaders
      where
      mkParams1 = Prelude.map mkParam1
@@ -87,7 +91,7 @@ splitPath str=
 
 waiMessageFlow  ::  Request ->  ResourceT IO Response
 waiMessageFlow req1=   do
-     let httpreq1= getParams  req1 
+     let httpreq1= requestHeaders  req1 
 
      let cookies = getCookies  httpreq1
 
@@ -97,7 +101,7 @@ waiMessageFlow req1=   do
                      fl <- liftIO $ newFlow
                      return (fl,  [(flow,  fl, "/",Nothing):: Cookie])
                      
-{-  for state persistence in cookies 
+{-   for state persistence in cookies 
      putStateCookie req1 cookies
      let retcookies= case getStateCookie req1 of
                                 Nothing -> retcookies1
@@ -105,20 +109,24 @@ waiMessageFlow req1=   do
 -}
 
      input <- case parseMethod $ requestMethod req1  of
-              Right POST -> if  lookup  ("Content-Type") httpreq1 == Just "application/x-www-form-urlencoded"
-                  then do
+              Right POST -> do
                    inp <- liftIO $ runResourceT (requestBody req1 $$ CList.consume)
-                   return .  urlDecode $ concatMap SB.unpack  inp
-                  else return []
+                   return . parseSimpleQuery $ SB.concat inp
+
                   
-              Right GET -> let tail1 s | s==SB.empty =s
-                               tail1 xs= SB.tail xs
-                           in return . urlDecode $  SB.unpack   . tail1 $ rawQueryString req1  --  !> (SB.unpack $ rawQueryString req1)
-              x ->  return []
-              
+                  
+              Right GET ->
+                   let tail1 s | s==SB.empty =s
+                       tail1 xs= SB.tail xs 
+                   in
+                   return . Prelude.map (\(x,y) -> (x,fromMaybe "" y)) $ queryString req1
+
+
+                                        
+               
      let req = case retcookies of
-          [] -> req1{requestHeaders=  mkParams (input ++ cookies) ++ requestHeaders req1}  -- !> "REQ"
-          _  -> req1{requestHeaders=  mkParams ((flow, flowval): input ++ cookies) ++ requestHeaders req1}  --  !> "REQ"
+          [] -> req1{requestHeaders= mkParams (input ++ cookies) ++ requestHeaders req1}  -- !> "REQ"
+          _  -> req1{requestHeaders= mkParams ((flow, flowval): input ++ cookies) ++ requestHeaders req1}  --  !> "REQ"
 
 
      (resp',th) <- liftIO $ msgScheduler req      -- !> (show $ requestHeaders req)

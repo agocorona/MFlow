@@ -3,7 +3,7 @@
 module ShopCart ( shopCart) where
 
 import MFlow.Wai.Blaze.Html.All
-import Menu
+
 import Data.Typeable
 import qualified Data.Vector as V
 import Text.Blaze.Html5 as El
@@ -12,17 +12,22 @@ import Data.Monoid
 import Data.String
 import Data.Typeable
 
+import Menu
+
+-- to run it alone, comment import Menu and uncomment the code below
+--main= runNavigation ""   shopCart--askm= ask
+
 data ShopOptions= IPhone | IPod | IPad deriving (Bounded, Enum, Show,Read , Typeable)
 
-
 newtype Cart= Cart (V.Vector Int) deriving Typeable
+
 emptyCart= Cart $ V.fromList [0,0,0]
 
 shopCart= shopCart1
 
 shopCart1  =  do
      setHeader  stdheader 
-     setTimeouts 200 $ 60*60
+--     setTimeouts 200 $ 60*60   
      prod <-
         step . askm $ do
              Cart cart <- getSessionData `onNothing` return  emptyCart
@@ -63,6 +68,3 @@ shopCart1  =  do
          \.The cart state is not stored, Only the history of events is saved. The cart is recreated by running the history of events."
 
      p << "The second parameter of \"setTimeout\" is the time during which the cart is recorded"
-
--- to run it alone:
---main= runNavigation ""   shopCart

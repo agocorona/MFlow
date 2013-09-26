@@ -6,7 +6,7 @@ import Data.List
 
 autocomplete1= do
    r <- askm  $   p <<  "Autocomplete "
-            ++> p <<  "when su press submit, the box value  is returned"
+            ++> p <<  "when submit is pressed, the box value  is returned"
             ++> wautocomplete Nothing filter1 <! hint "red,green or blue"
             <** submitButton "submit"
    askm  $ p << ( show r ++ " selected")  ++> wlink () (p <<  " menu")

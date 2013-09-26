@@ -11,7 +11,7 @@ import Data.Typeable
 import Data.Monoid
 import System.IO.Unsafe
 import Data.Map as M
---import Data.CaseInsensitive
+import Data.CaseInsensitive
 import Network.HTTP.Types
 import Control.Workflow(WFErrors(..))
 import Data.String
@@ -36,9 +36,9 @@ instance Monoid TResp where
               Nothing -> error $ "fragment of type " ++ show ( typeOf  y)  ++ " after fragment of type " ++ show ( typeOf x)
 
 
-contentHtml1= [mkparam contentHtml] -- [(mk $ SB.pack "Content-Type", SB.pack  "text/html")]
 mkParams = Prelude.map mkparam
-mkparam (x,y)= (fromString  x, fromString y)
+mkparam (x,y)= (mk  x, y)
+
 instance ToResponse TResp where
   toResponse (TResp x)= toResponse x
   toResponse (TRespR r)= toResponse r
@@ -47,13 +47,13 @@ instance ToResponse Response where
       toResponse = id
 
 instance ToResponse B.ByteString  where
-      toResponse x= responseLBS status200 contentHtml1 {-,("Content-Length",show $ B.length x) -} x
+      toResponse x= responseLBS status200 [mkparam contentHtml]  x
 
 instance ToResponse String  where
-      toResponse x= responseLBS status200 contentHtml1 {-,("Content-Length",show $ B.length x) -} $ B.pack x
+      toResponse x= responseLBS status200 [mkparam contentHtml]  $ B.pack x
 
 instance  ToResponse HttpData  where
-  toResponse (HttpData hs cookies x)= responseLBS status200 (mkParams ( hs ++ cookieHeaders cookies)) x
+  toResponse (HttpData hs cookies x)= responseLBS status200 (mkParams ( hs <> cookieHeaders cookies)) x
   toResponse (Error str)=  responseLBS status404 [("Content-Type", "text/html")] str
 
 --  toResponse $ error "FATAL ERROR: HttpData errors should not reach here: MFlow.Forms.Response.hs "

@@ -28,7 +28,7 @@ pushDecrease= do
  counter tv = push Html 0 $ do
       setTimeouts 2 0     -- kill  the thread when count finish
       n <- atomic $ readTVar tv
-      if (n== -1)
+      if (n== 0)
         then  do
           script << "window.location='/'" ++> noWidget
         else do
