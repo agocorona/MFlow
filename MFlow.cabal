@@ -119,8 +119,8 @@ executable demos-blaze.Loc
                    stm -any, text -any, transformers -any, vector -any, hamlet -any,
                    monadloc -any, aws -any, network -any, hscolour -any,
                    persistent-template, persistent-sqlite, persistent,
-                   conduit, http-conduit, monad-logger,
-                   tcache-persistent
+                   conduit, http-conduit, monad-logger
+--                   ,tcache-persistent
 
     main-is: demos-blaze.Loc.hs
     buildable: True
