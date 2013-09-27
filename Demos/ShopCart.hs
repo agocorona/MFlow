@@ -15,7 +15,8 @@ import Data.Typeable
 import Menu
 
 -- to run it alone, comment import Menu and uncomment the code below
---main= runNavigation ""   shopCart--askm= ask
+--main= runNavigation ""   shopCart
+--askm= ask
 
 data ShopOptions= IPhone | IPod | IPad deriving (Bounded, Enum, Show,Read , Typeable)
 

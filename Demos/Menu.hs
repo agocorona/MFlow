@@ -166,7 +166,7 @@ mainMenu= wcached "menu" 0 $
                  <> article gridl)
 
    <|>  (li <<< wlink TextEdit     << b "Content Management"
-                 <++ b " Example of the (basic) content management primitives defined in MFlow.Forms.Widgets")
+                 <++ b " Example of content management primitives defined in MFlow.Forms.Widgets")
 
    <|>  br ++>  br ++> b "OTHERS"
 
@@ -204,9 +204,9 @@ widgetAndSource filename w = do
       source <- getSource filename
       El.div <<< tFieldEd edadmin (filename ++ "top") "top text"
              **> tFieldEd edadmin (filename ++ "bottom") "botom text"
---             **> h1 "Running example"
---             ++> "(in the ligth red box):"
-             **> (divsample <<< w)
+             **> h1 "Running example"
+             ++> "(in the ligth red box):"
+             ++> (divsample <<< w)
 
 
              <++ do -- Blaze-html monad
