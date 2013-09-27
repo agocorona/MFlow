@@ -412,7 +412,7 @@ instance Indexable TField where
 instance Serializable TField where
     serialize= B.pack . show
     deserialize= read . B.unpack
-    setPersist _ = Just filePersist
+--    setPersist = const $  Just filePersist
 
 writetField k s= atomically $ writeDBRef (getDBRef k) $ TField k $ toByteString s
 
