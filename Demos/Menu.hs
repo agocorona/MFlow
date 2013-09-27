@@ -203,9 +203,9 @@ widgetAndSource filename w = do
       source <- getSource filename
       El.div <<< h1 "Running example"
              ++> "(in the ligth red box):"
-             ++> (divsample <<< w)
-             <** tFieldEd edadmin (filename ++ "top") "top text"
-             <** tFieldEd edadmin (filename ++ "bottom") "botom text"
+             ++> tFieldEd edadmin (filename ++ "top") "top text"
+             **> tFieldEd edadmin (filename ++ "bottom") "botom text"
+             **>(divsample <<< w)
 
 
              <++  do -- Blaze-html monad
