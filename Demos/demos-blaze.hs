@@ -51,7 +51,7 @@ import Debug.Trace
 
 
 main= do
---   setAmazonSDBPersist "mflowdemo" -- for the Database example
+   setAmazonSDBPersist "mflowdemo"     -- for the Database example
    index idnumber                      -- for the Database example
    setAdminUser adminname adminname
 --   userRegister edadmin edadmin

@@ -199,16 +199,17 @@ preventbackl= "http://haskell-web.blogspot.com.es/2013/04/controlling-backtracki
 ajaxl= "http://hackage.haskell.org/packages/archive/MFlow/0.3.1.0/doc/html/MFlow-Forms.html#g:17"
 menuarticle= "http://haskell-web.blogspot.com.es/2013/08/how-to-handle-menus-and-other.html"
 
+
 widgetAndSource filename w = do
       source <- getSource filename
-      El.div <<< h1 "Running example"
-             ++> "(in the ligth red box):"
-             ++> tFieldEd edadmin (filename ++ "top") "top text"
+      El.div <<< tFieldEd edadmin (filename ++ "top") "top text"
              **> tFieldEd edadmin (filename ++ "bottom") "botom text"
-             **>(divsample <<< w)
+--             **> h1 "Running example"
+--             ++> "(in the ligth red box):"
+             **> (divsample <<< w)
 
 
-             <++  do -- Blaze-html monad
+             <++ do -- Blaze-html monad
                   br
                   hr
                   h1 $ "Source code:"
