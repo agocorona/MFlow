@@ -80,8 +80,7 @@ import Debug.Trace
 {-# LINE 53 "INPUT" #-}
 main
   = Control.Monad.Loc.withLoc "main, Main(INPUT): (53, 7)"
-      (do Control.Monad.Loc.withLoc "main, Main(INPUT): (54, 4)" (setAmazonSDBPersist "mflowdemo")
-          Control.Monad.Loc.withLoc "main, Main(INPUT): (55, 4)" (index idnumber)
+      (do Control.Monad.Loc.withLoc "main, Main(INPUT): (55, 4)" (index idnumber)
           Control.Monad.Loc.withLoc "main, Main(INPUT): (56, 4)" (setAdminUser adminname adminname)
           Control.Monad.Loc.withLoc "main, Main(INPUT): (58, 4)" (syncWrite $ Asyncronous 120 defaultCheck 1000)
           Control.Monad.Loc.withLoc "main, Main(INPUT): (60, 4)" (setFilesPath "Demos/")
