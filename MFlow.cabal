@@ -120,7 +120,7 @@ executable demos-blaze.Loc
                    monadloc -any, aws -any, network -any, hscolour -any,
                    persistent-template, persistent-sqlite, persistent,
                    conduit, http-conduit, monad-logger
---                   ,tcache-persistent
+
 
     main-is: demos-blaze.Loc.hs
     buildable: True
