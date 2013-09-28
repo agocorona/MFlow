@@ -62,10 +62,10 @@ main= do
        setHeader $ stdheader 
        setTimeouts 400 $ 60 * 60
 
-       r <- step . ask $   tFieldEd edadmin "head" "set Header" <++ hr
+       r <- step . ask $   tField "head" -- tFieldEd edadmin "head" "set Header" <++ hr
                        **> (divmenu  <<< br ++>  mainMenu) 
                        <** (El.div ! At.style "float:right;width:65%;overflow:auto;"
-                       <<< tFieldEd edadmin "intro" "enter intro text")
+                            <<< tFieldEd edadmin "intro" "enter intro text")
 
        case r of
              CountI    ->     step  (clickn 0)           `showSource`  "IncreaseInt.hs"

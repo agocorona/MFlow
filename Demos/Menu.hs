@@ -202,13 +202,11 @@ menuarticle= "http://haskell-web.blogspot.com.es/2013/08/how-to-handle-menus-and
 
 widgetAndSource filename w = do
       source <- getSource filename
-      El.div <<< tFieldEd edadmin (filename ++ "top") "top text"
-             **> tFieldEd edadmin (filename ++ "bottom") "botom text"
+      El.div <<<  tFieldEd edadmin (filename ++ "top") "top text"
              **> h1 "Running example"
              ++> "(in the ligth red box):"
              ++> (divsample <<< w)
-
-
+--             <** tField edadmin (filename ++ "bottom") "botom text"
              <++ do -- Blaze-html monad
                   br
                   hr

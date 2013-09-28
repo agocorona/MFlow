@@ -33,7 +33,7 @@ textEdit= do
     
     askm  $   p <<  "Please login with edituser/edituser to edit it"
         ++> userWidget (Just editUser) userLogin
-      
+     
     askm  $   p <<  "Now you can click the fields and edit them"
         ++> p << b <<  "to save an edited field, press the save icon in the left"
         ++> tFieldEd editUser "first"  first
