@@ -32,7 +32,7 @@ delEdited, getEdited
 ,prependWidget,appendWidget,setWidget
 
 -- * Content Management
-,tField, tFieldEd, htmlEdit
+,tField, tFieldEd, htmlEdit, wedit
 
 -- * Multilanguage
 ,mFieldEd, mField
@@ -412,10 +412,9 @@ instance Indexable TField where
 instance Serializable TField where
     serialize= B.pack . show
     deserialize= read . B.unpack
---    setPersist = const $  Just filePersist
+    setPersist = const $  Just filePersist
 
 writetField k s= atomically $ writeDBRef (getDBRef k) $ TField k $ toByteString s
-
 
 readtField text k= atomically $ do
    let ref = getDBRef k
@@ -468,12 +467,12 @@ tFieldEd  muser k text= wfreeze k 0 $  do
    nam     <- genNewId
    let ipanel= nam++"panel"
        name= nam++"-"++k
-       install= "installEditField('"++muser++"','"++cookieuser++"','"++name++"','"++ipanel++"');\n"
+       install= "\ninstallEditField('"++muser++"','"++cookieuser++"','"++name++"','"++ipanel++"');\n"
        getTexts :: (Token -> IO ())
-       getTexts token= do
+       getTexts token = do
          let (k,s):_ = tenv token
          liftIO $ do
-           writetField k  $ (fromStrNoEncode s `asTypeOf` content)
+           writetField k  $ (fromStrNoEncode s `asTypeOf` text)
            flushCached k
            sendFlush token $ HttpData [] [] ""
            return()
@@ -487,37 +486,88 @@ tFieldEd  muser k text= wfreeze k 0 $  do
    (ftag "div" mempty `attrs` [("id",ipanel)]) ++>
     wraw (ftag "span" content `attrs` [("id", name)])
 
-   where
 
-   installEditField=
+
+installEditField=
           "\nfunction installEditField(muser,cookieuser,name,ipanel){\n\
             \if(muser== '' || document.cookie.search(cookieuser+'='+muser) != -1)\n\
                  \ bkLib.onDomLoaded(function() {\n\
                  \   var myNicEditor = new nicEditor({fullPanel : true, onSave : function(content, id, instance) {\
                  \        ajaxSendText(id,content);\n\
+                 \        myNicEditor.removeInstance(name);\n\
+                 \        myNicEditor.removePanel(ipanel);\n\
                  \      }});\n\
                  \   myNicEditor.addInstance(name);\n\
                  \   myNicEditor.setPanel(ipanel);\n\
                  \})};\n"
 
-   ajaxSendText = "\nfunction ajaxSendText(id,content){\n\
+ajaxSendText = "\nfunction ajaxSendText(id,content){\n\
         \var arr= id.split('-');\n\
         \var k= arr[1];\n\
         \$.ajax({\n\
         \       type: 'POST',\n\
         \       url: '/_texts',\n\
         \       data: k + '='+ encodeURIComponent(content),\n\
-        \       success: function (resp) {},\n\
+        \       success: function (resp) {alert ('saved');},\n\
         \       error: function (xhr, status, error) {\n\
         \                var msg = $('<div>' + xhr + '</div>');\n\
         \                id1.html(msg);\n\
         \       }\n\
         \   });\n\
-        \alert ('saved');\n\
         \return false;\n\
         \};\n"
 
+wedit
+  :: (FormInput v, Typeable a) =>
+      UserStr -> Key -> View v Identity a -> View v IO a
+wedit muser k w=  View $ do
+   nam     <- genNewId
 
+   let ipanel= nam++"panel"
+       name= nam++"-"++k
+       install= "\ninstallEditField('"++muser++"','"++cookieuser++"','"++name++"','"++ipanel++"');\n"
+
+       w'=  do
+           requires [JScriptFile nicEditUrl [install]
+                    ,JScript     ajaxSendText
+                    ,JScript     installEditField
+                    ,JScriptFile jqueryScript []
+                    ,ServerProc  ("_texts",  transient getTexts)]
+           w
+
+   FormElm text mx <- runView $ changeMonad w' -- $ wcached k 0 w'
+   content <- liftIO $ readtField (mconcat text) k
+
+   return $FormElm [ftag "div" mempty `attrs` [("id",ipanel)]
+                   ,ftag "span" content `attrs` [("id", name)]]
+                    mx
+
+   where
+   getTexts :: (Token -> IO ())
+   getTexts token= do
+     let (k,s):_ = tenv token
+     liftIO $ do
+       writetField k  $ (fromStrNoEncode s `asTypeOf` viewFormat w)
+       flushCached k
+       sendFlush token $ HttpData [] [] ""
+       return()
+
+   viewFormat :: View v m a -> v
+   viewFormat= undefined -- is a type function
+
+--togglebutton=
+--    "var nicExampleOptions = {\n\
+--    \    buttons : {\n\
+--    \        'example' : {name : 'Some alt text for the button'\n\
+--    \                    , type : 'nicEditorExampleButton'}\n\
+--    \    }/* NICEDIT_REMOVE_START */,iconFiles : {'example' : 'http://wiki.nicedit.com/f/save.gif'}/*NICEDIT_REMOVE_END */\n\
+--    \};\n\
+--    \var nicEditorExampleButton = nicEditorButton.extend({\n\
+--    \  mouseClick : function() {\n\
+--    \    alert('The example save button icon has been clicked!');\n\
+--    \  }\n\
+--    \});\n\
+--    \nicEditors.registerPlugin(nicPlugin,nicExampleOptions);"
 
 -- | Read the cached field value and present it without edition.
 tField :: (MonadIO m,Functor m, Executable m

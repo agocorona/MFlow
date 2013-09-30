@@ -206,7 +206,7 @@ widgetAndSource filename w = do
              **> h1 "Running example"
              ++> "(in the ligth red box):"
              ++> (divsample <<< w)
---             <** tField edadmin (filename ++ "bottom") "botom text"
+--             <** tFieldEd edadmin (filename ++ "bottom") "botom text"
              <++ do -- Blaze-html monad
                   br
                   hr

@@ -1,37 +1,19 @@
 -- | example of storage and query by using tcache
-{-# OPTIONS -XDeriveDataTypeable -F -pgmF MonadLoc   #-}
+{-# OPTIONS -XDeriveDataTypeable  #-}
 module Main where
-import Data.TCache
 import Data.TCache.DefaultPersistence
 import Data.TCache.IndexQuery
 import MFlow.Wai.Blaze.Html.All hiding(name, select, base)
 import Data.Typeable
 
-
-
---import Data.Serialize
---import Data.SafeCopy
 import Data.ByteString.Lazy.Char8 as BS hiding (index)
 
 
-import Control.Monad.CatchIO as CMT
 import Control.Exception(SomeException)
 
 data  MyData= MyData{name :: String} deriving (Typeable, Read, Show)  -- that is enough for file persistence
 
---instance SafeCopy MyData where
---   putCopy (MyData name)= contain $ safePut name
---   getCopy = contain $ MyData <$> safeGet
---   version = 1
---   kind = base
---
---
---instance Serializable MyData where
---   serialize= strictB2Lazy . runPut . migrate. putCopy
---   deserialize = runGet getCopy . lazyB2Strict
---
---lazyB2Strict= BS.concat . BS.toChunks
---strictB2Lazy= BS.fromChunks . []
+
 
 instance Indexable MyData where  key=  name     -- just to notify what is the key of the register
 
@@ -44,23 +26,27 @@ main= do
     --  algorithm
     --  At most 1000 objects (1000 names) will be cached simultaneously (although there will be
     --  more stored)
-    addMessageFlows[("", transient $ runFlow mainFlow)]
-    wait $ run 80 waiMessageFlow
+    runNavigation "" $ step  mainFlow
+
 
 
 data Options= NewName | ListNames deriving (Show, Typeable)
 
 
 mainFlow= do
-     r <- ask $   do
-              p << "menu"
-               ++> wlink NewName   << p << "enter a new name"
-               <|> wlink ListNames << p <<  "List names"
+     r <- ask $ wedit "edit" "key"
+              $ p << "menu"
+            ++> wlink NewName   << p << "enter a new name"
+            <|> wlink ListNames << p <<  "List names"
 
 
      case r of
          NewName -> do
-              name <- ask $ p << "what is your name?" ++> getString Nothing
+              name <- ask $ wedit "edit" "key3"
+                          $ p << "what is your name?"
+                        ++> getString Nothing
+                        <** submitButton "ok"
+                        
               liftIO . atomically . newDBRef $ MyData name   -- store the name in the cache (later will be written to disk automatically)
               return()
 

@@ -27,6 +27,7 @@ import Data.Maybe
 import System.IO.Unsafe
 import Control.Exception
 
+
 import Menu
 
 -- to run it alone,  remove Menu.hs and uncomment this:
@@ -34,10 +35,10 @@ import Menu
 --askm= ask
 --
 --main= do
-----  cfg <- baseConfiguration
-----  setIndexPersist $ amazonS3Persist cfg "testmflowdemo"
+--  cfg <- baseConfiguration
+----  setIndexPersist $ amazonSDBPersist cfg "testmflowdemo"
 ----  setAmazonSDBPersist "testmflowdemo"
-----  setAmazonS3Persist "testmflowdemo"
+--  setAmazonS3Persist "testmflowdemo"
 --
 --  syncWrite  $ Asyncronous 120 defaultCheck  1000
 --  index idnumber
@@ -72,7 +73,7 @@ database= do
 
      listtexts all  =  do
            h3 "list of all texts"
-           ++> mconcat[p $ preEscapedToHtml t | t <- all]
+           ++> mconcat[p $ preEscapedToHtml t >> hr | t <- all]
            ++> menu
            <++ b "or press the back button or enter the  URL any other page in the web site"
 
@@ -126,10 +127,10 @@ amazonS3Persist cfg  bucket= Persist{
                           Aws.pureAws cfg s3cfg mgr
                             $ getObject
                               bucket
-                              (fromString key) -- !> "READ"
-               if omDeleteMarker hdr -- !> (show o)
-                then return Nothing
-                else fmap Just $ responseBody rsp $$+- CList.consume
+                              (fromString key)  -- !> key
+               if omDeleteMarker hdr
+                then return Nothing  -- !> "nothing"
+                else fmap Just $ responseBody rsp $$+- CList.consume  -- !> "just"
      return $ fmap fromChunks mr)
     `Control.Exception.catch` (\(e :: SomeException) -> return Nothing),
    write = \key str -> do
