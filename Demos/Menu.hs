@@ -60,19 +60,21 @@ data Options= CountI | CountS | Radio
             | FViewMonad | Counter | WDialog |Push |PushDec |Trace | RESTNav
             | Database | MFlowPersist
             | DatabaseSamples |PushSamples | ErrorTraces | Flows
-            | BasicWidgets | MonadicWidgets | DynamicWidgets | Others 
+            | BasicWidgets | MonadicWidgets | DynamicWidgets | LoginLogout
+            | Templates | RuntimeTemplates
             deriving (Bounded, Enum,Read, Show,Typeable)
 
 absLink ref = wcached (show ref) 0 . wlink ref
 
-noAutoRefresh= [("class","_noAutoRefresh")]
+
 mainMenu :: View Html IO Options
 mainMenu= autoRefresh $
   ul<<<(  li << b "About this menu" ++> article menuarticle
    ++> br
    ++> br
    ++> (li <<<  do
-          absLink DatabaseSamples << b  "Database Samples"
+          absLink DatabaseSamples << b  "Database examples"
+             <++ " with different backends"
           ul <<<
            (li <<< (absLink MFlowPersist <<  b "Persistent")  <! noAutoRefresh
                      <++ b " illustrates the use of MFlow with "
@@ -86,6 +88,7 @@ mainMenu= autoRefresh $
                      <> article amazonarticle))
    <|> (li <<<  do
           absLink PushSamples << b  "Push Samples"
+             <++ " using long polling"
           ul <<<
            (li <<< (absLink Push << b  "Push example") <! noAutoRefresh
                      <++ b " A push widget in append mode receives input from \
@@ -144,31 +147,33 @@ mainMenu= autoRefresh $
 
   <|> (li <<< do
           absLink MonadicWidgets << b  "Monadic widgets, actions and callbacks"
+             <++ " autoRefresh, page flows, dialogs etc"
           ul <<<                   
             (li <<< (absLink Action      << b  "Example of action, executed when a widget is validated") <! noAutoRefresh
 
-            <|> (li <<< absLink FViewMonad   << b  "in page flow: sum of three numbers") <! noAutoRefresh
+            <|> li <<< (absLink FViewMonad   << b  "in page flow: sum of three numbers") <! noAutoRefresh
                  <++ b " Page flows are monadic widgets that modifies themselves in the page"
                  <> article pageflow
 
-            <|> (li <<< absLink Counter      << b  "Counter")  <! noAutoRefresh
+            <|> li <<< (absLink Counter      << b  "Counter")  <! noAutoRefresh
                  <++ b " A page flow which increases a counter by using a callback"
                  <> article callbacks
 
-            <|> (li <<< absLink Multicounter << b  "Multicounter")  <! noAutoRefresh
+            <|> li <<< (absLink Multicounter << b  "Multicounter")  <! noAutoRefresh
                  <++ b " Page flow with many independent counters with autoRefresh, so they modify themselves in-place"
                  <> article callbacks
 
-            <|> (li <<< absLink Combination  << b  "Combination of three dynamic widgets") <! noAutoRefresh
+            <|> li <<< (absLink Combination  << b  "Combination of three dynamic widgets") <! noAutoRefresh
                  <++ b " Combination of autoRefreshe'd widgets in the same page, with\
                           \ different behaviours"
                  <> article combinationl
 
-            <|> (li <<< absLink WDialog      << b  "Modal dialog")   <! noAutoRefresh
+            <|> li <<< (absLink WDialog      << b  "Modal dialog")   <! noAutoRefresh
                  <++ b " A modal Dialog box with a form within a page flow"))          
 
    <|> (li <<< do
           absLink DynamicWidgets << b "Dynamic Widgets"
+             <++ " Widgets with Ajax and containers of other widgets"
           ul <<<
            (li <<< (absLink Ajax         << b  "AJAX example")  <! noAutoRefresh
                  <++ b " A onclick event in a text box invokes a server procedure that \
@@ -191,13 +196,18 @@ mainMenu= autoRefresh $
            <|> li <<< (absLink Grid         << b  "grid")    <! noAutoRefresh
                  <++ b " Example of the same widget In this case, containing a row of two fields,\
                  \ aranged in a table"
-                 <> article gridl
-
+                 <> article gridl))
+   <|> (li <<< do
+          absLink Templates << b "Runtime templates"
+             <++ " Templates and content management modifiable at runtime"
+          ul <<<
+           (li <<<(absLink RuntimeTemplates  << b "Runtime templates") <! noAutoRefresh
+                 <++ b " Example of form templates and result templates modified at runtime"
            <|> li <<< (absLink TextEdit     << b  "Content Management")  <! noAutoRefresh
                  <++ b " Example of content management primitives defined in MFlow.Forms.Widgets"))
 
    <|> (li <<< do
-          absLink Others << b "Others"
+          absLink LoginLogout << b "Login/logout"
           ul <<<
            (li <<< (absLink Login        << b  "login/logout")   <! noAutoRefresh
                  <++ b " Example of using the login and/or logout")))

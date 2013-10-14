@@ -551,7 +551,8 @@ ajaxSendText = "\nfunction ajaxSendText(id,content){\n\
         \};\n"
 
 -- | a text field. Read the cached  field value and present it without edition.
-tField :: (MonadIO m,Functor m, Executable m, FormInput v)
+tField :: (MonadIO m,Functor m, Executable m
+       ,  FormInput v)
        => Key
        -> View v m ()
 tField k = wfreeze k 0 $ do
@@ -581,10 +582,10 @@ edTemplate muser k w=  View $ do
 
 
    requires [JScriptFile nicEditUrl [install]
-            ,JScript     ajaxSendText
-            ,JScript     installEditField
-            ,JScriptFile jqueryScript []
-            ,ServerProc  ("_texts",  transient getTexts)]
+                    ,JScript     ajaxSendText
+                    ,JScript     installEditField
+                    ,JScriptFile jqueryScript []
+                    ,ServerProc  ("_texts",  transient getTexts)]
 
    FormElm text mx <- runView  $ wcached k 0  w
    content <- liftIO $ readtField (mconcat text) k
@@ -621,7 +622,7 @@ edTemplateList
   :: (Typeable a,FormInput view) =>
      UserStr -> String  -> [View view Identity a] -> View view IO a
 edTemplateList user templ  ws=  do
-  let  id = templ
+  id <- genNewId
   let wrapid=  "wrapper-" ++ id
   text <- liftIO $ readtField  (ftag "div" mempty `attrs` [("id",wrapid)])  wrapid
   let   vwrtext= B.unpack $ toByteString (text `asTypeOf` witness ws)
@@ -646,7 +647,7 @@ edTemplateList user templ  ws=  do
 --              ,"replacewrap('"++ wrapid ++ "','" ++ vwrtext ++ "')",
               insert
               ,"$(document).ready(function() {\
-               \insert('" ++ id ++ "',"++ show (map ( B.unpack . toByteString) vs) ++");\n\
+               \insert('"++id++"',"++ show (map ( B.unpack . toByteString) vs) ++");\n\
                \});"]]
 
     let res = filter isJust $ map (\(FormElm _ r) -> r) forms
@@ -661,25 +662,25 @@ edTemplateList user templ  ws=  do
       \})};\n"
 
 --  wrapperEd :: (FormInput view) => String -> view -> View view IO ()
---  wrapperEd  wrapid  wrtext = do -- autoRefresh . pageFlow "wrap" $ do
+  wrapperEd  wrapid  wrtext = do -- autoRefresh . pageFlow "wrap" $ do
 --        vwrtext <- liftIO $ readtField  (ftag "div" mempty `attrs` [("id",wrapid)])  wrapid
 --        let wrtext= B.unpack $ toByteString (vwrtext `asTypeOf` witness)
---        nwrtext<- getString  (Just wrtext)
---                          <! [("id", wrapid++"-ed")]
---                   <** submitButton "OK"
---
---        liftIO $ writetField wrapid (fromStr nwrtext `asTypeOf` witness ws) !> nwrtext
+        nwrtext<- getString  (Just wrtext)
+                          <! [("id", wrapid++"-ed")]
+                   <** submitButton "OK"
+
+        liftIO $ writetField wrapid (fromStr nwrtext `asTypeOf` witness ws) !> nwrtext
 
 
---  replacewrap = "\nfunction replacewrap(id,wrapcode){\n\
---          \   var selector= '#'+id;\n\
---          \   var children = $(selector).children();\n\
---          \   var nchildren;\n\
---          \   $(selector).replaceWith(wrapcode);\n\
---          \   $(selector).html(children);\n\
---          \   if(wrapcode.search('table') != -1)\n\
---          \        $(children[1].children).wrap('<tr><td></td></tr>')\n\
---          \};\n"
+  replacewrap = "\nfunction replacewrap(id,wrapcode){\n\
+          \   var selector= '#'+id;\n\
+          \   var children = $(selector).children();\n\
+          \   var nchildren;\n\
+          \   $(selector).replaceWith(wrapcode);\n\
+          \   $(selector).html(children);\n\
+          \   if(wrapcode.search('table') != -1)\n\
+          \        $(children[1].children).wrap('<tr><td></td></tr>')\n\
+          \};\n"
 
 --          \   if(wrapcode.search('xx') != -1){\n\
 --          \        children.each(function(n,it){\n\
@@ -786,8 +787,6 @@ autoRefresh w=  update "html" w
 -- when @option A@ is clicked, the two sub-options appear with autorefresh. Only the two
 -- lines are returned by the server using AJAX. but when Option A1-2 is pressed we want to
 -- present other pages, so we add the noAutorefresh attribute.
---
--- NOTE: the noAutoRefresh attribute should be added to the <a/> or <form/> tags.
 noAutoRefresh= [("class","_noAutoRefresh")]
 
 -- | does the same than autoRefresh but append the result of each request to the bottom of the widget

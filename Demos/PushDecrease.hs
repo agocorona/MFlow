@@ -8,7 +8,7 @@ import Text.Hamlet
 import Control.Concurrent
 
 import Menu
--- to run it alone comment import menu and uncomment:
+-- to run it alone, comment "import menu" and uncomment:
 --main= runNavigation "" $ transientNav pushDecrease
 
 
@@ -30,9 +30,9 @@ pushDecrease= do
 
  where
  counter tv = push Html 0 $ do
-      setTimeouts 2 0     -- kill  the thread when count finish
+      setTimeouts 2 0     -- kill  the thread after 2 s of incactivity, when count finish
       n <- atomic $ readTVar tv
-      if (n== 0)
+      if (n== -1)
         then  do
           script << "window.location='/'" ++> noWidget
         else do

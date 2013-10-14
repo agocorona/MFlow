@@ -41,6 +41,7 @@ import SumView
 import MCounter
 import Database
 import MFlowPersistent
+import RuntimeTemplates
 
 import Debug.Trace
 
@@ -96,6 +97,7 @@ main= do
              ShopCart    ->   shopCart                   `showSource` "ShopCart.hs"
              MCounter    ->   mcounter                   `showSource` "MCounter.hs"
              MFlowPersist ->  step mFlowPersistent       `showSource` "MFlowPersistent.hs"
+             RuntimeTemplates -> step runtimeTemplates  `showSource` "RuntimeTemplates.hs"
 
 
 

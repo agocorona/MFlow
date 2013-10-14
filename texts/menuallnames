@@ -1,1 +1,1 @@
-TField "menuallnames" "<h1>MENU\n</h1><a href=\"/noscript/newname\"><p>Enter a new name</p></a><a href=\"/noscript/listnames\"><p>List names</p></a><hr>Other options<a href=\"/noscript/login\"><p>login</p></a>"
+TField "menuallnames" "<h2>Menu</h2><p><a href=\"/noscript/newname\">enter a new name</a></p><p><a href=\"/noscript/listnames\">List names</a></p><p><br></p><h3>Other options</h3>\n<hr>\n<p><a href=\"http://localhost/noscript/loginlogout/login\" title=\"\" target=\"\">login</a></p>"
