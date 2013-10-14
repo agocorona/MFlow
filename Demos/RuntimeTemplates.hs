@@ -35,7 +35,7 @@ runtimeTemplates= do
 
      case r of
          NewName -> do
-              name <- pagem  $ edTemplate "user" "enterallnames"
+              name <- pagem  $ edTemplate "edituser" "enterallnames"
                           $ getString Nothing
                         <** submitButton "ok"
 
@@ -45,7 +45,8 @@ runtimeTemplates= do
          ListNames -> do
               -- query for all the names stored in all the registers
               allnames <- liftIO . atomically $ select name $ name .>.  ""
-              pagem $ edTemplateList "edituser"  "listNames"
+              pagem $   tFieldEd "edituser" "headerListNames" (p << "header")
+                    **> edTemplateList "edituser"  "listNames"
                         [wraw . p $ fromStr name | name <- allnames]
                     **> wlink () << p << "click here to go to the menu"
 
