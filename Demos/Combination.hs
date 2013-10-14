@@ -11,7 +11,7 @@ combination =  askm  $ do
      p << "Three active widgets in the same page with autoRefresh. Each widget refresh itself \
           \with Ajax. If Ajax is not active, they will refresh by sending a new page."
      ++> hr
-     ++> p << "Login widget (use admin/admin)" ++> autoRefresh (pageFlow "r" wlogin)  <++ hr
+     ++> p << "Login widget (use admin/admin)" ++> autoRefresh (pageFlow "r" wlogin1)  <++ hr
      **> p << "Counter widget" ++> autoRefresh (pageFlow "c" (counterWidget 0))  <++ hr
      **> p << "Dynamic form widget" ++> autoRefresh (pageFlow "f" formWidget) <++ hr
      **> wlink () << b << "exit"
@@ -60,8 +60,8 @@ radiob s n= wlabel (text s) $ setRadio s n <! onClickSubmit
 -- If logged, it present the user name and a link to logout
 --
 -- normally to be used with autoRefresh and pageFlow when used with other widgets.
-wlogin :: View Html IO ()
-wlogin=  do
+wlogin1 :: View Html IO ()
+wlogin1 =  do
    username <- getCurrentUser
    if username /= anonymous
          then return username

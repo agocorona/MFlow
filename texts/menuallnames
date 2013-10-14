@@ -1,0 +1,1 @@
+TField "menuallnames" "<h1>MENU\n</h1><a href=\"/noscript/newname\"><p>Enter a new name</p></a><a href=\"/noscript/listnames\"><p>List names</p></a><hr>Other options<a href=\"/noscript/login\"><p>login</p></a>"

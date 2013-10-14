@@ -1,1 +1,1 @@
-TField "IncreaseInt.hstop" (Chunk "<h1>An Integer in a text box is incremented in a loop</h1>" Empty)
+TField "IncreaseInt.hstop" "<h1>An Integer in a text box is incremented in a loop</h1>"

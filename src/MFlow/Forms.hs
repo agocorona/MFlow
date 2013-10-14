@@ -289,6 +289,7 @@ import MFlow.Forms.Internals
 import MFlow.Cookies
 import Data.ByteString.Lazy.Char8 as B(ByteString,cons,pack,unpack,append,empty,fromChunks)
 import qualified Data.Text as T
+import Data.Text.Encoding
 import Data.List
 --import qualified Data.CaseInsensitive as CI
 import Data.Typeable
@@ -579,16 +580,16 @@ getParam look type1 mvalue = View $ do
 -- | Display a multiline text box and return its content
 getMultilineText :: (FormInput view
                  ,  Monad m)
-                 => String
+                   => T.Text
                  ->  View view m T.Text
 getMultilineText nvalue = View $ do
     tolook <- genNewId
     env <- gets mfEnv
     r <- getParam1 tolook env
     case r of
-       Validated x        -> return $ FormElm [ftextarea tolook  (show x) ] $ Just x
-       NotValidated s err -> return $ FormElm [ftextarea tolook  s ]  Nothing
-       NoParam            -> return $ FormElm [ftextarea tolook  nvalue ]  Nothing
+       Validated x        -> return $ FormElm [ftextarea tolook  x] $ Just x
+       NotValidated s err -> return $ FormElm [ftextarea tolook  (T.pack s)]  Nothing
+       NoParam            -> return $ FormElm [ftextarea tolook  nvalue]  Nothing
 
       
 --instance  (MonadIO m, Functor m, FormInput view) => FormLet Bool m view where
@@ -1559,7 +1560,7 @@ instance FormInput  ByteString  where
     inred = btag "b" [("style", "color:red")]
     finput n t v f c= btag "input"  ([("type", t) ,("name", n),("value",  v)] ++ if f then [("checked","true")]  else []
                               ++ case c of Just s ->[( "onclick", s)]; _ -> [] ) ""
-    ftextarea name text= btag "textarea"  [("name", name)]   $ pack text
+    ftextarea name text= btag "textarea"  [("name", name)]   $ fromChunks [encodeUtf8 text]
 
     fselect name   options=  btag "select" [("name", name)]   options
 
@@ -1578,11 +1579,10 @@ instance FormInput  ByteString  where
 
 ------ page Flows ----
 
--- | prepares the state for a page flow. A page flow is a dynamic page which changes his rendering by executing
--- a monadic computation with widgets that are validated depending on the user responses.
--- It initiates the creation of a well known sequence of identifiers for the formlets and also
--- keep the state of the previous form submissions within the page.
--- If the computation has branches   @if@ @case@ etc, each branch must have its pageFlow with a distinct identifier
+-- | prepares the state for a page flow.
+-- It add a prefix to every form element or link identifier for the formlets and also
+-- keep the state of the links clicked and form imput entered within the widget.
+-- If the computation within the widget has branches  @if@ @case@ etc, each branch must have its pageFlow with a distinct identifier
 --
 -- See "http://haskell-web.blogspot.com.es/2013/06/the-promising-land-of-monadic-formlets.html"
 pageFlow

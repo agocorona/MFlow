@@ -1,1 +1,1 @@
-TField "key" (Chunk "<p>menu this is the menu</p><a href=\"/noscript/newname\"><p>enter a new name</p></a><p><a href=\"/noscript/listnames\">List names</a>&nbsp; &nbsp;&lt;-list all the names</p>" Empty)
+TField "key" "<a href=\"/noscript/newname\"><p>enter a new name</p></a><a href=\"/noscript/listnames\"><p>List names</p></a><a href=\"/noscript/login\"><p>login</p></a>"

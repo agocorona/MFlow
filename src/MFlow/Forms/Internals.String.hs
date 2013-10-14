@@ -726,7 +726,7 @@ class (Monoid view,Typeable view)   => FormInput view where
     flink1:: String -> view
     flink1 verb = flink verb (fromStr  verb) 
     finput :: Name -> Type -> Value -> Checked -> OnClick -> view 
-    ftextarea :: String -> T.Text -> view
+    ftextarea :: String -> String -> view
     fselect :: String -> view -> view
     foption :: String -> view -> Bool -> view
     foption1 :: String -> Bool -> view

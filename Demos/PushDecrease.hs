@@ -2,10 +2,14 @@
 module PushDecrease ( pushDecrease) where
 
 import MFlow.Wai.Blaze.Html.All
-import Menu
+
 import Control.Concurrent.STM
 import Text.Hamlet
 import Control.Concurrent
+
+import Menu
+-- to run it alone comment import menu and uncomment:
+--main= runNavigation "" $ transientNav pushDecrease
 
 
 atomic= liftIO . atomically
@@ -36,6 +40,4 @@ pushDecrease= do
           liftIO $ threadDelay 1000000
           h1 << (show n) ++> noWidget
 
--- to run it alone:
---main= runNavigation "" $ transientNav pushDecrease
 

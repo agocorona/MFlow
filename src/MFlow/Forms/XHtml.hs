@@ -26,7 +26,7 @@ import MFlow (HttpData(..))
 import MFlow.Forms
 import MFlow.Cookies(contentHtml)
 import Data.ByteString.Lazy.Char8(pack,unpack)
-
+import qualified Data.Text as T
 import Text.XHtml.Strict as X
 import Control.Monad.Trans
 import Data.Typeable
@@ -43,7 +43,7 @@ instance FormInput  Html  where
     inred = X.bold ![X.thestyle "color:red"]
     finput n t v f c= X.input ! ([thetype t ,name  n, value  v] ++ if f then [checked]  else []
                               ++ case c of Just s ->[strAttr "onclick"  s]; _ -> [] )
-    ftextarea name text= X.textarea ! [X.name  name] <<  text
+    ftextarea name text= X.textarea ! [X.name  name] <<  T.unpack text
 
     fselect name list = select ![ X.name  name] << list
     foption  name v msel=  X.option ! ([value  name] ++ selected msel) <<  v

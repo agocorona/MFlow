@@ -1,1 +1,1 @@
-TField "AutoComplete.hstop" (Chunk "<h1>Autocomplete widget</h1><div><br></div>" Empty)
+TField "AutoComplete.hstop" "<h1>Autocomplete widget</h1><div><br></div>"

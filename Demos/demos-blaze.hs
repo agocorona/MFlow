@@ -62,7 +62,8 @@ main= do
        setHeader $ stdheader 
        setTimeouts 400 $ 60 * 60
 
-       r <- step . ask $   tField "head" -- tFieldEd edadmin "head" "set Header" <++ hr
+       r <- step . ask $   tFieldEd edadmin "head" "set Header" <++ hr
+--                       **> topLogin
                        **> (divmenu  <<< br ++>  mainMenu) 
                        <** (El.div ! At.style "float:right;width:65%;overflow:auto;"
                             <<< tFieldEd edadmin "intro" "enter intro text")

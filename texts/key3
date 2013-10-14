@@ -1,1 +1,1 @@
-TField "key3" (Chunk "<p>what is your name?</p><p>This is a question</p><input type=\"text\" name=\"c0\" value=\"\"><input type=\"submit\" name=\"c1\" value=\"ok\">" Empty)
+TField "key3" "<input type=\"text\" name=\"c0\" value=\"\"><input type=\"submit\" name=\"c1\" value=\"ok\">"

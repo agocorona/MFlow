@@ -32,18 +32,21 @@ edadmin= "editor"
 
 -- present the widget w decorated with the main menu on the left and the source code at the bottom
 askm w= ask $ do
-   Filename filename <- getSessionData `onNothing` error "source filename not set"
-   tFieldEd edadmin "head" "set Header"
+    Filename filename <- getSessionData `onNothing` error "source filename not set"
+    tFieldEd edadmin "head" "set Header"
+--       **> topLogin
        <++ hr
        **> (divmenu <<< br ++> retry mainMenu)
        **> (El.div ! At.style "float:right;width:65%;overflow:auto;"
-       <<< widgetAndSource filename w)
+            <<< (insertForm $ widgetAndSource filename w))
   
 divmenu= El.div
      ! At.style ( "background-color:#EEEEEE;float:left\
                  \;width:30%\
                  \;margin-left:10px;margin-right:10px;overflow:auto;")
 
+--topLogin= El.div ! At.style "float:right;top:5px;left:5px"
+--              <<< autoRefresh (pageFlow "login"  wlogin)
 
 
 pagem= askm
@@ -56,129 +59,197 @@ data Options= CountI | CountS | Radio
             | Combination | ShopCart | MCounter
             | FViewMonad | Counter | WDialog |Push |PushDec |Trace | RESTNav
             | Database | MFlowPersist
+            | DatabaseSamples |PushSamples | ErrorTraces | Flows
+            | BasicWidgets | MonadicWidgets | DynamicWidgets | Others 
             deriving (Bounded, Enum,Read, Show,Typeable)
 
+absLink ref = wcached (show ref) 0 . wlink ref
+
+noAutoRefresh= [("class","_noAutoRefresh")]
 mainMenu :: View Html IO Options
-mainMenu= wcached "menu" 0 $
-  ul <<<(
-   li << b "About this menu" ++> article menuarticle
+mainMenu= autoRefresh $
+  ul<<<(  li << b "About this menu" ++> article menuarticle
    ++> br
    ++> br
-   ++> b "DATABASE"
-   ++> (li <<< wlink MFlowPersist << b "Persistent"
+   ++> (li <<<  do
+          absLink DatabaseSamples << b  "Database Samples"
+          ul <<<
+           (li <<< (absLink MFlowPersist <<  b "Persistent")  <! noAutoRefresh
                      <++ b " illustrates the use of MFlow with "
                      <> a  "Persistent" ! href yesodweb
                      <> " (In this example sqlite backend is used) "
-                     <> article persistentarticle)
-   <|> (li <<< wlink Database << b "Database"
-                     <++ b " Create, Store and retrieve lines of text from Amazon SimpleDB storage "
-                     <> article amazonarticle)
-   <|> br 
-   ++> b "PUSH"
-   ++> (li <<< wlink Push << b "Push example"
-                     <++ b " A push widget in append mode receives input from\
+                     <> article persistentarticle
+
+           <|> li <<< (absLink Database << b  "Database") <! noAutoRefresh
+                     <++ b " Create, Store and retrieve lines of text from Amazon SimpleDB \
+                            \ storage "
+                     <> article amazonarticle))
+   <|> (li <<<  do
+          absLink PushSamples << b  "Push Samples"
+          ul <<<
+           (li <<< (absLink Push << b  "Push example") <! noAutoRefresh
+                     <++ b " A push widget in append mode receives input from \
                              \a text box with autorefresh"
-                     <> article pushl)
+                     <> article pushl
                      
-   <|> (li <<< wlink PushDec << b "A push counter"
+           <|>   li <<< (absLink PushDec << b  "A push counter") <! noAutoRefresh
                      <++ b " Show a countdown. Then goes to the main menu"
-                     <> article pushdec)
-   <|> br ++> br
-   ++> b "ERROR TRACES"
-   ++> (li <<< wlink Trace << b " Execution traces for errors"
+                     <> article pushdec))
+   <|> (li <<< do
+
+          absLink ErrorTraces << b  "Error Traces"
+          ul <<<
+            (li <<< (absLink Trace << b  " Execution traces for errors") <! noAutoRefresh
                  <++ b " produces an error and show the complete execution trace"
-                 <> article errorTrace)
-   <|> br ++> br ++>
-   b "DIFFERENT KINDS OF FLOWS"
-               
-   ++> (li <<< wlink RESTNav  << b " REST navigation"
+                 <> article errorTrace))
+                 
+   <|> (li <<< do
+
+          absLink Flows << b  "Different kinds of flows"
+          ul <<< 
+           (li <<< (absLink RESTNav  << b  " REST navigation") <! noAutoRefresh
                 <++ b " Navigates trough  menus and a sucession of GET pages"
-                <> article navigation)
+                <> article navigation
 
 
-   <|> (li <<< wlink ShopCart  << b "Stateful persistent flow: shopping"
+           <|> li <<< (absLink ShopCart <<  b  "Stateful persistent flow: shopping") <! noAutoRefresh
                 <++ b " Add articles to a persistent shopping cart stored in the session log."
                 <> i " getSessionData is read in the View monad to get the most recent shopping cart\
                             \even when the back button has been pressed"
-                <> article stateful)
+                <> article stateful
 
-   <|> (li <<< wlink MCounter << b "Persistent stateful flow: Counter"
-                <++ b " a persistent counter. It uses the same mechanism than shopping, but it is a more simple example")
-                       
-   <|>  br ++> br ++> b "BASIC"
-               
-   ++>  (li <<< wlink CountI       << b "Increase an Int"
-                       <++ b " A loop that increases the Int value of a text box")
-                                   
-   <|>  (li <<< wlink CountS       << b "Increase a String"
-                       <++ b " A loop that concatenate text in a text box")
-                                   
-   <|>  (li <<< wlink Select       << b "Select options"
-                       <++ b " A combo box")
-                                   
-   <|>  (li <<< wlink CheckBoxes   << b "Checkboxes")
-           
-   <|>  (li <<< wlink Radio        << b "Radio buttons")
-
-   <++  br <> br                  <> b "PAGE FLOWS with MONADIC WIDGETS, ACTIONS & CALLBACKS"
-               
-   <|>  (li <<< wlink Action      << b "Example of action, executed when a widget is validated")
-
-   <|>  (li <<< wlink FViewMonad   << b "in page flow: sum of three numbers"
-                 <++ b " Page flows are monadic widgets that modifies themselves in the page"
-                 <> article pageflow)
-
-   <|>  (li <<< wlink Counter      << b "Counter"
-                 <++ b " A page flow which increases a counter by using a callback"
-                 <> article callbacks)
-
-   <|>  (li <<< wlink Multicounter << b "Multicounter"
-                 <++ b " Page flow with many independent counters with autoRefresh, so they modify themselves in-place"
-                 <> article callbacks)
-
-   <|>  (li <<< wlink Combination  << b "Combination of three dynamic widgets"
-                 <++ b " Combination of autoRefreshe'd widgets in the same page, with\
-                          \ different behaviours"
-                 <> article combinationl)
-
-   <|>  (li <<< wlink WDialog      << b "Modal dialog"
-                 <++ b " A modal Dialog box with a form within a page flow")          
-
-   <|>  br ++>  br               ++> b "DYNAMIC WIDGETS"
-
-   ++>  (li <<< wlink Ajax         << b "AJAX example"
-                 <++ b " A onclick event in a text box invokes a server procedure that \
-                          \increment the integer value"
-                 <> article ajaxl)
-
-   <|>  (li <<< wlink Autocomp     << b "autocomplete"
-                 <++ b " Example of autocomplete, a widget which takes the suggested values from a server procedure")                 
-
-   <|>  (li <<< wlink AutocompList << b "autocomplete List"
-                 <++ b " Example of a widget that generates a set of return values, suggested by a autocomplete input box"
-                 <> article editList)
-
-   <|>  (li <<< wlink ListEdit     << b "list edition"
-                 <++ b " Example of a widget that edit, update and delete a list of user-defined widgets")
-
-   <|>  (li <<< wlink Grid         << b "grid"
-                 <++ b " Example of the same widget In this case, containing a row of two fields, aranged in a table"
-                 <> article gridl)
-
-   <|>  (li <<< wlink TextEdit     << b "Content Management"
-                 <++ b " Example of content management primitives defined in MFlow.Forms.Widgets")
-
-   <|>  br ++>  br ++> b "OTHERS"
-
-   ++>  (li <<< wlink Login        << b "login/logout"
-                 <++ b " Example of using the login and/or logout")
-
-   <|>  (li <<< wlink PreventBack  << b "Prevent going back after a transaction"
+           <|> li <<< (absLink MCounter << b  "Persistent stateful flow: Counter") <! noAutoRefresh
+                <++ b " a persistent counter. It uses the same mechanism than shopping, but it is\
+                      \a more simple example"
+           <|> li <<< (absLink PreventBack  << b "Prevent going back after a transaction") <! noAutoRefresh
                  <++ b " Control backtracking to avoid navigating back to undo something that can not be undone\
                           \. For example, a payment"
-                 <> article preventbackl)
+                 <> article preventbackl ))
 
-   )
+  <|> (li <<< do
+          absLink BasicWidgets << b  "Basic Widgets"
+          ul <<<        
+           (li <<< (absLink CountI << b  "Increase an Int") <! noAutoRefresh
+                       <++ b " A loop that increases the Int value of a text box"
+                                   
+           <|> li <<< (absLink CountS  << b  "Increase a String") <! noAutoRefresh
+                       <++ b " A loop that concatenate text in a text box"
+                                   
+           <|> li <<< (absLink Select  << b  "Select options") <! noAutoRefresh
+                       <++ b " A combo box"
+                                   
+           <|> li <<< (absLink CheckBoxes   << b  "Checkboxes") <! noAutoRefresh
+           
+           <|> li <<< (absLink Radio        << b  "Radio buttons") <! noAutoRefresh))
+
+  <|> (li <<< do
+          absLink MonadicWidgets << b  "Monadic widgets, actions and callbacks"
+          ul <<<                   
+            (li <<< (absLink Action      << b  "Example of action, executed when a widget is validated") <! noAutoRefresh
+
+            <|> (li <<< absLink FViewMonad   << b  "in page flow: sum of three numbers") <! noAutoRefresh
+                 <++ b " Page flows are monadic widgets that modifies themselves in the page"
+                 <> article pageflow
+
+            <|> (li <<< absLink Counter      << b  "Counter")  <! noAutoRefresh
+                 <++ b " A page flow which increases a counter by using a callback"
+                 <> article callbacks
+
+            <|> (li <<< absLink Multicounter << b  "Multicounter")  <! noAutoRefresh
+                 <++ b " Page flow with many independent counters with autoRefresh, so they modify themselves in-place"
+                 <> article callbacks
+
+            <|> (li <<< absLink Combination  << b  "Combination of three dynamic widgets") <! noAutoRefresh
+                 <++ b " Combination of autoRefreshe'd widgets in the same page, with\
+                          \ different behaviours"
+                 <> article combinationl
+
+            <|> (li <<< absLink WDialog      << b  "Modal dialog")   <! noAutoRefresh
+                 <++ b " A modal Dialog box with a form within a page flow"))          
+
+   <|> (li <<< do
+          absLink DynamicWidgets << b "Dynamic Widgets"
+          ul <<<
+           (li <<< (absLink Ajax         << b  "AJAX example")  <! noAutoRefresh
+                 <++ b " A onclick event in a text box invokes a server procedure that \
+                          \increment the integer value"
+                 <> article ajaxl
+
+           <|> li <<< (absLink Autocomp     << b  "autocomplete")  <! noAutoRefresh
+                 <++ b " Example of autocomplete, a widget which takes the suggested values from a \
+                 \ server procedure"  
+
+           <|> li <<< (absLink AutocompList << b  "autocomplete List")   <! noAutoRefresh
+                 <++ b " Example of a widget that generates a set of return values, suggested by a \
+                 \ autocomplete input box"
+                 <> article editList
+
+           <|> li <<< (absLink ListEdit     << b  "list edition")    <! noAutoRefresh
+                 <++ b " Example of a widget that edit, update and delete a list of user-defined \
+                 \ widgets"
+
+           <|> li <<< (absLink Grid         << b  "grid")    <! noAutoRefresh
+                 <++ b " Example of the same widget In this case, containing a row of two fields,\
+                 \ aranged in a table"
+                 <> article gridl
+
+           <|> li <<< (absLink TextEdit     << b  "Content Management")  <! noAutoRefresh
+                 <++ b " Example of content management primitives defined in MFlow.Forms.Widgets"))
+
+   <|> (li <<< do
+          absLink Others << b "Others"
+          ul <<<
+           (li <<< (absLink Login        << b  "login/logout")   <! noAutoRefresh
+                 <++ b " Example of using the login and/or logout")))
+
+
+
+   <|> (El.div ! At.style "display:none" <<< mainMenu1)
+
+
+
+ -- for compatibility with older paths published that did not have two step cascaded menus
+
+mainMenu1 :: View Html IO Options
+mainMenu1= wcached "menu" 0 $
+ wlink MFlowPersist     mempty
+   <|> wlink Database   mempty
+   <|> wlink Push       mempty
+   <|> wlink PushDec    mempty
+   <|> wlink Trace      mempty
+   <|> wlink RESTNav    mempty
+   <|> wlink ShopCart   mempty
+   <|> wlink MCounter   mempty
+   <|> wlink CountI       mempty                           
+   <|> wlink CountS       mempty                     
+   <|> wlink Select       mempty                      
+   <|> wlink CheckBoxes   mempty
+   <|> wlink Radio        mempty      
+   <|> wlink Action       mempty
+   <|> wlink FViewMonad   mempty
+   <|> wlink Counter      mempty
+   <|> wlink Multicounter mempty
+   <|> wlink Combination  mempty
+   <|> wlink WDialog      mempty
+   <|> wlink Ajax         mempty
+   <|> wlink Autocomp     mempty
+   <|> wlink AutocompList mempty
+   <|> wlink ListEdit     mempty
+
+
+   <|>  wlink Grid         << b "grid"
+
+
+   <|>  wlink TextEdit     << b "Content Management"
+
+
+
+
+   <|>  wlink Login        << b "login/logout"
+
+
+   <|>  wlink PreventBack  << b "Prevent going back after a transaction"
+
 
 article link=  " " <> a ! href ( link) <<  i "(article)"
 
@@ -203,6 +274,7 @@ menuarticle= "http://haskell-web.blogspot.com.es/2013/08/how-to-handle-menus-and
 widgetAndSource filename w = do
       source <- getSource filename
       El.div <<<  tFieldEd edadmin (filename ++ "top") "top text"
+             <++ hr
              **> h1 "Running example"
              ++> "(in the ligth red box):"
              ++> (divsample <<< w)

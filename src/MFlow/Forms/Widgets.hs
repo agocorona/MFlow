@@ -21,21 +21,23 @@ autoRefresh, appendUpdate, prependUpdate, push, UpdateMethod(..)
 ,datePicker, getSpinner, wautocomplete, wdialog,
 
 -- * User Management
-userFormOrName,maybeLogout,
+userFormOrName,maybeLogout, wlogin,
 
 -- * Active widgets
 wEditList,wautocompleteList
 , wautocompleteEdit,
 
 -- * Editing widgets
-delEdited, getEdited
-,prependWidget,appendWidget,setWidget
+delEdited, getEdited,prependWidget,appendWidget,setWidget
 
 -- * Content Management
-,tField, tFieldEd, htmlEdit, wedit
+,tField, tFieldEd, htmlEdit, edTemplate, dField, template, edTemplateList
 
 -- * Multilanguage
 ,mFieldEd, mField
+
+-- * other
+,insertForm
 
 ) where
 import MFlow
@@ -113,6 +115,34 @@ instance (Typeable view, Typeable a)
       ta :: Medit v m a -> a
       ta= undefined
 
+-- | If not logged, it present a page flow which askm  for the user name, then the password if not logged
+--
+-- If logged, it present the user name and a link to logout
+--
+-- normally to be used with autoRefresh and pageFlow when used with other widgets.
+wlogin :: (MonadIO m,Functor m,FormInput v) => View v m ()
+wlogin=  do
+   username <- getCurrentUser
+   if username /= anonymous
+         then return username
+         else do
+          name <- getString Nothing <! hint "login name" <! size 9 <++ ftag "br" mempty
+          pass <- getPassword <! hint "password" <! size 9
+                     <++ ftag "br" mempty
+                     <** submitButton "login" 
+          val  <- userValidate (name,pass)
+          case val of
+            Just msg -> notValid msg
+            Nothing  -> login name >> return name
+       
+   `wcallback` (\name -> ftag "b" (fromStr $ "logged as " ++ name)
+                     ++>  wlink ("logout" :: String) (ftag "b" $ fromStr " logout"))
+   `wcallback`  const (logout >> wlogin)
+   
+focus = [("onload","this.focus()")]
+hint s= [("placeholder",s)]
+size n= [("size",show n)]
+
 getEdited1 id= do
     Medit stored <- getSessionData `onNothing` return (Medit M.empty)
     return $ fromMaybe [] $ M.lookup id stored
@@ -170,6 +200,7 @@ modifyWidget selector modifier  w = View $ do
      where
      typ :: View v Identity a -> a
      typ = undefined
+
 -- | Return the javascript to be executed on the browser to prepend a widget to the location
 -- identified by the selector (the bytestring parameter), The selector must have the form of a jquery expression
 -- . It stores the added widgets in the edited list, that is accessed with 'getEdited'
@@ -412,9 +443,11 @@ instance Indexable TField where
 instance Serializable TField where
     serialize= B.pack . show
     deserialize= read . B.unpack
---    setPersist = const $  Just filePersist
+    setPersist = const $  Just filePersist
+
 
 writetField k s= atomically $ writeDBRef (getDBRef k) $ TField k $ toByteString s
+
 
 readtField text k= atomically $ do
    let ref = getDBRef k
@@ -508,7 +541,7 @@ ajaxSendText = "\nfunction ajaxSendText(id,content){\n\
         \       type: 'POST',\n\
         \       url: '/_texts',\n\
         \       data: k + '='+ encodeURIComponent(content),\n\
-        \       success: function (resp) {alert ('saved');},\n\
+        \       success: function (resp) {},\n\
         \       error: function (xhr, status, error) {\n\
         \                var msg = $('<div>' + xhr + '</div>');\n\
         \                id1.html(msg);\n\
@@ -517,25 +550,44 @@ ajaxSendText = "\nfunction ajaxSendText(id,content){\n\
         \return false;\n\
         \};\n"
 
-wedit
+-- | a text field. Read the cached  field value and present it without edition.
+tField :: (MonadIO m,Functor m, Executable m
+       ,  FormInput v)
+       => Key
+       -> View v m ()
+tField k = wfreeze k 0 $ do
+    content <- liftIO $ readtField (fromStrNoEncode "not found")  k
+    wraw content
+
+-- | A multilanguage version of tFieldEd. For a field with @key@ it add a suffix with the
+-- two characters of the language used.
+mFieldEd  muser k content= do
+  lang <- getLang
+  tFieldEd  muser (k ++ ('-':lang)) content
+
+-- | A multilanguage version of tField
+mField k= do
+  lang <- getLang
+  tField $ k ++ ('-':lang)
+
+edTemplate
   :: (FormInput v, Typeable a) =>
       UserStr -> Key -> View v Identity a -> View v IO a
-wedit muser k w=  View $ do
+edTemplate muser k w=  View $ do
    nam     <- genNewId
 
    let ipanel= nam++"panel"
        name= nam++"-"++k
        install= "\ninstallEditField('"++muser++"','"++cookieuser++"','"++name++"','"++ipanel++"');\n"
 
-       w'=  do
-           requires [JScriptFile nicEditUrl [install]
+
+   requires [JScriptFile nicEditUrl [install]
                     ,JScript     ajaxSendText
                     ,JScript     installEditField
                     ,JScriptFile jqueryScript []
                     ,ServerProc  ("_texts",  transient getTexts)]
-           w
 
-   FormElm text mx <- runView $ changeMonad w' -- $ wcached k 0 w'
+   FormElm text mx <- runView  $ wcached k 0  w
    content <- liftIO $ readtField (mconcat text) k
 
    return $FormElm [ftag "div" mempty `attrs` [("id",ipanel)]
@@ -555,39 +607,88 @@ wedit muser k w=  View $ do
    viewFormat :: View v m a -> v
    viewFormat= undefined -- is a type function
 
---togglebutton=
---    "var nicExampleOptions = {\n\
---    \    buttons : {\n\
---    \        'example' : {name : 'Some alt text for the button'\n\
---    \                    , type : 'nicEditorExampleButton'}\n\
---    \    }/* NICEDIT_REMOVE_START */,iconFiles : {'example' : 'http://wiki.nicedit.com/f/save.gif'}/*NICEDIT_REMOVE_END */\n\
---    \};\n\
---    \var nicEditorExampleButton = nicEditorButton.extend({\n\
---    \  mouseClick : function() {\n\
---    \    alert('The example save button icon has been clicked!');\n\
---    \  }\n\
---    \});\n\
---    \nicEditors.registerPlugin(nicPlugin,nicExampleOptions);"
+template k w= wcached k 0 $ View $ do
+    FormElm text mx <- runView  w
+    let content= unsafePerformIO $ readtField  (mconcat text) k
+    return $ FormElm [content] mx
 
--- | Read the cached field value and present it without edition.
-tField :: (MonadIO m,Functor m, Executable m
-       ,  FormInput v)
-       => Key
-       -> View v m ()
-tField  k    =  wfreeze k 0 $ do
-    content <-  liftIO $ readtField (fromStrNoEncode "not found")  k
-    wraw content
+dField v= do
+    id <- genNewId
+    requires [JScript "function setId(id,v){document.onload = function(){document.getElementById(id).innerHTML= v;}};\n"
+             ,JScript $ "setId('"++id++"','" ++ B.unpack (toByteString v)++"');\n"]
+    wraw $ ftag "span" v `attrs`[("id",id)]
 
--- | A multilanguage version of tFieldEd. For a field with @key@ it add a suffix with the
--- two characters of the language used.
-mFieldEd  muser k content= do
-  lang <- getLang
-  tFieldEd  muser (k ++ ('-':lang)) content
+edTemplateList
+  :: (Typeable a,FormInput view) =>
+     UserStr -> String  -> [View view Identity a] -> View view IO a
+edTemplateList user templ  ws=  do
+  id <- genNewId
+  let wrapid=  "wrapper-" ++ id
+  text <- liftIO $ readtField  (ftag "div" mempty `attrs` [("id",wrapid)])  wrapid
+  let   vwrtext= B.unpack $ toByteString (text `asTypeOf` witness ws)
 
--- | A multilanguage version of tField
-mField k= do
-  lang <- getLang
-  tField $ k ++ ('-':lang)
+--  wrapperEd wrapid vwrtext **>
+  (ftag "div" <<< elems id wrapid vwrtext) <! [("id",wrapid)]
+  where
+  witness :: [View view Identity a] -> view
+  witness = undefined
+
+  elems id wrapid vwrtext= View $ do
+    let holder=  ftag "span" (fromStr "holder") `attrs` [("_holder",id)]
+
+    FormElm fedit _ <- runView $ tFieldEd user templ holder
+    frest  <- liftIO $ readtField holder  templ
+
+    forms <-  mapM (runView . changeMonad) ws
+    let vs   = map (\(FormElm v _) ->  mconcat v) forms
+    requires [JScriptFile jqueryScript
+              [
+--               replacewrap
+--              ,"replacewrap('"++ wrapid ++ "','" ++ vwrtext ++ "')",
+              insert
+              ,"$(document).ready(function() {\
+               \insert('"++id++"',"++ show (map ( B.unpack . toByteString) vs) ++");\n\
+               \});"]]
+
+    let res = filter isJust $ map (\(FormElm _ r) -> r) forms
+        res1= if null res then Nothing else head res
+
+    return $ FormElm  (mconcat fedit: take (length vs -1) (repeat frest)) res1
+    where
+    insert =
+      "\nfunction insert(id,vs){\n\
+      \$('[_holder=\"'+id+'\"]').each(function(n,it) {\n\
+      \  $(it).html(vs[n]);\n\
+      \})};\n"
+
+--  wrapperEd :: (FormInput view) => String -> view -> View view IO ()
+  wrapperEd  wrapid  wrtext = do -- autoRefresh . pageFlow "wrap" $ do
+--        vwrtext <- liftIO $ readtField  (ftag "div" mempty `attrs` [("id",wrapid)])  wrapid
+--        let wrtext= B.unpack $ toByteString (vwrtext `asTypeOf` witness)
+        nwrtext<- getString  (Just wrtext)
+                          <! [("id", wrapid++"-ed")]
+                   <** submitButton "OK"
+
+        liftIO $ writetField wrapid (fromStr nwrtext `asTypeOf` witness ws) !> nwrtext
+
+
+  replacewrap = "\nfunction replacewrap(id,wrapcode){\n\
+          \   var selector= '#'+id;\n\
+          \   var children = $(selector).children();\n\
+          \   var nchildren;\n\
+          \   $(selector).replaceWith(wrapcode);\n\
+          \   $(selector).html(children);\n\
+          \   if(wrapcode.search('table') != -1)\n\
+          \        $(children[1].children).wrap('<tr><td></td></tr>')\n\
+          \};\n"
+
+--          \   if(wrapcode.search('xx') != -1){\n\
+--          \        children.each(function(n,it){\n\
+--          \                      $(it).wrap('<li></li>')});\n\
+
+--          \        })\n\
+
+------------------- JQuery widgets -------------------
 
 -- | present the JQuery datepicker calendar to choose a date.
 -- The second parameter is the configuration. Use \"()\" by default.
@@ -632,8 +733,7 @@ wdialog conf title w= do
 
     (ftag "div" <<< insertForm w) <! [("id",id),("title", title)]
 
-
-
+-- | insert a form tag if the widget has form input fields. If not, it does nothing
 insertForm w=View $ do
     FormElm forms mx <- runView w
     st <- get
@@ -714,9 +814,9 @@ update method w= do
      \setTimeout(function() {hadtimeout=true; }, "++show (t*1000)++");\n"
 
   -- | adapted from http://www.codeproject.com/Articles/341151/Simple-AJAX-POST-Form-and-AJAX-Fetch-Link-to-Modal
-  ajaxGetLink = "function ajaxGetLink(id){\n\
+  ajaxGetLink = "\nfunction ajaxGetLink(id){\n\
     \var id1= $('#'+id);\n\
-    \var ida= $('#'+id+' a');\n\
+    \var ida= $('#'+id+' a[class!=\"_noAutoRefresh\"]');\n\
     \ida.click(function () {\n\
     \if (hadtimeout == true) return true;\n\
     \var pdata = $(this).attr('data-value');\n\
@@ -726,8 +826,8 @@ update method w= do
     \       url: actionurl+'?bustcache='+ new Date().getTime()+'&auto'+id+'=true',\n\
     \       data: pdata,\n\
     \       success: function (resp) {\n\
-    \         id1."++method++"(resp);\n\
-    \         ajaxGetLink(id)\n\
+    \           id1."++method++"(resp);\n\
+    \           ajaxGetLink(id)\n\
     \       },\n\
     \       error: function (xhr, status, error) {\n\
     \           var msg = $('<div>' + xhr + '</div>');\n\
@@ -737,9 +837,9 @@ update method w= do
     \$.ajax(dialogOpts);\n\
     \return false;\n\
     \});\n\
-  \}"
+  \}\n"
 
-  ajaxPostForm = "function ajaxPostForm(id) {\n\
+  ajaxPostForm = "\nfunction ajaxPostForm(id) {\n\
     \var id1= $('#'+id);\n\
     \var idform= $('#'+id+' form');\n\
     \idform.submit(function (event) {\n\
