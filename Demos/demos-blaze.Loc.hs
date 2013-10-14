@@ -73,24 +73,27 @@ import MCounter
 import Database
 {-# LINE 43 "INPUT" #-}
 import MFlowPersistent
-{-# LINE 45 "INPUT" #-}
+{-# LINE 44 "INPUT" #-}
+import RuntimeTemplates
+{-# LINE 46 "INPUT" #-}
 import Debug.Trace
-{-# LINE 47 "INPUT" #-}
+{-# LINE 48 "INPUT" #-}
 (!>) = flip trace
-{-# LINE 53 "INPUT" #-}
+{-# LINE 54 "INPUT" #-}
 main
-  = Control.Monad.Loc.withLoc "main, Main(INPUT): (53, 7)"
-      (do Control.Monad.Loc.withLoc "main, Main(INPUT): (55, 4)" (index idnumber)
-          Control.Monad.Loc.withLoc "main, Main(INPUT): (56, 4)" (setAdminUser adminname adminname)
-          Control.Monad.Loc.withLoc "main, Main(INPUT): (58, 4)" (syncWrite $ Asyncronous 120 defaultCheck 1000)
-          Control.Monad.Loc.withLoc "main, Main(INPUT): (60, 4)" (setFilesPath "Demos/")
-          Control.Monad.Loc.withLoc "main, Main(INPUT): (61, 4)"
+  = Control.Monad.Loc.withLoc "main, Main(INPUT): (54, 7)"
+      (do Control.Monad.Loc.withLoc "main, Main(INPUT): (55, 4)" (setAmazonSDBPersist "mflowdemo")
+          Control.Monad.Loc.withLoc "main, Main(INPUT): (56, 4)" (index idnumber)
+          Control.Monad.Loc.withLoc "main, Main(INPUT): (57, 4)" (setAdminUser adminname adminname)
+          Control.Monad.Loc.withLoc "main, Main(INPUT): (59, 4)" (syncWrite $ Asyncronous 120 defaultCheck 1000)
+          Control.Monad.Loc.withLoc "main, Main(INPUT): (61, 4)" (setFilesPath "Demos/")
+          Control.Monad.Loc.withLoc "main, Main(INPUT): (62, 4)"
             (runNavigation "" $
-               Control.Monad.Loc.withLoc "main, Main(INPUT): (61, 23)"
-                 (do Control.Monad.Loc.withLoc "main, Main(INPUT): (62, 8)" (setHeader $ stdheader)
-                     Control.Monad.Loc.withLoc "main, Main(INPUT): (63, 8)" (setTimeouts 400 $ 60 * 60)
-                     r <- Control.Monad.Loc.withLoc "main, Main(INPUT): (65, 8)" (step . ask $ tFieldEd edadmin "head" "set Header" <++ hr **> (divmenu <<< br ++> mainMenu) <** (El.div ! At.style "float:right;width:65%;overflow:auto;" <<< tFieldEd edadmin "intro" "enter intro text"))
-                     Control.Monad.Loc.withLoc "main, Main(INPUT): (70, 8)"
+               Control.Monad.Loc.withLoc "main, Main(INPUT): (62, 23)"
+                 (do Control.Monad.Loc.withLoc "main, Main(INPUT): (63, 8)" (setHeader $ stdheader)
+                     Control.Monad.Loc.withLoc "main, Main(INPUT): (64, 8)" (setTimeouts 400 $ 60 * 60)
+                     r <- Control.Monad.Loc.withLoc "main, Main(INPUT): (66, 8)" (step . ask $ tFieldEd edadmin "head" "set Header" <++ hr **> (divmenu <<< br ++> mainMenu) <** (El.div ! At.style "float:right;width:65%;overflow:auto;" <<< tFieldEd edadmin "intro" "enter intro text"))
+                     Control.Monad.Loc.withLoc "main, Main(INPUT): (72, 8)"
                        (case r of
                             CountI -> step (clickn 0) `showSource` "IncreaseInt.hs"
                             CountS -> step (clicks "1") `showSource` "IncreaseString.hs"
@@ -118,12 +121,13 @@ main
                             Database -> step database `showSource` "Database.hs"
                             ShopCart -> shopCart `showSource` "ShopCart.hs"
                             MCounter -> mcounter `showSource` "MCounter.hs"
-                            MFlowPersist -> step mFlowPersistent `showSource` "MFlowPersistent.hs"))))
-{-# LINE 105 "INPUT" #-}
+                            MFlowPersist -> step mFlowPersistent `showSource` "MFlowPersistent.hs"
+                            RuntimeTemplates -> step runtimeTemplates `showSource` "RuntimeTemplates.hs"))))
+{-# LINE 108 "INPUT" #-}
 traceSample
-  = Control.Monad.Loc.withLoc "traceSample, Main(INPUT): (105, 14)"
-      (do Control.Monad.Loc.withLoc "traceSample, Main(INPUT): (106, 3)" (pagem $ h2 "Error trace example" ++> p "MFlow now produces execution traces in case of error by making use of the backtracking mechanism" ++> p "It is more detailed than a call stack" ++> p "this example has a deliberate error" ++> br ++> p "You must be logged as admin to see the trace" ++> wlink () << p "pres here")
-          Control.Monad.Loc.withLoc "traceSample, Main(INPUT): (114, 3)" (pagem $ p "Please login with admin/admin" ++> userWidget (Just "admin") userLogin)
-          u <- Control.Monad.Loc.withLoc "traceSample, Main(INPUT): (117, 3)" (getCurrentUser)
-          Control.Monad.Loc.withLoc "traceSample, Main(INPUT): (118, 3)" (pagem $ p "The trace will appear after you press the link. press one of the options available at the bottom of the page" ++> p << ("user=" ++ u) ++> br ++> wlink () "press here")
-          Control.Monad.Loc.withLoc "traceSample, Main(INPUT): (121, 3)" (pagem $ error $ "this is the error"))
+  = Control.Monad.Loc.withLoc "traceSample, Main(INPUT): (108, 14)"
+      (do Control.Monad.Loc.withLoc "traceSample, Main(INPUT): (109, 3)" (pagem $ h2 "Error trace example" ++> p "MFlow now produces execution traces in case of error by making use of the backtracking mechanism" ++> p "It is more detailed than a call stack" ++> p "this example has a deliberate error" ++> br ++> p "You must be logged as admin to see the trace" ++> wlink () << p "pres here")
+          Control.Monad.Loc.withLoc "traceSample, Main(INPUT): (117, 3)" (pagem $ p "Please login with admin/admin" ++> userWidget (Just "admin") userLogin)
+          u <- Control.Monad.Loc.withLoc "traceSample, Main(INPUT): (120, 3)" (getCurrentUser)
+          Control.Monad.Loc.withLoc "traceSample, Main(INPUT): (121, 3)" (pagem $ p "The trace will appear after you press the link. press one of the options available at the bottom of the page" ++> p << ("user=" ++ u) ++> br ++> wlink () "press here")
+          Control.Monad.Loc.withLoc "traceSample, Main(INPUT): (124, 3)" (pagem $ error $ "this is the error"))
