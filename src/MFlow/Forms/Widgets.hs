@@ -441,8 +441,12 @@ instance Indexable TField where
 
 
 instance Serializable TField where
-    serialize= B.pack . show
-    deserialize= read . B.unpack
+    serialize (TField k content)  = B.pack $ "TField "++show k ++ " " ++ show (B.unpack content)-- B.pack . show
+    deserialize bs=
+                let ('T':'F':'i':'e':'l':'d':' ':s)= B.unpack bs -- read . B.unpack
+                    [(k,rest)] =  readsPrec 0 s
+                    [(content,_)] = readsPrec 0 $ tail rest
+                in TField k (B.pack content)
     setPersist =   \_ -> Just filePersist
 
 

@@ -1,0 +1,1 @@
+TField "Combination.hstop" "<h1><font face=\"Trebuchet MS, Helvetica, Arial, Verdana, sans-serif\">Combination of three active widgets</font></h1><font face=\"helvetica\" size=\"2\">Three active widgets in the same page with autoRefresh. Each widget refresh itself with Ajax. If Ajax is not active, they will refresh by sending a new page.</font><br>"
