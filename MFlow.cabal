@@ -115,7 +115,7 @@ library
 executable demos-blaze.Loc
     build-depends: MFlow -any, RefSerialize -any, TCache -any,
                    directory -any, Workflow -any, base -any, blaze-html -any,
-                   bytestring -any, containers -any, mtl -any, old-time -any,
+                   bytestring >= 0.10, containers -any, mtl -any, old-time -any,
                    stm -any, text -any, transformers -any, vector -any, hamlet -any,
                    monadloc -any, aws -any, network -any, hscolour -any,
                    persistent-template, persistent-sqlite, persistent,
