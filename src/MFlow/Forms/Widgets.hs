@@ -495,7 +495,7 @@ tFieldEd
   :: (Functor m,  MonadIO m, Executable m,
       FormInput v) =>
       UserStr -> Key -> v -> View v m ()
-tFieldEd  muser k text= wfreeze k 0 $  do
+tFieldEd  muser k  text= wfreeze k 0 $  do
    content <- liftIO $ readtField text k
    nam     <- genNewId
    let ipanel= nam++"panel"
