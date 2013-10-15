@@ -778,8 +778,8 @@ autoRefresh w=  update "html" w
 --
 -- > r <- page $ autoRefresh $ ul <<< do
 -- >        li <<< wlink OptionA << "option A"
--- >        ul <<< (li <<< wlink OptionA1 << "Option A1" <! noAutoRefresh)
--- >           <|> (li <<< wlink OptionA2 << "Option A2" <! noAutoRefresh)
+-- >        ul <<< li <<< (wlink OptionA1 << "Option A1" <! noAutoRefresh)
+-- >           <|> li <<< (wlink OptionA2 << "Option A2" <! noAutoRefresh)
 -- >        <|>...
 -- >           maybe other content
 -- >
