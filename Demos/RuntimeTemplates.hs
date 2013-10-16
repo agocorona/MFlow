@@ -36,7 +36,7 @@ runtimeTemplates= do
      case r of
          NewName -> do
               name <- pagem  $ edTemplate "edituser" "enterallnames"
-                          $ getString Nothing
+                          $ getString Nothing `validate` jsval
                         <** submitButton "ok"
 
               liftIO . atomically . newDBRef $ MyData name   -- store the name in the cache (later will be written to disk automatically)
@@ -53,3 +53,10 @@ runtimeTemplates= do
      if r== Exit then return ()
                  else runtimeTemplates
 
+     where
+     -- simple alert valiation message.
+     -- validation messages in presence of templates must be via jscript
+     jsval s= if Prelude.length s > 10 then do
+         requires[JScript "alert('length must be less than 10 chars');"]
+         return $ Just mempty
+         else return Nothing

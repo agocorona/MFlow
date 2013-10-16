@@ -319,7 +319,7 @@ validate
      -> (a -> WState view m (Maybe view))
      -> View view m a
 validate  formt val= View $ do
-   FormElm form mx <- (runView  formt)  
+   FormElm form mx <- runView  formt
    case mx of
     Just x -> do
       me <- val x
