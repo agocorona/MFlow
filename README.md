@@ -1,12 +1,18 @@
 # MFlow
 
-MFlow is am application server and Web Framework for stateful and persistent Web applications that run in a navigation monad with backtracking that provides services of routing and state persistence. 
+MFlow is simply the most high level, most advanced and fun to program web framework.  MFlow uses Haskell magic to counteract the wicked Web programming magic, that terrifies the programmer with all their explosion of events, configurations, plumbing  lookups and identifiers, in order to restore programming to be intuitive and natural again. Everything in MFlow that seems sophisticated is to solve a real problem at hand, not a fancy way to hide with new names the inherent flawed nature of the MVC model when used in real web applications.
 
-MFlow is the only Web Framework that uses matching requests and backtracking as the mechanism for browser-server synchronization.
+MFlow Web applications are much like console applications. You just write an ordinary sequential program with inputs, outputs and control statements where the inputs and outputs are web pages. MFlow will run the sequence forward and backward depending on your input to find the appropriate location in the sequence to respond your query. 
 
-Each link or form in the page return type safe responses. The navigation is also type safe since it is encoded within a monadic procedure in haskell, and server and browser are ever in sync. The page is composed of reusable type-safe components called widgets that may change their rendering depending o the user responses by autorefreshing, without using JavaScript.
+MFlow works just in the same way people would read a cooking recipe: Each person look for instructions forward or backward until they find the correct point in the sequence appropriate for his state in the cooking process. To know his state, the people remember the name of the steps already done, but not the details of each step. That is exactly what MFlow does. All is pure tracking, backtracking and event logging. 
 
-Since the navigation is monadic, any navigation sequence can be reusable. Deployment and configuation is reduced to zero. The elements can work together if they typecheck.
+Other frameworks try to do it with heavy page state or execution state snapshots That is too bad for scalability and this has limited the acceptance of this model for large scale web applications. 
+
+Additionally MFlow has nice unique features for the creation of rich and dynamic applications: widgets can exhibit dinamic behaviours and refresh independently on their own without using explicit javaScript. The code for these dynamic widgets are, again much like console applications. With a few changes, a multi-page application can be converted into a dynamic auto-refreshed widget that can be inserted in a page along with others.
+
+MFlow is the only Web Framework that uses matching of requests and true backtracking as the mechanism for browser-server synchronization. Each link or form in the page return type safe responses. The navigation is also type safe since it is encoded within a monadic procedure. The server process ever synchronize with the browser request. There are no sequence errors. The page is composed of reusable type-safe components called widgets that may change their rendering depending o the user responses by auto refreshing themselves  without using JavaScript.
+
+Since the navigation is coded as a normal procedure under the navigation monad, any navigation sequence can be reusable. Deployment and configuration is reduced to zero. The elements can work together if they type-check. In the examples you will see different ways to combine components: either widgets inside widgets, different widgets in a page or complete application flows called as normal procedures in a program.
 
 ## Goals:
 
