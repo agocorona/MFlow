@@ -330,25 +330,16 @@ instance  (Monad m) => Monad (View view m) where
                    case mk of
                      Just k  -> do
                         st <- get
---                        let clear = mfClear st
-                        put st{linkMatched= False} -- ,mfClear= False} 
+                        let clear = mfClear st
+                        let form= if clear then mempty else form1
+                        form `seq` put st{linkMatched = False, mfClear= False} 
                         FormElm form2 mk <- runView $ f k
---                        let form= if clear then mempty else form1
-                        return $ FormElm (form1 ++ form2) mk
+                        return $ FormElm (form ++ form2) mk
 
                      Nothing -> 
                         return $ FormElm form1 Nothing
                         
---    View x >> f = View $ do
---                   FormElm form1 mk <- x
---                   case mk of
---                     Just k  -> do
---                        modify $ \st -> st{linkMatched= False,mfClear= False} 
---                        FormElm form2 mk <- runView  f 
---                        return $ FormElm (form1 ++ form2) mk
 
---                     Nothing -> 
---                        return $ FormElm form1 Nothing
 
     return = View .  return . FormElm  [] . Just
 --    fail msg= View . return $ FormElm [fromStr msg] Nothing
@@ -380,8 +371,8 @@ wcallback (View x) f = View $ do
        runView (f k)
      Nothing -> return $ FormElm form1 Nothing
 
---clear :: MonadState (MFlowState v) m => m()
---clear= modify $ \s -> s{mfClear= True}
+clear :: MonadState (MFlowState v) m => m()
+clear= modify $ \s -> s{mfClear= True}
 
 --incLink :: MonadState (MFlowState view) m => m()
 --incLink= modify $ \st -> st{mfPIndex= if linkMatched st then mfPIndex  st + 1 else mfPIndex st
@@ -533,8 +524,8 @@ data MFlowState view= MFlowState{
    mfLinks          :: M.Map String Int,
 
    mfAutorefresh   :: Bool,
-   mfTrace          :: [String]
---   mfClear          :: Bool
+   mfTrace          :: [String],
+   mfClear          :: Bool
    }
    deriving Typeable
 
@@ -543,7 +534,7 @@ type Void = Char
 mFlowState0 :: (FormInput view) => MFlowState view
 mFlowState0 = MFlowState 0 False  True  True  "en"
                 [] False  (error "token of mFlowState0 used")
-                0 0 [] [] stdHeader False [] M.empty  Nothing 0 False    []   ""   1 Nothing False M.empty False [] -- False
+                0 0 [] [] stdHeader False [] M.empty  Nothing 0 False    []   ""   1 Nothing False M.empty False [] False
 
 
 -- | Set user-defined data in the context of the session.

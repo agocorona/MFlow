@@ -216,7 +216,7 @@ getString,getInt,getInteger, getTextBox
 getRadio, setRadio, setRadioActive, wlabel, getCheckBoxes, genCheckBoxes, setCheckBox,
 submitButton,resetButton, whidden, wlink, returning, wform, firstOf, manyOf, wraw, wrender, notValid
 -- * FormLet modifiers
-,validate, noWidget, waction, wcallback, wmodify,
+,validate, noWidget, waction, wcallback, clear, wmodify,
 
 -- * Caching widgets
 cachedWidget, wcached, wfreeze,
@@ -826,7 +826,7 @@ returnIfForward x = do
 
 -- | forces backtracking if the widget validates, because a previous page handle this widget response
 -- . This is useful for recurrent cached widgets that are present in multiple pages. For example
--- in the case of menus or common options. The widget must be cached with no timeout.
+-- in the case of menus or common options. The active elements of this widget must be cached with no timeout.
 retry :: Monad m => View v m a -> View v m ()
 retry w=  w >> modify (\st -> st{inSync=False})
 
@@ -1216,7 +1216,6 @@ wstateless w = transient $ runFlow loop
 -- there are more than one form in the page.
 wform ::  (Monad m, FormInput view)
           => View view m b -> View view m b 
-
 wform x = View $ do
      FormElm form mr <- (runView $   x )
      st <- get

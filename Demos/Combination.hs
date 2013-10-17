@@ -1,5 +1,5 @@
 
-module Combination ( combination, wlogin) where
+module Combination ( combination, wlogin1) where
 import MFlow.Wai.Blaze.Html.All
 import Menu
 import Counter(counterWidget)
@@ -67,7 +67,8 @@ wlogin1 =  do
          then return username
          else do
           name <- getString Nothing <! hint "username" <++ br
-          pass <- getPassword <! focus <** submitButton "login" <++ br
+          clear
+          pass <- getPassword <! hint "password" <** submitButton "login" <++ br
           val  <- userValidate (name,pass)
           case val of
             Just msg -> notValid msg
@@ -76,7 +77,7 @@ wlogin1 =  do
    `wcallback` (\name -> b << ("logged as " ++ name)
                      ++> p << "navigate away of this page before logging out"
                      ++>  wlink "logout"  << b << " logout")
-   `wcallback`  const (logout >> wlogin)
+   `wcallback`  const (logout >> wlogin1)
 
 focus = [("onload","this.focus()")]
 

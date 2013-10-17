@@ -61,7 +61,7 @@ data Options= CountI | CountS | Radio
             | Database | MFlowPersist
             | DatabaseSamples |PushSamples | ErrorTraces | Flows
             | BasicWidgets | MonadicWidgets | DynamicWidgets | LoginLogout
-            | Templates | RuntimeTemplates
+            | Templates | RuntimeTemplates | LoginWidget
             deriving (Bounded, Enum,Read, Show,Typeable)
 
 absLink ref = wcached (show ref) 0 . wlink ref
@@ -69,24 +69,24 @@ absLink ref = wcached (show ref) 0 . wlink ref
 
 mainMenu :: View Html IO Options
 mainMenu= autoRefresh $
-  ul<<<(  li << b "About this menu" ++> article menuarticle
-   ++> br
-   ++> br
+  ul<<<(li << a ! href "/" ! At.class_ "_noAutoRefresh" << b "HOME"
+   ++> li << (b "About this menu" <> article menuarticle)
    ++> (li <<<  do
           absLink DatabaseSamples << b  "Database examples"
              <++ " with different backends"
           ul <<<
            (li <<< (absLink MFlowPersist <<  b "Persistent")  <! noAutoRefresh
-                     <++ b " illustrates the use of MFlow with "
-                     <> a  "Persistent" ! href yesodweb
-                     <> " (In this example sqlite backend is used) "
-                     <> article persistentarticle
+                     <++ do -- blaze-html monad
+                        b " illustrates the use of MFlow with "
+                        a  "Persistent" ! href yesodweb
+                        " (In this example sqlite backend is used) "
+                        article persistentarticle
 
            <|> li <<< (absLink Database << b  "Database") <! noAutoRefresh
                      <++ b " Create, Store and retrieve lines of text from Amazon SimpleDB \
                             \ storage "
                      <> article amazonarticle))
-   <|> (li <<<  do
+   <|> li <<<  do
           absLink PushSamples << b  "Push Samples"
              <++ " using long polling"
           ul <<<
@@ -97,16 +97,16 @@ mainMenu= autoRefresh $
                      
            <|>   li <<< (absLink PushDec << b  "A push counter") <! noAutoRefresh
                      <++ b " Show a countdown. Then goes to the main menu"
-                     <> article pushdec))
-   <|> (li <<< do
+                     <> article pushdec)
+   <|> li <<< do
 
           absLink ErrorTraces << b  "Error Traces"
           ul <<<
             (li <<< (absLink Trace << b  " Execution traces for errors") <! noAutoRefresh
                  <++ b " produces an error and show the complete execution trace"
-                 <> article errorTrace))
+                 <> article errorTrace)
                  
-   <|> (li <<< do
+   <|> li <<< do
 
           absLink Flows << b  "Different kinds of flows"
           ul <<< 
@@ -127,9 +127,9 @@ mainMenu= autoRefresh $
            <|> li <<< (absLink PreventBack  << b "Prevent going back after a transaction") <! noAutoRefresh
                  <++ b " Control backtracking to avoid navigating back to undo something that can not be undone\
                           \. For example, a payment"
-                 <> article preventbackl ))
+                 <> article preventbackl )
 
-  <|> (li <<< do
+  <|> li <<< do
           absLink BasicWidgets << b  "Basic Widgets"
           ul <<<        
            (li <<< (absLink CountI << b  "Increase an Int") <! noAutoRefresh
@@ -143,9 +143,9 @@ mainMenu= autoRefresh $
                                    
            <|> li <<< (absLink CheckBoxes   << b  "Checkboxes") <! noAutoRefresh
            
-           <|> li <<< (absLink Radio        << b  "Radio buttons") <! noAutoRefresh))
+           <|> li <<< (absLink Radio        << b  "Radio buttons") <! noAutoRefresh)
 
-  <|> (li <<< do
+  <|> li <<< do
           absLink MonadicWidgets << b  "Monadic widgets, actions and callbacks"
              <++ " autoRefresh, page flows, dialogs etc"
           ul <<<                   
@@ -169,9 +169,9 @@ mainMenu= autoRefresh $
                  <> article combinationl
 
             <|> li <<< (absLink WDialog      << b  "Modal dialog")   <! noAutoRefresh
-                 <++ b " A modal Dialog box with a form within a page flow"))          
+                 <++ b " A modal Dialog box with a form within a page flow")         
 
-   <|> (li <<< do
+   <|> li <<< do
           absLink DynamicWidgets << b "Dynamic Widgets"
              <++ " Widgets with Ajax and containers of other widgets"
           ul <<<
@@ -196,29 +196,30 @@ mainMenu= autoRefresh $
            <|> li <<< (absLink Grid         << b  "grid")    <! noAutoRefresh
                  <++ b " Example of the same widget In this case, containing a row of two fields,\
                  \ aranged in a table"
-                 <> article gridl))
-   <|> (li <<< do
+                 <> article gridl)
+   <|> li <<< do
           absLink Templates << b "Runtime templates"
              <++ " Templates and content management modifiable at runtime"
           ul <<<
            (li <<<(absLink RuntimeTemplates  << b "Runtime templates") <! noAutoRefresh
                  <++ b " Example of form templates and result templates modified at runtime"
            <|> li <<< (absLink TextEdit     << b  "Content Management")  <! noAutoRefresh
-                 <++ b " Example of content management primitives defined in MFlow.Forms.Widgets"))
+                 <++ b " Example of content management primitives defined in MFlow.Forms.Widgets")
 
-   <|> (li <<< do
+   <|> li <<< do
           absLink LoginLogout << b "Login/logout"
-          ul <<<
-           (li <<< (absLink Login        << b  "login/logout")   <! noAutoRefresh
-                 <++ b " Example of using the login and/or logout")))
+          ul <<<(li <<< (absLink Login        << b  "login/logout")   <! noAutoRefresh
+                            <++ b " Example of using the login and/or logout")
 
 
-
+   <** li <<< wlogin)
    <|> (El.div ! At.style "display:none" <<< mainMenu1)
 
 
 
- -- for compatibility with older paths published that did not have two step cascaded menus
+
+ -- for compatibility with older paths published that did not have two-step cascaded menus
+ -- so that /noscript/databasesampes/mflowpersist and /noscript/mflowpersist produce the same page
 
 mainMenu1 :: View Html IO Options
 mainMenu1= wcached "menu" 0 $

@@ -54,7 +54,7 @@ runtimeTemplates= do
                  else runtimeTemplates
 
      where
-     -- simple alert valiation message.
+     -- simple alert validation message.
      -- validation messages in presence of templates must be via jscript
      jsval s= if Prelude.length s > 10 then do
          requires[JScript "alert('length must be less than 10 chars');"]
