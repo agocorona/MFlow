@@ -70,7 +70,7 @@ absLink ref = wcached (show ref) 0 . wlink ref
 mainMenu :: View Html IO Options
 mainMenu= autoRefresh $
   ul<<<(li << a ! href "/" ! At.class_ "_noAutoRefresh" << b "HOME"
-   ++> li << (b "About this menu" <> article menuarticle)
+   ++> li << (b "About this menu" <> article cascade <> article menuarticle)
    ++> (li <<<  do
           absLink DatabaseSamples << b  "Database examples"
              <++ " with different backends"
@@ -280,7 +280,7 @@ stateful= "http://haskell-web.blogspot.com.es/2013/04/more-on-session-management
 preventbackl= "http://haskell-web.blogspot.com.es/2013/04/controlling-backtracking-in-mflow.html"
 ajaxl= "http://hackage.haskell.org/packages/archive/MFlow/0.3.1.0/doc/html/MFlow-Forms.html#g:17"
 menuarticle= "http://haskell-web.blogspot.com.es/2013/08/how-to-handle-menus-and-other.html"
-
+cascade="http://haskell-web.blogspot.com.es/2013/10/a-cascade-menu-coded-in-pure.html"
 
 widgetAndSource filename w = do
       source <- getSource filename
