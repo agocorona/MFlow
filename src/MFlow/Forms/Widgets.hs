@@ -577,7 +577,7 @@ edTemplate
   :: (FormInput v, Typeable a) =>
       UserStr -> Key -> View v Identity a -> View v IO a
 edTemplate muser k w=  View $ do
-   nam     <- genNewId
+   nam  <- genNewId
 
    let ipanel= nam++"panel"
        name= nam++"-"++k
@@ -690,6 +690,8 @@ edTemplateList user templ  ws=  do
 --          \                      $(it).wrap('<li></li>')});\n\
 
 --          \        })\n\
+
+--wiki user = wstateless $ edTemplate user temp
 
 ------------------- JQuery widgets -------------------
 

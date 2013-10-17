@@ -262,7 +262,7 @@ mainMenu1= wcached "menu" 0 $
    <|>  wlink PreventBack  << b "Prevent going back after a transaction"
 
 
-article link=  " " <> a ! href ( link) <<  i "(article)"
+article link=  " " <> a ! At.class_ "_noAutoRefresh"  ! href link <<  i "(article)"
 
 persistentarticle= "http://haskell-web.blogspot.com.es/2013/08/mflow-using-persistent-with-sqlite.html"
 yesodweb= "http://www.yesodweb.com/book/persistent"
