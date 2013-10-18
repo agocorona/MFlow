@@ -57,7 +57,7 @@ main= do
    setAdminUser adminname adminname
 --   userRegister edadmin edadmin
    syncWrite  $ Asyncronous 120 defaultCheck  1000
-
+   addMessageFlows[("wiki", wstateless  wiki)] 
    setFilesPath "Demos/"
    runNavigation "" $ do
        setHeader $ stdheader 
@@ -97,11 +97,23 @@ main= do
              ShopCart    ->   shopCart                   `showSource` "ShopCart.hs"
              MCounter    ->   mcounter                   `showSource` "MCounter.hs"
              MFlowPersist ->  step mFlowPersistent       `showSource` "MFlowPersistent.hs"
-             RuntimeTemplates -> step runtimeTemplates  `showSource` "RuntimeTemplates.hs"
+             RuntimeTemplates -> step runtimeTemplates   `showSource` "RuntimeTemplates.hs"
 
 
 
+wiki = do
+   page <- getRestParam `onNothing` return "index"
+   (docTypeHtml $ do
+       El.head $ do
+         El.title $ fromString page
+         link ! rel   "stylesheet"
+              ! type_ "text/css"
+              ! href  "http://jqueryui.com/resources/demos/style.css")
+        ++> (El.div ! At.style "float:right" <<< autoRefresh wlogin )
+        **> (h1 <<< tFieldEd "editor" (wikip ++page ++ "title.html") "Enter the title")
+        **> tFieldEd "editor" (wikip ++ page ++ "body.html") "Enter the body"
 
+wikip="wiki/"
 
 
 -- | to run it on heroku, traceSample is included since heroku does not run the monadloc preprocessor

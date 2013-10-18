@@ -1073,15 +1073,31 @@ transientNav= MFlow.Forms.Internals.step
 
 data ParamResult v a= NoParam | NotValidated String v | Validated a deriving (Read, Show)
 
+valToMaybe (Validated x)= Just x
+valToMaybe _= Nothing
+
+isValidated (Validated x)= True
+isValidated _= False
+
+fromValidated (Validated x)= x
+fromValidated NoParam= error $ "fromValidated : NoParam"
+fromValidated (NotValidated s err)= error $ "fromValidated: NotValidated "++ s
+
+
 getParam1 :: (Monad m, MonadState (MFlowState v) m, Typeable a, Read a, FormInput v)
           => String -> Params ->  m (ParamResult v a)
-getParam1 par req =  r
+getParam1 par req =   case lookup  par req of
+    Just x1 -> readParam x1
+    Nothing  -> return  NoParam
+
+readParam :: (Monad m, MonadState (MFlowState v) m, Typeable a, Read a, FormInput v)
+           => String -> m (ParamResult v a)
+readParam x1 = r
  where
- r= case lookup  par req of
-    Just x -> do
-        modify $ \s -> s{inSync= True}
-        maybeRead x 
-    Nothing  -> return  NoParam 
+ r= do
+     modify $ \s -> s{inSync= True}
+     maybeRead x1
+      
  getType ::  m (ParamResult v a) -> a
  getType= undefined
  x= getType r

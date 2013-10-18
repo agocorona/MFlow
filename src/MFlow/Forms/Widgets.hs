@@ -36,8 +36,9 @@ delEdited, getEdited,prependWidget,appendWidget,setWidget
 -- * Multilanguage
 ,mFieldEd, mField
 
--- * other
+-- * utility
 ,insertForm
+
 
 ) where
 import MFlow
@@ -691,10 +692,9 @@ edTemplateList user templ  ws=  do
 
 --          \        })\n\
 
---wiki user = wstateless $ edTemplate user temp
+
 
 ------------------- JQuery widgets -------------------
-
 -- | present the JQuery datepicker calendar to choose a date.
 -- The second parameter is the configuration. Use \"()\" by default.
 -- See http://jqueryui.com/datepicker/

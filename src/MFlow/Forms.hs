@@ -214,7 +214,7 @@ ask, page, askt, clearEnv, wstateless, pageFlow,
 getString,getInt,getInteger, getTextBox 
 ,getMultilineText,getBool,getSelect, setOption,setSelectedOption, getPassword,
 getRadio, setRadio, setRadioActive, wlabel, getCheckBoxes, genCheckBoxes, setCheckBox,
-submitButton,resetButton, whidden, wlink, returning, wform, firstOf, manyOf, wraw, wrender, notValid
+submitButton,resetButton, whidden, wlink, getRestParam, returning, wform, firstOf, manyOf, wraw, wrender, notValid
 -- * FormLet modifiers
 ,validate, noWidget, waction, wcallback, clear, wmodify,
 
@@ -417,15 +417,6 @@ setRadioActive  v n = View $ do
           ( isValidated mn  && v== fromValidated mn) (Just  "this.form.submit()")]
           (fmap Radio $ valToMaybe mn)
 
-valToMaybe (Validated x)= Just x
-valToMaybe _= Nothing
-
-isValidated (Validated x)= True
-isValidated _= False
-
-fromValidated (Validated x)= x
-fromValidated NoParam= error $ "fromValidated : NoParam"
-fromValidated (NotValidated s err)= error $ "fromValidated: NotValidated "++ s
 
 -- | Implement a radio button
 -- the parameter is the name of the radio group
@@ -1133,10 +1124,6 @@ page= ask
 
 
 
-comparePaths _ n [] xs=  n
-comparePaths  o n _ [] = o
-comparePaths  o n (v:path) (v': npath) | v== v' = comparePaths o (n+1)path npath
-                                        | otherwise= n
 
 nextMessage :: MonadIO m => WState view m ()
 nextMessage= do
@@ -1149,20 +1136,30 @@ nextMessage= do
          env=   updateParams inPageFlow (mfEnv st) req
          npath= pwfPath msg
          path=  mfPath st
-         inPageFlow= isJust $ mfPageIndex st  
+         inPageFlow= case (comparep,mfPageIndex st) of
+                    (n, Just n') -> if n < n' then Nothing   else Just n'
+                    _ -> Nothing
+         comparep= comparePaths (mfPIndex st) 1 (tail path) (tail npath)
      put st{ mfPath= npath
-           , mfPIndex= case mfPageIndex st of
+           , mfPIndex= case inPageFlow of
                          Just n -> n
-                         Nothing ->
-                             comparePaths (mfPIndex st) 1 (tail path) (tail npath)
---           , mfPageIndex= Nothing
+                         Nothing -> comparep
+
+           , mfPageIndex= inPageFlow
+           , mfLinks= if isNothing inPageFlow then M.empty else mfLinks st
            , mfEnv= env }                        -- !> show req
 
 
      where
-     updateParams :: Bool -> Params -> Params -> Params
-     updateParams False _ req= req
-     updateParams True env req=
+
+     comparePaths _ n [] xs=  n
+     comparePaths  o n _ [] = o
+     comparePaths  o n (v:path) (v': npath) | v== v' = comparePaths o (n+1)path npath
+                                        | otherwise= n
+
+     updateParams :: Maybe Int -> Params -> Params -> Params
+     updateParams Nothing _ req= req
+     updateParams (Just _) env req=
         let params= takeWhile isparam env
             fs= fst $ head req
             parms= (case findIndex (\p -> fst p == fs)  params of
@@ -1184,14 +1181,14 @@ isparam _= False
 -- higuer level form of the latter 
 wstateless
   :: (Typeable view,  FormInput view) =>
-     View view IO a -> Flow
-wstateless w = transient $ runFlow loop
-  where
-  loop= do
-      ask w
-      env <- get
-      put $ env{ mfSequence= 0} 
-      loop
+     View view IO () -> Flow
+wstateless w = transient . runFlow . ask $ w **> noWidget -- loop
+--  where
+--  loop= do
+--      ask w
+--      env <- get
+--      put $ env{ mfSequence= 0} 
+--      loop
 
 
 ---- This version writes a log with all the values returned by ask
@@ -1303,7 +1300,24 @@ wlabel str w = do
 --                       True  -> s{mfSeqCache= mfSeqCache s -1}
 --                       False -> s{mfSequence= mfSequence s -1}
    ftag "label" str `attrs` [("for",id)] ++> w <! [("id",id)]
-    
+
+getRestParam :: (Read a, Typeable a,Monad m,Functor m, FormInput v) => View v m (Maybe a)
+getRestParam= do
+   st <- get
+   let lpath = mfPath st
+   let index' = mfPIndex st
+                 + if linkMatched st then -1 else 0
+                 + if Just (mfPIndex st)== mfPageIndex st then 1 else 0
+       index = if index'== 0 then 1 else index'
+
+   case  index < length lpath  of
+             True -> do
+                  modify $ \s -> s{inSync= True
+                                 ,linkMatched= True, mfPIndex= index+1 }  -- !> (name ++ "<-" ++show index++ " MATCHED")
+                  fmap valToMaybe $ readParam $ lpath !! index
+             False ->  return Nothing
+
+   
 -- | Creates a link wiget. A link can be composed with other widget elements,
 wlink :: (Typeable a, Show a, MonadIO m,  FormInput view) 
          => a -> view -> View  view m a
@@ -1329,7 +1343,7 @@ wlink x v= View $ do
           toSend = flink path v
 
 
-      r <- if linkMatched st then return Nothing
+      r <- if linkMatched st then return Nothing -- only a link match per page
            else
            if isJust $ mfPageIndex st -- !> (show $ mfPageIndex st)
              then
