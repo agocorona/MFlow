@@ -895,7 +895,7 @@ update method w= do
         \});\n\
        \});\n\
       \return false;\n\
-     \}"
+     \}\n"
 
 data UpdateMethod= Append | Prepend | Html deriving Show
 

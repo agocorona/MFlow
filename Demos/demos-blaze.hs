@@ -105,10 +105,7 @@ wiki = do
    page <- getRestParam `onNothing` return "index"
    (docTypeHtml $ do
        El.head $ do
-         El.title $ fromString page
-         link ! rel   "stylesheet"
-              ! type_ "text/css"
-              ! href  "http://jqueryui.com/resources/demos/style.css")
+         El.title $ fromString page)
         ++> (El.div ! At.style "float:right" <<< autoRefresh wlogin )
         **> (h1 <<< tFieldEd "editor" (wikip ++page ++ "title.html") "Enter the title")
         **> tFieldEd "editor" (wikip ++ page ++ "body.html") "Enter the body"

@@ -310,9 +310,13 @@ divsample= El.div ! At.style ( "background-color:#FFEEEE;")
 stdheader  c= docTypeHtml $ do
    El.head $ do
      El.title "MFlow examples"
-     link ! rel   "stylesheet"
-          ! type_ "text/css"
-          ! href ( "http://jqueryui.com/resources/demos/style.css")
+--     link ! rel   "stylesheet"
+--          ! type_ "text/css"
+--          ! href ( "http://jqueryui.com/resources/demos/style.css")
+     El.style $ "body {\n\
+	      \font-family: \"rebuchet MS\", \"Helvetica\", \"Arial\",  \"Verdana\", \"sans-serif\";\n\
+	    \font-size: 62.5%;\n\
+            \}\n"
    body  $ do
       [shamlet|
          <script>
