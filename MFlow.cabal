@@ -101,7 +101,7 @@ library
                    TCache -any, stm >2, old-time -any, vector -any,
                    directory -any, utf8-string -any, wai -any, case-insensitive -any,
                    http-types -any, conduit -any, text -any, parsec -any, warp -any,
-                   random -any, blaze-html -any, blaze-markup -any, monadloc -any,
+                   random -any, blaze-html -any, blaze-markup -any, monadloc-pp -any,
                    hamlet -any
     exposed-modules: MFlow MFlow.Wai.Blaze.Html.All MFlow.Forms
                      MFlow.Forms.Admin MFlow.Cookies MFlow.Wai MFlow.Wai.XHtml.All
