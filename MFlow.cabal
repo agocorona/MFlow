@@ -101,7 +101,7 @@ library
                    TCache -any, stm >2, old-time -any, vector -any,
                    directory -any, utf8-string -any, wai -any, case-insensitive -any,
                    http-types -any, conduit -any, text -any, parsec -any, warp -any,
-                   random -any, blaze-html -any, blaze-markup -any, monadloc-pp -any,
+                   random -any, blaze-html -any, blaze-markup -any, monadloc -any,
                    hamlet -any
     exposed-modules: MFlow MFlow.Wai.Blaze.Html.All MFlow.Forms
                      MFlow.Forms.Admin MFlow.Cookies MFlow.Wai MFlow.Wai.XHtml.All
@@ -117,12 +117,12 @@ executable demos-blaze
                    directory -any ,  Workflow -any, base -any, blaze-html -any,
                    bytestring, containers -any, mtl -any, old-time -any,
                    stm -any, text -any, transformers -any, vector -any, hamlet -any,
-                   monadloc -any, monadloc-pp, aws -any, network -any, hscolour -any,
+                   monadloc -any, aws -any, network -any, hscolour -any,
                    persistent-template, persistent-sqlite, persistent,
                    conduit, http-conduit, monad-logger
 
 
-    main-is: demos-blaze.hs
+    main-is: demos-blaze.Loc.hs
     buildable: True
     hs-source-dirs: Demos
     other-modules: MFlowPersistent MCounter
