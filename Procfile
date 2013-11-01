@@ -1,1 +1,1 @@
-web: ./dist/build/demos-blaze.Loc/demos-blaze.Loc
+web: ./dist/build/demos-blaze/demos-blaze
