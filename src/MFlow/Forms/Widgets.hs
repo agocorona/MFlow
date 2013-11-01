@@ -31,7 +31,7 @@ wEditList,wautocompleteList
 delEdited, getEdited,prependWidget,appendWidget,setWidget
 
 -- * Content Management
-,tField, tFieldEd, htmlEdit, edTemplate, dField, template, edTemplateList
+,tField, tFieldEd, htmlEdit, edTemplate, dField, template, witerate,tfieldKey
 
 -- * Multilanguage
 ,mFieldEd, mField
@@ -63,7 +63,7 @@ import Data.Maybe
 import Data.Char
 import Control.Monad.Identity
 import Control.Workflow(killWF)
-
+import Unsafe.Coerce
 
 
 readyJQuery="ready=function(){if(!window.jQuery){return setTimeout(ready,100)}};"
@@ -433,8 +433,8 @@ wautocompleteList phold serverproc values=
                            ++> whidden( fromJust x)
 
 ------- Templating and localization ---------
-type Key= String
-data TField  = TField Key B.ByteString  deriving (Read, Show,Typeable)
+
+data TField  = TField {tfieldKey:: Key, tfieldContent :: B.ByteString}  deriving (Read, Show,Typeable)
 
 instance Indexable TField where
     key (TField k _)= k
@@ -459,9 +459,7 @@ readtField text k= atomically $ do
    mr <- readDBRef ref
    case mr of
     Just (TField k v) -> return $ fromStrNoEncode $ B.unpack v
-    Nothing -> do
-        writeDBRef ref  $ TField k $ toByteString text
-        return text
+    Nothing -> return text
 
 
 htmlEdit :: (Monad m, FormInput v) =>  [String] -> UserStr -> View v m a -> View v m a
@@ -569,16 +567,168 @@ mFieldEd  muser k content= do
   lang <- getLang
   tFieldEd  muser (k ++ ('-':lang)) content
 
+
+
 -- | A multilanguage version of tField
 mField k= do
   lang <- getLang
   tField $ k ++ ('-':lang)
 
+newtype IteratedId= IteratedId  String deriving Typeable
+
+witerate
+  :: (MonadIO m, Functor m, FormInput v) =>
+      View v m a -> View v m a
+witerate  w= do
+   name  <- genNewId
+   setSessionData $ IteratedId name
+   st <- get
+   let index= mfPIndex st
+   let t= mfkillTime st
+   let installAutoEval=
+        "$(document).ready(function(){\n\
+           \autoEvalLink('"++name++"','"++ show index ++"');\
+           \autoEvalForm('"++name++"');\
+           \})\n"
+   let r = lookup ("auto"++name) $ mfEnv st
+   ret <- case r of
+    Nothing -> do
+     requires [JScript     autoEvalLink
+              ,JScript     autoEvalForm
+              ,JScript     setId
+              ,JScript     $ timeoutscript t
+              ,JScriptFile jqueryScript [installAutoEval]]
+
+     (ftag "div" <<< insertForm w) <! [("id",name)]
+
+
+    Just sind -> View $ do
+         let t= mfToken st
+         let index= read sind
+         put st{mfPIndex= index}
+         modify $ \s -> s{mfRequirements=[]}
+
+         FormElm _ mr <- runView  w
+
+         reqs <- return . map ( \(Requirement r) -> unsafeCoerce r) =<< gets mfRequirements
+         let js = jsRequirements reqs
+         liftIO . sendFlush t $ HttpData
+                                (("Cache-Control", "no-cache, no-store"):mfHttpHeaders st)
+                                (mfCookies st) (B.pack js)
+         modify $ \st -> st{mfAutorefresh=True,inSync=True}
+         return $ FormElm [] mr
+
+   delSessionData $ IteratedId name
+   return ret
+
+autoEvalLink = "\nfunction autoEvalLink(id,ind){\n\
+    \var id1= $('#'+id);\n\
+    \var ida= $('#'+id+' a[class!=\"_noAutoRefresh\"]');\n\
+    \ida.click(function () {\n\
+    \ if (hadtimeout == true) return true;\n\
+    \ var pdata = $(this).attr('data-value');\n\
+    \ var actionurl = $(this).attr('href');\n\
+    \ var dialogOpts = {\n\
+    \       type: 'GET',\n\
+    \       url: actionurl+'?bustcache='+ new Date().getTime()+'&auto'+id+'='+ind,\n\
+    \       data: pdata,\n\
+    \       success: function (resp) {\n\
+    \           eval(resp);\n\
+    \       },\n\
+    \       error: function (xhr, status, error) {\n\
+    \           var msg = $('<div>' + xhr + '</div>');\n\
+    \           id1.html(msg);\n\
+    \       }\n\
+    \   };\n\
+    \ $.ajax(dialogOpts);\n\
+    \ return false;\n\
+    \});\n\
+  \}\n"
+
+autoEvalForm = "\nfunction autoEvalForm(id) {\n\
+    \var id1= $('#'+id);\n\
+    \var idform= $('#'+id+' form[class!=\"_noAutoRefresh\"]');\n\
+    \idform.submit(function (event) {\n\
+        \if (hadtimeout == true) return true;\n\
+        \event.preventDefault();\n\
+        \var $form = $(this);\n\
+        \var url = $form.attr('action');\n\
+        \var pdata = $form.serialize();\n\
+        \$.ajax({\n\
+            \type: 'POST',\n\
+            \url: url,\n\
+            \data: 'auto'+id+'=true&'+pdata,\n\
+            \success: function (resp) {\n\
+                \eval(resp);\n\
+            \},\n\
+            \error: function (xhr, status, error) {\n\
+                \var msg = $('<div>' + xhr + '</div>');\n\
+                \id1.html(msg);\n\
+            \}\n\
+        \});\n\
+       \});\n\
+      \return false;\n\
+     \}\n"
+
+setId= "function setId(id,v){document.getElementById(id).innerHTML= v;};\n"
+
+dField
+  :: (Monad m, FormInput view) =>
+     View view m  b -> View view m b
+dField w= View $ do
+    id <- genNewId
+    FormElm vs mx <- runView w
+    let render = mconcat vs
+    st <- get
+    let env =  mfEnv st
+
+    IteratedId name <- getSessionData `onNothing` return (IteratedId noid)
+    let r =  lookup ("auto"++name) env
+    if r == Nothing || (name == noid && newAsk st== True)  then do
+       requires [JScriptFile jqueryScript ["$(document).ready(function() {setId('"++id++"','" ++ B.unpack (toByteString $ render)++"')});\n"]]
+       return $ FormElm[(ftag "span" render) `attrs` [("id",id)]] mx
+     else do
+       requires [JScript $  "setId('"++id++"','" ++ B.unpack (toByteString $ render)++"');\n"]
+       return $ FormElm mempty mx
+
+noid= "noid"
+
+--edTemplateList
+--  :: (MonadIO m, Functor m, Typeable b, FormInput view) =>
+--     UserStr -> String -> (a ->View view m  b) -> [a] -> View view m b
+--edTemplateList user  name w xs= View $ do
+--    id <- genNewId
+--    let ws= Prelude.map w xs
+--    FormElm vx mx <- runView $
+--          edTemplate user name ( Prelude.head ws) <|>
+--          firstOf [template name w | w <- Prelude.tail ws]
+--
+--    let render = mconcat vx
+--    st <- get
+--    let t= mfkillTime st
+--    let env =  mfEnv st
+--    let insertResults= "insert('" ++ id ++ "',"++ show (B.unpack $ toByteString render) ++");"
+--    IteratedId name <- getSessionData `onNothing` return (IteratedId noid)
+--    let r =  lookup ("auto"++name) env           -- !> ("TIMEOUT="++ show t)
+--    if r == Nothing || (name == noid && newAsk st== True)
+--     then do
+--         requires[JScript autoEvalLink
+--                 ,JScript $ timeoutscript t
+--                 ,JScript jsInsertList
+--                 ,JScriptFile jqueryScript [insertResults]]
+--         return $ FormElm[(ftag "span" render) `attrs` [("id",id)]] mx  !> "NOPARAM edTemplateList"
+--     else do
+--       modify $ \st -> st{mfRequirements= [],mfAutorefresh=True,inSync=True}
+--       requires[JScript insertResults]
+--             !> "VALIDATED edTemplateList"
+--       return $ FormElm mempty mx
+--
+
 edTemplate
-  :: (FormInput v, Typeable a) =>
-      UserStr -> Key -> View v Identity a -> View v IO a
+  :: (MonadIO m, FormInput v, Typeable a) =>
+      UserStr -> Key -> View v m a -> View v m a
 edTemplate muser k w=  View $ do
-   nam  <- genNewId
+   nam     <- genNewId
 
    let ipanel= nam++"panel"
        name= nam++"-"++k
@@ -591,13 +741,12 @@ edTemplate muser k w=  View $ do
             ,JScriptFile jqueryScript []
             ,ServerProc  ("_texts",  transient getTexts)]
 
-   FormElm text mx <- runView  $ wcached k 0  w
+   FormElm text mx <- runView w -- $ wcached k 0  w
    content <- liftIO $ readtField (mconcat text) k
 
-   return $FormElm [ftag "div" mempty `attrs` [("id",ipanel)]
-                   ,ftag "span" content `attrs` [("id", name)]]
-                    mx
-
+   return $ FormElm [ftag "div" mempty `attrs` [("id",ipanel)]
+                    ,ftag "span" content `attrs` [("id", name)]]
+                     mx
    where
    getTexts :: (Token -> IO ())
    getTexts token= do
@@ -611,55 +760,50 @@ edTemplate muser k w=  View $ do
    viewFormat :: View v m a -> v
    viewFormat= undefined -- is a type function
 
-template k w= wcached k 0 $ View $ do
+
+template k w= View $ do
     FormElm text mx <- runView  w
     let content= unsafePerformIO $ readtField  (mconcat text) k
     return $ FormElm [content] mx
 
-dField v= do
-    id <- genNewId
-    requires [JScript "function setId(id,v){document.onload = function(){document.getElementById(id).innerHTML= v;}};\n"
-             ,JScript $ "setId('"++id++"','" ++ B.unpack (toByteString v)++"');\n"]
-    wraw $ ftag "span" v `attrs`[("id",id)]
-
-edTemplateList
-  :: (Typeable a,FormInput view) =>
-     UserStr -> String  -> [View view Identity a] -> View view IO a
-edTemplateList user templ  ws=  do
-  let  id = templ
-  let wrapid=  "wrapper-" ++ id
-  text <- liftIO $ readtField  (ftag "div" mempty `attrs` [("id",wrapid)])  wrapid
-  let   vwrtext= B.unpack $ toByteString (text `asTypeOf` witness ws)
-
---  wrapperEd wrapid vwrtext **>
-  (ftag "div" <<< elems id wrapid vwrtext) <! [("id",wrapid)]
-  where
-  witness :: [View view Identity a] -> view
-  witness = undefined
-
-  elems id wrapid vwrtext= View $ do
-    let holder=  ftag "span" (fromStr "holder") `attrs` [("_holder",id)]
-
-    FormElm fedit _ <- runView $ tFieldEd user templ holder
-    frest  <- liftIO $ readtField holder  templ
-
-    forms <-  mapM (runView . changeMonad) ws
-    let vs   = map (\(FormElm v _) ->  mconcat v) forms
-    requires [JScriptFile jqueryScript
-              [
---               replacewrap
---              ,"replacewrap('"++ wrapid ++ "','" ++ vwrtext ++ "')",
-              insert
-              ,"$(document).ready(function() {\
-               \insert('" ++ id ++ "',"++ show (map ( B.unpack . toByteString) vs) ++");\n\
-               \});"]]
-
-    let res = filter isJust $ map (\(FormElm _ r) -> r) forms
-        res1= if null res then Nothing else head res
-
-    return $ FormElm  (mconcat fedit: take (length vs -1) (repeat frest)) res1
-    where
-    insert =
+--edTemplateList
+--  :: (Typeable a,FormInput view) =>
+--     UserStr -> String  -> [View view Identity a] -> View view IO a
+--edTemplateList user templ  ws=  do
+--  let  id = templ
+--  let wrapid=  "wrapper-" ++ id
+--  text <- liftIO $ readtField  (ftag "div" mempty `attrs` [("id",wrapid)])  wrapid
+--  let   vwrtext= B.unpack $ toByteString (text `asTypeOf` witness ws)
+--
+----  wrapperEd wrapid vwrtext **>
+--  (ftag "div" <<< elems id wrapid vwrtext) <! [("id",wrapid)]
+--  where
+--  witness :: [View view Identity a] -> view
+--  witness = undefined
+--
+--  elems id wrapid vwrtext= View $ do
+--    let holder=  ftag "span" (fromStr "holder") `attrs` [("_holder",id)]
+--
+--    FormElm fedit _ <- runView $ tFieldEd user templ holder
+--    frest  <- liftIO $ readtField holder  templ
+--
+--    forms <-  mapM (runView . changeMonad) ws
+--    let vs   = map (\(FormElm v _) ->  mconcat v) forms
+--    requires [JScriptFile jqueryScript
+--              [
+----               replacewrap
+----              ,"replacewrap('"++ wrapid ++ "','" ++ vwrtext ++ "')",
+--              jsInsertList
+--              ,"$(document).ready(function() {\
+--               \insert('" ++ id ++ "',"++ show (map ( B.unpack . toByteString) vs) ++");\n\
+--               \});"]]
+--
+--    let res = filter isJust $ map (\(FormElm _ r) -> r) forms
+--        res1= if null res then Nothing else head res
+--
+--    return $ FormElm  (mconcat fedit: take (length vs -1) (repeat frest)) res1
+--
+jsInsertList =
       "\nfunction insert(id,vs){\n\
       \$('[_holder=\"'+id+'\"]').each(function(n,it) {\n\
       \  $(it).html(vs[n]);\n\
@@ -810,6 +954,11 @@ prependUpdate   :: (MonadIO m,
   -> View v m a
 prependUpdate= update "prepend"
 
+update :: (MonadIO m,
+     FormInput v)
+  => B.ByteString
+  -> View v m a
+  -> View v m a
 update method w= do
     id <- genNewId
     st <- get
@@ -821,29 +970,30 @@ update method w= do
                ++ "ajaxPostForm('"++id++"');"
                ++ "})\n"
 
-    r <- getParam1 ("auto"++id) $ mfEnv st           -- !> ("TIMEOUT="++ show t)
+    let r= lookup ("auto"++id) $ mfEnv st           -- !> ("TIMEOUT="++ show t)
     case r of
-      NoParam -> do
+      Nothing -> do
          requires [JScript $ timeoutscript t
                   ,JScript ajaxGetLink
                   ,JScript ajaxPostForm
                   ,JScriptFile jqueryScript [installscript]]
          (ftag "div" <<< insertForm w) <! [("id",id)] 
 
-      Validated (x :: String) -> View $ do
+      Just sind -> View $ do
          let t= mfToken st
          FormElm form mr <- runView $ insertForm w
          st <- get
-         let HttpData ctype c s= toHttpData $ mconcat form
+         let HttpData ctype c s= toHttpData $ method <> " " <> toByteString (mconcat form)
+--                                            "$('#"<> B.pack id <>"')." <> method
+--                                            <> "('" <> toByteString (mconcat form) <> "');"
+--                                            <> "ajaxGetLink('" <> B.pack id  <> "');"
+--                                            <> "ajaxPostForm('" <> B.pack id  <> "');"
          liftIO . sendFlush t $ HttpData (ctype ++ ("Cache-Control", "no-cache, no-store"):mfHttpHeaders st) (mfCookies st ++ c) s
-         put st{mfAutorefresh=True}
+         put st{mfAutorefresh=True,inSync=True}
          return $ FormElm [] mr
 
   where
 
-  timeoutscript t=
-     "\nvar hadtimeout=false;\n\
-     \setTimeout(function() {hadtimeout=true; }, "++show (t*1000)++");\n"
 
   -- | adapted from http://www.codeproject.com/Articles/341151/Simple-AJAX-POST-Form-and-AJAX-Fetch-Link-to-Modal
   ajaxGetLink = "\nfunction ajaxGetLink(id){\n\
@@ -858,8 +1008,13 @@ update method w= do
     \       url: actionurl+'?bustcache='+ new Date().getTime()+'&auto'+id+'=true',\n\
     \       data: pdata,\n\
     \       success: function (resp) {\n\
-    \           id1."++method++"(resp);\n\
-    \           ajaxGetLink(id)\n\
+    \            var ind= resp.indexOf(' ');\n\
+    \            var dat = resp.substr(ind);\n\
+    \            var method= resp.substr(0,ind);\n\
+    \            if(method== 'html')id1.html(dat);\n\
+    \            else if (method == 'append') id1.append(dat);\n\
+    \            else id1.prepend(dat);\n\
+    \            ajaxGetLink(id);\n\
     \       },\n\
     \       error: function (xhr, status, error) {\n\
     \           var msg = $('<div>' + xhr + '</div>');\n\
@@ -885,8 +1040,13 @@ update method w= do
             \url: url,\n\
             \data: 'auto'+id+'=true&'+pdata,\n\
             \success: function (resp) {\n\
-                \id1."++method++"(resp);\n\
-                \ajaxPostForm(id)\n\
+    \            var ind= resp.indexOf(' ');\n\
+    \            var dat = resp.substr(ind);\n\
+    \            var method= resp.substr(0,ind);\n\
+    \            if(method== 'html')id1.html(dat);\n\
+    \            else if (method == 'append') id1.append(dat);\n\
+    \            else id1.prepend(dat);\n\
+    \            ajaxPostForm(id);\n\
             \},\n\
             \error: function (xhr, status, error) {\n\
                 \var msg = $('<div>' + xhr + '</div>');\n\
@@ -896,6 +1056,11 @@ update method w= do
        \});\n\
       \return false;\n\
      \}\n"
+
+timeoutscript t=
+     "\nvar hadtimeout=false;\n\
+     \if("++show t++" > 0)setTimeout(function() {hadtimeout=true; }, "++show (t*1000)++");\n"
+
 
 data UpdateMethod= Append | Prepend | Html deriving Show
 

@@ -69,7 +69,7 @@ Flow, Params, HttpData(..),Processable(..)
 -- | very basic but efficient bytestring tag formatting
 btag, bhtml, bbody,Attribs, addAttrs
 -- * user
-, userRegister, setAdminUser, getAdminName
+, userRegister, setAdminUser, getAdminName, Auth(..),getAuthMethod, setAuthMethod
 -- * static files
 ,setFilesPath
 -- * internal use
@@ -144,6 +144,7 @@ instance Read Token where
 instance Serializable Token  where
   serialize  = B.pack . show
   deserialize= read . B.unpack
+  setPersist =   \_ -> Just filePersist
 
 iorefqmap= unsafePerformIO  . newMVar $ M.empty
 
@@ -442,9 +443,17 @@ hlog= unsafePerformIO $ openFile logFileName ReadWriteMode
 
 ------ USER MANAGEMENT -------
 
---instance Serialize a => Serializable a where
---  serialize=  runW . showp
---  deserialize=   runR readp
+data Auth = Auth{
+   uregister ::  UserStr -> PasswdStr -> (IO (Maybe String)),
+   uvalidate ::  UserStr -> PasswdStr -> (IO (Maybe String))}
+
+_authMethod= unsafePerformIO $ newIORef $ Auth tCacheRegister tCacheValidate
+
+-- | set an authentication method
+setAuthMethod auth= writeIORef _authMethod auth
+
+getAuthMethod = readIORef _authMethod
+
 
 data User= User
             { userName :: String
@@ -462,13 +471,41 @@ instance Indexable User where
 -- | Return  the key name of an user
 keyUserName n= userPrefix++n
 
-instance Serialize a => Serializable a where
-  serialize= runW . showp
-  deserialize= runR  readp
-
+instance  Serializable User where
+  serialize=  B.pack . show
+  deserialize=   read . B.unpack
+  setPersist =   \_ -> Just filePersist
+  
 -- | Register an user/password 
-userRegister :: MonadIO m => String -> String  -> m (DBRef User)
-userRegister user password  = liftIO . atomically $ newDBRef $ User user password
+tCacheRegister ::  String -> String  -> IO (Maybe String)
+tCacheRegister user password  =  atomically $ do
+     withSTMResources [newuser]  doit
+     where
+     newuser= User user password
+     doit [Just (User _ _)] = resources{toReturn= Just "user already exist"}
+     doit [Nothing] = resources{toAdd= [newuser],toReturn= Nothing}
+
+tCacheValidate ::  UserStr -> PasswdStr -> IO (Maybe String)
+tCacheValidate  u p =
+    let user= eUser{userName=u}
+    in  atomically
+     $ withSTMResources [user]
+     $ \ mu -> case mu of
+         [Nothing] -> resources{toReturn= err }
+         [Just (User _ pass )] -> resources{toReturn= 
+               case pass==p  of
+                 True -> Nothing
+                 False -> err
+               }
+
+     where
+     err= Just  "Username or password invalid"
+
+userRegister u p= liftIO $ do
+   Auth reg _ <- getAuthMethod :: IO Auth
+   reg u p
+
+
 
 
 data Config = Config UserStr deriving (Read, Show, Typeable)
@@ -477,14 +514,18 @@ keyConfig= "mflow.config"
 instance Indexable Config where key _= keyConfig
 rconf= getDBRef keyConfig
 
+instance  Serializable Config where
+  serialize=  B.pack . show
+  deserialize=   read . B.unpack
+  setPersist =   \_ -> Just filePersist
 
 type UserStr= String
 type PasswdStr= String
 
 setAdminUser :: MonadIO m => UserStr -> PasswdStr -> m ()
-setAdminUser user password= liftIO $  atomically $ do
-  newDBRef $ User user password
-  writeDBRef rconf $ Config user
+setAdminUser user password= liftIO $  do
+  userRegister user password
+  atomically $ writeDBRef rconf $ Config user
 
 getAdminName :: MonadIO m => m UserStr
 getAdminName=  liftIO  $ do
@@ -600,6 +641,10 @@ data NFlow= NFlow !Integer deriving (Read, Show, Typeable)
 instance Indexable NFlow where
   key _= "Flow"
 
+instance  Serializable NFlow where
+  serialize=  B.pack . show
+  deserialize=   read . B.unpack
+  setPersist =   \_ -> Just filePersist
 
 rflow= getDBRef . key $ NFlow undefined
 

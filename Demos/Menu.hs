@@ -32,7 +32,7 @@ edadmin= "editor"
 
 -- present the widget w decorated with the main menu on the left and the source code at the bottom
 askm w= ask $ do
-    Filename filename <- getSessionData `onNothing` error "source filename not set"
+    filename <- getSessionData
     tFieldEd edadmin "head" "set Header"
 --       **> topLogin
        <++ hr
@@ -52,7 +52,7 @@ divmenu= El.div
 pagem= askm
 
 
-data Options= CountI | CountS | Radio
+data Options= Wiki | CountI | CountS | Radio
             | Login | TextEdit |Grid | Autocomp | AutocompList
             | ListEdit |Shop | Action | Ajax | Select
             | CheckBoxes | PreventBack | Multicounter
@@ -68,9 +68,10 @@ absLink ref = wcached (show ref) 0 . wlink ref
 
 
 mainMenu :: View Html IO Options
-mainMenu= autoRefresh $
+mainMenu= autoRefresh  $
   ul<<<(li << a ! href "/" ! At.class_ "_noAutoRefresh" << b "HOME"
-   ++> li << (b "About this menu" <> article cascade <> article menuarticle)
+   ++> (li <<<  ((absLink Wiki << b "Wiki") <! [("class", "_noAutoRefresh")]))
+   <|> li << (b "About this menu" <> article cascade <> article menuarticle)
    ++> (li <<<  do
           absLink DatabaseSamples << b  "Database examples"
              <++ " with different backends"
@@ -149,7 +150,8 @@ mainMenu= autoRefresh $
           absLink MonadicWidgets << b  "Monadic widgets, actions and callbacks"
              <++ " autoRefresh, page flows, dialogs etc"
           ul <<<                   
-            (li <<< (absLink Action      << b  "Example of action, executed when a widget is validated") <! noAutoRefresh
+            (li <<< (absLink Action      << b  "Example of action") <! noAutoRefresh
+                <++ " executed when a widget is validated"
 
             <|> li <<< (absLink FViewMonad   << b  "in page flow: sum of three numbers") <! noAutoRefresh
                  <++ b " Page flows are monadic widgets that modifies themselves in the page"
@@ -282,7 +284,8 @@ ajaxl= "http://hackage.haskell.org/packages/archive/MFlow/0.3.1.0/doc/html/MFlow
 menuarticle= "http://haskell-web.blogspot.com.es/2013/08/how-to-handle-menus-and-other.html"
 cascade="http://haskell-web.blogspot.com.es/2013/10/a-cascade-menu-coded-in-pure.html"
 
-widgetAndSource filename w = do
+widgetAndSource Nothing w = w
+widgetAndSource (Just(Filename filename)) w = do
       source <- getSource filename
       El.div <<<  tFieldEd edadmin (filename ++ "top") "top text"
              <++ hr
@@ -315,7 +318,7 @@ stdheader  c= docTypeHtml $ do
 --          ! href ( "http://jqueryui.com/resources/demos/style.css")
      El.style $ "body {\n\
 	      \font-family: \"rebuchet MS\", \"Helvetica\", \"Arial\",  \"Verdana\", \"sans-serif\";\n\
-	    \font-size: 62.5%;\n\
+	    \font-size: 80.5%;\n\
             \}\n"
    body  $ do
       [shamlet|

@@ -15,7 +15,7 @@ import Aws
 import Aws.SimpleDb hiding (select)
 import qualified Data.Text as T
 import Data.Text.Encoding
-import Data.ByteString.Lazy(toChunks,fromChunks)
+import Data.ByteString.Lazy.Char8(toChunks,fromChunks,pack,unpack)
 import Network
 
 import Aws.S3
@@ -35,11 +35,8 @@ import Menu
 --askm= ask
 --
 --main= do
---  cfg <- baseConfiguration
 ----  setIndexPersist $ amazonSDBPersist cfg "testmflowdemo"
 ----  setAmazonSDBPersist "testmflowdemo"
---  setAmazonS3Persist "testmflowdemo"
---
 --  syncWrite  $ Asyncronous 120 defaultCheck  1000
 --  index idnumber
 --  runNavigation "" $ transientNav database
@@ -48,6 +45,12 @@ data  MyData= MyData{idnumber :: Int, textdata :: T.Text} deriving (Typeable, Re
 instance Indexable MyData where
    key=  show . idnumber    -- the key of the register
 
+cfg = unsafePerformIO $ withSocketsDo $ do baseConfiguration
+
+instance  Serializable MyData where
+  serialize=  pack . show
+  deserialize=   read . unpack
+  setPersist =   \_ -> Just (amazonSDBPersist cfg "mflowdemo") -- assumes domain mflowdemo already created
 
 data Options= NewText | Exit deriving (Show, Typeable)
 
@@ -123,7 +126,7 @@ setAmazonS3Persist bucket = withSocketsDo $ do
 amazonS3Persist cfg  bucket= Persist{
    readByKey = \key -> (withSocketsDo $ withManager $ \mgr -> do
      mr <- do
-               o@(GetObjectResponse hdr rsp) <-
+               o@(GetObjectResponse hdr rsp) <- 
                           Aws.pureAws cfg s3cfg mgr
                             $ getObject
                               bucket

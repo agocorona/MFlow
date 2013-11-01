@@ -113,6 +113,16 @@ fromFailBack (NoBack  x)   = x
 fromFailBack (BackPoint  x)= x
 toFailBack x= NoBack x
 
+
+-- | the FlowM monad executes the page navigation. It perform Backtracking when necessary to syncronize
+-- when the user press the back button or when the user enter an arbitrary URL. The instruction pointer
+-- is moved to the right position within the procedure to handle the request.
+--
+-- However this is transparent to the programmer, who codify in the style of a console application.
+newtype FlowM v m a= FlowM {runFlowM :: FlowMM v m a} deriving (Monad,MonadIO,Functor,MonadState(MFlowState v))
+flowM= FlowM
+--runFlowM= runView
+
 {-# NOINLINE breturn  #-}
 
 -- | Use this instead of return to return from a computation with ask statements
@@ -278,14 +288,7 @@ instance  MonadLoc (View v IO)  where
 
 
 
--- | the FlowM monad executes the page navigation. It perform Supracking when necessary to syncronize
--- when the user press the back button or when the user enter an arbitrary URL. The instruction pointer
--- is moved to the right position within the procedure to handle the request.
---
--- However this is transparent to the programmer, who codify in the style of a console application.
-newtype FlowM v m a= FlowM {runFlowM :: FlowMM v m a} deriving (Monad,MonadIO,MonadState(MFlowState v))
-flowM= FlowM
---runFlowM= runView
+
 
 
 
@@ -330,11 +333,9 @@ instance  (Monad m) => Monad (View view m) where
                    case mk of
                      Just k  -> do
                         st <- get
-                        let clear = mfClear st
-                        let form= if clear then mempty else form1
-                        form `seq` put st{linkMatched = False, mfClear= False} 
+                        put st{linkMatched = False} 
                         FormElm form2 mk <- runView $ f k
-                        return $ FormElm (form ++ form2) mk
+                        return $ FormElm (form1 ++ form2) mk
 
                      Nothing -> 
                         return $ FormElm form1 Nothing
@@ -367,12 +368,17 @@ wcallback (View x) f = View $ do
    FormElm form1 mk <- x
    case mk of
      Just k  -> do
-       modify $ \st -> st{linkMatched= False} 
+       modify $ \st -> st{linkMatched= False, needForm=False} 
        runView (f k)
      Nothing -> return $ FormElm form1 Nothing
 
-clear :: MonadState (MFlowState v) m => m()
-clear= modify $ \s -> s{mfClear= True}
+--clear :: Monad m => View v m ()
+--clear=  View $ do
+--   modify $ \s -> s{mfClear= True}
+--   return . FormElm [] $ Just ()
+
+clear :: Monad m => View v m ()
+clear = wcallback (return()) (const $ return()) 
 
 --incLink :: MonadState (MFlowState view) m => m()
 --incLink= modify $ \st -> st{mfPIndex= if linkMatched st then mfPIndex  st + 1 else mfPIndex st
@@ -1216,28 +1222,29 @@ instance Requirements WebRequirement where
 
 installWebRequirements ::  (Monad m,FormInput view) =>[WebRequirement] -> m view
 installWebRequirements rs= do
-  let s =  aggregate  $ sort rs 
+  let s =  jsRequirements $ sort rs
 
   return $ ftag "script" (fromStrNoEncode  s)
-  where
-  aggregate  []= ""
 
 
-  aggregate (r@(JScriptFile f c) : r'@(JScriptFile f' c'):rs)
-         | f==f' = aggregate $ JScriptFile f (nub $ c++c'):rs
-         | otherwise= strRequirement r ++ aggregate (r':rs)
+jsRequirements  []= ""
 
-  aggregate (r:r':rs)
-         | r== r' = aggregate $ r:rs
-         | otherwise= strRequirement r ++ aggregate (r':rs)
 
-  aggregate (r:rs)= strRequirement r++aggregate rs
+jsRequirements (r@(JScriptFile f c) : r'@(JScriptFile f' c'):rs)
+         | f==f' = jsRequirements $ JScriptFile f (nub $ c++c'):rs
+         | otherwise= strRequirement r ++ jsRequirements (r':rs)
 
-  strRequirement  (CSSFile s')         = loadcssfile s'
-  strRequirement (CSS s')              = loadcss s'
-  strRequirement (JScriptFile s' call) = loadjsfile s' call
-  strRequirement (JScript s')          = loadjs s'
-  strRequirement (ServerProc  f)= (unsafePerformIO $! addMessageFlows [f]) `seq` ""
+jsRequirements (r:r':rs)
+         | r== r' = jsRequirements $ r:rs
+         | otherwise= strRequirement r ++ jsRequirements (r':rs)
+
+jsRequirements (r:rs)= strRequirement r++jsRequirements rs
+  
+strRequirement (CSSFile s')          = loadcssfile s'
+strRequirement (CSS s')              = loadcss s'
+strRequirement (JScriptFile s' call) = loadjsfile s' call
+strRequirement (JScript s')          = loadjs s'
+strRequirement (ServerProc  f)= (unsafePerformIO $! addMessageFlows [f]) `seq` ""
 
 
 --- AJAX ----

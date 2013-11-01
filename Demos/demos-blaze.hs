@@ -45,19 +45,20 @@ import RuntimeTemplates
 
 import Debug.Trace
 
-(!>)= flip trace
+--(!>)= flip trace
 
 --attr= fromString
 
 
 
 main= do
-   setAmazonSDBPersist "mflowdemo"     -- for the Database example
    index idnumber                      -- for the Database example
+   index tfieldKey
    setAdminUser adminname adminname
---   userRegister edadmin edadmin
+   userRegister edadmin edadmin
+   userRegister "edituser" "edituser"
    syncWrite  $ Asyncronous 120 defaultCheck  1000
-   addMessageFlows[("wiki", wstateless  wiki)] 
+--   addMessageFlows[("wiki", transient $ runFlow $ ask  wiki)] 
    setFilesPath "Demos/"
    runNavigation "" $ do
        setHeader $ stdheader 
@@ -70,6 +71,7 @@ main= do
                             <<< tFieldEd edadmin "intro" "enter intro text")
 
        case r of
+             Wiki      ->    delSessionData (Filename "") >> step  wiki                 
              CountI    ->     step  (clickn 0)           `showSource`  "IncreaseInt.hs"
              CountS    ->     step  (clicks "1")         `showSource`  "IncreaseString.hs"
              Action    ->     step  actions              `showSource`  "Actions.hs"
@@ -101,14 +103,16 @@ main= do
 
 
 
-wiki = do
-   page <- getRestParam `onNothing` return "index"
+wiki =  do
+  pag <- getRestParam `onNothing` return "Index"
+  askm $
    (docTypeHtml $ do
        El.head $ do
-         El.title $ fromString page)
+        El.title $ fromString pag)
         ++> (El.div ! At.style "float:right" <<< autoRefresh wlogin )
-        **> (h1 <<< tFieldEd "editor" (wikip ++page ++ "title.html") "Enter the title")
-        **> tFieldEd "editor" (wikip ++ page ++ "body.html") "Enter the body"
+        **> ( h1 ! At.style "text-align:center" <<<  tFieldEd "editor" (wikip ++pag ++ "title.html") (fromString pag))
+        **> tFieldEd "editor" (wikip ++ pag ++ "body.html") "Enter the body"
+        **> noWidget
 
 wikip="wiki/"
 

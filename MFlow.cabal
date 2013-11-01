@@ -112,17 +112,17 @@ library
     hs-source-dirs: src .
     other-modules:  MFlow.Wai.Response
 
-executable demos-blaze.Loc
+executable demos-blaze
     build-depends: MFlow -any, RefSerialize -any, TCache -any,
                    directory -any ,  Workflow -any, base -any, blaze-html -any,
                    bytestring, containers -any, mtl -any, old-time -any,
                    stm -any, text -any, transformers -any, vector -any, hamlet -any,
-                   monadloc -any, aws -any, network -any, hscolour -any,
+                   monadloc -any, monadloc-pp, aws -any, network -any, hscolour -any,
                    persistent-template, persistent-sqlite, persistent,
                    conduit, http-conduit, monad-logger
 
 
-    main-is: demos-blaze.Loc.hs
+    main-is: demos-blaze.hs
     buildable: True
     hs-source-dirs: Demos
     other-modules: MFlowPersistent MCounter

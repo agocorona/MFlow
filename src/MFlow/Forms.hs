@@ -200,8 +200,8 @@ module MFlow.Forms(
 FlowM, View(..), FormElm(..), FormInput(..)
 
 -- * Users 
-,userRegister, userValidate, isLogged, setAdminUser, getAdminName
-,getCurrentUser,getUserSimple, getUser, userFormLine, userLogin,logout, userWidget,getLang, login,
+, Auth(..), userRegister, setAuthMethod, userValidate, isLogged, setAdminUser, getAdminName
+,getCurrentUser,getUserSimple, getUser, userFormLine, userLogin,logout, userWidget, login,
 userName,
 -- * User interaction 
 ask, page, askt, clearEnv, wstateless, pageFlow,  
@@ -270,6 +270,7 @@ cachedWidget, wcached, wfreeze,
 ,WebRequirement(..)
 ,requires
 -- * Utility
+,getLang
 ,genNewId
 ,getNextId
 ,changeMonad
@@ -920,20 +921,9 @@ getUser mu form= ask $ userWidget mu form
 -- | Authentication against `userRegister`ed users.
 -- to be used with `validate`
 userValidate :: (FormInput view,MonadIO m) => (UserStr,PasswdStr) -> m (Maybe view)
-userValidate (u,p) =
-    let user= eUser{userName=u}
-    in liftIO $ atomically
-     $ withSTMResources [user]
-     $ \ mu -> case mu of
-         [Nothing] -> resources{toReturn= err }
-         [Just (User _ pass )] -> resources{toReturn= 
-               case pass==p  of
-                 True -> Nothing
-                 False -> err
-               }
-
-     where
-     err= Just . fromStr $ "Username or password invalid"
+userValidate (u,p) = liftIO $  do
+   Auth _ val <- getAuthMethod
+   val u p >>= return .  fmap  fromStr
 
 -- | Join two widgets in the same page
 -- the resulting widget, when `ask`ed with it, return a 2 tuple of their validation results
@@ -1027,9 +1017,8 @@ askt v w =  ask w
 --
 -- Backtracking and advancing can occur in a single request, so the flow in any state can reach any
 -- other state in the flow if the request has the required parameters.
-ask
-  :: (FormInput view) =>
-      View view IO a -> FlowM view IO a
+ask :: (FormInput view) =>
+       View view IO a -> FlowM view IO a
 ask w =  do
  st1 <- get
  if not . null $ mfTrace st1 then fail "" else do
@@ -1046,7 +1035,7 @@ ask w =  do
   -- END AJAX
 
    _ ->   do
-     let st= st1{needForm= False, inSync= False, mfRequirements= [],linkMatched=False} 
+     let st= st1{needForm= False, inSync= False, mfRequirements= [], linkMatched= False} 
      put st
 
      FormElm forms mx <- FlowM . lift  $ runView  w
@@ -1054,18 +1043,16 @@ ask w =  do
      st' <- get
      if notSyncInAction st' then put st'{notSyncInAction=False}>> ask w
 
-
       else
       case mx  of
        Just x -> do
-         put st'{newAsk= True  , mfEnv=[]
+         put st'{newAsk= True, mfEnv=[]
                 ,mfPageIndex=Nothing
                 ,mfPIndex= case isJust $ mfPageIndex st' of
                             True -> length (mfPath st') -1
                             False -> mfPIndex st'
          }
-
-         breturn x                                       -- !> "RETURN"
+         breturn x                                        -- !> "RETURN"
 
        Nothing ->
          if  not (inSync st')  && not (newAsk st')
@@ -1081,20 +1068,19 @@ ask w =  do
           else if mfAutorefresh st' then do
                      resetState st st'
                      FlowM (lift  nextMessage)
-                     ask w                              --  !> "EN AUTOREFRESH"
+                     ask w                                -- !> "EN AUTOREFRESH"
           else do
              reqs <-  FlowM $ lift installAllRequirements     -- !> "REPEAT"
              let header= mfHeader st'
                  t= mfToken st'
              cont <- case (needForm st') of
                       True ->  do
-                               frm <- formPrefix (mfPIndex st') (twfname t ) st' forms False
-                               return . header $  reqs <> frm
+                              frm <- formPrefix (mfPIndex st') (twfname t ) st' forms False
+                              return . header $  reqs <> frm
                       _    ->  return . header $  reqs <> mconcat  forms
 
              let HttpData ctype c s= toHttpData cont 
-             liftIO . sendFlush t $ HttpData (ctype++mfHttpHeaders st') (mfCookies st' ++ c) s
-
+             liftIO . sendFlush t $ HttpData (ctype ++ mfHttpHeaders st') (mfCookies st' ++ c) s
 
              resetState st st'              
 
@@ -1108,7 +1094,8 @@ ask w =  do
                    ,mfToken= mfToken st'
                    ,mfPageIndex= mfPageIndex st'
                    ,mfAjax= mfAjax st'
-                   ,mfSeqCache= mfSeqCache st' }
+                   ,mfSeqCache= mfSeqCache st'
+                   ,mfData= mfData st' }
 
 
 -- | A synonym of ask.
@@ -1119,11 +1106,6 @@ page
   :: (FormInput view) =>
       View view IO a -> FlowM view IO a
 page= ask
-
-
-
-
-
 
 nextMessage :: MonadIO m => WState view m ()
 nextMessage= do
@@ -1301,7 +1283,7 @@ wlabel str w = do
 --                       False -> s{mfSequence= mfSequence s -1}
    ftag "label" str `attrs` [("for",id)] ++> w <! [("id",id)]
 
-getRestParam :: (Read a, Typeable a,Monad m,Functor m, FormInput v) => View v m (Maybe a)
+getRestParam :: (Read a, Typeable a,Monad m,Functor m, FormInput v) => FlowM v m (Maybe a)
 getRestParam= do
    st <- get
    let lpath = mfPath st
@@ -1343,7 +1325,7 @@ wlink x v= View $ do
           toSend = flink path v
 
 
-      r <- if linkMatched st then return Nothing -- only a link match per page
+      r <- if linkMatched st then return Nothing -- only a link match per page or monadic sentence in page
            else
            if isJust $ mfPageIndex st -- !> (show $ mfPageIndex st)
              then
@@ -1356,7 +1338,7 @@ wlink x v= View $ do
                      modify $ \st -> st{ inSync= True,linkMatched= True
                                       , mfPIndex= index + 1
                                       , mfLinks= M.insert name (n-1) $ mfLinks st}
-                                            -- !> (name ++" "++ show n ++ " Match")
+                                           -- !> (name ++" "++ show n ++ " Match")
                      return $ Just x
                  Nothing -> return Nothing  -- !> (name ++ " 0 Fail")
              else
@@ -1365,7 +1347,7 @@ wlink x v= View $ do
                   modify $ \s -> s{inSync= True
                                  ,linkMatched= True, mfPIndex= index+1 }  -- !> (name ++ "<-" ++show index++ " MATCHED")
                   return $ Just x
-             False ->  return Nothing                                        -- !> (name++"<-" ++show index++ " "++(if index < length lpath then lpath !! index else ""))
+             False ->  return Nothing                                      -- !> ( "NOT MATCHED "++name++"<-" ++show index++ " "++(if index < length lpath then lpath !! index else ""))
 
       return $ FormElm [toSend] r
 
