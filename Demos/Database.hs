@@ -45,13 +45,20 @@ data  MyData= MyData{idnumber :: Int, textdata :: T.Text} deriving (Typeable, Re
 instance Indexable MyData where
    key=  show . idnumber    -- the key of the register
 
-cfg = unsafePerformIO $ withSocketsDo $ do baseConfiguration
+
+domain= "mflowdemo"
 
 instance  Serializable MyData where
   serialize=  pack . show
   deserialize=   read . unpack
-  setPersist =   \_ -> Just (amazonSDBPersist cfg "mflowdemo") -- assumes domain mflowdemo already created
+  setPersist = const . Just . unsafePerformIO $ withSocketsDo $ do
+     cfg <- baseConfiguration
+     simpleAws cfg sdbCfg $ deleteDomain domain   -- delete the domain to start afresh
+     simpleAws cfg sdbCfg $ createDomain domain
+     return $ amazonSDBPersist cfg domain
+--    const $ Just $ amazonSDBPersist cfg "mflowdemo" -- assumes domain mflowdemo already created
 
+ 
 data Options= NewText | Exit deriving (Show, Typeable)
 
 
@@ -76,6 +83,7 @@ database= do
 
      listtexts all  =  do
            h3 "list of all texts"
+           ++> p << "the text are deleted on every restart by heroku"
            ++> mconcat[p $ preEscapedToHtml t >> hr | t <- all]
            ++> menu
            <++ b "or press the back button or enter the  URL any other page in the web site"
