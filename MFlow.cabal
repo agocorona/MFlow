@@ -98,7 +98,7 @@ library
     build-depends: Workflow -any, transformers -any, mtl -any,
                    extensible-exceptions -any, xhtml -any, base >4.0 && <5,
                    bytestring -any, containers -any, RefSerialize -any,
-                   TCache ==0.10.2.4, stm >2, old-time -any, vector -any,
+                   TCache -any, stm >2, old-time -any, vector -any,
                    directory -any, utf8-string -any, wai -any, case-insensitive -any,
                    http-types -any, conduit -any, text -any, parsec -any, warp -any,
                    random -any, blaze-html -any, blaze-markup -any, monadloc -any,
