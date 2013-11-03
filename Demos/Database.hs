@@ -83,7 +83,7 @@ database= do
 
      listtexts all  =  do
            h3 "list of all texts"
-           ++> p << "the text are deleted on every restart by heroku"
+           ++> p "the texts are deleted on every restart by heroku"
            ++> mconcat[p $ preEscapedToHtml t >> hr | t <- all]
            ++> menu
            <++ b "or press the back button or enter the  URL any other page in the web site"
