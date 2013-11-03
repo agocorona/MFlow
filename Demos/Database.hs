@@ -70,7 +70,8 @@ database= do
      case r of
          NewText -> do
               text <- askm $   p "Insert the text"
-                           ++> htmlEdit ["bold","italic"] "" (getMultilineText "") <++ br
+                           ++> htmlEdit ["bold","italic"] ""
+                                        (getMultilineText "" <! [("rows","3"),("cols","80")]) <++ br
                            <** submitButton "enter"
 
               liftIO . atomically . newDBRef $ MyData (length all) text  -- store the name in the cache (later will be written to disk automatically)
