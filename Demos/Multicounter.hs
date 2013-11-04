@@ -3,7 +3,7 @@ module Multicounter ( multicounter) where
 
 import MFlow.Wai.Blaze.Html.All
 import Menu
-import Data.Monoid
+import Data.Monoid 
 import Data.String
 import Counter(counterWidget)
 
