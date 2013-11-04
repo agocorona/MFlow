@@ -213,6 +213,7 @@ mainMenu= autoRefresh  $
           ul <<<(li <<< (absLink Login        << b  "login/logout")   <! noAutoRefresh
                             <++ b " Example of using the login and/or logout")
 
+   <** tFieldEd "editor" "othermenu"  "Other menu options"
 
    <** li <<< wlogin)
    <|> (El.div ! At.style "display:none" <<< mainMenu1)

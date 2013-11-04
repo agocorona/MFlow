@@ -56,7 +56,6 @@ instance  Serializable MyData where
      simpleAws cfg sdbCfg $ deleteDomain domain   -- delete the domain to start afresh
      simpleAws cfg sdbCfg $ createDomain domain
      return $ amazonSDBPersist cfg domain
---    const $ Just $ amazonSDBPersist cfg "mflowdemo" -- assumes domain mflowdemo already created
 
  
 data Options= NewText | Exit deriving (Show, Typeable)
@@ -70,7 +69,7 @@ database= do
      case r of
          NewText -> do
               text <- askm $   p "Insert the text"
-                           ++> htmlEdit ["bold","italic"] ""
+                           ++> htmlEdit ["bold","italic"] ""  -- rich text editor with bold and italic buttons
                                         (getMultilineText "" <! [("rows","3"),("cols","80")]) <++ br
                            <** submitButton "enter"
 

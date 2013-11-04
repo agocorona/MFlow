@@ -56,11 +56,11 @@ process= do
          NewName -> do
               pagem  $ edTemplate "edituser" "enterallnames"
                      $ pageFlow "enter" $ witerate (
-                        do  name <- dField (getString Nothing `validate` jsval)
+                            do  name <- dField (getString Nothing `validate` jsval)
                                       <** submitButton "ok" <++ br
-                            -- store the register in the cache
-                            -- Later will be written by the default persistence automatically
-                            liftIO . atomically . newDBRef $ MyData name   
+                                -- store the register in the cache
+                                -- Later will be written by the default persistence automatically
+                                liftIO . atomically . newDBRef $ MyData name   
                         **> do
                              n <- countRegisters
                              dField (wraw $ b << show n) <++ fromStr " registers added ")
