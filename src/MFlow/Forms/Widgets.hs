@@ -425,16 +425,16 @@ wautocompleteList
 wautocompleteList phold serverproc values=
  wautocompleteEdit phold serverproc  wrender1 values
  where
- wrender1 x= ftag "div"    <<< ftag "input" mempty
+ wrender1 x= ftag "div" <<< ftag "input" mempty
                                 `attrs` [("type","checkbox")
                                         ,("checked","")
                                         ,("onclick","this.parentNode.parentNode.removeChild(this.parentNode)")]
-                           ++> ftag "span" (fromStr $ fromJust x )
-                           ++> whidden( fromJust x)
+                        ++> ftag "span" (fromStr $ fromJust x )
+                        ++> whidden( fromJust x)
 
 ------- Templating and localization ---------
 
-data TField  = TField {tfieldKey:: Key, tfieldContent :: B.ByteString}  deriving (Read, Show,Typeable)
+data TField  = TField {tfieldKey :: Key, tfieldContent :: B.ByteString}  deriving (Read, Show,Typeable)
 
 instance Indexable TField where
     key (TField k _)= k

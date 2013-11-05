@@ -11,7 +11,7 @@ text= fromString
 attr= fromString
 
 multicounter=
- askm  $   explain
+ askm  $ explain
      ++> add (counterWidget 0) [1..4]
      <|> wlink () << p << "exit"
 

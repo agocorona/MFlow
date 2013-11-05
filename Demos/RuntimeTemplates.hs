@@ -101,7 +101,7 @@ process= do
 
      iterateResults allnames len = pageFlow "iter" $ witerate $ do
               NextReg ind <- getSessionData `onNothing` return (NextReg 0)
-              dField (getData ind     len allnames) <++ br
+              dField (getData  ind    len allnames) <++ br
               dField (getData (ind+1) len allnames) <++ br
               dField (getData (ind+2) len allnames) <++ br
               dField (getData (ind+3) len allnames) <++ br
