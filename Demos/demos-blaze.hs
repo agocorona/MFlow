@@ -1,4 +1,4 @@
-{-# OPTIONS  -XDeriveDataTypeable -XQuasiQuotes -XOverloadedStrings #-} --  -F -pgmF MonadLoc #-}
+{-# OPTIONS  -XDeriveDataTypeable -XQuasiQuotes -XOverloadedStrings -F -pgmF MonadLoc #-}
 module Main where
 import MFlow.Wai.Blaze.Html.All hiding (name)
 import Text.Blaze.Html5 as El
