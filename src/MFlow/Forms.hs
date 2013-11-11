@@ -1207,18 +1207,6 @@ wform x = View $ do
      put st{needForm=False}
      return $ FormElm [form1] mr
 
--- | insert a form tag if the widget has form input fields. If not, it does nothing
-insertForm w=View $ do
-    FormElm forms mx <- runView w
-    st <- get
-    cont <- case needForm st of
-                      True ->  do
-                               frm <- formPrefix (mfPIndex st) (twfname $ mfToken st ) st forms False
-                               put st{needForm= False}
-                               return   frm
-                      _    ->  return $ mconcat  forms
-
-    return $ FormElm [cont] mx
 
 
 

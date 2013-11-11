@@ -1289,6 +1289,20 @@ formPrefix index verb st form anchored= do
                False -> return (mempty,mempty)
      return $ formAction (path ++ anchor ) $  mconcat ( anchorf:form)  -- !> anchor
 
+-- | insert a form tag if the widget has form input fields. If not, it does nothing
+insertForm w=View $ do
+    FormElm forms mx <- runView w
+    st <- get
+    cont <- case needForm st of
+                      True ->  do
+                               frm <- formPrefix (mfPIndex st) (twfname $ mfToken st ) st forms False
+                               put st{needForm= False}
+                               return   frm
+                      _    ->  return $ mconcat  forms
+
+    return $ FormElm [cont] mx
+
+
 currentPath insInBackTracking index lpath verb =
     (if null lpath then verb
      else case insInBackTracking of
