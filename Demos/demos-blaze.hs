@@ -45,24 +45,10 @@ import RuntimeTemplates
 
 
 
+
+
+
 main= do
-  userRegister "user" "user"
-  runNavigation "" . step . page $
-     wform wlogin **>
-     ( pageFlow "s" . edTemplate "user" "template.html" .  witerate $ do
-       n  <- dField(getInt Nothing)
-                <|> return 0 <++ "first"  <> br
-
-       n' <- dField(getInt Nothing)
-                <|> return 0 <++ "second" <> br
-                <** submitButton "OK"
-
-       dField( p << (n+n') ++> noWidget))
-
-
-
-
-main1= do
    index idnumber                      -- for the Database example
    index tfieldKey
    setAdminUser adminname adminname
