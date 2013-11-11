@@ -1,5 +1,5 @@
 name: MFlow
-version: 0.3.1.2
+version: 0.3.2.0
 cabal-version: >=1.8
 build-type: Simple
 license: BSD3
@@ -44,7 +44,10 @@ description: MFlow is a Web Framework that turns Web programing back into just o
              .
              Bindings for hack, and hsp >= 0.8,  are not compiled by Hackage, and do not appear, but are included in the package files. To use them, add then to the exported modules and execute cabal install
              .
-             The version 0.3.1 includes:
+             .
+             This version 0.3.2 add runtime templates http://haskell-web.blogspot.com.es/2013/11/more-composable-elements-for-single.html
+             .
+             The version 0.3.1 included:
              .
              - Push widgets: http://haskell-web.blogspot.com.es/2013/07/maxwell-smart-push-counter.html
              .
@@ -74,7 +77,7 @@ description: MFlow is a Web Framework that turns Web programing back into just o
              .
              -Clustering
              .
-             In this release, this issue has been fixed: <https://github.com/agocorona/MFlow/issues/8>
+             In this release, runtime templates is e
 category: Web, Application Server
 author: Alberto Gómez Corona
 data-dir: ""
@@ -117,12 +120,12 @@ executable demos-blaze
                    directory -any ,  Workflow -any, base -any, blaze-html -any,
                    bytestring, containers -any, mtl -any, old-time -any,
                    stm -any, text -any, transformers -any, vector -any, hamlet -any,
-                   monadloc -any, aws -any, network -any, hscolour -any,
+                   monadloc -any,  aws -any, network -any, hscolour -any,
                    persistent-template, persistent-sqlite, persistent,
                    conduit, http-conduit, monad-logger
 
 
-    main-is: demos-blaze.Loc.hs
+    main-is: demos-blaze.hs
     buildable: True
     hs-source-dirs: Demos
     other-modules: MFlowPersistent MCounter

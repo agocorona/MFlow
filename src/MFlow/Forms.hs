@@ -111,15 +111,19 @@ additional applicative combinators like  \<+> !*> , |*|. Widgets are also monoid
 be combined as such.
 
 * NEW IN THIS RELEASE
+[@Runtime templates@]  'template', 'edTemplate', 'witerate' and 'dField' permit the edition of
+the widget content at runtime, and the management of placeholders with input fields and data fields
+within the template with no navigation in the client, little bandwidth usage and little server load. Enven less
+than using 'autoRefresh'.
 
+* IN PREVIOUS RELEASES
 
-{@Auto-Refresh@] Using `autoRefresh`, Dynamic widgets can refresh themselves with new information without forcing a refresh of the whole page
+{@AutoRefresh@] Using `autoRefresh`, Dynamic widgets can refresh themselves with new information without forcing a refresh of the whole page
 
 [@Push@]  With `push` a widget can push new content to the browser when something in the server happens
 
 [@Error traces@] using the monadloc package, now each runtime error (in a monadic statement) has a complete execution trace.
 
-* IN PREVIOUS RELEASES
 
 [@RESTful URLs@] Now each page is directly reachable by means of a intuitive, RESTful url, whose path is composed by the sucession
 of links clicked to reach such page and such point in the procedure. Just what you would expect.
@@ -1198,11 +1202,23 @@ wform ::  (Monad m, FormInput view)
 wform x = View $ do
      FormElm form mr <- (runView $   x )
      st <- get
-     verb <- getWFName
+     verb  <- getWFName
      form1 <- formPrefix (mfPIndex st) verb st form True
      put st{needForm=False}
      return $ FormElm [form1] mr
 
+-- | insert a form tag if the widget has form input fields. If not, it does nothing
+insertForm w=View $ do
+    FormElm forms mx <- runView w
+    st <- get
+    cont <- case needForm st of
+                      True ->  do
+                               frm <- formPrefix (mfPIndex st) (twfname $ mfToken st ) st forms False
+                               put st{needForm= False}
+                               return   frm
+                      _    ->  return $ mconcat  forms
+
+    return $ FormElm [cont] mx
 
 
 

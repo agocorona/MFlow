@@ -44,13 +44,14 @@ import Control.Workflow (Workflow, unsafeIOtoWF)
 
 
 import Control.Applicative
+import Control.Monad(when)
 import Control.Monad.IO.Class
 import System.Environment
 import Data.Maybe(fromMaybe)
 import Data.Char(isNumber)
 
--- | The port is read from the first exectution parameter
--- if no parameter, it is read from the PORT environment variable.
+-- | The port is read from the first exectution parameter.
+-- If no parameter, it is read from the PORT environment variable.
 -- if this does not exist, the port 80 is used.
 getPort= do
     args <- getArgs
@@ -65,11 +66,12 @@ getPort= do
     print porti
     return porti
 
--- | run a persistent flow. The port is read from the first exectution parameter
--- if no parameter, it is read from the PORT environment variable.
--- if this does not exist, the port 80 is used.
+-- | run a persistent flow. It uses `getPort` to get the port
+-- The first parameter is the first element in the URL path.
+-- It also set the home page
 runNavigation :: String -> FlowM Html (Workflow IO) () -> IO Bool
 runNavigation n f= do
+    when(not $ null n) $ setNoScript n
     addMessageFlows[(n, runFlow f)]
     porti <- getPort
     wait $ run porti waiMessageFlow

@@ -68,14 +68,14 @@ import Unsafe.Coerce
 
 readyJQuery="ready=function(){if(!window.jQuery){return setTimeout(ready,100)}};"
 
-jqueryScript1= "http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"
-jqueryScript="http://code.jquery.com/jquery-1.9.1.js"
+jqueryScript= "//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"
+jqueryScript1="//code.jquery.com/jquery-1.9.1.js"
 
-jqueryCSS1= "http://code.jquery.com/ui/1.9.1/themes/base/jquery-ui.css"
-jqueryCSS= "http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css"
+jqueryCSS1= "//code.jquery.com/ui/1.9.1/themes/base/jquery-ui.css"
+jqueryCSS= "//code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css"
 
-jqueryUI1= "http://code.jquery.com/ui/1.9.1/jquery-ui.js"
-jqueryUI= "http://code.jquery.com/ui/1.10.3/jquery-ui.js"
+jqueryUI1= "//code.jquery.com/ui/1.9.1/jquery-ui.js"
+jqueryUI= "//code.jquery.com/ui/1.10.3/jquery-ui.js"
 
 ------- User Management ------
 
@@ -122,7 +122,7 @@ instance (Typeable view, Typeable a)
 --
 -- normally to be used with autoRefresh and pageFlow when used with other widgets.
 wlogin :: (MonadIO m,Functor m,FormInput v) => View v m ()
-wlogin=  do
+wlogin= insertForm $ do
    username <- getCurrentUser
    if username /= anonymous
          then return username
@@ -478,7 +478,7 @@ htmlEdit buttons jsuser w = do
   requires [JScriptFile nicEditUrl [installHtmlField,install]]
   w <! [("id",id)]
 
-nicEditUrl= "http://js.nicedit.com/nicEdit-latest.js"
+nicEditUrl= "//js.nicedit.com/nicEdit-latest.js"
 
 
 -- | A widget that display the content of an  html, But if the user has edition privileges,
@@ -516,7 +516,7 @@ tFieldEd  muser k  text= wfreeze k 0 $  do
    requires [JScriptFile nicEditUrl [install]
             ,JScript     ajaxSendText
             ,JScript     installEditField
-            ,JScriptFile jqueryScript []
+--            ,JScriptFile jqueryScript []
             ,ServerProc  ("_texts",  transient getTexts)]
 
    (ftag "div" mempty `attrs` [("id",ipanel)]) ++>
@@ -575,6 +575,25 @@ mField k= do
   tField $ k ++ ('-':lang)
 
 newtype IteratedId= IteratedId  String deriving Typeable
+
+-- | Permits to iterate the presentation of data and//or input fields and widgets within
+-- a web page that does not change. The placeholders are created with dField.  Both are widget
+-- modifiers: The latter gets a widget and create a placeholder in the page that is updated
+-- via ajax. The content of the update is the rendering of the widget at each iteration.
+-- The former gets a wider widget which contains dField elements and permit the iteration.
+-- Whenever a link or a form within the witerate widget is activated, the result is the
+-- placeholders filled with the new  html content.  This content can be data, a input field,
+-- a link or a widget. No navigation happens.
+--
+-- This permits even faster updates than autoRefresh.  since the latter refresh the whole
+-- widget and it does not permits modifications of the layout at runtime.
+--
+-- When edTemplate or template is used on top of witerate, the result is editable at runtime,
+-- and the span placeholders generated, that are updated via ajax can be relocated within
+-- the layout of the template.
+--
+-- Additionally, contrary to some javascript frameworks, the pages generated with this
+-- mechanism are searchable by web crawlers.
 
 witerate
   :: (MonadIO m, Functor m, FormInput v) =>
@@ -672,6 +691,9 @@ autoEvalForm = "\nfunction autoEvalForm(id) {\n\
 
 setId= "function setId(id,v){document.getElementById(id).innerHTML= v;};\n"
 
+-- Present a widget via AJAX if it is within a 'witerate' context. In the first iteration it present the
+-- widget surrounded by a placeholder. subsequent iterations will send just the javascript code
+-- necessary for the refreshing of the placeholder.
 dField
   :: (Monad m, FormInput view) =>
      View view m  b -> View view m b
@@ -724,6 +746,19 @@ noid= "noid"
 --       return $ FormElm mempty mx
 --
 
+-- | load a template with the name equal to the second parameter in the texts folder. If no template
+-- exist, it uses the widget rendering. If the first parameter match the name of the logged user,
+-- the template will be editable at runtime. edTemplate will present an edition bar on the top of
+-- the template. The changes in the template will be effective inmediately for all the users.
+--
+-- The return value is the one returned by the internal widget each time it is executed.
+--
+-- edTemplate can be used to enrich the content and layout of a widget, for example, by adding
+-- extra links, text and formatting. Widgets with form fields work well with an 'edTemplate' mask
+-- as long as the tags created by the widget are not deleted, but the validation messages will not appear
+--
+-- To add dynamic elements to the template for data presentation and//or input field validation
+-- messages, combine it with 'witerate' and 'dField'
 edTemplate
   :: (MonadIO m, FormInput v, Typeable a) =>
       UserStr -> Key -> View v m a -> View v m a
@@ -741,7 +776,7 @@ edTemplate muser k w=  View $ do
             ,JScriptFile jqueryScript []
             ,ServerProc  ("_texts",  transient getTexts)]
 
-   FormElm text mx <- runView w -- $ wcached k 0  w
+   FormElm text mx <- runView w
    content <- liftIO $ readtField (mconcat text) k
 
    return $ FormElm [ftag "div" mempty `attrs` [("id",ipanel)]
@@ -760,7 +795,7 @@ edTemplate muser k w=  View $ do
    viewFormat :: View v m a -> v
    viewFormat= undefined -- is a type function
 
-
+-- | Does the same than template but without the edition facility
 template k w= View $ do
     FormElm text mx <- runView  w
     let content= unsafePerformIO $ readtField  (mconcat text) k
@@ -882,19 +917,7 @@ wdialog conf title w= do
 
     (ftag "div" <<< insertForm w) <! [("id",id),("title", title)]
 
--- | insert a form tag if the widget has form input fields. If not, it does nothing
-insertForm w=View $ do
-    FormElm forms mx <- runView w
-    st <- get
 
-
-    cont <- case needForm st of
-                      True ->  do
-                               frm <- formPrefix (mfPIndex st) (twfname $ mfToken st ) st forms False
-                               return   frm
-                      _    ->  return $ mconcat  forms
-    put st{needForm= False}
-    return $ FormElm [cont] mx
 
 
 
@@ -1075,8 +1098,8 @@ data UpdateMethod= Append | Prepend | Html deriving Show
 -- STM semantics for waiting updates using 'retry'.
 --
 -- Widgets in a push can have links and forms, but since they are asunchonous, they can not
--- return validated inputs. but they can modify the server state.
--- push ever return invalid to the calling widget, so it never
+-- return inputs. but they can modify the server state.
+-- push ever return an invalid response to the calling widget, so it never
 -- triggers the advance of the navigation.
 --
 --
@@ -1177,7 +1200,7 @@ push method' wait w= push' . map toLower $ show method'
     \       },\n\
     \       error: function (xhr, status, error) {\n\
     \            cnt= cnt + 1;\n\
-    \            if (cnt > 6)\n\
+    \            if  (false) \n\
     \               idstatus.html('no more retries');\n\
     \            else {\n\
     \               idstatus.html('waiting');\n\

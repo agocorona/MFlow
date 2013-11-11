@@ -437,7 +437,7 @@ changeMonad w= View . StateT $ \s ->
 --  Usually this check is nos necessary unless conditional code make it necessary
 --
 -- @menu= do
---       mop <- getGoStraighTo
+--       mop <- getGoStraighTo 
 --       case mop of
 --        Just goop -> goop
 --        Nothing -> do
@@ -463,7 +463,7 @@ changeMonad w= View . StateT $ \s ->
 --
 -- However this is very specialized. Normally the back button detection is not necessary.
 -- In a persistent flow (with step) even this default entry option would be completely automatic,
--- since the process would restar at the last page visited. No setting is necessary.
+-- since the process would restart at the last page visited.
 goingBack :: MonadState (MFlowState view) m => m Bool
 goingBack = do
     st <- get

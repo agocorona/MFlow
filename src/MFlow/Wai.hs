@@ -47,8 +47,6 @@ import System.Time
 import qualified Data.Text as T 
 
 
-
-
 --import Debug.Trace
 --(!>) = flip trace
 

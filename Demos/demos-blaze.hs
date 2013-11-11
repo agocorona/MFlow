@@ -1,4 +1,4 @@
-{-# OPTIONS  -XDeriveDataTypeable -XQuasiQuotes -XOverloadedStrings -F -pgmF MonadLoc #-}
+{-# OPTIONS  -XDeriveDataTypeable -XQuasiQuotes -XOverloadedStrings #-} -- -F -pgmF MonadLoc #-}
 module Main where
 import MFlow.Wai.Blaze.Html.All hiding (name)
 import Text.Blaze.Html5 as El
@@ -43,15 +43,26 @@ import Database
 import MFlowPersistent
 import RuntimeTemplates
 
-import Debug.Trace
-
---(!>)= flip trace
-
---attr= fromString
-
 
 
 main= do
+  userRegister "user" "user"
+  runNavigation "" . step . page $
+     wform wlogin **>
+     ( pageFlow "s" . edTemplate "user" "template.html" .  witerate $ do
+       n  <- dField(getInt Nothing)
+                <|> return 0 <++ "first"  <> br
+
+       n' <- dField(getInt Nothing)
+                <|> return 0 <++ "second" <> br
+                <** submitButton "OK"
+
+       dField( p << (n+n') ++> noWidget))
+
+
+
+
+main1= do
    index idnumber                      -- for the Database example
    index tfieldKey
    setAdminUser adminname adminname
@@ -65,7 +76,7 @@ main= do
        setTimeouts 400 $ 60 * 60
 
        r <- step . ask $   tFieldEd edadmin "head" "set Header" <++ hr
---                       **> topLogin
+                       **> wlogin
                        **> (divmenu  <<< br ++>  mainMenu) 
                        <** (El.div ! At.style "float:right;width:65%;overflow:auto;"
                             <<< tFieldEd edadmin "intro" "enter intro text")

@@ -63,7 +63,7 @@ Flow, Params, HttpData(..),Processable(..)
 ,flushRec, receive, receiveReq, receiveReqTimeout, send, sendFlush, sendFragment
 , sendEndFragment, sendToMF
 -- * Flow configuration
-,addMessageFlows,getMessageFlows,delMessageFlow, transient, stateless,anonymous
+,setNoScript,addMessageFlows,getMessageFlows,delMessageFlow, transient, stateless,anonymous
 ,noScript,hlog, setNotFoundResponse,getNotFoundResponse,
 -- * ByteString tags
 -- | very basic but efficient bytestring tag formatting
@@ -229,7 +229,15 @@ data Resp  = Fragm HttpData
 anonymous= "anon#"
 
 -- | It is the path of the root flow
-noScript = "noscript"
+noScriptRef= unsafePerformIO $ newIORef "noscript"
+
+noScript= unsafePerformIO $ readIORef noScriptRef
+
+-- | set the flow to be executed when the URL has no path. The home page.
+--
+-- By default it is "noscript".
+-- Although it is changed by `runNavigation` to his own flow name.
+setNoScript scr= writeIORef noScriptRef scr
 
 {-
 instance  (Monad m, Show a) => Traceable (Workflow m a) where
