@@ -1,18 +1,25 @@
-
+{-# OPTIONS -XQuasiQuotes  -XCPP #-}
 module PushSample (pushSample) where
 
-import MFlow.Wai.Blaze.Html.All hiding (retry)
-import Menu 
 import Control.Concurrent.STM
 import System.IO.Unsafe
-import Debug.Trace
-(!>)= flip trace
+
+-- #define ALONE -- to execute it alone, uncomment this
+#ifdef ALONE
+import MFlow.Wai.Blaze.Html.All
+main= runNavigation "" $ transientNav pushSample
+#else
+import MFlow.Wai.Blaze.Html.All hiding(retry, page)
+import Menu
+#endif
+
+
 
 lastLine = unsafePerformIO $ newTVarIO $ "The content will be appended here"
   
 pushSample=  do
   last <- liftIO $ newTVarIO ""
-  pagem  $ h2 << "Basic Chat as a push example"
+  page  $ h2 << "Basic Chat as a push example"
        ++> hr
        ++> pageFlow "push" (push Append 0 (disp last ) <** input )
        **> br
@@ -45,5 +52,3 @@ pushSample=  do
 
 atomic= liftIO . atomically
 
--- to run it alone, change askm by ask and uncomment this:
---main= runNavigation "" $ transientNav pushSample

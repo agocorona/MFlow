@@ -1,8 +1,7 @@
 {-# LANGUAGE DeriveDataTypeable, RecordWildCards
            , OverloadedStrings, StandaloneDeriving
-           , ScopedTypeVariables #-}
+           , ScopedTypeVariables, CPP #-}
 module Database where
-import MFlow.Wai.Blaze.Html.All hiding (select)
 
 import Data.Typeable
 import Data.TCache.IndexQuery
@@ -27,8 +26,16 @@ import Data.Maybe
 import System.IO.Unsafe
 import Control.Exception
 
-
+-- #define ALONE -- to execute it alone, uncomment this
+#ifdef ALONE
+import MFlow.Wai.Blaze.Html.All
+main= runNavigation "" $ transientNav grid
+#else
+import MFlow.Wai.Blaze.Html.All hiding(select, page)
 import Menu
+#endif
+
+
 
 -- to run it alone,  remove Menu.hs and uncomment this:
 
@@ -64,11 +71,11 @@ data Options= NewText | Exit deriving (Show, Typeable)
      
 database= do
      all <- allTexts
-     r <- askm $ listtexts all
+     r <- page $ listtexts all
 
      case r of
          NewText -> do
-              text <- askm $   p "Insert the text"
+              text <- page $   p "Insert the text"
                            ++> htmlEdit ["bold","italic"] ""  -- rich text editor with bold and italic buttons
                                         (getMultilineText "" <! [("rows","3"),("cols","80")]) <++ br
                            <** submitButton "enter"

@@ -14,7 +14,8 @@
 {-# LANGUAGE DeriveDataTypeable, OverloadedStrings , QuasiQuotes #-}
 module Menu where
 import Data.Typeable
-import MFlow.Wai.Blaze.Html.All hiding (article, source)
+import MFlow.Wai.Blaze.Html.All hiding (article, source,page,ask)
+import qualified MFlow.Wai.Blaze.Html.All as MF(page,ask)
 import Text.Blaze.Html5 as El hiding (article, source)
 import Text.Blaze.Html5.Attributes as At hiding (step)
 import Data.Monoid
@@ -31,10 +32,10 @@ adminname= "admin"
 edadmin= "editor"
 
 -- present the widget w decorated with the main menu on the left and the source code at the bottom
-askm w= ask $ do
+ask w= MF.ask $ do
     filename <- getSessionData
     tFieldEd edadmin "head" "set Header"
---       **> topLogin
+       **> (El.div ! At.style "float:right" <<< autoRefresh wlogin )
        <++ hr
        **> (divmenu <<< br ++> retry mainMenu)
        **> (El.div ! At.style "float:right;width:65%;overflow:auto;"
@@ -49,7 +50,7 @@ divmenu= El.div
 --              <<< autoRefresh (pageFlow "login"  wlogin)
 
 
-pagem= askm
+page= ask
 
 
 data Options= Wiki | CountI | CountS | Radio

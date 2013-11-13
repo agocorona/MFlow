@@ -2,7 +2,7 @@
 {-# OPTIONS  -XDeriveDataTypeable #-}
 module ShopCart ( shopCart) where
 
-import MFlow.Wai.Blaze.Html.All
+import MFlow.Wai.Blaze.Html.All hiding(page)
 
 import Data.Typeable
 import qualified Data.Vector as V
@@ -30,7 +30,7 @@ shopCart1  =  do
      setHeader  stdheader 
 --     setTimeouts 200 $ 60*60   
      prod <-
-        step . askm $ do
+        step . page $ do
              Cart cart <- getSessionData `onNothing` return  emptyCart
 
              moreexplain

@@ -1,15 +1,23 @@
+{-# OPTIONS  -XCPP #-}
 module MCounter (
 mcounter
 ) where
-import MFlow.Wai.Blaze.Html.All
-import Menu
 import Data.Monoid
 import Data.String
+-- #define ALONE -- to execute it alone, uncomment this
+#ifdef ALONE
+import MFlow.Wai.Blaze.Html.All
+main= runNavigation "" $ transientNav grid
+#else
+import MFlow.Wai.Blaze.Html.All hiding(retry, page)
+import Menu
+#endif
+
 
 
 
 mcounter  = do 
- (op,n) <- step . askm $ do
+ (op,n) <- step . page $ do
               n <- getSessionData  `onNothing` return (0 :: Int) -- get Int data from the session
               op <- h2 << show n    
                      ++> wlink "i" << b << " ++ "
@@ -22,8 +30,4 @@ mcounter  = do
           "d" -> setSessionData  (n - 1)
 
  mcounter
-
--- to run it alone, change askm by ask and uncomment this:
---main= runNavigation ""  mcounter
-
 

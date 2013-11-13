@@ -1,15 +1,21 @@
-
+{-# OPTIONS -XCPP #-} 
 module Combination ( combination, wlogin1) where
-import MFlow.Wai.Blaze.Html.All
-import Menu
 import Counter(counterWidget)
 import Data.String
+-- #define ALONE -- to execute it alone, uncomment this
+#ifdef ALONE
+import MFlow.Wai.Blaze.Html.All
+main= runNavigation "" $ transientNav combination
+#else
+import MFlow.Wai.Blaze.Html.All hiding(page)
+import Menu
+#endif
 
 text= fromString
 
-combination =  askm  $ do
-     p << "Three active widgets in the same page with autoRefresh. Each widget refresh itself \
-          \with Ajax. If Ajax is not active, they will refresh by sending a new page."
+combination =  page $ 
+     p << "Three active widgets in the same page with autoRefresh. Each widget refresh itself"
+     ++> p << "with Ajax. If Ajax is not active, they will refresh by sending a new page."
      ++> hr
      ++> p << "Login widget (use admin/admin)" ++> autoRefresh (pageFlow "r" wlogin1)  <++ hr
      **> p << "Counter widget" ++> autoRefresh (pageFlow "c" (counterWidget 0))  <++ hr
@@ -48,14 +54,14 @@ formWidget=   do
 
 
 hint s= [("placeholder",s)]
-onClickSubmit= [("onclick","if(window.jQuery){\n\
-                                  \$(this).parent().submit();}\n\
-                           \else {this.form.submit()}")]
+onClickSubmit= [("onclick","if(window.jQuery){\n"++
+                                  "$(this).parent().submit();}\n"++
+                           "else {this.form.submit()}")]
 radiob s n= wlabel (text s) $ setRadio s n <! onClickSubmit
 
 
 
--- | If not logged, it present a page flow which askm  for the user name, then the password if not logged
+-- | If not logged, it present a page flow which page  for the user name, then the password if not logged
 --
 -- If logged, it present the user name and a link to logout
 --
@@ -84,6 +90,6 @@ focus = [("onload","this.focus()")]
 
 
 
--- to run it alone, change askm by ask and uncomment this:
+-- to run it alone, change page by ask and uncomment this:
 --main= runNavigation "" $ transientNav  combination
 

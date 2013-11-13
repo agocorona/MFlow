@@ -1,16 +1,23 @@
-
+{-# OPTIONS -XCPP #-} 
 module Counter ( counter, counterWidget) where
-import MFlow.Wai.Blaze.Html.All
-import Menu
 import Data.Monoid
 import Data.String
+
+-- #define ALONE -- to execute it alone, uncomment this
+#ifdef ALONE
+import MFlow.Wai.Blaze.Html.All
+main= runNavigation "" $ transientNav counter
+#else
+import MFlow.Wai.Blaze.Html.All hiding(page)
+import Menu
+#endif
 
 attr= fromString
 text= fromString
 
 counter= do
    
-   askm  $   explain
+   page  $   explain
        ++> pageFlow "c" (counterWidget 0) <++ br
        <|> wlink () << p << "exit"
    where
@@ -34,5 +41,5 @@ counterWidget n=
           "d" -> counterWidget (n - 1)
 
 
--- to run it alone, change askm by ask and uncomment this:
+-- to run it alone, change page by ask and uncomment this:
 --main= runNavigation "" $ transientNav counter

@@ -1,4 +1,4 @@
-{-# OPTIONS  -XDeriveDataTypeable -XQuasiQuotes -XOverloadedStrings #-} -- -F -pgmF MonadLoc #-}
+{-# OPTIONS  -XDeriveDataTypeable -XQuasiQuotes -XOverloadedStrings #-}
 module Main where
 import MFlow.Wai.Blaze.Html.All hiding (name)
 import Text.Blaze.Html5 as El
@@ -14,7 +14,7 @@ import Text.Hamlet
 -- For error traces
 import Control.Monad.Loc
 
-import Menu
+import Menu hiding (page)
 import TestREST
 import Actions
 import IncreaseInt
@@ -42,6 +42,7 @@ import MCounter
 import Database
 import MFlowPersistent
 import RuntimeTemplates
+import TraceSample
 
 
 
@@ -61,8 +62,8 @@ main= do
        setHeader $ stdheader 
        setTimeouts 400 $ 60 * 60
 
-       r <- step . ask $   tFieldEd edadmin "head" "set Header" <++ hr
-                       **> wlogin
+       r <- step . page $   tFieldEd edadmin "head" "set Header" <++ hr
+                       **> (El.div ! At.style "float:right" <<< autoRefresh wlogin )
                        **> (divmenu  <<< br ++>  mainMenu) 
                        <** (El.div ! At.style "float:right;width:65%;overflow:auto;"
                             <<< tFieldEd edadmin "intro" "enter intro text")
@@ -102,7 +103,7 @@ main= do
 
 wiki =  do
   pag <- getRestParam `onNothing` return "Index"
-  askm $
+  page $
    (docTypeHtml $ do
        El.head $ do
         El.title $ fromString pag)
@@ -112,26 +113,5 @@ wiki =  do
         **> noWidget
 
 wikip="wiki/"
-
-
--- | to run it on heroku, traceSample is included since heroku does not run the monadloc preprocessor
-traceSample= do
-  pagem $ h2  "Error trace example"
-       ++> p  "MFlow now produces execution traces in case of error by making use of the backtracking mechanism"
-       ++> p  "It is more detailed than a call stack"
-       ++> p  "this example has a deliberate error"
-       ++> br
-       ++> p "You must be logged as admin to see the trace"
-       ++> wlink () << p "pres here"
-
-  pagem $   p "Please login with admin/admin"
-        ++> userWidget (Just "admin") userLogin
-
-  u <- getCurrentUser
-  pagem $  p "The trace will appear after you press the link. press one of the options available at the bottom of the page"
-       ++> p << ("user="++ u) ++> br
-       ++> wlink () "press here"
-  pagem $  error $ "this is the error"
-
 
 

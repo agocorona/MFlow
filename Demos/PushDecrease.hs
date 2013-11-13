@@ -1,15 +1,18 @@
-{-# OPTIONS -XQuasiQuotes #-}
+{-# OPTIONS -XQuasiQuotes  -XCPP #-}
 module PushDecrease ( pushDecrease) where
-
-import MFlow.Wai.Blaze.Html.All
 
 import Control.Concurrent.STM
 import Text.Hamlet
 import Control.Concurrent
 
+-- #define ALONE -- to execute it alone, uncomment this
+#ifdef ALONE
+import MFlow.Wai.Blaze.Html.All
+main= runNavigation "" $ transientNav pushDecrease
+#else
+import MFlow.Wai.Blaze.Html.All hiding(page)
 import Menu
--- to run it alone, comment "import menu" and uncomment:
---main= runNavigation "" $ transientNav pushDecrease
+#endif
 
 
 atomic= liftIO . atomically
@@ -17,13 +20,13 @@ atomic= liftIO . atomically
 pushDecrease= do
  tv <- liftIO $ newTVarIO 10
 
- pagem $
+ page $
       [shamlet|
        <div>
            <h2> Maxwell Smart push counter
-           <p> This example shows a reverse counter
-           <p> To avoid unnecessary load, the push process will be killed when reaching 0
-           <p> The last push message will be an script that will redirect to the menu"
+           <p>  This example shows a reverse counter
+           <p>  To avoid unnecessary load, the push process will be killed when reaching 0
+           <p>  The last push message will be an script that will redirect to the menu"
            <h3> This message will be autodestroyed within ...
 
       |] ++> counter tv <++  b << "seconds"

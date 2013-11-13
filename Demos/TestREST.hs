@@ -1,6 +1,6 @@
 
 module TestREST where
-import MFlow.Wai.Blaze.Html.All
+import MFlow.Wai.Blaze.Html.All hiding(page)
 import Menu
 import Data.Monoid
 import Data.String
@@ -19,22 +19,22 @@ import Data.String
 testREST= do
 --  setTimeouts 120 0
 
-  option <- pagem $  h2 << "Choose between:"
+  option <- page $  h2 << "Choose between:"
                  ++> wlink "a" << b << "letters " <++ i << " or "
                  <|> wlink "1" << b << "numbers"
 
   case option of
     "1" -> do
-          pagem $ wlink "2" << contentFor "1" 
-          pagem $ wlink "3" << contentFor "2"
-          pagem $ wlink "4" << contentFor "3"
-          pagem $ wlink ()  << "menu"
+          page $ wlink "2" << contentFor "1" 
+          page $ wlink "3" << contentFor "2"
+          page $ wlink "4" << contentFor "3"
+          page $ wlink ()  << "menu"
 
     "a" -> do
-          pagem $ wlink "b" << contentFor "a"
-          pagem $ wlink "c" << contentFor "b"
-          pagem $ wlink "d" << contentFor "c"
-          pagem $ wlink ()  << "menu"
+          page $ wlink "b" << contentFor "a"
+          page $ wlink "c" << contentFor "b"
+          page $ wlink "d" << contentFor "c"
+          page $ wlink ()  << "menu"
 
 
 contentFor x= do

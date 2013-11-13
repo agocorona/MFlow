@@ -17,12 +17,13 @@
 {-# LANGUAGE TemplateHaskell   #-}
 {-# LANGUAGE TypeFamilies      #-}
 {-# LANGUAGE NoMonomorphismRestriction #-}
+{-# LANGUAGE CPP #-}
 
 module MFlowPersistent
 
 where
 
-import           MFlow.Wai.Blaze.Html.All
+
 import           Control.Monad.IO.Class  (liftIO)
 import           Database.Persist
 import           Database.Persist.Sqlite
@@ -30,7 +31,15 @@ import           Database.Persist.TH
 
 import           System.IO.Unsafe
 
-import           Menu
+-- #define ALONE -- to execute it alone, uncomment this
+#ifdef ALONE
+import MFlow.Wai.Blaze.Html.All
+main= runNavigation "" $ transientNav mFlowPersistent
+#else
+import MFlow.Wai.Blaze.Html.All hiding(select, page)
+import Menu
+#endif
+
 
 
 
@@ -62,7 +71,7 @@ migratesqlite= runSQL $ runMigration migrateAll
 mFlowPersistent :: FlowM Html IO ()
 mFlowPersistent = do
     migratesqlite              -- should be outside of the flow, in Main
-    (name, age) <- askm $ (,)
+    (name, age) <- page $ (,)
                          <$> getString Nothing <! hint "your name" <++ br
                          <*> getInt    Nothing <! hint "your age"
                          <** br
@@ -70,16 +79,16 @@ mFlowPersistent = do
 
     userId <- runSQL  $ insert $ Person name $ Just age
 
-    post <- askm $ getString Nothing <! hint "your post" <** submitButton "enter"
+    post <- page $ getString Nothing <! hint "your post" <** submitButton "enter"
     runSQL  $ insert $ BlogPost post userId
 
     oneUserPost <- runSQL  $ selectList [BlogPostAuthorId ==. userId] [LimitTo 1]
 
-    askm $ b << show (oneUserPost :: [Entity BlogPost]) ++> br ++> wlink () << b  "click here"
+    page $ b << show (oneUserPost :: [Entity BlogPost]) ++> br ++> wlink () << b  "click here"
 
     user <- runSQL  $ get userId
 
-    askm $ b << show (user :: Maybe Person) ++> br ++> wlink ()  << b  "click here"
+    page $ b << show (user :: Maybe Person) ++> br ++> wlink ()  << b  "click here"
     where
     hint h=  [("placeholder",h)]
 

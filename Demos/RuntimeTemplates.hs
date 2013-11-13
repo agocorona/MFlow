@@ -1,25 +1,22 @@
--- | example of storage and query by using tcache
-{-# OPTIONS -XDeriveDataTypeable -XNoMonomorphismRestriction  #-}
+-- | example of runtime templates, storage and query by using tcache
+{-# OPTIONS -XDeriveDataTypeable -XNoMonomorphismRestriction  -XCPP #-}
 module RuntimeTemplates where
 import Data.TCache.DefaultPersistence
 import Data.TCache.IndexQuery
 import Control.Workflow.Configuration
-import MFlow.Wai.Blaze.Html.All hiding(name, select, base)
 import Data.Typeable
 import Data.Monoid
 import Data.ByteString.Lazy.Char8 as BS hiding (index)
 import Control.Exception(SomeException)
 import Control.Monad (when)
-
+-- #define ALONE -- to execute it alone, uncomment this
+#ifdef ALONE
+import MFlow.Wai.Blaze.Html.All
+main= runNavigation "" $ transientNav mFlowPersistent
+#else
+import MFlow.Wai.Blaze.Html.All hiding(name,select,base, page)
 import Menu
-import Debug.Trace
-(!>) = flip trace
-
---pagem= page
---main= do
-----    index name    -- index the name field, so I can query  for it later
---    syncWrite  $ Asyncronous 10 defaultCheck  1000
---    runNavigation "" $  runtimeTemplates
+#endif
 
 
 data  MyData= MyData{name :: String} deriving (Typeable,Read, Show)  
@@ -47,14 +44,14 @@ runtimeTemplates= do
      process
 
 process= do                     
-     r <- pagem $ edTemplate "edituser" "menuallnames"
+     r <- page $ edTemplate "edituser" "menuallnames"
                 $ wlink NewName   << p << "enter a new name"
               <|> wlink ListNames << p << "List names"
               <|> wlink Exit << p << "Exit to the home page"
 
      case r of
          NewName -> do
-              pagem  $ edTemplate "edituser" "enterallnames"
+              page  $ edTemplate "edituser" "enterallnames"
                      $ pageFlow "enter" $ witerate (
                             do  name <- dField (getString Nothing `validate` jsval)
                                       <** submitButton "ok" <++ br
@@ -71,16 +68,16 @@ process= do
               allnames <- getAllNames
               let len= Prelude.length allnames
               
-              pagem $  iterateResults allnames len
+              page $  iterateResults allnames len
                   **> wlink "templ" << p << "click here to show the result within a runtime template"
 
               setSessionData $ NextReg 0
-              pagem $  edTemplate "edituser" "listallnames"
+              page $  edTemplate "edituser" "listallnames"
                     $  iterateResults allnames len
                   **> wlink "scroll" << p << "click here to present the results as a on-demand-filled scroll list"
 
               setSessionData $ NextReg 0
-              pagem $ appendUpdate (do
+              page $ appendUpdate (do
                           NextReg ind <- getSessionData `onNothing` return (NextReg 0)
                           getData ind     len allnames <++ br
                           getData (ind+1) len allnames <++ br

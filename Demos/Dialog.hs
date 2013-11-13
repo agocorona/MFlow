@@ -1,12 +1,12 @@
 
 module Dialog (wdialog1) where
 
-import MFlow.Wai.Blaze.Html.All
+import MFlow.Wai.Blaze.Html.All hiding(page)
 import Menu
 
 wdialog1= do
-   askm   wdialogw
-   askm  (wlink () << "out of the page flow, press here to go to the menu")
+   page   wdialogw
+   page  (wlink () << "out of the page flow, press here to go to the menu")
 
 wdialogw= pageFlow "diag" $ do
    r <- wform $ p << "please enter your name" ++> getString (Just "your name") <** submitButton "ok"
@@ -17,5 +17,5 @@ wdialogw= pageFlow "diag" $ do
                       else  wlink () << b << "thanks, press here to exit from the page Flow"
 
 
--- to run it alone, change askm by ask and uncomment this:
+-- to run it alone, change page by ask and uncomment this:
 --main= runNavigation "" $ transientNav wdialog1
