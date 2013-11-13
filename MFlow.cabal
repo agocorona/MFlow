@@ -120,7 +120,7 @@ executable demos-blaze
                    directory -any ,  Workflow -any, base -any, blaze-html -any,
                    bytestring, containers -any, mtl -any, old-time -any,
                    stm -any, text -any, transformers -any, vector -any, hamlet -any,
-                   monadloc -any,  aws -any, network -any, hscolour -any,
+                   monadloc-pp -any,  aws -any, network -any, hscolour -any,
                    persistent-template, persistent-sqlite, persistent,
                    conduit, http-conduit, monad-logger
 
