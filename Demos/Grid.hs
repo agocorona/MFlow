@@ -2,7 +2,7 @@
 module Grid ( grid) where
 
 import Data.String
-import Text.Blaze.Html5.Attributes as At hiding (page,step)
+import Text.Blaze.Html5.Attributes as At hiding (step)
 
 -- #define ALONE -- to execute it alone, uncomment this
 #ifdef ALONE
