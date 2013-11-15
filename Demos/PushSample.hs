@@ -21,7 +21,7 @@ pushSample=  do
   last <- liftIO $ newTVarIO ""
   page  $ h2 << "Basic Chat as a push example"
        ++> hr
-       ++> pageFlow "push" (push Append 0 (disp last ) <** input )
+       ++> pageFlow "push" (push Append 1000 (disp last ) <** input )
        **> br
        ++> br
        ++> wlink () << b << "exit"
