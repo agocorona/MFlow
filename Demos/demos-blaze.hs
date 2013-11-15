@@ -44,8 +44,11 @@ import MFlowPersistent
 import RuntimeTemplates
 import TraceSample
 
-
-
+import Data.TCache.DefaultPersistence
+import Data.ByteString.Lazy.Char8 hiding (index)
+instance Serializable Int where
+  serialize= pack . show
+  deserialize= read . unpack
 
 
 

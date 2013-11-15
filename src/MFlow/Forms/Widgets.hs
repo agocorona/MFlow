@@ -64,6 +64,7 @@ import Data.Char
 import Control.Monad.Identity
 import Control.Workflow(killWF)
 import Unsafe.Coerce
+import Control.Exception
 
 
 readyJQuery="ready=function(){if(!window.jQuery){return setTimeout(ready,100)}};"
@@ -442,13 +443,28 @@ instance Indexable TField where
 
 
 instance Serializable TField where
-    serialize (TField k content)  = B.pack $ "TField "++show k ++ " " ++ show (B.unpack content)-- B.pack . show
-    deserialize bs=
-                let ('T':'F':'i':'e':'l':'d':' ':s)= B.unpack bs -- read . B.unpack
-                    [(k,rest)] =  readsPrec 0 s
-                    [(content,_)] = readsPrec 0 $ tail rest
-                in TField k (B.pack content)
+    serialize (TField k content)  = content
+    deserialKey k content= TField k content -- applyDeserializers [des1,des2] k bs
+
+--       where
+
+--       des1 _ bs=
+--          let s= B.unpack bs -- read . B.unpack
+--          in case s of
+--               ('T':'F':'i':'e':'l':'d':' ':s)  ->
+--                  let
+--                      [(k,rest)] =  readsPrec 0 s
+--                      [(content,_)] = readsPrec 0 $ tail rest
+--                  in TField k (B.pack content)
+--               _ -> error "not match"
     setPersist =   \_ -> Just filePersist
+
+
+--applyDeserializers [] k str = x where
+--     x= error $ "can not deserialize "++ B.unpack str++" to type: "++ show (typeOf x)
+--
+--applyDeserializers (d:ds) k str=  unsafePerformIO $
+--      (return $! d k str) `catch` (\(_ :: SomeException)-> return (applyDeserializers ds k str))
 
 
 writetField k s= atomically $ writeDBRef (getDBRef k) $ TField k $ toByteString s

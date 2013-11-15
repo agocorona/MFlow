@@ -1,1 +1,1 @@
-TField "Radio.hstop" "<h1>Show how radio buttons are programmed in MFlow</h1>"
+<h1>Radio box</h1><p>Show how radio buttons are programmed in MFlow.&nbsp;</p><p>In this &nbsp;case, &nbsp;unlike setRadio, setRadioActive inmediately return the value.</p>

@@ -72,7 +72,8 @@ getPort= do
 runNavigation :: String -> FlowM Html (Workflow IO) () -> IO Bool
 runNavigation n f= do
     when(not $ null n) $ setNoScript n
-    addMessageFlows[(n, runFlow f)]
+    addMessageFlows[(n, runFlow f)] 
     porti <- getPort
     wait $ run porti waiMessageFlow
+    --runSettings defaultSettings{settingsTimeout = 20, settingsPort= porti} waiMessageFlow
     

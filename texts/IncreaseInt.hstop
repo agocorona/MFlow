@@ -1,1 +1,1 @@
-TField "IncreaseInt.hstop" "<h1>An Integer in a text box is incremented in a loop</h1>"
+<h1>An Integer in a text box is incremented in a loop</h1>A text input box in a page in a loop that increase the value of the box. you can enter new values, go back and enter invalid inputs (non numbers) to see what happens.

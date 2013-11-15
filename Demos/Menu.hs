@@ -71,7 +71,8 @@ absLink ref = wcached (show ref) 0 . wlink ref
 mainMenu :: View Html IO Options
 mainMenu= autoRefresh  $
   ul<<<(li << a ! href "/" ! At.class_ "_noAutoRefresh" << b "HOME"
-   ++> (li <<<  ((absLink Wiki << b "Wiki") <! [("class", "_noAutoRefresh")]))
+   ++> tFieldEd "editor" "othermenu"  "Other menu options"
+   **> (li <<<  ((absLink Wiki << b "Wiki") <! [("class", "_noAutoRefresh")]))
    <|> li << (b "About this menu" <> article cascade <> article menuarticle)
    ++> (li <<<  do
           absLink DatabaseSamples << b  "Database examples"
@@ -213,8 +214,6 @@ mainMenu= autoRefresh  $
           absLink LoginLogout << b "Login/logout"
           ul <<<(li <<< (absLink Login        << b  "login/logout")   <! noAutoRefresh
                             <++ b " Example of using the login and/or logout")
-
-   <** tFieldEd "editor" "othermenu"  "Other menu options"
 
    <** li <<< wlogin)
    <|> (El.div ! At.style "display:none" <<< mainMenu1)
