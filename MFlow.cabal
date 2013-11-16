@@ -113,13 +113,14 @@ library
     exposed: True
     buildable: True
     hs-source-dirs: src .
+    ghc-options: -O
     other-modules:  MFlow.Wai.Response
 
 executable demos-blaze
     build-depends: MFlow -any, RefSerialize -any, TCache -any,
                    directory -any ,  Workflow -any, base -any, blaze-html -any,
                    bytestring, containers -any, mtl -any, old-time -any,
-                   stm -any, text -any, transformers -any, vector -any, hamlet -any,
+                   stm -any, text -any, transformers -any, vector -any, hamlet -any,shakespeare-js -any,
                    monadloc -any,aws -any, network -any, hscolour -any,
                    persistent-template, persistent-sqlite, persistent,
                    conduit, http-conduit, monad-logger
@@ -129,5 +130,5 @@ executable demos-blaze
     buildable: True
     hs-source-dirs: Demos
     other-modules: MFlowPersistent MCounter
-    ghc-options: -iDemos -threaded -rtsopts
+    ghc-options: -O -iDemos -threaded -rtsopts
 
