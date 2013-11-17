@@ -1023,10 +1023,6 @@ update method w= do
          FormElm form mr <- runView $ insertForm w
          st <- get
          let HttpData ctype c s= toHttpData $ method <> " " <> toByteString (mconcat form)
---                                            "$('#"<> B.pack id <>"')." <> method
---                                            <> "('" <> toByteString (mconcat form) <> "');"
---                                            <> "ajaxGetLink('" <> B.pack id  <> "');"
---                                            <> "ajaxPostForm('" <> B.pack id  <> "');"
          liftIO . sendFlush t $ HttpData (ctype ++ ("Cache-Control", "no-cache, no-store"):mfHttpHeaders st) (mfCookies st ++ c) s
          put st{mfAutorefresh=True,inSync=True}
          return $ FormElm [] mr
@@ -1230,6 +1226,60 @@ push method' wait w= push' . map toLower $ show method'
     \ }\n\
     \ ajaxPush1();\n\
   \}"
+
+--    let r= lookup ("auto"++id) $ mfEnv st           -- !> ("TIMEOUT="++ show t)
+--    case r of
+--      Nothing -> do
+--         requires [
+--                  JScript $ ajaxPush method,
+--                  JScriptFile jqueryScript [installscript]]
+--         (ftag "div" <<< insertForm w) <! [("id",id)]  
+--
+--      Just sind -> View $ do
+--         let t= mfToken st
+--         FormElm form mr <- runView $ insertForm w
+--         st <- get
+--         let HttpData ctype c s= toHttpData $ B.pack method <> " " <> toByteString (mconcat form)
+--         liftIO . sendFlush t $ HttpData (ctype ++ ("Cache-Control", "no-cache, no-store"):mfHttpHeaders st) (mfCookies st ++ c) s
+--         put st{mfAutorefresh=True,inSync=True}
+--         return $ FormElm [] mr
+--
+-- ajaxPush method =" function ajaxPush(id,verb,waititime){\n\
+--    \var cnt=0; \n\
+--    \var id1= $('#'+id);\n\
+--    \var idstatus= $('#'+id+'status');\n\
+--    \var ida= $('#'+id+' a');\n\
+--    \var actionurl = './';\n\
+--    \var dialogOpts = {\n\
+--    \       cache: false,\n\
+--    \       type: 'GET',\n\
+--    \       url: actionurl+'?bustcache='+ new Date().getTime()+'&auto'+id+'=true',\n\
+--    \       data: '',\n\
+--    \       success: function (resp) {\n\
+--    \         idstatus.html('')\n\
+--    \         cnt=0;\n\
+--    \         id1."++method++"(resp);\n\
+--    \         ajaxPush1();\n\
+--    \       },\n\
+--    \       error: function (xhr, status, error) {\n\
+--    \            cnt= cnt + 1;\n\
+--    \            if  (false) \n\
+--    \               idstatus.html('no more retries');\n\
+--    \            else {\n\
+--    \               idstatus.html('waiting');\n\
+--    \               setTimeout(function() { idstatus.html('retrying');ajaxPush1(); }, waititime);\n\
+--    \            }\n\
+--    \       }\n\
+--    \   };\n\
+--    \function ajaxPush1(){\n\
+--    \   $.ajax(dialogOpts);\n\
+--    \   return false;\n\
+--    \ }\n\
+--    \ ajaxPush1();\n\
+--  \}"
+--
+
+
 
 -- | show the jQuery spinner widget. the first parameter is the configuration . Use \"()\" by default.
 -- See http://jqueryui.com/spinner

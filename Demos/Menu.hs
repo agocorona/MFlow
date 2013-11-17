@@ -21,12 +21,16 @@ import Text.Blaze.Html5.Attributes as At hiding (step)
 import Data.Monoid
 import Data.String
 import Data.TCache.Memoization
+import Data.TCache.IndexQuery
+import Data.List(isPrefixOf)
 import Language.Haskell.HsColour
 import Language.Haskell.HsColour.Colourise
 import Text.Hamlet
-import Text.Julius
 
 
+import Debug.Trace
+
+(!>) = flip trace
 
 newtype Filename= Filename String deriving Typeable
 
@@ -217,7 +221,7 @@ mainMenu= autoRefresh  $
           ul <<<(li <<< (absLink Login        << b  "login/logout")   <! noAutoRefresh
                             <++ b " Example of using the login and/or logout")
 
-   <** li <<< wlogin)
+       )
    <|> (El.div ! At.style "display:none" <<< mainMenu1)
 
 
@@ -251,19 +255,9 @@ mainMenu1= wcached "menu" 0 $
    <|> wlink Autocomp     mempty
    <|> wlink AutocompList mempty
    <|> wlink ListEdit     mempty
-
-
    <|>  wlink Grid         << b "grid"
-
-
    <|>  wlink TextEdit     << b "Content Management"
-
-
-
-
    <|>  wlink Login        << b "login/logout"
-
-
    <|>  wlink PreventBack  << b "Prevent going back after a transaction"
 
 
@@ -356,19 +350,23 @@ getSource file = liftIO $ cachedByKey file 0 $ do
                 ++ "</font>"
 
 wiki =  do
-  pag <- getRestParam `onNothing` return "Index"
-  Menu.page $
+  pag <- getRestParam `onNothing` return "index"
+  page $
    (docTypeHtml $ do
        El.head $ do
-        El.title $ fromString pag)
+        El.title << pag)
         ++> ( h1 ! At.style "text-align:center" <<<  tFieldEd "editor" (wikip ++pag ++ "title.html") (fromString pag))
         **> tFieldEd "editor" (wikip ++ pag ++ "body.html") "Enter the body"
+        **> noWidget
+
 --        <++ shareHtml
---        <>  script << shareScript
+--        <>  shareScript
 
 wikip="wiki/"
 
-shareScript=  [julius|
+wikintries= return . filter  (isPrefixOf wikip . fst)  =<< indexOf tfieldKey
+
+shareScript=  [shamlet|<script>
 (function(doc, script) {
   var js,
       fjs = doc.getElementsByTagName(script)[0],
@@ -390,6 +388,7 @@ shareScript=  [julius|
 
     fjs.parentNode.insertBefore(frag, fjs);
 }(document, 'script'));
+
 |]
 
 shareHtml= [shamlet|<a href="https://twitter.com/share" class="twitter-share-button" data-count="horizontal">Tweet</a>
