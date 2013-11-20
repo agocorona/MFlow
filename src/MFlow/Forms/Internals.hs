@@ -57,8 +57,8 @@ import Control.Exception as CE
 import Control.Concurrent
 import Control.Monad.Loc
 
-import Debug.Trace
-(!>) = flip trace
+--import Debug.Trace
+--(!>) = flip trace 
 
 
 data FailBack a = BackPoint a | NoBack a | GoBack   deriving (Show,Typeable)
@@ -1093,7 +1093,7 @@ fromValidated (NotValidated s err)= error $ "fromValidated: NotValidated "++ s
 getParam1 :: (Monad m, MonadState (MFlowState v) m, Typeable a, Read a, FormInput v)
           => String -> Params ->  m (ParamResult v a)
 getParam1 par req =   case lookup  par req of
-    Just x1 -> readParam x1
+    Just x1 -> readParam x1 
     Nothing  -> return  NoParam
 
 readParam :: (Monad m, MonadState (MFlowState v) m, Typeable a, Read a, FormInput v)

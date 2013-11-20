@@ -536,7 +536,7 @@ tFieldEd  muser k  text= wfreeze k 0 $  do
             ,ServerProc  ("_texts",  transient getTexts)]
 
    (ftag "div" mempty `attrs` [("id",ipanel)]) ++>
-    wraw (ftag "span" content `attrs` [("id", name)])
+    notValid (ftag "span" content `attrs` [("id", name)])
 
 
 
@@ -575,7 +575,7 @@ tField :: (MonadIO m,Functor m, Executable m, FormInput v)
        -> View v m ()
 tField k = wfreeze k 0 $ do
     content <- liftIO $ readtField (fromStrNoEncode "not found")  k
-    wraw content
+    notValid content
 
 -- | A multilanguage version of tFieldEd. For a field with @key@ it add a suffix with the
 -- two characters of the language used.

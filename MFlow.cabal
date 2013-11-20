@@ -49,14 +49,14 @@ description: MFlow is a Web Framework that turns Web programing back into just o
              .
              The version 0.3.1 included:
              .
-             - Push widgets: http://haskell-web.blogspot.com.es/2013/07/maxwell-smart-push-counter.html
+             - Push widgets: 'http://haskell-web.blogspot.com.es/2013/07/maxwell-smart-push-counter.html'
              .
-             - Complete execution traces for errors: http://haskell-web.blogspot.com.es/2013/07/automatic-error-trace-generation-in.html
+             - Complete execution traces for errors: 'http://haskell-web.blogspot.com.es/2013/07/automatic-error-trace-generation-in.html'
              .
              The version 0.3 added:
-             - RESTful URLs: http://haskell-web.blogspot.com.es/2013/07/the-web-navigation-monad.html
+             - RESTful URLs: 'http://haskell-web.blogspot.com.es/2013/07/the-web-navigation-monad.html'
              .
-             - Automatic independent refreshing of widgets via Ajax. (see http://haskell-web.blogspot.com.es/2013/06/and-finally-widget-auto-refreshing.html)
+             - Automatic independent refreshing of widgets via Ajax. (see 'http://haskell-web.blogspot.com.es/2013/06/and-finally-widget-auto-refreshing.html')
              .
              - Page flows: Monadic widgets that can express his own behaviour and can run its own independent page flow. (see http://haskell-web.blogspot.com.es/2013/06/the-promising-land-of-monadic-formlets.html)
              .
@@ -77,7 +77,7 @@ description: MFlow is a Web Framework that turns Web programing back into just o
              .
              -Clustering
              .
-             In this release, runtime templates is e
+
 category: Web, Application Server
 author: Alberto Gómez Corona
 data-dir: ""
@@ -120,7 +120,7 @@ executable demos-blaze
     build-depends: MFlow -any, RefSerialize -any, TCache -any,
                    directory -any ,  Workflow -any, base -any, blaze-html -any,
                    bytestring, containers -any, mtl -any, old-time -any,
-                   stm -any, text -any, transformers -any, vector -any, hamlet -any,shakespeare-js -any,
+                   stm -any, text -any, transformers -any, vector -any, hamlet -any,
                    monadloc -any,aws -any, network -any, hscolour -any,
                    persistent-template, persistent-sqlite, persistent,
                    conduit, http-conduit, monad-logger

@@ -578,7 +578,7 @@ getMultilineText :: (FormInput view
                  ,  Monad m)
                    => T.Text
                  ->  View view m T.Text
-getMultilineText nvalue = View $ do
+getMultilineText nvalue = View $ do 
     tolook <- genNewId
     env <- gets mfEnv
     r <- getParam1 tolook env
@@ -600,7 +600,7 @@ getMultilineText nvalue = View $ do
 -- | Display a dropdown box with the two values (second (true) and third parameter(false))
 -- . With the value of the first parameter selected.                  
 getBool :: (FormInput view,
-      Monad m, Functor m) =>
+      Monad m, Functor m) => 
       Bool -> String -> String -> View view m Bool
 getBool mv truestr falsestr= do
    r <- getSelect $   setOption truestr (fromStr truestr)  <! (if mv then [("selected","true")] else [])
@@ -785,7 +785,9 @@ userLogin=
 
 
 
--- | Empty widget that return Nothing. May be used as \"empty boxes\" inside larger widgets
+-- | Empty widget that return Nothing. May be used as \"empty boxes\" inside larger widgets.
+--
+-- It returns a non valid value.
 noWidget ::  (FormInput view,
      Monad m) =>
      View view m a
@@ -798,10 +800,10 @@ wrender
 wrender x = (fromStr $ show x) ++> return x
 
 -- | Render raw view formatting. It is useful for displaying information
-wraw :: Monad m => view -> View view m ()
-wraw x= View . return . FormElm [x] $ Just ()
+wraw :: Monad m => view -> View view m a
+wraw = notValid
 
--- To display some rendering and return  non valid
+-- To display some rendering and return  a no valid value
 notValid :: Monad m => view -> View view m a
 notValid x= View . return $ FormElm [x] Nothing
 
@@ -1056,12 +1058,12 @@ ask w =  do
                             True -> length (mfPath st') -1
                             False -> mfPIndex st'
          }
-         breturn x                                        -- !> "RETURN"
+         breturn x                                       -- !> "BRETURN"
 
        Nothing ->
          if  not (inSync st')  && not (newAsk st')
 --                                                        !> ("pageIndex="++ show (mfPageIndex st'))
---                                                        !> ("insinc="++show (inSync st'))
+--                                                        !> ("insync="++show (inSync st'))
 --                                                        !> ("newask="++show (newAsk st'))
 --                                                        !> ("mfPIndex="++ show( mfPIndex st'))
           then do
