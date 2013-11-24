@@ -22,5 +22,3 @@ autocomplete1= do
 
 hint s= [("placeholder",s)]
 
--- to run it alone, change page by ask and uncomment this:
---main= runNavigation "" $ transientNav autocomplete1

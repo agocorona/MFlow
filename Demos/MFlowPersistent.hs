@@ -54,12 +54,6 @@ BlogPost
     deriving Show
 |]
 
--- Uncomment this to run the example alone
---main= do
---  migratesqlite
---  runNavigation "" . transientNav $ mFlowPersistent
---
---askm= ask
 
 
 pool= unsafePerformIO $ createSqlitePool ":memory:" 10

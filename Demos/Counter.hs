@@ -40,6 +40,3 @@ counterWidget n=
           "i" -> counterWidget (n + 1)                       
           "d" -> counterWidget (n - 1)
 
-
--- to run it alone, change page by ask and uncomment this:
---main= runNavigation "" $ transientNav counter

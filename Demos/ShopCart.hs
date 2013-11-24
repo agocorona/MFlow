@@ -1,9 +1,5 @@
-
-{-# OPTIONS  -XDeriveDataTypeable #-}
+{-# OPTIONS  -XDeriveDataTypeable -XCPP #-}
 module ShopCart ( shopCart) where
-
-import MFlow.Wai.Blaze.Html.All hiding(page)
-
 import Data.Typeable
 import qualified Data.Vector as V
 import Text.Blaze.Html5 as El
@@ -11,12 +7,14 @@ import Text.Blaze.Html5.Attributes as At hiding (step)
 import Data.Monoid
 import Data.String
 import Data.Typeable
-
+-- #define ALONE -- to execute it alone, uncomment this
+#ifdef ALONE
+import MFlow.Wai.Blaze.Html.All
+main= runNavigation "" $ transientNav grid
+#else
+import MFlow.Wai.Blaze.Html.All hiding(retry, page)
 import Menu
-
--- to run it alone, comment import Menu and uncomment the code below
---main= runNavigation ""   shopCart
---askm= ask
+#endif
 
 data ShopOptions= IPhone | IPod | IPad deriving (Bounded, Enum, Show,Read , Typeable)
 
@@ -60,12 +58,12 @@ shopCart1  =  do
     linkHome= a ! href  (attr $ "/" ++ noScript) << b <<  "home"
     attr= fromString
     moreexplain= do
-     p $ El.span <<
-         "A persistent flow  (uses step). The process is killed after the timeout set by setTimeouts \
-         \but it is restarted automatically. Event If you restart the whole server, it remember the shopping cart\n\n \
-         \The shopping cart is not logged, just the products bought returned by step are logged. The shopping cart\
-         \is rebuild from the events (that is an example of event sourcing.\n\n\
-         \.Defines a table with links that return ints and a link to the menu, that abandon this flow.\n\
-         \.The cart state is not stored, Only the history of events is saved. The cart is recreated by running the history of events."
+     p $ El.span <<(
+         "A persistent flow  (uses step). The process is killed after the timeout set by setTimeouts "++
+         "but it is restarted automatically. Event If you restart the whole server, it remember the shopping cart "++
+         " The shopping cart is not logged, just the products bought returned by step are logged. The shopping cart "++
+         " is rebuild from the events (that is an example of event sourcing."++
+         " .Defines a table with links that return ints and a link to the menu, that abandon this flow. "++
+         " .The cart state is not stored, Only the history of events is saved. The cart is recreated by running the history of events.")
 
      p << "The second parameter of \"setTimeout\" is the time during which the cart is recorded"

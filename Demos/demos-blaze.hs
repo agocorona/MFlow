@@ -59,7 +59,7 @@ main= do
    userRegister edadmin edadmin
    userRegister "edituser" "edituser"
    syncWrite  $ Asyncronous 120 defaultCheck  1000
---   addMessageFlows[("wiki", transient $ runFlow $ ask  wiki)] 
+
    setFilesPath "Demos/"
    runNavigation "" $ do
        setHeader $ stdheader 

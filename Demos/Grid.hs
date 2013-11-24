@@ -38,5 +38,3 @@ grid = do
              
   tdborder= td ! At.style  (attr "border: solid 1px")
 
--- to run it alone, change page by ask and uncomment this:
---main= runNavigation "" $ transientNav grid

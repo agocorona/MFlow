@@ -32,6 +32,3 @@ multicounter=
 
  add widget list= firstOf [autoRefresh $ pageFlow (show i) widget <++ hr | i <- list]
 
-
--- to run it alone, change page by ask and uncomment this:
---main= runNavigation "" $ transientNav multicounter

@@ -15,10 +15,6 @@ import MFlow.Wai.Blaze.Html.All hiding(page)
 import Menu
 #endif
 
--- to run it alone, change askm by ask and uncomment this:
---askm = ask
---main= runNavigation "" $ transientNav textEdit
-
 
 
 editUser= "edituser"

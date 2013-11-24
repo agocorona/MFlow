@@ -88,8 +88,3 @@ wlogin1 =  do
 focus = [("onload","this.focus()")]
 
 
-
-
--- to run it alone, change page by ask and uncomment this:
---main= runNavigation "" $ transientNav  combination
-

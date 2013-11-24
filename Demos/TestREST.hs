@@ -1,9 +1,16 @@
-
+{-# OPTIONS  -XCPP #-}
 module TestREST where
-import MFlow.Wai.Blaze.Html.All hiding(page)
 import Menu
 import Data.Monoid
 import Data.String
+-- #define ALONE -- to execute it alone, uncomment this
+#ifdef ALONE
+import MFlow.Wai.Blaze.Html.All
+main= runNavigation "" $ transientNav grid
+#else
+import MFlow.Wai.Blaze.Html.All hiding(retry, page)
+import Menu
+#endif
 
 -- A menu with two branches, each one is a sucession of pages
 
@@ -17,9 +24,7 @@ import Data.String
 
 
 testREST= do
---  setTimeouts 120 0
-
-  option <- page $  h2 << "Choose between:"
+  option <- page $   h2 << "Choose between:"
                  ++> wlink "a" << b << "letters " <++ i << " or "
                  <|> wlink "1" << b << "numbers"
 
