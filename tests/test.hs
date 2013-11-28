@@ -1,10 +1,14 @@
-{-# LANGUAGE   OverloadedStrings #-}
+{-# LANGUAGE   OverloadedStrings, DeriveDataTypeable #-}
 import MFlow.Wai.Blaze.Html.All hiding (footer)
-
+import MFlow.Forms.Internals
+import Control.Monad.State
 import Data.Monoid
 import Control.Applicative
 import Control.Concurrent
-import Control.Workflow(Workflow)
+import Control.Workflow hiding (step)
+import Data.Typeable
+import Data.TCache.DefaultPersistence
+import Data.ByteString.Lazy.Char8
 
 import Debug.Trace
 
@@ -17,40 +21,81 @@ main2= runNavigation "" $ step $ do
   r <- ask $ getString Nothing
   ask $ wlink () (b << r)  <++ footer
 
-main= runNavigation "" . step $ do
-  r <- page $ wlink True "reserve or purchase a flight" <|> wlink False "other options"
-  case r of
-    True -> runFlowIn "reserve" reserve
-    False -> other
+--comprar o reservar
+--no está en stock
+--reservar libro
+--si está en stock pasado un tiempo quitar la reserva
+--si está en stock y reservado, comprar
 
 
-other= page $ "doing other things" ++> wlink() "end"
 
-reserve :: FlowM Html (Workflow IO) ()
-reserve = do
-     step $ reserveFlight `onCancel` cancelReservation
-     step $ manageAprobal
-     step $ purchaseFlight
+main= do
+ addMessageFlows [("buyreserve", runFlow buyReserve)]
+ runNavigation ""  . step $ do
+  page $ (a ! href "/buyreserve" $ "buy a book") ++> br ++> wlink () "other"
+  page $ wlink () "doing other things"
 
-onCancel x y = do
-  back <- goingBack
-  case back of
-     True -> y
-     _    -> x
+inStock _= False
 
-reserveFlight = do
-   liftIO $ print  "flight reserved "
-   breturn()
+data Book= Book{btitle :: String, stock, price,reserved :: Int} deriving (Read,Show,Typeable)
 
-cancelReservation= do
-   liftIO $ print  "reservation cancelled"
-   breturn()
+instance Indexable Book where key= btitle
+instance Serializable Book where
+  serialize= pack. show
+  deserialize= read . unpack
 
-manageAprobal :: FlowM Html IO ()
-manageAprobal= do
-   liftIO $ threadDelay 10000000
-   fail ""
+buy= undefined
 
-purchaseFlight= do
-   page $ wlink () "do you want to purchaase?"
-   page $ b  "fligh purchased" ++> wlink () "finish"
+buyReserve= do
+ let thebook= Book{btitle= "Bible"}
+ if inStock thebook then buy
+  else do
+   r <- step $ nobacktrack $ ask $ wlink True "not in stock. Reserve when available? "
+                 <|> br
+                 ++> wlink False " no thanks"
+   if r then do
+        step $ do
+            nobacktrack $ page $  "waiting stock" ++> noWidget <++ (a ! href "/" $ "home")
+            liftIO $ forkIO $ waitStock thebook
+            mr <- liftIO $ readResource thebook
+            case mr of
+              Nothing -> nobacktrack $ page $  "not in Stock yet" ++> noWidget <++ (a ! href "/" $ "home")
+              Just (Book t s p 0) ->
+                 if s >0 then do
+                    liftIO . atomically $ withSTMResources[thebook] reserve
+                    page $ wlink () "reservation period ended, but stock available"
+                 else do
+                    page $ wlink () "sorry reservation period ended. Not available again"
+
+
+        buyReserve
+
+    else
+      step $ page $ wlink () "ok, do not reserve"
+
+addStock= do
+   liftIO $ threadDelay 100000000
+   withResources [] $ const [Book "Bible" 5 10 0]
+
+
+
+waitStock thebook= do
+    atomically $ withSTMResources[ thebook] reserve
+    threadDelay 100000000
+    atomically $ withSTMResources[thebook] unreserve
+
+reserve [Nothing]= Retry
+reserve [Just(Book t s p r)] = resources{toAdd=[Book t (s-1) p (r+1)]}
+
+unreserve [Nothing]= resources{toReturn= ()}
+unreserve [Just(Book t s p r)] =  resources{toAdd=[Book t (s+1) p (r-1)]}
+
+
+nobacktrack msg= do
+
+   back <- goingBack
+   if not back  then msg else do
+             breturn()  -- will not go back beyond this
+             clearEnv
+             modify $ \s -> s{newAsk= True}
+             breturn r
