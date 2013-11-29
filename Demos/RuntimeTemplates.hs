@@ -9,15 +9,21 @@ import Data.Monoid
 import Data.ByteString.Lazy.Char8 as BS hiding (index)
 import Control.Exception(SomeException)
 import Control.Monad (when)
+
+import Debug.Trace
+
+
+
 -- #define ALONE -- to execute it alone, uncomment this
 #ifdef ALONE
-import MFlow.Wai.Blaze.Html.All
-main= runNavigation "" $ transientNav mFlowPersistent
+import MFlow.Wai.Blaze.Html.All  hiding(name,select,base)
+main= runNavigation "" $ transientNav runtimeTemplates
 #else
 import MFlow.Wai.Blaze.Html.All hiding(name,select,base, page)
 import Menu
 #endif
 
+(!>)= flip trace
 
 data  MyData= MyData{name :: String} deriving (Typeable,Read, Show)  
 
@@ -66,8 +72,11 @@ process= do
          ListNames -> do
               -- query for all the names stored in all the registers
               allnames <- getAllNames
+
+
               let len= Prelude.length allnames
-              
+
+              setSessionData $ NextReg 0
               page $  iterateResults allnames len
                   **> wlink "templ" << p << "click here to show the result within a runtime template"
 
@@ -94,7 +103,8 @@ process= do
      where
      getAllNames= liftIO . atomically $ select name $ name .>.  ""
 
-     countRegisters= getAllNames >>= return . Prelude.length
+     countRegisters= (getAllNames >>= return . Prelude.length)
+
 
      iterateResults allnames len = pageFlow "iter" $ witerate $ do
               NextReg ind <- getSessionData `onNothing` return (NextReg 0)
@@ -108,7 +118,7 @@ process= do
                    wlink False << b << "prev"
               when (r== False) $ setSessionData . NextReg $  prev ind len
 
-     getData i len all= wraw $ fromStr $  if i>= len || i < 0 then "" else all !! i
+     getData i len all=  wraw . fromStr $ if i >= len || i < 0 then "" else all !! i
      next i len = case i > len  of  True -> 0 ; _ -> i + 4
      prev i len = case i < 0 of True -> len; _ -> i - 4
 

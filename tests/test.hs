@@ -92,7 +92,6 @@ unreserve [Just(Book t s p r)] =  resources{toAdd=[Book t (s+1) p (r-1)]}
 
 
 nobacktrack msg= do
-
    back <- goingBack
    if not back  then msg else do
              breturn()  -- will not go back beyond this

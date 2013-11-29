@@ -799,9 +799,9 @@ wrender
      a -> View view m a
 wrender x = (fromStr $ show x) ++> return x
 
--- | Render raw view formatting. It is useful for displaying information
-wraw :: Monad m => view -> View view m a
-wraw = notValid
+-- | Render raw view formatting. It is useful for displaying information.
+wraw :: Monad m => view -> View view m ()
+wraw x= View . return . FormElm [x] $ Just ()
 
 -- To display some rendering and return  a no valid value
 notValid :: Monad m => view -> View view m a
