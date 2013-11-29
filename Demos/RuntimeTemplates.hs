@@ -10,10 +10,6 @@ import Data.ByteString.Lazy.Char8 as BS hiding (index)
 import Control.Exception(SomeException)
 import Control.Monad (when)
 
-import Debug.Trace
-
-
-
 -- #define ALONE -- to execute it alone, uncomment this
 #ifdef ALONE
 import MFlow.Wai.Blaze.Html.All  hiding(name,select,base)
@@ -23,7 +19,6 @@ import MFlow.Wai.Blaze.Html.All hiding(name,select,base, page)
 import Menu
 #endif
 
-(!>)= flip trace
 
 data  MyData= MyData{name :: String} deriving (Typeable,Read, Show)  
 
