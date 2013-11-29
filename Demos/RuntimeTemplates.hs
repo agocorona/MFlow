@@ -73,7 +73,6 @@ process= do
               -- query for all the names stored in all the registers
               allnames <- getAllNames
 
-
               let len= Prelude.length allnames
 
               setSessionData $ NextReg 0
