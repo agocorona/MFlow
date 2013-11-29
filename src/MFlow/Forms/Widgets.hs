@@ -474,7 +474,7 @@ readtField text k= atomically $ do
    let ref = getDBRef k
    mr <- readDBRef ref
    case mr of
-    Just (TField k v) -> return $ fromStrNoEncode $ B.unpack v
+    Just (TField k v) -> if v /= mempty then return $ fromStrNoEncode $ B.unpack v else return text
     Nothing -> return text
 
 

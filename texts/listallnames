@@ -1,4 +1,4 @@
-<h2> Results </h2>
+<h2> Results  </h2>
 <div id="p0iter">
 <li><span id="p1iter">i</span></li>
 <li><span id="p2iter">j</span></li>
@@ -6,4 +6,4 @@
 <li><span id="p4iter">l</span></li>
 <a href="/noscript/templates/runtimetemplates/listnames/templ/itertrue"><b>next</b></a> <a href="/noscript/templates/runtimetemplates/listnames/templ/iterfalse"><b>prev</b></a>
 </div>
-<a href="/noscript/templates/runtimetemplates/listnames/templ/scroll"><p>click here to present the results as a on-demand-filled scroll list</p></a>
+<a href="/noscript/templates/runtimetemplates/listnames/templ/scroll"><p>click here to present the results as a on-demand-filled scroll list</p></a> 
