@@ -118,9 +118,9 @@ library
     buildable: True
     hs-source-dirs: src .
     ghc-options: 
-    other-modules:  MFlow.Wai.Response
+    other-modules:  MFlow.Wai.Response 
 
- executable demos-blaze
+executable demos-blaze
     build-depends: MFlow -any, RefSerialize -any, TCache -any, tcache-AWS -any,
                    directory -any ,  Workflow -any, base -any, blaze-html -any,
                    bytestring, containers -any, mtl -any, old-time -any,
