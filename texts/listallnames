@@ -1,9 +1,14 @@
-<h2> Results  </h2>
+Edit this template by logging as edituser/edituser<br>
+Do not delete the placeholders<br>
+you can edit in HTML mode with the button in the right of the bar.<br>
+To reset the template, delete all the content and refresh <br>
+(from time to time heroku will reset the changes)
+<h2> Results  </h2> 
 <div id="p0iter">
-<li><span id="p1iter">i</span></li>
-<li><span id="p2iter">j</span></li>
-<li><span id="p3iter">k</span></li>
-<li><span id="p4iter">l</span></li>
+<li><span id="p1iter">z</span></li>
+<li><span id="p2iter"></span></li>
+<li><span id="p3iter"></span></li>
+<li><span id="p4iter"></span></li>
 <a href="/noscript/templates/runtimetemplates/listnames/templ/itertrue"><b>next</b></a> <a href="/noscript/templates/runtimetemplates/listnames/templ/iterfalse"><b>prev</b></a>
 </div>
 <a href="/noscript/templates/runtimetemplates/listnames/templ/scroll"><p>click here to present the results as a on-demand-filled scroll list</p></a> 

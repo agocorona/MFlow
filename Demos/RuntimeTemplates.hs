@@ -51,6 +51,7 @@ process= do
               <|> wlink Exit << p << "Exit to the home page"
 
      case r of
+         Exit -> return()
          NewName -> do
               page  $ edTemplate "edituser" "enterallnames"
                      $ pageFlow "enter" $ witerate (

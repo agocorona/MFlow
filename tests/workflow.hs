@@ -132,19 +132,23 @@ buyReserve keyBook= do
 
     r <- WF.step . atomically $ reserve rbook >> return True
                        `orElse` (waitUntilSTM t >> return False)
-    False -> do
+    case r of
+     False -> do
        logWF "reservation period ended, no stock available"
        return ()
 
-    True  -> do
+     True  -> do
        logWF "The book entered in stock, reserved "
        t <- getTimeoutFlag $ 5 * 24 *60 * 60
-       WF.step . atomically $ waitUntilSTM t
+       r <- WF.step . atomically $ waitUntilSTM t >> return False
+                     `orElse` bougth rbook
 
-       logWF "entered in stock but reservation period ended"
-
-       WF.step . atomically $ unreserve rbook
-       return ()
+       case r of
+        False -> do
+          logWF "Reservation period ended"
+          WF.step . atomically $ unreserve rbook
+          return ()
+        True -> logWF "Book was bought"
 
 reserve rbook = do
    mr <- readDBRef rbook
@@ -157,6 +161,6 @@ unreserve rbook= do
    mr <- readDBRef rbook
    case mr of
      Nothing -> error "where is the book?"
-     Just (Book t s p r) -> writeDBRef rbook $ Book t (s-1) p (r+1)
+     Just (Book t s p r) -> writeDBRef rbook $ Book t (s+1) p (r-1)
 
 

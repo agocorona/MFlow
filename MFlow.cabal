@@ -1,5 +1,5 @@
 name: MFlow
-version: 0.3.2.1
+version: 0.3.3
 cabal-version: >=1.8
 build-type: Simple
 license: BSD3
@@ -45,7 +45,11 @@ description: MFlow is a Web Framework that turns Web programing back into just o
              Bindings for hack, and hsp >= 0.8,  are not compiled by Hackage, and do not appear, but are included in the package files. To use them, add then to the exported modules and execute cabal install
              .
              .
-             This version 0.3.2 add runtime templates http://haskell-web.blogspot.com.es/2013/11/more-composable-elements-for-single.html
+             This version 0.3.3 run with wai 2.0
+             .
+             The version 0.3.2 add runtime templates. It also add witerate and dField, two modifiers for single page
+             development. dField creates a placeholder for a widget that is updated via implicit AJAX by witerate.
+             http://haskell-web.blogspot.com.es/2013/11/more-composable-elements-for-single.html
              .
              The version 0.3.1 included:
              .
@@ -113,22 +117,22 @@ library
     exposed: True
     buildable: True
     hs-source-dirs: src .
-    ghc-options: -O
+    ghc-options: 
     other-modules:  MFlow.Wai.Response
 
-executable demos-blaze
-    build-depends: MFlow -any, RefSerialize -any, TCache -any, tcache-AWS -any,
-                   directory -any ,  Workflow -any, base -any, blaze-html -any,
-                   bytestring, containers -any, mtl -any, old-time -any,
-                   stm -any, text -any, transformers -any, vector -any, hamlet -any,
-                   monadloc -any,aws -any, network -any, hscolour -any,
-                   persistent-template, persistent-sqlite, persistent,
-                   conduit, http-conduit, monad-logger
-
-
-    main-is: demos-blaze.hs
-    buildable: True
-    hs-source-dirs: Demos
-    other-modules: MFlowPersistent MCounter
-    ghc-options: -O -iDemos -threaded -rtsopts
+-- executable demos-blaze
+--    build-depends: MFlow -any, RefSerialize -any, TCache -any, tcache-AWS -any,
+--                   directory -any ,  Workflow -any, base -any, blaze-html -any,
+--                   bytestring, containers -any, mtl -any, old-time -any,
+--                   stm -any, text -any, transformers -any, vector -any, hamlet -any,
+--                   monadloc -any,aws -any, network -any, hscolour -any,
+--                   persistent-template, persistent-sqlite, persistent,
+--                   conduit, http-conduit, monad-logger
+--
+--
+--    main-is: demos-blaze.hs
+--    buildable: True
+--    hs-source-dirs: Demos
+--    other-modules: MFlowPersistent MCounter
+--    ghc-options: -O -iDemos -threaded -rtsopts
 

@@ -111,6 +111,7 @@ additional applicative combinators like  \<+> !*> , |*|. Widgets are also monoid
 be combined as such.
 
 * NEW IN THIS RELEASE
+
 [@Runtime templates@]  'template', 'edTemplate', 'witerate' and 'dField' permit the edition of
 the widget content at runtime, and the management of placeholders with input fields and data fields
 within the template with no navigation in the client, little bandwidth usage and little server load. Enven less
