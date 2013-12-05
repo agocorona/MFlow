@@ -108,7 +108,7 @@ waiMessageFlow req1=   do
 -}
 
      input <- case parseMethod $ requestMethod req1  of
-              Right POST -> do
+              Right POST -> do 
 #if MIN_VERSION_wai(2, 0, 0)
                    inp <- liftIO $ requestBody req1 $$ CList.consume
 #else
