@@ -396,7 +396,7 @@ msgScheduler x  = do
                     `CE.catch` \(e:: CE.SomeException) -> do
                        showError wfname token (show e)
 --                     sendFlush token (Error NotFound $ "Not found: " <> pack wfname)
-                       deleteTokenInList token 
+                       deleteTokenInList token
 
           Left AlreadyRunning -> return ()                    -- !> ("already Running " ++ wfname)
 
