@@ -81,7 +81,6 @@ description: MFlow is a Web Framework that turns Web programing back into just o
              .
              -Clustering
              .
-
 category: Web, Application Server
 author: Alberto Gómez Corona
 data-dir: ""
@@ -104,12 +103,11 @@ source-repository head
 library
     build-depends: Workflow -any, transformers -any, mtl -any,
                    extensible-exceptions -any, xhtml -any, base >4.0 && <5,
-                   bytestring -any, containers -any, RefSerialize -any,
-                   TCache -any, stm >2, old-time -any, vector -any,
-                   directory -any, utf8-string -any, wai -any, case-insensitive -any,
-                   http-types -any, conduit -any, text -any, parsec -any, warp -any,
-                   random -any, blaze-html -any, blaze-markup -any, monadloc -any, 
-                   hamlet -any
+                   bytestring -any, containers -any, RefSerialize -any, TCache -any,
+                   stm >2, old-time -any, vector -any, directory -any,
+                   utf8-string -any, wai -any, case-insensitive -any, http-types -any,
+                   conduit -any, text -any, parsec -any, warp -any, random -any,
+                   blaze-html -any, blaze-markup -any, monadloc -any, hamlet -any
     exposed-modules: MFlow MFlow.Wai.Blaze.Html.All MFlow.Forms
                      MFlow.Forms.Admin MFlow.Cookies MFlow.Wai MFlow.Wai.XHtml.All
                      MFlow.Forms.XHtml MFlow.Forms.Blaze.Html MFlow.Forms.Test
@@ -117,22 +115,19 @@ library
     exposed: True
     buildable: True
     hs-source-dirs: src .
-    ghc-options: 
-    other-modules:  MFlow.Wai.Response 
+    other-modules:  MFlow.Wai.Response
 
-executable demos-blaze
-    build-depends: MFlow -any, RefSerialize -any, TCache -any, tcache-AWS -any,
-                   directory -any ,  Workflow -any, base -any, blaze-html -any,
-                   bytestring, containers -any, mtl -any, old-time -any,
-                   stm -any, text -any, transformers -any, vector -any, hamlet -any,
-                   monadloc -any,aws -any, network -any, hscolour -any,
-                   persistent-template, persistent-sqlite, persistent,
-                   conduit, http-conduit, monad-logger
-
-
-    main-is: demos-blaze.hs
-    buildable: True
-    hs-source-dirs: Demos
-    other-modules: MFlowPersistent MCounter
-    ghc-options: -O -iDemos -threaded -rtsopts
+--executable demos-blaze
+--    build-depends: MFlow -any, RefSerialize -any, TCache -any,
+--                   tcache-AWS -any, directory -any, Workflow -any, base -any,
+--                   blaze-html -any, bytestring -any, containers -any, mtl -any,
+--                   old-time -any, stm -any, text -any, transformers -any, vector -any,
+--                   hamlet -any, monadloc -any, aws -any, network -any, hscolour -any,
+--                   persistent-template -any, persistent-sqlite -any, persistent -any,
+--                   conduit -any, http-conduit -any, monad-logger -any
+--    main-is: demos-blaze.hs
+--    buildable: True
+--    hs-source-dirs: Demos
+--    other-modules: Todo MFlowPersistent MCounter
+--    ghc-options: -O -iDemos -threaded -rtsopts
 

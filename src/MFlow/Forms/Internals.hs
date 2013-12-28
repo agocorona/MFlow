@@ -54,7 +54,7 @@ import qualified Data.Text as T
 --
 
 import Control.Exception as CE
-import Control.Concurrent
+import Control.Concurrent 
 import Control.Monad.Loc
 
 --import Debug.Trace
@@ -424,7 +424,7 @@ instance  (Monad m)=> MonadState (MFlowState view) (View view m) where
 
 
 instance (MonadIO m) => MonadIO (View view m) where
-    liftIO io= let x= liftIO io in x `seq` lift x -- to force liftIO==unsafePerformIO onf the Identity monad
+    liftIO io= let x= liftIO io in x `seq` lift x -- to force liftIO==unsafePerformIO on the Identity monad
 
 -- | Execute the widget in a monad and return the result in another.
 changeMonad :: (Monad m, Executable m1)

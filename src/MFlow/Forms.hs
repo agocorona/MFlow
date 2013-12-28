@@ -730,7 +730,8 @@ infixr 5 <<<
   FormElm f mx <-  runView  form  
   return $ FormElm ( f ++ [ v]) mx 
  
-infixr 6 <++ , .<++. , ++> , .++>.
+infixr 6  ++> , .++>.
+infixr 6 <++ , .<++. 
 -- | Prepend formatting code to a widget
 --
 -- @bold << "enter name" ++> getString Nothing @
@@ -827,7 +828,10 @@ returnIfForward x = do
 -- . This is useful for recurrent cached widgets that are present in multiple pages. For example
 -- in the case of menus or common options. The active elements of this widget must be cached with no timeout.
 retry :: Monad m => View v m a -> View v m ()
-retry w=  w >> modify (\st -> st{inSync=False})
+retry w = View $ do
+    FormElm v _ <- runView w
+    modify $ \st -> st{inSync = False}
+    return $ FormElm  v Nothing
 
 -- | It creates a widget for user login\/registering. If a user name is specified
 -- in the first parameter, it is forced to login\/password as this specific user.

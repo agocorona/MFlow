@@ -107,7 +107,7 @@ waiMessageFlow req1=   do
                                 Just ck -> ck:retcookies1
 -}
 
-     input <- case parseMethod $ requestMethod req1  of
+     input <- case parseMethod $ requestMethod req1  of 
               Right POST -> do 
 #if MIN_VERSION_wai(2, 0, 0)
                    inp <- liftIO $ requestBody req1 $$ CList.consume

@@ -1,10 +1,11 @@
     {-# LANGUAGE   OverloadedStrings, DeriveDataTypeable , NoMonomorphismRestriction #-}
-import MFlow.Wai.Blaze.Html.All hiding (footer, retry,step, push)
-import Control.Monad.State
+import MFlow.Wai.Blaze.Html.All hiding (footer, retry, push)
+import qualified MFlow.Wai.Blaze.Html.All  as MF(retry)
+import Control.Monad.Trans
 import Data.Monoid
 import Control.Applicative
 import Control.Concurrent
-import Control.Workflow as WF
+import Control.Workflow as WF hiding (step)
 import Control.Workflow.Stat
 import Control.Concurrent.STM
 import Data.Typeable
@@ -40,7 +41,7 @@ rbook= getDBRef $  keyBook
 
 stm= liftIO . atomically
 
-reservetime= 5* 24 * 60 * 60  -- five days waiting for reserve and  five days reserved
+reservetime= 120 -- 5* 24 * 60 * 60  -- five days waiting for reserve and  five days reserved
 
 data RouteOptions= Buy | Other | Reserve | NoReserve deriving (Typeable,Show)
 
@@ -49,24 +50,28 @@ main= do
  restartWorkflows $ M.fromList [("buyreserve",  buyReserve reservetime)]
 
  runNavigation "" . transientNav $ do
-  op <-  page $ wlink Buy "buy or reserve the book" <++ br <|> wlink Other "Do other things"
+  op <-  page $ absLink Buy "buy or reserve the book" <++ br <|> wlink Other "Do other things"
   case op of
    Other -> page $ "doing other things" ++> wlink () "home"
    Buy -> do
-     reserved  <- stm $ do
-             mr <- readDBRef rbook
-             case mr of
-               Nothing -> return False
-               Just r  ->
-                 if reserved r > 0 then return True
-                 else if stock r > 0 then reserveIt rbook >> return True
-                 else return False
+     reserved  <- stm (do
+         mr <- readDBRef rbook !> "RESERVING"
+         case mr of
+           Nothing -> return False
+           Just r  ->
+             if reserved r > 0 then return True
+             else if stock r > 0 then reserveIt rbook >> return True
+             else return False)
+       `compensate`  (stm (unreserveIt rbook) >> fail "" !> "JUST")
 
-     if reserved then page $ buyIt keyBook
+     if reserved then do
+             page $ buyIt keyBook
+             return() !> "buyit forward"
+
 
      else  reserveOffline keyBook
 
-
+absLink ref = wcached (show ref) 0 . wlink ref
 
 buyIt keyBook= do
       mh <- getHistory "buyreserve" keyBook
@@ -79,10 +84,12 @@ buyIt keyBook= do
                 in  h2 "History of your reserve:"
                     <> histmarkup
          ++> wlink keyBook "buy?"
-                 `waction` (\keyBook -> do
-                     stm $ buy rbook
+                 `waction` (\ key -> do
+                     stm . buy $ getDBRef key
                      page $  "bought! " ++> wlink () "home"
-                     delWF "buyreserve" keyBook)
+                     delWF "buyreserve" key)
+
+         <|> (absLink Buy undefined >> return())
 
 reserveOffline keyBook = do
      v <- getState "buyreserve" (buyReserve reservetime) keyBook
@@ -125,31 +132,52 @@ lookReserve keyBook= do
             ++> buyIt keyBook
 
 
-buyReserve timereserve  keyBook= do
-    let rbook = getDBRef keyBook
-    logWF $  "You requested the reserve for: "++ keyBook
-    t <- getTimeoutFlag timereserve  -- $ 5 * 24 * 60 * 60
+compensate :: Monad m => FlowM v m a -> FlowM v m a -> FlowM v m a
+compensate doit undoit= do
+  back <- goingBack
+  case  back of
+    False -> doit >>= breturn
+    True  -> undoit
 
-    r <- WF.step . atomically $ (reserveAndMailIt rbook >> return True)
-                      `orElse` (waitUntilSTM t >> return False)
+
+
+withTimeoutIO flag f  = liftIO $ atomically $ (f  >> return True)
+                    `orElse` (waitUntilSTM flag >> return False)
+
+buyReserve timereserve  keyBook= runFlowOnce f undefined where
+ f :: FlowM Html (Workflow IO) ()
+ f= do
+    let rbook = getDBRef keyBook
+    lift . logWF $  "You requested the reserve for: "++ keyBook
+    t <- lift $ getTimeoutFlag timereserve  -- $ 5 * 24 * 60 * 60
+
+    r <- compensate (step $ withTimeoutIO t (reserveAndMailIt rbook))
+                     (do
+                       lift $ logWF "Unreserving the book"
+                       step $ liftIO . atomically $ unreserveIt rbook >> fail "")
+
+--     liftIO $ atomically $ (reserveAndMailIt rbook >> return True)
+--                    `orElse` (waitUntilSTM t >> return False)
     if not r
      then do
-       logWF "reservation period ended, no stock available"
+       lift $ logWF "reservation period ended, no stock available"
        return ()
 
      else do
-       logWF "The book entered in stock, reserved "
-       t <- getTimeoutFlag timereserve -- $ 5 * 24 *60 * 60
-       r <- WF.step . atomically $ (waitUntilSTM t >> return False)
+       lift $ logWF "The book entered in stock, reserved "
+       t <- lift $ getTimeoutFlag timereserve -- $ 5 * 24 *60 * 60
+       r <- step . liftIO $ atomically $ (waitUntilSTM t >> return False)
                           `orElse` (testBought rbook >> return True)
 
        if r
         then do
-          logWF "Book was bought at this time"
+          lift $ logWF "Book was bought at this time"
         else do
-          logWF "Reserved for a time, but reserve period ended"
-          WF.step . atomically $ unreserveIt rbook
-          return ()
+          lift $ logWF "Reserved for a time, but reserve period ended"
+          fail ""
+--        now it is compensated above
+--        step . liftIO $ atomically $ unreserveIt rbook
+
 
 userMail= "user@mail.com"
 
@@ -163,7 +191,7 @@ reserveAndMailIt rbook=  do
    reserveIt rbook
 
 reserveIt rbook = do
-   mr <- readDBRef rbook
+   mr <- readDBRef rbook  !> "RESERVE"
    case mr of
      Nothing -> retry
      Just (Book t s  r) ->
@@ -172,7 +200,7 @@ reserveIt rbook = do
 
 
 unreserveIt rbook= do
-   mr <- readDBRef rbook
+   mr <- readDBRef rbook  !> "UNRESERVE"
    case mr of
      Nothing -> error "unreserveIt: where is the book?"
      Just (Book t s r) ->

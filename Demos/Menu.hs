@@ -43,7 +43,7 @@ ask w= MF.ask $ do
     tFieldEd edadmin "head" "set Header"
        **> (El.div ! At.style "float:right" <<< autoRefresh wlogin )
        <++ hr
-       **> (divmenu <<< br ++> retry mainMenu)
+       **> (divmenu <<< br ++> {- retry -} mainMenu)
        **> (El.div ! At.style "float:right;width:65%;overflow:auto;"
             <<< (insertForm $ widgetAndSource filename w))
   
