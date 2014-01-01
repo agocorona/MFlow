@@ -644,7 +644,7 @@ getHeader= gets mfHeader
 addHeader new= do
   fhtml <- getHeader
   setHeader $  fhtml . new
-  
+
 -- | Set an HTTP cookie
 setCookie :: MonadState (MFlowState view) m
           =>  String  -- ^ name
@@ -652,15 +652,43 @@ setCookie :: MonadState (MFlowState view) m
           -> String  -- ^ path
           -> Maybe Integer  -- ^ Max-Age in seconds. Nothing for a session cookie
           -> m ()
-setCookie n v p me= do
-    modify $ \st -> st{mfCookies= (SB.pack n,SB.pack v,SB.pack p, fmap  (SB.pack . show) me):mfCookies st }
+setCookie n v p me=
+    modify $ \st -> st{mfCookies= (SB.pack n,SB.pack v,SB.pack p, fmap (SB.pack . show) me):mfCookies st }
+
+setParanoidCookie :: MonadState (MFlowState view) m
+          =>  String  -- ^ name
+          -> String  -- ^ value
+          -> String  -- ^ path
+          -> Maybe Integer  -- ^ age
+          -> m ()
+setParanoidCookie n v p me=
+    modify $ \st -> st{mfCookies =
+                          (unsafePerformIO $ paranoidEncryptCookie
+                           (  SB.pack n,
+                              SB.pack v,
+                              SB.pack p,
+                              fmap  (SB.pack . show) me)):mfCookies st }
+
+setEncryptedCookie :: MonadState (MFlowState view) m
+          =>  String  -- ^ name
+          -> String  -- ^ value
+          -> String  -- ^ path
+          -> Maybe Integer  -- ^ age
+          -> m ()
+setEncryptedCookie n v p me=
+    modify $ \st -> st{mfCookies =
+                          (unsafePerformIO $ encryptCookie
+                           (  SB.pack n,
+                              SB.pack v,
+                              SB.pack p,
+                              fmap  (SB.pack . show) me)):mfCookies st }
 
 -- | Set an HTTP Response header
 setHttpHeader :: MonadState (MFlowState view) m
            => SB.ByteString  -- ^ name
           -> SB.ByteString  -- ^ value
           -> m ()
-setHttpHeader n v = do
+setHttpHeader n v =
     modify $ \st -> st{mfHttpHeaders=  (n,v):mfHttpHeaders st }
 
 
