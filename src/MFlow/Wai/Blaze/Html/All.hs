@@ -74,17 +74,20 @@ getPort= do
 runNavigation :: String -> FlowM Html (Workflow IO) () -> IO Bool
 runNavigation n f= do
     unless (null n) $ setNoScript n
-    addMessageFlows[(n, runFlow f)] 
+    addMessageFlows[(n, runFlow f)]
     porti <- getPort
     wait $ run porti waiMessageFlow
     --runSettings defaultSettings{settingsTimeout = 20, settingsPort= porti} waiMessageFlow
-    
+
+-- | Exactly the same as runNavigation, but with TLS added.
+-- | Expects certificate.pem and key.pem in project directory.
+
 runSecureNavigation :: String -> FlowM Html (Workflow IO) () -> IO Bool
 runSecureNavigation = runSecureNavigation' TLS.defaultTlsSettings defaultSettings
 
 runSecureNavigation' :: TLSSettings -> Settings -> String -> FlowM Html (Workflow IO) () -> IO Bool
 runSecureNavigation' t s n f = do
     unless (null n) $ setNoScript n
-    addMessageFlows[(n, runFlow f)] 
+    addMessageFlows[(n, runFlow f)]
     porti <- getPort
     wait $ TLS.runTLS t s{settingsPort = porti} waiMessageFlow
