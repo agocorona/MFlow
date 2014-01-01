@@ -280,5 +280,3 @@ encryptMaybe _ _ Nothing  = Nothing
 decryptMaybe :: Key -> Maybe ByteString -> Maybe ByteString
 decryptMaybe k (Just s) = Just $ fromMaybe "" $ decrypt k s
 decryptMaybe _ Nothing  = Nothing
-
-getUser env = fromMaybe "" $ lookup "USER" env
