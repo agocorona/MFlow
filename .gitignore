@@ -9,4 +9,4 @@ notes.txt
 notes.lhs
 dist
 .cabal-sandbox
-.cabal.sanbox.config
+cabal.sanbox.config
