@@ -107,7 +107,8 @@ library
                    stm >2, old-time -any, vector -any, directory -any,
                    utf8-string -any, wai -any, case-insensitive -any, http-types -any,
                    conduit -any, text -any, parsec -any, warp -any, random -any,
-                   blaze-html -any, blaze-markup -any, monadloc -any, hamlet -any
+                   blaze-html -any, blaze-markup -any, monadloc -any, hamlet -any,
+                   warp-tls -any, pem -any, certificate -any, tls-extra -any, tls -any
     exposed-modules: MFlow MFlow.Wai.Blaze.Html.All MFlow.Forms
                      MFlow.Forms.Admin MFlow.Cookies MFlow.Wai MFlow.Wai.XHtml.All
                      MFlow.Forms.XHtml MFlow.Forms.Blaze.Html MFlow.Forms.Test
@@ -124,7 +125,8 @@ executable demos-blaze
                    old-time -any, stm -any, text -any, transformers -any, vector -any,
                    hamlet -any, monadloc -any, aws -any, network -any, hscolour -any,
                    persistent-template -any, persistent-sqlite -any, persistent -any,
-                   conduit -any, http-conduit -any, monad-logger -any
+                   conduit -any, http-conduit -any, monad-logger -any, warp-tls -any, 
+                   pem -any, certificate -any, tls-extra -any, tls -any
     main-is: demos-blaze.hs
     buildable: True
     hs-source-dirs: Demos

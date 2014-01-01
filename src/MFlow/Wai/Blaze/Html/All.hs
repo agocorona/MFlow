@@ -24,6 +24,7 @@ module MFlow.Wai.Blaze.Html.All (
 ,module Text.Blaze.Html5.Attributes
 ,module Control.Monad.IO.Class
 ,runNavigation
+,runSecureNavigation
 ) where
 
 import MFlow
@@ -44,11 +45,12 @@ import Control.Workflow (Workflow, unsafeIOtoWF)
 
 
 import Control.Applicative
-import Control.Monad(when)
+import Control.Monad(when, unless)
 import Control.Monad.IO.Class
 import System.Environment
 import Data.Maybe(fromMaybe)
 import Data.Char(isNumber)
+import Network.Wai.Handler.WarpTLS as TLS
 
 -- | The port is read from the first exectution parameter.
 -- If no parameter, it is read from the PORT environment variable.
@@ -71,9 +73,18 @@ getPort= do
 -- It also set the home page
 runNavigation :: String -> FlowM Html (Workflow IO) () -> IO Bool
 runNavigation n f= do
-    when(not $ null n) $ setNoScript n
+    unless (null n) $ setNoScript n
     addMessageFlows[(n, runFlow f)] 
     porti <- getPort
     wait $ run porti waiMessageFlow
     --runSettings defaultSettings{settingsTimeout = 20, settingsPort= porti} waiMessageFlow
     
+runSecureNavigation :: String -> FlowM Html (Workflow IO) () -> IO Bool
+runSecureNavigation = runSecureNavigation' TLS.defaultTlsSettings defaultSettings
+
+runSecureNavigation' :: TLSSettings -> Settings -> String -> FlowM Html (Workflow IO) () -> IO Bool
+runSecureNavigation' t s n f = do
+    unless (null n) $ setNoScript n
+    addMessageFlows[(n, runFlow f)] 
+    porti <- getPort
+    wait $ TLS.runTLS t s{settingsPort = porti} waiMessageFlow
