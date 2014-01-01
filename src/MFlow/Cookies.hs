@@ -267,8 +267,6 @@ encryptCookie (a,b,c,d) = do
 
 decryptCookie :: Cookie -> IO Cookie
 decryptCookie (a,b,c,d) = do
-  env <- getEnvironment
-  let user = getUser env
   key <- getKey "CookieKey.key"
   return ( fromMaybe "" $ decrypt      key a,
            fromMaybe "" $ decrypt      key b,
