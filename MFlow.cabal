@@ -128,6 +128,6 @@ executable demos-blaze
     main-is: demos-blaze.hs
     buildable: True
     hs-source-dirs: Demos
-    other-modules: Todo MFlowPersistent MCounter
+    other-modules:
     ghc-options: -O -iDemos -threaded -rtsopts
 

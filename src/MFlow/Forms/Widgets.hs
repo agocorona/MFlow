@@ -28,7 +28,7 @@ wEditList,wautocompleteList
 , wautocompleteEdit,
 
 -- * Editing widgets
-delEdited, getEdited,prependWidget,appendWidget,setWidget
+delEdited, getEdited, setEdited, prependWidget,appendWidget,setWidget
 
 -- * Content Management
 ,tField, tFieldEd, htmlEdit, edTemplate, dField, template, witerate,tfieldKey
@@ -67,16 +67,19 @@ import Unsafe.Coerce
 import Control.Exception
 
 
-readyJQuery="ready=function(){if(!window.jQuery){return setTimeout(ready,100)}};"
 
-jqueryScript= "//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"
-jqueryScript1="//code.jquery.com/jquery-1.9.1.js"
+--jqueryScript= "//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"
+--jqueryScript1="//code.jquery.com/jquery-1.9.1.js"
+--
+--jqueryCSS1= "//code.jquery.com/ui/1.9.1/themes/base/jquery-ui.css"
+--jqueryCSS= "//code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css"
+--
+--jqueryUI1= "//code.jquery.com/ui/1.9.1/jquery-ui.js"
+--jqueryUI= "//code.jquery.com/ui/1.10.3/jquery-ui.js"
 
-jqueryCSS1= "//code.jquery.com/ui/1.9.1/themes/base/jquery-ui.css"
-jqueryCSS= "//code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css"
-
-jqueryUI1= "//code.jquery.com/ui/1.9.1/jquery-ui.js"
-jqueryUI= "//code.jquery.com/ui/1.10.3/jquery-ui.js"
+jqueryScript= cjqueryScript config
+jqueryCSS= cjqueryCSS config
+jqueryUI= cjqueryUI config
 
 ------- User Management ------
 

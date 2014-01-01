@@ -97,7 +97,7 @@ addAdminWF= addMessageFlows[("adminserv",transient $ runFlow adminMFlow)]
 
 adminMFlow ::  FlowM   Html IO ()
 adminMFlow= do
-   admin <- getAdminName
+   let admin = getAdminName
    u <- getUser (Just admin) $ p << bold << "Please login as Administrator" ++> userLogin
    op <- ask  $  p <<< wlink "sync"  (bold << "sync")
              <|> p <<< wlink "flush" (bold << "flush")
