@@ -70,6 +70,8 @@ adminLoop1= do
 -- | execute the process and wait for its finalization.
 --  then it synchronizes the cache
 wait f= do
+    putStrLn "Using configuration: "
+    print config
     mv <- newEmptyMVar
     forkIO (f1 >> putMVar mv True)
     putStrLn "wait: ready"

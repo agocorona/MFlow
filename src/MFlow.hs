@@ -530,7 +530,9 @@ defConfig= Config "admin" "//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.m
                           "//code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css"
                           "//code.jquery.com/ui/1.10.3/jquery-ui.js"
 
-config= unsafePerformIO . atomically $ readDBRef rconf `onNothing` return defConfig
+config= unsafePerformIO $! atomically $! readConfig
+
+readConfig=  readDBRef rconf `onNothing` return defConfig
 
 
 
@@ -547,11 +549,16 @@ type UserStr= String
 type PasswdStr= String
 
 
-
+-- | set the Administrator user and password.
+-- It must be defined in Main , before any configuration parameter is read, before the execution
+-- of any flow
 setAdminUser :: MonadIO m => UserStr -> PasswdStr -> m ()
 setAdminUser user password= liftIO $  do
   userRegister user password
-  atomically $ writeDBRef rconf $ config{cadmin= user}
+  atomically $ do
+   conf <- readConfig
+   writeDBRef rconf $ conf{cadmin= user}
+
 
 
 getAdminName=  cadmin config

@@ -6,7 +6,7 @@ import Data.Typeable
 
 data Options= Sum | Prod deriving (Read,Show,Typeable)
 
-main= runNavigation "api" . transientNav $ do
+main= runNavigation "" . transientNav $ do
     op <- ask $   wlink Sum << b "sum "
               <++ br
               <|> wlink Prod << b "product " <++ br
@@ -16,4 +16,4 @@ main= runNavigation "api" . transientNav $ do
     ask $ case op of
            Sum  -> (fromStr $ show $ p1 + p2) 
            Prod -> (fromStr $ show $ p1 * p2)
-          ++> wlink () "click"
+          ++> noWidget
