@@ -343,7 +343,7 @@ instance  (Monad m) => Monad (View view m) where
 
 
     return = View .  return . FormElm  [] . Just
---    fail msg= View . return $ FormElm [fromStr msg] Nothing
+--    fail msg= View . return $ FormElm [inRed msg] Nothing
 
 
 
