@@ -117,17 +117,17 @@ library
     hs-source-dirs: src .
     other-modules:  MFlow.Wai.Response
 
---executable demos-blaze
---    build-depends: MFlow -any, RefSerialize -any, TCache -any,
---                   tcache-AWS -any, directory -any, Workflow -any, base -any,
---                   blaze-html -any, bytestring -any, containers -any, mtl -any,
---                   old-time -any, stm -any, text -any, transformers -any, vector -any,
---                   hamlet -any, monadloc -any, aws -any, network -any, hscolour -any,
---                   persistent-template -any, persistent-sqlite -any, persistent -any,
---                   conduit -any, http-conduit -any, monad-logger -any
---    main-is: demos-blaze.hs
---    buildable: True
---    hs-source-dirs: Demos
---    other-modules:
---    ghc-options: -O -iDemos -threaded -rtsopts
---
+executable demos-blaze
+    build-depends: MFlow -any, RefSerialize -any, TCache -any,
+                   tcache-AWS -any, directory -any, Workflow -any, base -any,
+                   blaze-html -any, bytestring -any, containers -any, mtl -any,
+                   old-time -any, stm -any, text -any, transformers -any, vector -any,
+                   hamlet -any, monadloc -any, aws -any, network -any, hscolour -any,
+                   persistent-template -any, persistent-sqlite -any, persistent -any,
+                   conduit -any, http-conduit -any, monad-logger -any
+    main-is: demos-blaze.hs
+    buildable: True
+    hs-source-dirs: Demos
+    other-modules:
+    ghc-options: -O -iDemos -threaded -rtsopts
+
