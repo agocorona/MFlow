@@ -39,7 +39,7 @@ instance (Typeable view)
 pushtest fss=do
    page $ push Html 0  $ do
          PushList fs <- getSessionData  `onNothing` return ( PushList fss)
-         if null fs then fail "" !> "fail"  else do
+         if null fs  !> (show $ length fs) then fail "" else do
             setSessionData . PushList $ tail fs
             liftIO $ threadDelay 1000000
             Prelude.head fs

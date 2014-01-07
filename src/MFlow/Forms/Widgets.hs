@@ -1107,8 +1107,8 @@ data UpdateMethod= Append | Prepend | Html deriving Show
 -- The second parameter is the delay for the next retry in case of disconnection, in milliseconds.
 --
 -- It can be used to show data updates in the server. The widget is executed in a different process than
---  the one of the rest of the page. Although the process is initiated with the session context,
--- updates in the session context are not seen by the push widget
+--  the one of the rest of the page.
+-- Updates in the session context are not seen by the push widget. It has his own context.
 -- To communicate with te widget, use DBRef's or TVar and the
 -- STM semantics for waiting updates using 'retry'.
 --
@@ -1131,7 +1131,7 @@ data UpdateMethod= Append | Prepend | Html deriving Show
 --
 -- This other  simulates a console output that echoes what is entered in a text box
 -- below. It has two widgets: a push output in append mode and a text box input.
--- The communication it uses a TVar. The push widget wait for updates in the TVar.
+-- The communication uses a TVar. The push widget wait for updates in the TVar.
 -- because the second widget uses autoRefresh, all happens in the same page.
 --
 -- It is recommended to add a timeout to the push widget, like in the example:
@@ -1171,7 +1171,7 @@ push method' wait w= push' . map toLower $ show method'
     id <- genNewId
     st <- get
     let token= mfToken st
-        dat= mfData st
+
         procname= "_push" ++ tind token ++ id
         installscript=
             "$(document).ready(function(){\n"
@@ -1182,7 +1182,7 @@ push method' wait w= push' . map toLower $ show method'
 
     when new  $ do
         killWF procname token{twfname= procname}
-        let proc= transient . runFlow . ask $ w' dat
+        let proc= transient . runFlow . ask $ w'
         requires [ServerProc (procname, proc),
                   JScript $ ajaxPush procname,
                   JScriptFile jqueryScript [installscript]]
@@ -1191,9 +1191,10 @@ push method' wait w= push' . map toLower $ show method'
       <++ ftag "div" mempty `attrs` [("id",id++"status")]
 
    where
-   w' dat= do
-     modify $ \s -> s{inSync= True,newAsk=True,mfData=dat}
+   w' = do
+     modify $ \s -> s{inSync= True,newAsk=True}
      w
+
 
 
    ajaxPush procname=" function ajaxPush(id,waititime){\n\

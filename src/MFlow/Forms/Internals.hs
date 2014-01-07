@@ -637,7 +637,7 @@ stdHeader v = v
 --                     `toByteString` <meta name= \"Keywords\" content= \"sci-fi\" />) `append`
 --                  `bbody` [(\"style\", \"margin-left:5%;margin-right:5%\")] c
 -- @
-
+--
 setHeader :: MonadState (MFlowState view) m => (view -> view) ->  m ()
 setHeader header= do
   fs <- get
@@ -842,15 +842,16 @@ The flow is executed in a loop. When the flow is finished, it is started again
 runFlow :: (FormInput view, MonadIO m)
         => FlowM view m () -> Token -> m () 
 runFlow  f t=
-  loop (runFlowOnce1  f) t --evalStateT (runSup . runFlowM $ breturn() >>  f)  mFlowState0{mfToken=t,mfEnv= tenv t}  >> return ()  -- >> return ()
+  loop (startState t) f   t --evalStateT (runSup . runFlowM $ breturn() >>  f)  mFlowState0{mfToken=t,mfEnv= tenv t}  >> return ()  -- >> return ()
   where
-  loop f t = do
-    t' <- f t
+  loop  s f t = do
+    (mt,s) <- runFlowOnce2 s f t
+    let t'= fromFailBack mt
     let t''= t'{tpath=[twfname t']}
     liftIO $ do
        flushRec t'' 
-       sendToMF t'' t''  -- !> "SEND"
-    loop  f t''          -- !> "LOOPAGAIN"
+       sendToMF t'' t''    -- !> "SEND"
+    loop  s f t''          -- !> "LOOPAGAIN"
 
 
 
@@ -858,14 +859,18 @@ runFlowOnce :: (MonadIO m, FormInput view,  Monad m)
         => FlowM view m () -> Token -> m ()
 runFlowOnce f t= runFlowOnce1 f t  >> return ()
 
-runFlowOnce1  f t  =
-  evalStateT (runSup . runFlowM $ do
+runFlowOnce1 f t  = runFlowOnce2 (startState t) f t
+
+startState t= mFlowState0{mfToken=t
+                   ,mfPath= tpath t
+                   ,mfEnv= tenv t}  -- >>= return . fromFailBack
+
+runFlowOnce2 s f t =
+  runStateT (runSup . runFlowM $ do
         backInit
         f
-        getToken)
-        mFlowState0{mfToken=t
-                   ,mfPath= tpath t
-                   ,mfEnv= tenv t} >>= return . fromFailBack
+        getToken) s
+        
 
   where
   backInit= do
