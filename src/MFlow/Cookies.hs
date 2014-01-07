@@ -1,20 +1,30 @@
 {-# OPTIONS -XScopedTypeVariables  -XOverloadedStrings #-}
 
-module MFlow.Cookies
-(Cookie,contentHtml,cookieuser,cookieHeaders,getCookies)
+module MFlow.Cookies (
+  Cookie,
+  contentHtml,
+  cookieuser,
+  cookieHeaders,
+  getCookies,
+  paranoidEncryptCookie,
+  paranoidDecryptCookie,
+  encryptCookie,
+  decryptCookie
+  )
 where
 import Control.Monad(MonadPlus(..), guard, replicateM_, when)
 import Data.Char
-import Data.Maybe(fromMaybe)
+import Data.Maybe(fromMaybe, fromJust)
 import System.IO.Unsafe
 import Control.Exception(handle)
 import Data.Typeable
-import Data.Maybe(fromJust)
 import Unsafe.Coerce
 import Data.Monoid
 import Text.Parsec
 import Control.Monad.Identity
 import Data.ByteString.Char8 as B
+import Web.ClientSession
+import System.Environment
 
 --import Debug.Trace
 --(!>)= flip trace
@@ -213,3 +223,60 @@ hexadecimal = do d1 <- hexDigit
 --                     Left err  -> error $ "urlDecode: decode  error: " ++ show err
 --                     Right r  ->   r
 --               !> ("decode="++str)
+
+
+-- Uses 4 seperate keys, corresponding to the 4 seperate fields in the Cookie.
+paranoidEncryptCookie :: Cookie -> IO Cookie
+paranoidEncryptCookie (a,b,c,d) = do
+  key1 <- getKey "CookieKey1.key"
+  key2 <- getKey "CookieKey2.key"
+  key3 <- getKey "CookieKey3.key"
+  key4 <- getKey "CookieKey4.key"
+  iv1  <- randomIV
+  iv2  <- randomIV
+  iv3  <- randomIV
+  iv4  <- randomIV
+  return ( encrypt      key1 iv1 a,
+           encrypt      key2 iv2 b,
+           encrypt      key3 iv3 c,
+           encryptMaybe key4 iv4 d)
+
+paranoidDecryptCookie :: Cookie -> IO Cookie
+paranoidDecryptCookie (a,b,c,d) = do
+  key1 <- getKey "CookieKey1.key"
+  key2 <- getKey "CookieKey2.key"
+  key3 <- getKey "CookieKey3.key"
+  key4 <- getKey "CookieKey4.key"
+  return ( fromMaybe "" $ decrypt      key1 a,
+           fromMaybe "" $ decrypt      key2 b,
+           fromMaybe "" $ decrypt      key3 c,
+                          decryptMaybe key4 d)
+
+-- Uses a single key to encrypt all 4 fields.
+encryptCookie :: Cookie -> IO Cookie
+encryptCookie (a,b,c,d) = do
+  key <- getKey  "CookieKey.key"
+  iv1  <- randomIV
+  iv2  <- randomIV
+  iv3  <- randomIV
+  iv4  <- randomIV
+  return ( encrypt      key iv1 a,
+           encrypt      key iv2 b,
+           encrypt      key iv3 c,
+           encryptMaybe key iv4 d)
+
+decryptCookie :: Cookie -> IO Cookie
+decryptCookie (a,b,c,d) = do
+  key <- getKey "CookieKey.key"
+  return ( fromMaybe "" $ decrypt      key a,
+           fromMaybe "" $ decrypt      key b,
+           fromMaybe "" $ decrypt      key c,
+                          decryptMaybe key d)
+
+encryptMaybe :: Key -> IV -> Maybe ByteString -> Maybe ByteString
+encryptMaybe k i (Just s) = Just $ encrypt k i s
+encryptMaybe _ _ Nothing  = Nothing
+
+decryptMaybe :: Key -> Maybe ByteString -> Maybe ByteString
+decryptMaybe k (Just s) = Just $ fromMaybe "" $ decrypt k s
+decryptMaybe _ Nothing  = Nothing

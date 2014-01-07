@@ -117,6 +117,7 @@ library
     hs-source-dirs: src .
     other-modules:  MFlow.Wai.Response
 
+
 executable demos-blaze
     build-depends: MFlow -any, RefSerialize -any, TCache -any,
                    tcache-AWS -any, directory -any, Workflow -any, base -any,
@@ -130,4 +131,3 @@ executable demos-blaze
     hs-source-dirs: Demos
     other-modules:
     ghc-options: -O -iDemos -threaded -rtsopts
-
