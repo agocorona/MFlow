@@ -10,3 +10,5 @@ notes.lhs
 dist
 .cabal-sandbox
 .cabal.sanbox.config
+_darcs
+darcs*
