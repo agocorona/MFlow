@@ -43,7 +43,7 @@ main = do
 
 main' :: AcidState (EventState AddMessage) -> IO Bool
 main' db = runNavigation "" . step $ do
-  r <- page  $  h3 << "Persistent message demo."
+  r <- page $ h3 << "Persistent message demo."
       ++> getString Nothing
       <* submitButton "OK"
 
