@@ -1,1 +1,2 @@
 language: haskell
+before_install: cabal install monadloc-pp 
