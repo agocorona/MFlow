@@ -2,10 +2,10 @@
 module LoginSample ( loginSample) where
 
 import Data.Monoid
--- #define ALONE to execute it alone, uncomment this
+-- #define ALONE -- to execute it alone, uncomment this
 #ifdef ALONE
 import MFlow.Wai.Blaze.Html.All
-main= runNavigation "" $ transientNav autocomplete1
+main= runNavigation "" $ transientNav loginSample
 #else
 import MFlow.Wai.Blaze.Html.All hiding(page)
 import Menu

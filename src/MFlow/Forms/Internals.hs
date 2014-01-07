@@ -343,7 +343,7 @@ instance  (Monad m) => Monad (View view m) where
 
 
     return = View .  return . FormElm  [] . Just
---    fail msg= View . return $ FormElm [fromStr msg] Nothing
+--    fail msg= View . return $ FormElm [inRed msg] Nothing
 
 
 
@@ -494,9 +494,18 @@ preventGoingBack msg= do
              clearEnv
              modify $ \s -> s{newAsk= True}
              msg
-             
 
 
+          
+onBacktrack :: Monad m => FlowM v m a -> FlowM v m a -> FlowM v m a
+onBacktrack doit undoit= do
+  back <- goingBack
+  case  back of
+    False -> doit >>= breturn
+    True  -> undoit
+
+
+compensate doit undoit= doit `onBacktrack` (undoit >> fail "")
 
 type Lang=  String
 

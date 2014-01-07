@@ -71,6 +71,8 @@ btag, bhtml, bbody,Attribs, addAttrs
 -- * user
 , userRegister, setAdminUser, getAdminName, Auth(..),getAuthMethod, setAuthMethod
 -- * static files
+-- * config
+,Config(..), config
 ,setFilesPath
 -- * internal use
 ,addTokenToList,deleteTokenInList, msgScheduler,serveFile,newFlow
@@ -420,7 +422,7 @@ showError wfname token@Token{..} e= do
 
                logError  msg
                fresp <- getNotFoundResponse
-               admin <- getAdminName
+               let admin=  getAdminName
 --               sendFlush token . Error $ fresp (tuser== admin)  $  Prelude.concat[ "<br/>"++ s | s <- lines msg]
                sendFlush token . Error $ fresp True  $  Prelude.concat[ "<br/>"++ s | s <- lines msg]
 
@@ -517,7 +519,22 @@ userRegister u p= liftIO $ do
 
 
 
-data Config = Config UserStr deriving (Read, Show, Typeable)
+data Config = Config{cadmin :: UserStr    -- ^ Administrator name
+                    ,cjqueryScript        -- ^ URL of jquery
+                    ,cjqueryCSS           -- ^ URL of jqueryCSS
+                    ,cjqueryUI :: String  -- ^ URL of jqueryUI
+                    }
+                    deriving (Read, Show, Typeable)
+
+defConfig= Config "admin" "//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"
+                          "//code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css"
+                          "//code.jquery.com/ui/1.10.3/jquery-ui.js"
+
+config= unsafePerformIO $! atomically $! readConfig
+
+readConfig=  readDBRef rconf `onNothing` return defConfig
+
+
 
 keyConfig= "mflow.config"
 instance Indexable Config where key _= keyConfig
@@ -531,17 +548,20 @@ instance  Serializable Config where
 type UserStr= String
 type PasswdStr= String
 
+
+-- | set the Administrator user and password.
+-- It must be defined in Main , before any configuration parameter is read, before the execution
+-- of any flow
 setAdminUser :: MonadIO m => UserStr -> PasswdStr -> m ()
 setAdminUser user password= liftIO $  do
   userRegister user password
-  atomically $ writeDBRef rconf $ Config user
+  atomically $ do
+   conf <- readConfig
+   writeDBRef rconf $ conf{cadmin= user}
 
-getAdminName :: MonadIO m => m UserStr
-getAdminName=  liftIO  $ do
-     cu <- atomically $ readDBRef rconf
-     case cu of
-      Nothing -> setAdminUser "admin" "admin" >> getAdminName
-      Just (Config u) -> return u
+
+
+getAdminName=  cadmin config
 
 
 --------------- ERROR RESPONSES --------
