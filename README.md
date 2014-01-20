@@ -1,5 +1,7 @@
 [![Build Status](https://travis-ci.org/agocorona/MFlow.png?branch=master)](https://travis-ci.org/agocorona/MFlow)
 
+See the [MFlow demo and documentation site](http://mflowdemo.herokuapp.com)
+
 # MFlow
 
 MFlow is simply the most high level, most advanced and fun to program web framework.  MFlow uses Haskell magic to counteract the wicked Web programming magic, that terrifies the programmer with all their explosion of events, configurations, plumbing  lookups and identifiers, in order to restore programming to be intuitive and natural again. Everything in MFlow that seems sophisticated is to solve a real problem at hand, not a fancy way to hide with new names the inherent flawed nature of the MVC model when used in real web applications.
