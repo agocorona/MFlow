@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/agocorona/MFlow.png?branch=master)](https://travis-ci.org/agocorona/MFlow)
+
 MFlow is am application server and Web Framework for stateful and persistent Web applications that run in a navigation monad with backtracking that provides services of routing and state persistence. 
 
 Each link or form in the page return type safe responses. The navigation is also type safe since it is a monadic procedure with type-safe components. The page is composed of reusable type-safe components called widgets that may change their rendering depending o the user responses by autorefreshing, without using JavaScript.
