@@ -14,8 +14,6 @@ import Data.Typeable
 import Data.String(fromString)
 
 
-
-
 data Skin= Normal |  Blue | Red deriving (Read,Show,Typeable, Bounded, Enum)
 
 initialConfig= do
