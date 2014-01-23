@@ -43,7 +43,7 @@ ask w= MF.ask $ do
     tFieldEd edadmin "head" "set Header"
        **> (El.div ! At.style "float:right" <<< autoRefresh wlogin )
        <++ hr
-       **> (divmenu <<< br ++> {- retry -} mainMenu)
+       **> (divmenu <<< br ++>  retry  mainMenu)
        **> (El.div ! At.style "float:right;width:65%;overflow:auto;"
             <<< (insertForm $ widgetAndSource filename w))
   
@@ -63,9 +63,9 @@ data Options= Wiki | CountI | CountS | Radio
             | Login | TextEdit |Grid | Autocomp | AutocompList
             | ListEdit |Shop | Action | Ajax | Select
             | CheckBoxes | PreventBack | Multicounter
-            | Combination | ShopCart | MCounter
+            | Combination | ShopCart | MCounter | InitialConfig | SearchCart
             | FViewMonad | Counter | WDialog |Push |PushDec |Trace | RESTNav
-            | Database | MFlowPersist
+            | Database | AcidState| MFlowPersist
             | DatabaseSamples |PushSamples | ErrorTraces | Flows
             | BasicWidgets | MonadicWidgets | DynamicWidgets | LoginLogout
             | Templates | RuntimeTemplates | LoginWidget
@@ -94,7 +94,14 @@ mainMenu= autoRefresh  $
            <|> li <<< (absLink Database << b  "Database") <! noAutoRefresh
                      <++ b " Create, Store and retrieve lines of text from Amazon SimpleDB \
                             \ storage "
-                     <> article amazonarticle))
+                     <> article amazonarticle
+           <|> li <<< (absLink AcidState << b  "Acid State") <! noAutoRefresh
+                     <++ do  -- blaze-html monad
+                        b " Create, Store and retrieve lines of text from"
+                        a ! href "http://hackage.haskell.org/package/acid-state" $ "Acid State"
+
+
+                     ))
    <|> li <<<  do
           absLink PushSamples << b  "Push Samples"
              <++ " using long polling"
@@ -130,13 +137,24 @@ mainMenu= autoRefresh  $
                             \even when the back button has been pressed"
                 <> article stateful
 
+           <|> li <<< (absLink SearchCart <<  b  "Shopping with data tier, queries and full text search") <! noAutoRefresh
+                <++ b " The shopping example completed with a dynamic catalog stored using TCache"
+                <> article searchcart
+
            <|> li <<< (absLink MCounter << b  "Persistent stateful flow: Counter") <! noAutoRefresh
                 <++ b " a persistent counter. It uses the same mechanism than shopping, but it is\
                       \a more simple example"
+
            <|> li <<< (absLink PreventBack  << b "Prevent going back after a transaction") <! noAutoRefresh
                  <++ b " Control backtracking to avoid navigating back to undo something that can not be undone\
                           \. For example, a payment"
-                 <> article preventbackl )
+                 <> article preventbackl
+
+           <|> li <<< (absLink InitialConfig  $ b "Initial Configuration in session parameters") <! noAutoRefresh
+                 <++ b " the user is asked for some questions initially that never will be asked again \
+                       \ unless he likes to change them (all in session parameters)"
+
+                 )
 
   <|> li <<< do
           absLink BasicWidgets << b  "Basic Widgets"
@@ -263,6 +281,7 @@ mainMenu1= wcached "menu" 0 $
 
 article link=  " " <> a ! At.class_ "_noAutoRefresh"  ! href link <<  i "(article)"
 
+searchcart= "http://haskell-web.blogspot.com.es/2013/04/mflow-what-about-data-tier-adding-it-to.html"
 persistentarticle= "http://haskell-web.blogspot.com.es/2013/08/mflow-using-persistent-with-sqlite.html"
 yesodweb= "http://www.yesodweb.com/book/persistent"
 amazonarticle= "http://haskell-web.blogspot.com.es/2013/08/using-amazon-web-services-with-tcache.html"
@@ -287,7 +306,7 @@ widgetAndSource (Just(Filename filename)) w = do
       El.div <<<  tFieldEd edadmin (filename ++ "top") "top text"
              <++ hr
              **> h1 "Running example"
-             ++> "(in the ligth red box):"
+             ++> "(in the light red box):"
              ++> (divsample <<< w)
 --             <** tFieldEd edadmin (filename ++ "bottom") "botom text"
              <++ do -- Blaze-html monad

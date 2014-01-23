@@ -71,7 +71,7 @@ getPort= do
 -- | run a persistent flow. It uses `getPort` to get the port
 -- The first parameter is the first element in the URL path.
 -- It also set the home page
-runNavigation :: String -> FlowM Html (Workflow IO) () -> IO Bool
+runNavigation :: String -> FlowM Html (Workflow IO) () -> IO ()
 runNavigation n f= do
     unless (null n) $ setNoScript n
     addMessageFlows[(n, runFlow f)] 
@@ -79,10 +79,10 @@ runNavigation n f= do
     wait $ run porti waiMessageFlow
     --runSettings defaultSettings{settingsTimeout = 20, settingsPort= porti} waiMessageFlow
     
-runSecureNavigation :: String -> FlowM Html (Workflow IO) () -> IO Bool
+runSecureNavigation :: String -> FlowM Html (Workflow IO) () -> IO ()
 runSecureNavigation = runSecureNavigation' TLS.defaultTlsSettings defaultSettings
 
-runSecureNavigation' :: TLSSettings -> Settings -> String -> FlowM Html (Workflow IO) () -> IO Bool
+runSecureNavigation' :: TLSSettings -> Settings -> String -> FlowM Html (Workflow IO) () -> IO ()
 runSecureNavigation' t s n f = do
     unless (null n) $ setNoScript n
     addMessageFlows[(n, runFlow f)] 
