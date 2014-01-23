@@ -1,6 +1,6 @@
 {-# LANGUAGE  CPP, DeriveDataTypeable, ScopedTypeVariables #-}
 
--- #define TEST
+
 module InitialConfig (initialConfig) where
 -- #define ALONE -- to execute it alone, uncomment this
 #ifdef ALONE

@@ -63,7 +63,7 @@ data Options= Wiki | CountI | CountS | Radio
             | Login | TextEdit |Grid | Autocomp | AutocompList
             | ListEdit |Shop | Action | Ajax | Select
             | CheckBoxes | PreventBack | Multicounter
-            | Combination | ShopCart | MCounter | InitialConfig -- | SearchCart
+            | Combination | ShopCart | MCounter  -- | InitialConfig  | SearchCart
             | FViewMonad | Counter | WDialog |Push |PushDec |Trace | RESTNav
             | Database |  MFlowPersist -- | AcidState
             | DatabaseSamples |PushSamples | ErrorTraces | Flows
@@ -150,9 +150,9 @@ mainMenu= autoRefresh  $
                           \. For example, a payment"
                  <> article preventbackl
 
-           <|> li <<< (absLink InitialConfig  $ b "Initial Configuration in session parameters") <! noAutoRefresh
-                 <++ b " the user is asked for some questions initially that never will be asked again \
-                       \ unless he likes to change them (all in session parameters)"
+--           <|> li <<< (absLink InitialConfig  $ b "Initial Configuration in session parameters") <! noAutoRefresh
+--                 <++ b " the user is asked for some questions initially that never will be asked again \
+--                       \ unless he likes to change them (all in session parameters)"
 
                  )
 
