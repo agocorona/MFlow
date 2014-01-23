@@ -63,9 +63,9 @@ data Options= Wiki | CountI | CountS | Radio
             | Login | TextEdit |Grid | Autocomp | AutocompList
             | ListEdit |Shop | Action | Ajax | Select
             | CheckBoxes | PreventBack | Multicounter
-            | Combination | ShopCart | MCounter | InitialConfig | SearchCart
+            | Combination | ShopCart | MCounter | InitialConfig -- | SearchCart
             | FViewMonad | Counter | WDialog |Push |PushDec |Trace | RESTNav
-            | Database | AcidState| MFlowPersist
+            | Database |  MFlowPersist -- | AcidState
             | DatabaseSamples |PushSamples | ErrorTraces | Flows
             | BasicWidgets | MonadicWidgets | DynamicWidgets | LoginLogout
             | Templates | RuntimeTemplates | LoginWidget
@@ -95,10 +95,10 @@ mainMenu= autoRefresh  $
                      <++ b " Create, Store and retrieve lines of text from Amazon SimpleDB \
                             \ storage "
                      <> article amazonarticle
-           <|> li <<< (absLink AcidState << b  "Acid State") <! noAutoRefresh
-                     <++ do  -- blaze-html monad
-                        b " Create, Store and retrieve lines of text from"
-                        a ! href "http://hackage.haskell.org/package/acid-state" $ "Acid State"
+--           <|> li <<< (absLink AcidState << b  "Acid State") <! noAutoRefresh
+--                     <++ do  -- blaze-html monad
+--                        b " Create, Store and retrieve lines of text from"
+--                        a ! href "http://hackage.haskell.org/package/acid-state" $ "Acid State"
 
 
                      ))
@@ -137,9 +137,9 @@ mainMenu= autoRefresh  $
                             \even when the back button has been pressed"
                 <> article stateful
 
-           <|> li <<< (absLink SearchCart <<  b  "Shopping with data tier, queries and full text search") <! noAutoRefresh
-                <++ b " The shopping example completed with a dynamic catalog stored using TCache"
-                <> article searchcart
+--           <|> li <<< (absLink SearchCart <<  b  "Shopping with data tier, queries and full text search") <! noAutoRefresh
+--                <++ b " The shopping example completed with a dynamic catalog stored using TCache"
+--                <> article searchcart
 
            <|> li <<< (absLink MCounter << b  "Persistent stateful flow: Counter") <! noAutoRefresh
                 <++ b " a persistent counter. It uses the same mechanism than shopping, but it is\

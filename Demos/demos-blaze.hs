@@ -106,7 +106,7 @@ main= do
              RuntimeTemplates -> step runtimeTemplates   `showSource` "RuntimeTemplates.hs"
 --             AcidState        -> step acidState          `showSource` "AcidState.hs"
              InitialConfig -> initialConfig              `showSource` "InitialConfig.hs"
-             SearchCart    -> searchCart                `showSource` "SearchCart.hs"
+--             SearchCart    -> searchCart                `showSource` "SearchCart.hs"
 
 
 
