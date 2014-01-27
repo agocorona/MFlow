@@ -1,4 +1,4 @@
-{-# OPTIONS -XQuasiQuotes  -XCPP #-}
+{-# OPTIONS   -XCPP #-}
 module PushSample (pushSample) where
 
 import Control.Concurrent.STM

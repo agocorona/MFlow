@@ -1,3 +1,7 @@
+[![Build Status](https://travis-ci.org/agocorona/MFlow.png?branch=master)](https://travis-ci.org/agocorona/MFlow)
+
+See the [MFlow demo and documentation site](http://mflowdemo.herokuapp.com)
+
 # MFlow
 
 [![Build Status](https://travis-ci.org/sheganinans/MFlow.png)](https://travis-ci.org/sheganinans/MFlow)

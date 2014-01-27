@@ -92,7 +92,9 @@ extra-source-files: Demos/demos-blaze.hs Demos/TestREST.hs
                     Demos/Combination.hs Demos/Options.hs Demos/ContentManagement.hs
                     Demos/PreventGoingBack.hs Demos/Counter.hs Demos/PushDecrease.hs
                     Demos/Dialog.hs Demos/PushSample.hs Demos/Grid.hs Demos/Radio.hs
-                    Demos/SumView.hs src/MFlow/Hack.hs src/MFlow/Hack/Response.hs
+                    Demos/SumView.hs Demos/AcidState.hs Demos/SearchCart.hs
+                    src/MFlow/Hack.hs
+                    src/MFlow/Hack/Response.hs
                     Demos/MCounter.hs src/MFlow/Hack/XHtml.hs
                     src/MFlow/Hack/XHtml/All.hs src/MFlow/Forms/HSP.hs
 
@@ -127,6 +129,7 @@ executable demos-blaze
                    hamlet -any, monadloc -any, aws -any, network -any, hscolour -any,
                    persistent-template -any, persistent-sqlite -any, persistent -any,
                    conduit -any, http-conduit -any, monad-logger -any
+                -- ,safecopy -any, acid-state -any
     main-is: demos-blaze.hs
     buildable: True
     hs-source-dirs: Demos
