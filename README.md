@@ -1,8 +1,5 @@
 # MFlow
 
-[![Build Status](https://travis-ci.org/sheganinans/MFlow.png)](https://travis-ci.org/sheganinans/MFlow)
-
-
 MFlow is simply the most high level, most advanced and fun to program web framework.  MFlow uses Haskell magic to counteract the wicked Web programming magic, that terrifies the programmer with all their explosion of events, configurations, plumbing  lookups and identifiers, in order to restore programming to be intuitive and natural again. Everything in MFlow that seems sophisticated is to solve a real problem at hand, not a fancy way to hide with new names the inherent flawed nature of the MVC model when used in real web applications.
 
 MFlow Web applications are much like console applications. You just write an ordinary sequential program with inputs, outputs and control statements where the inputs and outputs are web pages. MFlow will run the sequence forward and backward depending on your input to find the appropriate location in the sequence to respond your query. 
