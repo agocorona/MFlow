@@ -829,8 +829,8 @@ returnIfForward x = do
 -- in the case of menus or common options. The active elements of this widget must be cached with no timeout.
 retry :: Monad m => View v m a -> View v m ()
 retry w = View $ do
-    FormElm v _ <- runView w
-    modify $ \st -> st{inSync = False}
+    FormElm v mx <- runView w
+    when (isJust mx) $ modify $ \st -> st{inSync = False}
     return $ FormElm  v Nothing
 
 -- | It creates a widget for user login\/registering. If a user name is specified

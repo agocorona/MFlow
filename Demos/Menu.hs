@@ -28,6 +28,7 @@ import Language.Haskell.HsColour.Colourise
 import Text.Hamlet
 
 
+
 import Debug.Trace
 
 (!>) = flip trace
@@ -372,12 +373,13 @@ wiki =  do
   pag <- getRestParam `onNothing` return "index"
   page $
    (docTypeHtml $ do
-       El.head $ do
-        El.title << pag)
-        ++> ( h1 ! At.style "text-align:center" <<<  tFieldEd "editor" (wikip ++pag ++ "title.html") (fromString pag))
-        **> tFieldEd "editor" (wikip ++ pag ++ "body.html") "Enter the body"
+       El.head $ El.title << pag)
+        ++> (El.body
+        <<<   ( h1 ! At.style "text-align:center" <<<  tFieldEd "editor" (wikip ++pag ++ "title.html") (fromString pag))
+        **>   tFieldEd "editor" (wikip ++ pag ++ "body.html") "Enter the body"
 --        <++ shareHtml
 --        <>  shareScript
+        )
 
 wikip="wiki/"
 
