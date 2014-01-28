@@ -21,7 +21,7 @@ initialConfig= do
    skin <- case mskin of
     Nothing -> do
      s <- step . page $ p << "choose skin"
-                    ++> wlink Normal << p << "normal"
+                    ++> wlink Normal  << p << "normal"
                     <|> wlink Blue    << p << "blue"
                     <|> wlink Red     << p << "red"
      setSessionData s
