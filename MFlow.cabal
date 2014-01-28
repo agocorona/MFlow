@@ -93,6 +93,7 @@ extra-source-files: Demos/demos-blaze.hs Demos/TestREST.hs
                     Demos/PreventGoingBack.hs Demos/Counter.hs Demos/PushDecrease.hs
                     Demos/Dialog.hs Demos/PushSample.hs Demos/Grid.hs Demos/Radio.hs
                     Demos/SumView.hs Demos/AcidState.hs Demos/SearchCart.hs
+                    Demos/InitialConfig.hs
                     src/MFlow/Hack.hs
                     src/MFlow/Hack/Response.hs
                     Demos/MCounter.hs src/MFlow/Hack/XHtml.hs
