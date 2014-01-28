@@ -43,9 +43,9 @@ import Database
 import MFlowPersistent
 import RuntimeTemplates
 import TraceSample
---import AcidState
---import SearchCart
---import InitialConfig
+import AcidState
+import SearchCart
+import InitialConfig
 
 import Data.TCache.DefaultPersistence
 import Data.ByteString.Lazy.Char8 hiding (index)
@@ -104,9 +104,9 @@ main= do
              MCounter    ->   mcounter                   `showSource` "MCounter.hs"
              MFlowPersist ->  step mFlowPersistent       `showSource` "MFlowPersistent.hs"
              RuntimeTemplates -> step runtimeTemplates   `showSource` "RuntimeTemplates.hs"
---             AcidState        -> step acidState          `showSource` "AcidState.hs"
---             InitialConfig -> initialConfig              `showSource` "InitialConfig.hs"
---             SearchCart    -> searchCart                `showSource` "SearchCart.hs"
+             AcidState        -> step acidState          `showSource` "AcidState.hs"
+             InitialConfig -> initialConfig              `showSource` "InitialConfig.hs"
+             SearchCart    -> searchCart                `showSource` "SearchCart.hs"
 
 
 

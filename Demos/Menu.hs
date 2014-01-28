@@ -64,9 +64,9 @@ data Options= Wiki | CountI | CountS | Radio
             | Login | TextEdit |Grid | Autocomp | AutocompList
             | ListEdit |Shop | Action | Ajax | Select
             | CheckBoxes | PreventBack | Multicounter
-            | Combination | ShopCart | MCounter  -- | InitialConfig  | SearchCart
+            | Combination | ShopCart | MCounter   | InitialConfig  | SearchCart
             | FViewMonad | Counter | WDialog |Push |PushDec |Trace | RESTNav
-            | Database |  MFlowPersist -- | AcidState
+            | Database |  MFlowPersist  | AcidState
             | DatabaseSamples |PushSamples | ErrorTraces | Flows
             | BasicWidgets | MonadicWidgets | DynamicWidgets | LoginLogout
             | Templates | RuntimeTemplates | LoginWidget

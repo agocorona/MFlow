@@ -29,7 +29,7 @@ import Data.SafeCopy
 type Message = String
 data Database = Database [Message]
 
--- $(deriveSafeCopy 0 'Data.SafeCopy.base ''Database)
+$(deriveSafeCopy 0 'Data.SafeCopy.base ''Database)
 
 addMessage :: Message -> Update Database ()
 addMessage msg = do
