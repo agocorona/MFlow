@@ -128,7 +128,7 @@ executable demos-blaze
                    hamlet -any, monadloc -any, aws -any, network -any, hscolour -any,
                    persistent-template -any, persistent-sqlite -any, persistent -any,
                    conduit -any, http-conduit -any, monad-logger -any
-                   ,safecopy -any, acid-state -any
+                 --  ,safecopy -any, acid-state -any
     main-is: demos-blaze.hs
     buildable: True
     hs-source-dirs: Demos
