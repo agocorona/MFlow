@@ -471,6 +471,7 @@ data User= User
             , upassword :: String
             } deriving (Read, Show, Typeable)
 
+
 eUser= User (error1 "username") (error1 "password")
 
 error1 s= error $ s ++ " undefined"
