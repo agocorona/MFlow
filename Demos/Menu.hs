@@ -96,10 +96,10 @@ mainMenu= autoRefresh  $
                      <++ b " Create, Store and retrieve lines of text from Amazon SimpleDB \
                             \ storage "
                      <> article amazonarticle
---           <|> li <<< (absLink AcidState << b  "Acid State") <! noAutoRefresh
---                     <++ do  -- blaze-html monad
---                        b " Create, Store and retrieve lines of text from"
---                        a ! href "http://hackage.haskell.org/package/acid-state" $ "Acid State"
+           <|> li <<< (absLink AcidState << b  "Acid State") <! noAutoRefresh
+                     <++ do  -- blaze-html monad
+                        b " Create, Store and retrieve lines of text from"
+                        a ! href "http://hackage.haskell.org/package/acid-state" $ "Acid State"
 
 
                      ))
@@ -138,9 +138,9 @@ mainMenu= autoRefresh  $
                             \even when the back button has been pressed"
                 <> article stateful
 
---           <|> li <<< (absLink SearchCart <<  b  "Shopping with data tier, queries and full text search") <! noAutoRefresh
---                <++ b " The shopping example completed with a dynamic catalog stored using TCache"
---                <> article searchcart
+           <|> li <<< (absLink SearchCart <<  b  "Shopping with data tier, queries and full text search") <! noAutoRefresh
+                <++ b " The shopping example completed with a dynamic catalog stored using TCache"
+                <> article searchcart
 
            <|> li <<< (absLink MCounter << b  "Persistent stateful flow: Counter") <! noAutoRefresh
                 <++ b " a persistent counter. It uses the same mechanism than shopping, but it is\
@@ -151,9 +151,9 @@ mainMenu= autoRefresh  $
                           \. For example, a payment"
                  <> article preventbackl
 
---           <|> li <<< (absLink InitialConfig  $ b "Initial Configuration in session parameters") <! noAutoRefresh
---                 <++ b " the user is asked for some questions initially that never will be asked again \
---                       \ unless he likes to change them (all in session parameters)"
+           <|> li <<< (absLink InitialConfig  $ b "Initial Configuration in session parameters") <! noAutoRefresh
+                 <++ b " the user is asked for some questions initially that never will be asked again \
+                       \ unless he likes to change them (all in session parameters)"
 
                  )
 
