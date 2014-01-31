@@ -17,7 +17,7 @@ import Data.String(fromString)
 data Skin= Normal |  Blue | Red deriving (Read,Show,Typeable, Bounded, Enum)
 
 initialConfig= do
-   mskin <- getSessionData
+   mskin <-  getSessionData
    skin <- case mskin of
     Nothing -> do
      s <- step . page $ p << "choose skin"
