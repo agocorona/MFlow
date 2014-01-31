@@ -58,7 +58,7 @@ instance Serializable Int where
 main= do
    index idnumber                      -- for the Database example
    index tfieldKey
-   setAdminUser  adminname adminname
+   setAdminUser adminname adminname
    userRegister edadmin edadmin
    userRegister "edituser" "edituser"
    syncWrite  $ Asyncronous 120 defaultCheck  1000
