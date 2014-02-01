@@ -320,7 +320,7 @@ import Network.HTTP.Types.Header
 --
 -- @getOdd= getInt Nothing `validate` (\x -> return $ if mod x 2==0 then  Nothing else Just "only odd numbers, please")@
 validate
-  :: (FormInput view, Monad m) =>
+  :: (FormInput view,  Monad m) =>
      View view m a
      -> (a -> WState view m (Maybe view))
      -> View view m a
