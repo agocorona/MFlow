@@ -1,7 +1,8 @@
 {-# OPTIONS -XScopedTypeVariables  -XOverloadedStrings #-}
 
 module MFlow.Cookies (
-  Cookie,
+  CookieT,
+  Cookie(..),
   contentHtml,
   cookieuser,
   cookieHeaders,
@@ -32,11 +33,16 @@ import System.Environment
 contentHtml :: (ByteString, ByteString)
 contentHtml= ("Content-Type", "text/html")
 
-type Cookie=  (B.ByteString,B.ByteString,B.ByteString,Maybe B.ByteString)
+type CookieT =  (B.ByteString,B.ByteString,B.ByteString,Maybe B.ByteString)
+
+data Cookie
+  = UnEncryptedCookie CookieT
+  | EncryptedCookie CookieT
+  | ParanoidCookie CookieT
+    deriving (Eq, Read, Show)
 
 cookieuser :: String
 cookieuser= "cookieuser"
-
 
 getCookies httpreq=
      case  lookup "Cookie" $ httpreq of
@@ -45,30 +51,17 @@ getCookies httpreq=
 
 cookieHeaders cs =  Prelude.map (\c-> ( "Set-Cookie", showCookie c)) cs
 
-showCookie ::  Cookie -> B.ByteString
-showCookie (n,v,p,me) =  n <> "="  <>  v  <>
-                       ";path="  <>  p  <>
-                        showMaxAge  me
+showCookie :: Cookie -> B.ByteString
+showCookie c@(EncryptedCookie b) = showCookie' $ decryptAndToTuple c
+showCookie c@(ParanoidCookie b)  = showCookie' $ decryptAndToTuple c
+showCookie   (UnEncryptedCookie c) = showCookie' c
 
-    where
-    showMaxAge Nothing =  ""
-    showMaxAge (Just e)  =  ";Max-age=" <> e
+showCookie' (n,v,p,me) = n <> "="  <>  v  <>
+                         ";path="  <>  p  <>
+                         showMaxAge  me
 
-
---showCookie ::  Cookie -> String
---showCookie (n,v,p,me) =
---   let e= fromMaybe "" me
---   in showString n . showString "=" . showString v  . showString "; path=" 
---     . showString p . showMaxAge e  . showString "\n"  $ ""
---
---
---showMaxAge [] = showString ""
---showMaxAge e  = showString "; Max-age=" . showString e
-
-
-
-
-
+showMaxAge Nothing =  ""
+showMaxAge (Just e)  =  ";Max-age=" <> e
 
 splitCookies cookies  = f cookies []  
     where
@@ -221,12 +214,19 @@ hexadecimal = do d1 <- hexDigit
 --urlDecode :: String -> [([(String, String)],String)]
 --urlDecode str= case parse readEnv "" str of  -- let Parser p= readEnv in  p str
 --                     Left err  -> error $ "urlDecode: decode  error: " ++ show err
+
+
+
 --                     Right r  ->   r
 --               !> ("decode="++str)
 
+decryptCookie :: Cookie -> IO Cookie
+decryptCookie c@(UnEncryptedCookie _) = return c
+decryptCookie   (EncryptedCookie c)   = decryptCookie' c
+decryptCookie   (ParanoidCookie c)    = paranoidDecryptCookie c
 
 -- Uses 4 seperate keys, corresponding to the 4 seperate fields in the Cookie.
-paranoidEncryptCookie :: Cookie -> IO Cookie
+paranoidEncryptCookie :: CookieT -> IO Cookie
 paranoidEncryptCookie (a,b,c,d) = do
   key1 <- getKey "CookieKey1.key"
   key2 <- getKey "CookieKey2.key"
@@ -236,42 +236,46 @@ paranoidEncryptCookie (a,b,c,d) = do
   iv2  <- randomIV
   iv3  <- randomIV
   iv4  <- randomIV
-  return ( encrypt      key1 iv1 a,
-           encrypt      key2 iv2 b,
-           encrypt      key3 iv3 c,
-           encryptMaybe key4 iv4 d)
+  return $ ParanoidCookie
+             ( encrypt      key1 iv1 a,
+               encrypt      key2 iv2 b,
+               encrypt      key3 iv3 c,
+               encryptMaybe key4 iv4 d)
 
-paranoidDecryptCookie :: Cookie -> IO Cookie
+paranoidDecryptCookie :: CookieT -> IO Cookie
 paranoidDecryptCookie (a,b,c,d) = do
   key1 <- getKey "CookieKey1.key"
   key2 <- getKey "CookieKey2.key"
   key3 <- getKey "CookieKey3.key"
   key4 <- getKey "CookieKey4.key"
-  return ( fromMaybe "" $ decrypt      key1 a,
-           fromMaybe "" $ decrypt      key2 b,
-           fromMaybe "" $ decrypt      key3 c,
-                          decryptMaybe key4 d)
+  return $ UnEncryptedCookie
+             ( decryptFM    key1 a,
+               decryptFM    key2 b,
+               decryptFM    key3 c,
+               decryptMaybe key4 d)
 
 -- Uses a single key to encrypt all 4 fields.
-encryptCookie :: Cookie -> IO Cookie
+encryptCookie :: CookieT -> IO Cookie
 encryptCookie (a,b,c,d) = do
   key <- getKey  "CookieKey.key"
   iv1  <- randomIV
   iv2  <- randomIV
   iv3  <- randomIV
   iv4  <- randomIV
-  return ( encrypt      key iv1 a,
-           encrypt      key iv2 b,
-           encrypt      key iv3 c,
-           encryptMaybe key iv4 d)
+  return $ EncryptedCookie
+             ( encrypt      key iv1 a,
+               encrypt      key iv2 b,
+               encrypt      key iv3 c,
+               encryptMaybe key iv4 d)
 
-decryptCookie :: Cookie -> IO Cookie
-decryptCookie (a,b,c,d) = do
+decryptCookie' :: CookieT -> IO Cookie
+decryptCookie' (a,b,c,d) = do
   key <- getKey "CookieKey.key"
-  return ( fromMaybe "" $ decrypt      key a,
-           fromMaybe "" $ decrypt      key b,
-           fromMaybe "" $ decrypt      key c,
-                          decryptMaybe key d)
+  return $ UnEncryptedCookie
+             ( decryptFM    key a,
+               decryptFM    key b,
+               decryptFM    key c,
+               decryptMaybe key d)
 
 encryptMaybe :: Key -> IV -> Maybe ByteString -> Maybe ByteString
 encryptMaybe k i (Just s) = Just $ encrypt k i s
@@ -280,3 +284,14 @@ encryptMaybe _ _ Nothing  = Nothing
 decryptMaybe :: Key -> Maybe ByteString -> Maybe ByteString
 decryptMaybe k (Just s) = Just $ fromMaybe "" $ decrypt k s
 decryptMaybe _ Nothing  = Nothing
+
+decryptFM :: Key -> ByteString -> ByteString
+decryptFM k b = fromMaybe "" $ decrypt k b
+
+cookieToTuple :: Cookie -> CookieT
+cookieToTuple (UnEncryptedCookie c) = c
+cookieToTuple (EncryptedCookie c) = c
+cookieToTuple (ParanoidCookie c) = c
+
+decryptAndToTuple :: Cookie -> CookieT
+decryptAndToTuple = cookieToTuple . unsafePerformIO . decryptCookie

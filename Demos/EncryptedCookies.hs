@@ -1,4 +1,4 @@
-{-# OPTIONS -XCPP #-} 
+{-# OPTIONS -XCPP #-}
 module EncryptedLoginSample ( loginSample) where
 
 import Data.Monoid
@@ -25,10 +25,10 @@ loginSample widgetFunc logoutFunc = do
     r <- page  $   p <<  "Please login with user/user"
                ++> widgetFunc Nothing userLogin
                <|> wlink "exit" << p << "or exit"
-        
+
     if r == "exit" then return () else do
         user <- getCurrentUser
-    
+
         r <- page  $   b <<  ("user logged as " <>  user)
                    ++> wlink True  << p <<  "logout"
                    <|> wlink False << p <<  "or exit"
@@ -38,6 +38,3 @@ loginSample widgetFunc logoutFunc = do
              logoutFunc
              page  $ p << "logged out" ++> wlink () << "press here to exit"
           else return ()
-  
-
-

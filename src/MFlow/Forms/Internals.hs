@@ -662,7 +662,11 @@ setCookie :: MonadState (MFlowState view) m
           -> Maybe Integer  -- ^ Max-Age in seconds. Nothing for a session cookie
           -> m ()
 setCookie n v p me=
-    modify $ \st -> st{mfCookies= (SB.pack n,SB.pack v,SB.pack p, fmap (SB.pack . show) me):mfCookies st }
+    modify $ \st -> st{mfCookies= (UnEncryptedCookie
+                                   ( SB.pack n,
+                                     SB.pack v,
+                                     SB.pack p,
+                                     fmap (SB.pack . show) me)):mfCookies st }
 
 setParanoidCookie n v p me = setEncryptedCookie' n v p me paranoidEncryptCookie
 
@@ -671,10 +675,10 @@ setEncryptedCookie n v p me = setEncryptedCookie' n v p me encryptCookie
 setEncryptedCookie' n v p me encFunc=
     modify $ \st -> st{mfCookies =
                           (unsafePerformIO $ encFunc
-                           (  SB.pack n,
-                              SB.pack v,
-                              SB.pack p,
-                              fmap  (SB.pack . show) me)):mfCookies st }
+                           ( SB.pack n,
+                             SB.pack v,
+                             SB.pack p,
+                             fmap  (SB.pack . show) me)):mfCookies st }
 
 -- | Set an HTTP Response header
 setHttpHeader :: MonadState (MFlowState view) m
