@@ -72,7 +72,7 @@ data Options= Wiki | CountI | CountS | Radio
             | Templates | RuntimeTemplates | LoginWidget
             deriving (Bounded, Enum,Read, Show,Typeable)
 
-absLink ref = wcached (show ref) 0 . wlink ref
+absLink ref = wcached  (show ref) 0 . wlink ref
 
 
 mainMenu :: View Html IO Options
@@ -92,10 +92,10 @@ mainMenu= autoRefresh  $
                         " (In this example sqlite backend is used) "
                         article persistentarticle
 
-           <|> li <<< (absLink Database << b  "Database") <! noAutoRefresh
-                     <++ b " Create, Store and retrieve lines of text from Amazon SimpleDB \
-                            \ storage "
-                     <> article amazonarticle
+--           <|> li <<< (absLink Database << b  "Database") <! noAutoRefresh
+--                     <++ b " Create, Store and retrieve lines of text from Amazon SimpleDB \
+--                            \ storage "
+--                     <> article amazonarticle
            <|> li <<< (absLink AcidState << b  "Acid State") <! noAutoRefresh
                      <++ do  -- blaze-html monad
                         b " Create, Store and retrieve lines of text from"

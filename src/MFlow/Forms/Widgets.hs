@@ -1031,8 +1031,6 @@ update method w= do
          return $ FormElm [] mr
 
   where
-
-
   -- | adapted from http://www.codeproject.com/Articles/341151/Simple-AJAX-POST-Form-and-AJAX-Fetch-Link-to-Modal
   ajaxGetLink = "\nfunction ajaxGetLink(id){\n\
     \var id1= $('#'+id);\n\

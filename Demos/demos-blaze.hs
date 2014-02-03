@@ -39,7 +39,7 @@ import Grid
 import Radio
 import SumView
 import MCounter
-import Database
+--import Database
 import MFlowPersistent
 import RuntimeTemplates
 import TraceSample
@@ -56,7 +56,7 @@ instance Serializable Int where
 
 
 main= do
-   index idnumber                      -- for the Database example
+--   index idnumber                      -- for the Database example
    index tfieldKey
    setAdminUser adminname adminname
    userRegister edadmin edadmin
@@ -99,7 +99,7 @@ main= do
              PushDec     ->   step  pushDecrease         `showSource`  "PushDecrease.hs"
              Trace       ->   step  traceSample          `showSource`  "TraceSample.hs"
              RESTNav     ->   step  testREST             `showSource`  "TestREST.hs"
-             Database    ->   step  database             `showSource`  "Database.hs"
+--             Database    ->   step  database             `showSource`  "Database.hs"
              ShopCart    ->   shopCart                   `showSource` "ShopCart.hs"
              MCounter    ->   mcounter                   `showSource` "MCounter.hs"
              MFlowPersist ->  step mFlowPersistent       `showSource` "MFlowPersistent.hs"

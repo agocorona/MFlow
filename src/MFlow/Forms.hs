@@ -886,7 +886,7 @@ login uname= do
      st <- get
      let t = mfToken st
          u = tuser t
-     if u == uname then return () else do
+     when (u == uname) $ do
          let t'= t{tuser= uname}
     --     moveState (twfname t) t t'
          put st{mfToken= t'}
@@ -902,7 +902,7 @@ logout= do
      st <- get
      let t = mfToken st
          t'= t{tuser= anonymous}
-     if tuser t == anonymous then return () else do
+     when (tuser t /= anonymous) $ do
 --         moveState (twfname t) t t'
          put st{mfToken= t'}
 --         liftIO $ deleteTokenInList t
