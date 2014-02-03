@@ -40,6 +40,6 @@ tramp
 *.swp
 *.swo
 
-.cabal.sanbox.config
+*.key
 _darcs
 darcs*
