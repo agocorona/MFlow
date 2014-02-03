@@ -71,7 +71,7 @@ getPort= do
 -- | run a persistent flow. It uses `getPort` to get the port
 -- The first parameter is the first element in the URL path.
 -- It also set the home page
-runNavigation :: String -> FlowM Html (Workflow IO) () -> IO Bool
+runNavigation :: String -> FlowM Html (Workflow IO) () -> IO ()
 runNavigation n f= do
     unless (null n) $ setNoScript n
     addMessageFlows[(n, runFlow f)]
@@ -82,10 +82,9 @@ runNavigation n f= do
 -- | Exactly the same as runNavigation, but with TLS added.
 -- | Expects certificate.pem and key.pem in project directory.
 
-runSecureNavigation :: String -> FlowM Html (Workflow IO) () -> IO Bool
 runSecureNavigation = runSecureNavigation' TLS.defaultTlsSettings defaultSettings
 
-runSecureNavigation' :: TLSSettings -> Settings -> String -> FlowM Html (Workflow IO) () -> IO Bool
+runSecureNavigation' :: TLSSettings -> Settings -> String -> FlowM Html (Workflow IO) () -> IO ()
 runSecureNavigation' t s n f = do
     unless (null n) $ setNoScript n
     addMessageFlows[(n, runFlow f)]

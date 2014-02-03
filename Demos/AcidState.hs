@@ -1,10 +1,25 @@
 -- Modified From: https://github.com/acid-state/acid-state/blob/master/examples/HelloDatabase.hs
-
+-- Aistis Raulinaitis
 {-# LANGUAGE TypeFamilies, DeriveDataTypeable, TemplateHaskell #-}
-module Main (main) where
+{-# OPTIONS -XCPP #-}
+module AcidState (
+acidState
+) where
 
+
+
+#ifdef ALONE
 import MFlow.Wai.Blaze.Html.All
+main :: IO Bool
+main = do
 
+  runNavigation "" . step $ acidState db
+
+#else
+
+import MFlow.Wai.Blaze.Html.All hiding(page)
+import Menu hiding (Database)
+#endif
 import Data.Acid
 
 import Control.Monad.State                   ( get, put )
@@ -14,7 +29,7 @@ import Data.SafeCopy
 type Message = String
 data Database = Database [Message]
 
-$(deriveSafeCopy 0 'Data.SafeCopy.base ''Database)
+-- $(deriveSafeCopy 0 'Data.SafeCopy.base ''Database)
 
 addMessage :: Message -> Update Database ()
 addMessage msg = do
@@ -36,13 +51,14 @@ getLast10 database = do
 addMsg :: AcidState (EventState AddMessage) -> Message -> IO ()
 addMsg database msg = update database (AddMessage msg)
 
-main :: IO Bool
-main = do
-  db <- openLocalStateFrom "dist/db/" (Database [])
-  main' db
 
-main' :: AcidState (EventState AddMessage) -> IO Bool
-main' db = runNavigation "" . step $ do
+
+
+acidState = do
+  db <- liftIO $ openLocalStateFrom "dist/db/" (Database [])
+  acidState' db
+
+acidState' db= do
   r <- page $ h3 << "Persistent message demo."
       ++> getString Nothing
       <* submitButton "OK"
@@ -55,4 +71,4 @@ main' db = runNavigation "" . step $ do
     << ("You typed: "++ r ++ ", it has been added to the acid state db.")
     ++> p << ("Here are the last 10 things in the db: " ++ last10)
     ++> wlink () << p << "next"
-  return ()
+  acidState' db

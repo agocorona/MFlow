@@ -5,7 +5,7 @@ import Data.Monoid
 -- #define ALONE -- to execute it alone, uncomment this
 #ifdef ALONE
 import MFlow.Wai.Blaze.Html.All
-main= runNavigation "" $ transientNav loginSample
+main= runSecureNavigation "" $ transientNav loginSample
 #else
 import MFlow.Wai.Blaze.Html.All hiding(page)
 import Menu

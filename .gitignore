@@ -41,3 +41,5 @@ tramp
 *.swo
 
 *.key
+_darcs
+darcs*

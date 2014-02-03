@@ -76,9 +76,11 @@ wait f= do
     forkIO (f1 >> putMVar mv True)
     putStrLn "wait: ready"
     takeMVar mv
+    return ()
    `E.catch` (\(e:: E.SomeException) ->do
                   ssyncCache
                   error $ "Signal: "++ show e)
+
     where
     f1= do
         mv <- newEmptyMVar
@@ -142,7 +144,7 @@ errors= do
 users= do
   users <- liftIO $ atomically $ return . map  fst =<< indexOf userName
 
-  showFormList   [[wlink u (bold << u) `waction` optionsUser   ] | u<-users] 0 10
+  showFormList   [[wlink u (bold << u) `waction` optionsUser   ] | u<- users] 0 10
 
 showFormList
   :: [[View Html IO ()]]
