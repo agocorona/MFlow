@@ -92,10 +92,10 @@ mainMenu= autoRefresh  $
                         " (In this example sqlite backend is used) "
                         article persistentarticle
 
---           <|> li <<< (absLink Database << b  "Database") <! noAutoRefresh
---                     <++ b " Create, Store and retrieve lines of text from Amazon SimpleDB \
---                            \ storage "
---                     <> article amazonarticle
+           <|> li <<< (absLink Database << b  "Database") <! noAutoRefresh
+                     <++ b " Create, Store and retrieve lines of text from Amazon SimpleDB \
+                            \ storage "
+                     <> article amazonarticle
            <|> li <<< (absLink AcidState << b  "Acid State") <! noAutoRefresh
                      <++ do  -- blaze-html monad
                         b " Create, Store and retrieve lines of text from"

@@ -121,7 +121,7 @@ library
     other-modules:  MFlow.Wai.Response
 
 executable demos-blaze
-    build-depends: MFlow -any, RefSerialize -any, TCache -any,
+    build-depends: MFlow -any, RefSerialize -any, TCache -any, AWS == 0.8.3,
                    tcache-AWS -any, directory -any, Workflow -any, base -any,
                    blaze-html -any, bytestring -any, containers -any, mtl -any,
                    old-time -any, stm -any, text -any, transformers -any, vector -any,
