@@ -99,7 +99,7 @@ main= do
              PushDec     ->   step  pushDecrease         `showSource`  "PushDecrease.hs"
              Trace       ->   step  traceSample          `showSource`  "TraceSample.hs"
              RESTNav     ->   step  testREST             `showSource`  "TestREST.hs"
-             Database    ->   step  database             `showSource`  "Database.hs"
+             Database    ->   step  database              `showSource`  "Database.hs"
              ShopCart    ->   shopCart                   `showSource` "ShopCart.hs"
              MCounter    ->   mcounter                   `showSource` "MCounter.hs"
              MFlowPersist ->  step mFlowPersistent       `showSource` "MFlowPersistent.hs"

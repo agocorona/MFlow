@@ -10,7 +10,7 @@ import Data.TCache.AWS
 import Data.Monoid
 import qualified Data.Text as T
 import Data.String
-import Data.ByteString.Lazy.Char8
+import Data.ByteString.Lazy.Char8 hiding (index)
 
 
 -- #define ALONE -- to execute it alone, uncomment this
@@ -34,7 +34,7 @@ import Menu
 --main= do
 --  syncWrite  $ Asyncronous 120 defaultCheck  1000
 --  index idnumber
---  runNavigation "" $ transientNav database
+--  runNavigation "" $ step database
 
 data  MyData= MyData{idnumber :: Int, textdata :: T.Text} deriving (Typeable, Read, Show)  -- that is enough for file persistence
 instance Indexable MyData where
@@ -45,8 +45,8 @@ domain= "mflowdemo"
 
 instance  Serializable MyData where
   serialize=  pack . show
-  deserialize=   read . unpack
-  setPersist =  const . Just $ amazonSDBPersist domain False
+  deserialize=  read . unpack
+  setPersist =  const . Just $ amazonS3Persist domain -- False
  
 data Options= NewText | Exit deriving (Show, Typeable)
 
@@ -54,6 +54,7 @@ data Options= NewText | Exit deriving (Show, Typeable)
      
 database= do
      all <- allTexts
+
      r <- page $ listtexts all
 
      case r of
@@ -63,21 +64,20 @@ database= do
                                         (getMultilineText "" <! [("rows","3"),("cols","80")]) <++ br
                            <** submitButton "enter"
 
-              liftIO . atomically . newDBRef $ MyData (Prelude.length all) text  -- store the name in the cache (later will be written to disk automatically)
+              addtext all text  -- store the name in the cache (later will be written to disk automatically)
               database 
 
          Exit -> return ()
      where
-     menu=   wlink NewText   << p "enter a new text" <|>
-             wlink Exit      << p "exit to the home page"
+     menu= wlink NewText   << p "enter a new text" <|>
+           wlink Exit      << p "exit to the home page"
 
      listtexts all  =  do
            h3 "list of all texts"
-           ++> p "the texts are deleted on every restart by heroku"
            ++> mconcat[p $ preEscapedToHtml t >> hr | t <- all]
            ++> menu
            <++ b "or press the back button or enter the  URL any other page in the web site"
 
-
+     addtext all text= liftIO . atomically . newDBRef $ MyData (Prelude.length all) text
      allTexts= liftIO . atomically . select textdata $ idnumber .>=. (0 :: Int)
 
