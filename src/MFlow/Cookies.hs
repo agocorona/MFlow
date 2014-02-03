@@ -52,8 +52,8 @@ getCookies httpreq=
 cookieHeaders cs =  Prelude.map (\c-> ( "Set-Cookie", showCookie c)) cs
 
 showCookie :: Cookie -> B.ByteString
-showCookie c@(EncryptedCookie b) = showCookie' $ decryptAndToTuple c
-showCookie c@(ParanoidCookie b)  = showCookie' $ decryptAndToTuple c
+showCookie c@(EncryptedCookie _) = showCookie' $ decryptAndToTuple c
+showCookie c@(ParanoidCookie _)  = showCookie' $ decryptAndToTuple c
 showCookie   (UnEncryptedCookie c) = showCookie' c
 
 showCookie' (n,v,p,me) = n <> "="  <>  v  <>
@@ -202,21 +202,20 @@ hexadecimal = do d1 <- hexDigit
                  return .chr $ toInt d1* 16 + toInt d2
    where toInt d | isDigit d    =  ord d - ord '0'
          toInt d | isHexDigit d = (ord d - ord 'A') + 10
-         toInt d                = error ("hex2int: illegal hex digit " ++ [d])
+         toInt d                = error ("hex2int: illegal hex digit " ++ [d])
+
 --type HexString = String
 
 --hex2int :: HexString -> Int
 --hex2int ds = Prelude.foldl (\n d -> n*16+d) 0 (Prelude.map (toInt . toUpper) ds)
 --   where toInt d | isDigit d    =  ord d - ord '0'
 --         toInt d | isHexDigit d = (ord d - ord 'A') + 10
---         toInt d                = error ("hex2int: illegal hex digit " ++ [d])
+--         toInt d                = error ("hex2int: illegal hex digit " ++ [d])
+
 
 --urlDecode :: String -> [([(String, String)],String)]
 --urlDecode str= case parse readEnv "" str of  -- let Parser p= readEnv in  p str
 --                     Left err  -> error $ "urlDecode: decode  error: " ++ show err
-
-
-
 --                     Right r  ->   r
 --               !> ("decode="++str)
 
