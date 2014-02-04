@@ -85,7 +85,11 @@ mainMenu= autoRefresh  $
           absLink DatabaseSamples << b  "Database examples"
              <++ " with different backends"
           ul <<<
-           (li <<< (absLink MFlowPersist <<  b "Persistent")  <! noAutoRefresh
+           (li <<< (absLink SearchCart <<  b  "Shopping with data tier, queries and full text search") <! noAutoRefresh
+                <++ b " The shopping example completed with a dynamic catalog stored using TCache"
+                <> article searchcart
+
+           <|> li <<< (absLink MFlowPersist <<  b "Persistent")  <! noAutoRefresh
                      <++ do -- blaze-html monad
                         b " illustrates the use of MFlow with "
                         a  "Persistent" ! href yesodweb

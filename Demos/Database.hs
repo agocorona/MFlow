@@ -53,6 +53,11 @@ data Options= NewText | Exit deriving (Show, Typeable)
 
      
 database= do
+     liftIO $ index idnumber
+     database'
+
+
+database'= do
      all <- allTexts
 
      r <- page $ listtexts all
@@ -65,7 +70,7 @@ database= do
                            <** submitButton "enter"
 
               addtext all text  -- store the name in the cache (later will be written to disk automatically)
-              database 
+              database' 
 
          Exit -> return ()
      where
