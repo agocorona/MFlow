@@ -886,13 +886,14 @@ login uname= do
      st <- get
      let t = mfToken st
          u = tuser t
-     when (u == uname) $ do
+     when (u /= uname) $ do
          let t'= t{tuser= uname}
     --     moveState (twfname t) t t'
          put st{mfToken= t'}
 --         liftIO $ deleteTokenInList t
          liftIO $ addTokenToList t'
          setCookie cookieuser   uname "/"  (Just $ 365*24*60*60)
+
 
 -- | logout. The user is reset to the `anonymous` user
 logout :: (MonadIO m, MonadState (MFlowState view) m) => m ()

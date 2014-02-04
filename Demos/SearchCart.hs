@@ -26,10 +26,11 @@ import Control.Workflow (Workflow)
 import qualified Data.Text.Lazy as T
 import Data.ByteString.Lazy.Char8
 import Data.Typeable
+
 -- #define ALONE -- to execute it alone, uncomment this
 #ifdef ALONE
 import MFlow.Wai.Blaze.Html.All
-main= runNavigation "" $ transientNav searchCart
+main= runNavigation "" searchCart
 #else
 import MFlow.Wai.Blaze.Html.All hiding(retry, page)
 import Menu
@@ -58,6 +59,7 @@ instance Indexable Product where
 instance Serializable Product where
   serialize= pack . show
   deserialize= read . unpack
+  setPersist= const $ Just filePersist
 
 createProducts= atomically $ mapM newDBRef
     [ Product "ipad 3G"   ["gadget","pad"]   "ipad 8GB RAM, 3G"       400 200
@@ -68,10 +70,10 @@ createProducts= atomically $ mapM newDBRef
 searchCart :: FlowM Html (Workflow IO) ()
 searchCart = do
    liftIO $ runConfiguration "createprods" $ do  -- better put this in main
-        once createProducts
         ever $ Q.index namep
         ever $ indexList typep (Prelude.map T.pack)
         ever $ indexText descriptionp T.pack
+        once createProducts
    catalog
    where
    catalog = do
@@ -79,28 +81,7 @@ searchCart = do
        shoppingCart bought
        catalog
 
-   shoppingCart bought= do
-       cart <- getSessionData `onNothing` return (M.empty :: Cart)
-       let (n,price) = fromMaybe (0,undefined) $ M.lookup  bought cart
-       (n,price) <- step $ do
-                   if n /= 0 then return (n,price) else do
-                    [price] <- atomic $ Q.select pricep $ namep .==. bought
-                    return (n, price)
-       setSessionData $ M.insert  bought (n+1,price) cart
-       step $ do
-         r <- page $  do
-              cart <- getSessionData `onNothing` return (M.empty :: Cart)
-              h1 << "Shopping cart:"
-                ++> p << showCart cart
-                ++> wlink True  << b << "continue shopping"
-                <|> wlink False << p << "proceed to buy"
 
-         if not r then page $ wlink () << "not implemented, click here" !> show r
-              else breturn ()
-
-   atomic= liftIO . atomically
-   showList []= wlink Nothing << p << "no results"
-   showList xs= Just <$> firstOf [wlink  x << p <<  x | x <- xs]
 
    buyProduct :: FlowM Html  IO ProductName
    buyProduct =  do
@@ -125,5 +106,26 @@ searchCart = do
               Nothing   -> buyProduct
               Just prod -> breturn prod
 
+   shoppingCart bought= do
+       cart <- getSessionData `onNothing` return (M.empty :: Cart)
+       let (n,price) = fromMaybe (0,undefined) $ M.lookup  bought cart
+       (n,price) <- step $ do
+                   if n /= 0 then return (n,price) else do
+                    [price] <- atomic $ Q.select pricep $ namep .==. bought
+                    return (n, price)
+       setSessionData $ M.insert  bought (n+1,price) cart
+       step $ do
+         r <- page $  do
+              cart <- getSessionData `onNothing` return (M.empty :: Cart)
+              h1 << "Shopping cart:"
+                ++> p << showCart cart
+                ++> wlink True  << b << "continue shopping"
+                <|> wlink False << p << "proceed to buy"
+
+         if not r then page $ wlink () << "not implemented, click here"
+              else breturn ()
 
 
+   atomic= liftIO . atomically
+   showList []= wlink Nothing << p << "no results"
+   showList xs= Just <$> firstOf [wlink  x << p <<  x | x <- xs]
