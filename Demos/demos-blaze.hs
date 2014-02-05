@@ -47,6 +47,7 @@ import AcidState
 import SearchCart
 import InitialConfig
 
+
 import Data.TCache.DefaultPersistence
 import Data.ByteString.Lazy.Char8 hiding (index)
 instance Serializable Int where
@@ -62,7 +63,7 @@ main= do
    userRegister edadmin edadmin
    userRegister "edituser" "edituser"
    syncWrite  $ Asyncronous 120 defaultCheck  1000
-
+   db <- initAcid -- for the AcidState example
    setFilesPath "Demos/"
    runNavigation "" $ do
        setHeader $ stdheader 
@@ -104,7 +105,7 @@ main= do
              MCounter    ->   mcounter                   `showSource` "MCounter.hs"
              MFlowPersist ->  step mFlowPersistent       `showSource` "MFlowPersistent.hs"
              RuntimeTemplates -> step runtimeTemplates   `showSource` "RuntimeTemplates.hs"
-             AcidState        -> step acidState          `showSource` "AcidState.hs"
+             AcidState        -> step (acidState db)     `showSource` "AcidState.hs"
              InitialConfig -> initialConfig              `showSource` "InitialConfig.hs"
              SearchCart    -> searchCart                `showSource` "SearchCart.hs"
 

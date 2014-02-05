@@ -496,7 +496,7 @@ preventGoingBack msg= do
              msg
 
 
-          
+
 onBacktrack :: Monad m => FlowM v m a -> FlowM v m a -> FlowM v m a
 onBacktrack doit undoit= do
   back <- goingBack

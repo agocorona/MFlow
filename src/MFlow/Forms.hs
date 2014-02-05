@@ -1061,7 +1061,7 @@ ask w =  do
          put st'{newAsk= True, mfEnv=[]
                 ,mfPageIndex=Nothing
                 ,mfPIndex= case isJust $ mfPageIndex st' of
-                            True -> length (mfPath st') -1
+                            True -> length (mfPath st') -- -1
                             False -> mfPIndex st'
          }
          breturn x                                       -- !> "BRETURN"
@@ -1354,11 +1354,12 @@ wlink x v= View $ do
                      return $ Just x
                  Nothing -> return Nothing  -- !> (name ++ " 0 Fail")
              else
-             case  index < length lpath && name== lpath !! index  of
+             case  index < length lpath && name== lpath !! index   of
              True -> do
                   modify $ \s -> s{inSync= True
-                                 ,linkMatched= True, mfPIndex= index+1 }  -- !> (name ++ "<-" ++show index++ " MATCHED")
-                  return $ Just x
+                                 ,linkMatched= True, mfPIndex= index+1 }
+
+                  return $ Just x -- !> (name ++ "<-" ++show index++ " " ++ show (mfPIndex st))
              False ->  return Nothing                                      -- !> ( "NOT MATCHED "++name++"<-" ++show index++ " "++(if index < length lpath then lpath !! index else ""))
 
       return $ FormElm [toSend] r
