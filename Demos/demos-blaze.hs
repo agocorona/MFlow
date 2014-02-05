@@ -69,7 +69,7 @@ main= do
        setTimeouts 400 $ 60 * 60
 
        r <- step . page $   tFieldEd edadmin "head" "set Header" <++ hr
-                       **> (El.div ! At.style "float:right" <<< autoRefresh wlogin )
+                       **> (El.div ! At.style "float:right" <<< pageFlow "login" (autoRefresh wlogin))
                        **> (divmenu  <<< br ++>  mainMenu) 
                        <** (El.div ! At.style "float:right;width:65%;overflow:auto;"
                             <<< tFieldEd edadmin "intro" "enter intro text")

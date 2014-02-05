@@ -939,14 +939,15 @@ wdialog conf title w= do
 
 
 
--- | Capture the form submissions and the links of the enclosed widget and send them via jQuery AJAX.
+-- | Capture the form or link submissions and send them via jQuery AJAX.
 -- The response is the new presentation of the widget, that is updated. No new page is generated
--- but the functionality is equivalent. Only the activated widget is executed in the server and updated
+-- but the functionality is equivalent. Only the activated widget rendering is  updated
 -- in the client, so a widget with autoRefresh can be used in heavyweight pages.
 -- If AJAX/JavaScript are not available, the widget is refreshed normally, via a new page.
--- If has form elements, the enclosed widget must be a complete form and it must include the form action tag.
--- For this purpose, autoRefresh encloses the widget in a form tag if there are form elements on it
--- and the programmer has not enclosed them in a 'wform' element.
+--
+-- autoRefresh encloses the widget in a form tag if  it includes form elements.
+--
+-- If there are more than one autoRefresh, they must be enclosed within 'pageFlow' elements
 autoRefresh
   :: (MonadIO m,
      FormInput v)
@@ -981,14 +982,18 @@ autoRefresh w=  update "html" w
 -- NOTE: the noAutoRefresh attribute should be added to the <a/> or <form/> tags.
 noAutoRefresh= [("class","_noAutoRefresh")]
 
--- | does the same than autoRefresh but append the result of each request to the bottom of the widget
+-- | does the same than `autoRefresh` but append the result of each request to the bottom of the widget
+--
+-- all the comments and remarks of `autoRefresh` apply here
 appendUpdate  :: (MonadIO m,
      FormInput v)
   => View v m a
   -> View v m a
 appendUpdate= update "append"
 
--- | does the same than autoRefresh but prepend the result of each request before the current widget content
+-- | does the same than `autoRefresh` but prepend the result of each request before the current widget content
+--
+-- all the comments and remarks of `autoRefresh` apply here
 prependUpdate   :: (MonadIO m,
      FormInput v)
   => View v m a
