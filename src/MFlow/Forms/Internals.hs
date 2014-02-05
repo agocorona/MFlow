@@ -1335,7 +1335,7 @@ genNewId=  do
           prefseq=  mfPrefix st
       put $ st{mfSequence= n+1}
 
-      return $ 'p':show n++prefseq
+      return $ 'p':show n++prefseq  
     True  -> do
       let n = mfSeqCache st
       put $ st{mfSeqCache=n+1}

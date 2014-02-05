@@ -1595,7 +1595,7 @@ instance FormInput  ByteString  where
 pageFlow
   :: (Monad m, Functor m, FormInput view) =>
      String -> View view m a -> View view m a
-pageFlow str flow=do
+pageFlow str widget=do
      s <- get
 
      if isNothing $ mfPageIndex s
@@ -1603,9 +1603,9 @@ pageFlow str flow=do
        put s{mfPrefix= str ++ mfPrefix s
             ,mfSequence=0
             ,mfLinks= acum M.empty $ drop (mfPIndex s) (mfPath s)
-            ,mfPageIndex= Just $ mfPIndex s }                                                      -- !> ("PARENT pageflow. prefix="++ str)
+            ,mfPageIndex= Just $ mfPIndex s }                                                   -- !> ("PARENT pageflow. prefix="++ str)
 
-       flow <** (modify (\s' -> s'{mfSequence= mfSequence s
+       widget <** (modify (\s' -> s'{mfSequence= mfSequence s
                                  ,mfPrefix= mfPrefix s}))
                                                                                                    -- !> ("END PARENT pageflow. prefix="++ str))
 
@@ -1613,9 +1613,9 @@ pageFlow str flow=do
        else do
        put s{mfPrefix= str++ mfPrefix s
             ,mfLinks= acum M.empty $ drop (fromJust $ mfPageIndex s) (mfPath s)
-            ,mfSequence=0}                                                                         --  !> ("CHILD pageflow. prefix="++ str)
+            ,mfSequence=0}                                                                       --  !> ("CHILD pageflow. prefix="++ str)
 
-       flow <** (modify (\s' -> s'{mfSequence= mfSequence s
+       widget <** (modify (\s' -> s'{mfSequence= mfSequence s
                                  ,mfPrefix= mfPrefix s}))
                                                                                                    -- !> ("END CHILD pageflow. prefix="++ str))
 

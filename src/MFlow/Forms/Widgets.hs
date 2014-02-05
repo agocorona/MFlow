@@ -917,8 +917,7 @@ datePicker conf jd= do
 -- The first parameter is the configuration. To make it modal,  use \"({modal: true})\" see  "http://jqueryui.com/dialog/" for
 -- the available configurations.
 --
--- As in the case of 'autoRefresh' the enclosed widget will be wrapped within a form tag if the user do not encloses it using wform.
-
+-- As in the case of 'autoRefresh' the enclosed widget will be wrapped within a form tag if the user do not encloses it using wform.f
 wdialog :: (Monad m, FormInput v) => String -> String -> View v m a -> View v m a
 wdialog conf title w= do
     id <- genNewId
@@ -996,8 +995,7 @@ prependUpdate   :: (MonadIO m,
   -> View v m a
 prependUpdate= update "prepend"
 
-update :: (MonadIO m,
-     FormInput v)
+update :: (MonadIO m, FormInput v)
   => B.ByteString
   -> View v m a
   -> View v m a

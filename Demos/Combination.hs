@@ -16,10 +16,10 @@ text= fromString
 combination =  page $ 
      p << "Three active widgets in the same page with autoRefresh. Each widget refresh itself"
      ++> p << "with Ajax. If Ajax is not active, they will refresh by sending a new page."
-     ++> hr
-     ++> p << "Login widget (use admin/admin)" ++> autoRefresh (pageFlow "r" wlogin1)  <++ hr
-     **> p << "Counter widget" ++> autoRefresh (pageFlow "c" (counterWidget 0))  <++ hr
-     **> p << "Dynamic form widget" ++> autoRefresh (pageFlow "f" formWidget) <++ hr
+     ++> hr 
+     ++> p << "Login widget (use admin/admin)" ++>  pageFlow  "r" (autoRefresh wlogin1)  <++ hr
+     **> p << "Counter widget" ++> pageFlow "c" (autoRefresh $ counterWidget 0)  <++ hr
+     **> p << "Dynamic form widget" ++> pageFlow "f" (autoRefresh formWidget) <++ hr
      **> wlink () << b << "exit"
 
 formWidget :: View Html IO ()
