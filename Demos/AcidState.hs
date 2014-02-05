@@ -56,7 +56,7 @@ addMsg database msg = update database (AddMessage msg)
 
 acidState = do
   db <- liftIO $ openLocalStateFrom "dist/db/" (Database [])
-  acidState' db
+  acidState' db `compensate` (liftIO $ closeAcidState db !> "back")
 
 acidState' db= do
   r <- page $ h3 << "Persistent message demo."

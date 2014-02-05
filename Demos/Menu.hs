@@ -76,7 +76,7 @@ absLink ref = wcached  (show ref) 0 . wlink ref
 
 
 mainMenu :: View Html IO Options
-mainMenu= pageFlow "menu" . autoRefresh  $
+mainMenu= autoRefresh  $
   ul<<<(li << a ! href "/" ! At.class_ "_noAutoRefresh" << b "HOME"
    ++> tFieldEd "editor" "othermenu"  "Other menu options"
    **> (li <<<  ((absLink Wiki << b "Wiki") <! [("class", "_noAutoRefresh")]))
