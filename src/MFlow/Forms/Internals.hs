@@ -496,16 +496,20 @@ preventGoingBack msg= do
              msg
 
 
-
-onBacktrack :: Monad m => FlowM v m a -> FlowM v m a -> FlowM v m a
-onBacktrack doit undoit= do
+-- | executes the first computation when going forward and the second computation when backtracking.
+-- Depending on how the second computation finishes, the flow will  resume forward or backward.
+onBacktrack :: Monad m => m a -> FlowM v m a -> FlowM v m a
+onBacktrack doit onback= do
   back <- goingBack
   case  back of
-    False -> doit >>= breturn
-    True  -> undoit
+    False -> (lift doit) >>= breturn
+    True  -> onback
 
-
-compensate doit undoit= doit `onBacktrack` (undoit >> fail "")
+-- | less powerflul version of `onBacktrack`: The second computation simply undo the effect of
+-- the first one, and the flow continues backward ever. It can be used as a rollback mechanism in
+-- the context of long running transactions.
+compensate :: Monad m =>  m a ->  m a -> FlowM v m a
+compensate doit undoit= doit `onBacktrack` ( (lift undoit) >> fail "")
 
 type Lang=  String
 
