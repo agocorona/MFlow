@@ -5,7 +5,7 @@
              , DeriveDataTypeable
              , FlexibleInstances
              , OverloadedStrings #-}
-             
+
 module MFlow.Wai(
      module MFlow.Cookies
     ,module MFlow
@@ -29,7 +29,7 @@ import Control.Concurrent
 import Control.Monad.Trans
 import Control.Exception
 import qualified Data.Map as M
-import Data.Maybe 
+import Data.Maybe
 import Data.TCache
 import Data.TCache.DefaultPersistence
 import Control.Workflow hiding (Indexable(..))
@@ -45,7 +45,7 @@ import Data.Conduit.Lazy
 import qualified Data.Conduit.List as CList
 import Data.CaseInsensitive
 import System.Time
-import qualified Data.Text as T 
+import qualified Data.Text as T
 
 
 --import Debug.Trace
@@ -60,11 +60,11 @@ instance Processable Request  where
               p'= reverse p
           in case p' of
             [] -> []
-            p' -> if T.null $ head p' then  reverse(tail  p') else p 
+            p' -> if T.null $ head p' then  reverse(tail  p') else p
 
-   
+
    puser env = fromMaybe anonymous $ fmap SB.unpack $ lookup ( mk $SB.pack cookieuser) $ requestHeaders env
-                    
+
    pind env= fromMaybe (error ": No FlowID") $ fmap SB.unpack $ lookup  (mk flow) $ requestHeaders env
    getParams=    mkParams1 . requestHeaders
      where
@@ -74,9 +74,6 @@ instance Processable Request  where
 --   getServer env= serverName env
 --   getPath env= pathInfo env
 --   getPort env= serverPort env
-   
-
-
 
 
 splitPath ""= ("","","")
@@ -90,7 +87,7 @@ splitPath str=
 
 waiMessageFlow  ::  Application
 waiMessageFlow req1=   do
-     let httpreq1= requestHeaders  req1 
+     let httpreq1= requestHeaders  req1
 
      let cookies = getCookies  httpreq1
 
@@ -98,17 +95,17 @@ waiMessageFlow req1=   do
               Just fl -> return  (fl, [])
               Nothing  -> do
                      fl <- liftIO $ newFlow
-                     return (fl,  [(flow,  fl, "/",Nothing):: Cookie])
-                     
-{-   for state persistence in cookies 
+                     return (fl,  [UnEncryptedCookie (flow,  fl, "/",Nothing):: Cookie])
+
+{-   for state persistence in cookies
      putStateCookie req1 cookies
      let retcookies= case getStateCookie req1 of
                                 Nothing -> retcookies1
                                 Just ck -> ck:retcookies1
 -}
 
-     input <- case parseMethod $ requestMethod req1  of 
-              Right POST -> do 
+     input <- case parseMethod $ requestMethod req1  of
+              Right POST -> do
 #if MIN_VERSION_wai(2, 0, 0)
                    inp <- liftIO $ requestBody req1 $$ CList.consume
 #else
@@ -116,8 +113,8 @@ waiMessageFlow req1=   do
 #endif
                    return . parseSimpleQuery $ SB.concat inp
 
-                  
-                  
+
+
               Right GET ->
                    let tail1 s | s==SB.empty =s
                        tail1 xs= SB.tail xs 
@@ -125,8 +122,8 @@ waiMessageFlow req1=   do
                    return . Prelude.map (\(x,y) -> (x,fromMaybe "" y)) $ queryString req1
 
 
-                                        
-               
+
+
      let req = case retcookies of
           [] -> req1{requestHeaders= mkParams (input ++ cookies) ++ requestHeaders req1}  -- !> "REQ"
           _  -> req1{requestHeaders= mkParams ((flow, flowval): input ++ cookies) ++ requestHeaders req1}  --  !> "REQ"
@@ -168,16 +165,16 @@ getStateCookie req= do
 
 
 
-    
+
 {-
 persistInCookies= setPersist  PersistStat{readStat=readResource, writeStat=writeResource, deleteStat=deleteResource}
     where
-    writeResource stat= modifyMVar_ tvresources $  \mmap -> 
+    writeResource stat= modifyMVar_ tvresources $  \mmap ->
                                       case mmap of
                                             Just map-> return $ Just $ M.insert (keyResource stat) (serialize stat) map
                                             Nothing -> return $ Just $ M.fromList [((keyResource stat),   (serialize stat)) ]
     readResource stat= do
-           mstr <- withMVar tvresources $ \mmap -> 
+           mstr <- withMVar tvresources $ \mmap ->
                                 case mmap of
                                    Just map -> return $ M.lookup (keyResource stat) map
                                    Nothing -> return  Nothing
@@ -185,7 +182,7 @@ persistInCookies= setPersist  PersistStat{readStat=readResource, writeStat=write
              Nothing -> return Nothing
              Just str -> return $ deserialize str
 
-    deleteResource stat= modifyMVar_ tvresources $  \mmap-> 
+    deleteResource stat= modifyMVar_ tvresources $  \mmap->
                               case mmap of
                                   Just map -> return $ Just $ M.delete  (keyResource stat) map
                                   Nothing ->  return $ Nothing

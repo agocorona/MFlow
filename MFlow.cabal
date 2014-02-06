@@ -110,7 +110,8 @@ library
                    stm >2, old-time -any, vector -any, directory -any,
                    utf8-string -any, wai -any, case-insensitive -any, http-types -any,
                    conduit -any, text -any, parsec -any, warp -any, warp-tls -any, random -any,
-                   blaze-html -any, blaze-markup -any, monadloc -any, hamlet -any
+                   blaze-html -any, blaze-markup -any, monadloc -any, hamlet -any, clientsession == 0.9.0.3,
+                   safecopy -any, acid-state -any, hscolour -any
     exposed-modules: MFlow MFlow.Wai.Blaze.Html.All MFlow.Forms
                      MFlow.Forms.Admin MFlow.Cookies MFlow.Wai MFlow.Wai.XHtml.All
                      MFlow.Forms.XHtml MFlow.Forms.Blaze.Html MFlow.Forms.Test
@@ -119,6 +120,7 @@ library
     buildable: True
     hs-source-dirs: src .
     other-modules:  MFlow.Wai.Response
+
 
 executable demos-blaze
     build-depends: MFlow -any, RefSerialize -any, TCache -any,
@@ -134,4 +136,3 @@ executable demos-blaze
     hs-source-dirs: Demos
     other-modules:
     ghc-options: -O -iDemos -threaded -rtsopts
-
