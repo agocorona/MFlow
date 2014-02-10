@@ -18,7 +18,7 @@ attr= fromString
 
 multicounter=
  page  $ explain
-     ++> add (counterWidget 0) [1..4]
+     ++> firstOf [autoRefresh $ pageFlow (show i) (counterWidget 0) <++ hr | i <- [1..4]]
      <|> wlink () << p << "exit"
 
  where
@@ -30,5 +30,4 @@ multicounter=
           <> text "compose widgets with independent behaviours"
 
 
- add widget list= firstOf [autoRefresh $ pageFlow (show i) widget <++ hr | i <- list]
 

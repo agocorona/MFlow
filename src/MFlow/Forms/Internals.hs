@@ -802,7 +802,7 @@ cachedWidget :: (MonadIO m,Typeable view
         -> View view Identity a   -- ^ The cached widget, in the Identity monad
         -> View view m a          -- ^ The cached result
 cachedWidget key t mf =  View .  StateT $ \s ->  do
-        let((FormElm  form _), sec)= execute $ cachedByKey key t $ proc mf s{mfCached=True}
+        let((FormElm  form _), sec)= execute $! cachedByKey key t $ proc mf s{mfCached=True}
         let((FormElm  _ mx2), s2)  = execute $ runStateT  ( runView mf)    s{mfSeqCache= sec,mfCached=True}
         let s''=  s{inSync = inSync s2
                    ,mfRequirements=mfRequirements s2
@@ -811,10 +811,10 @@ cachedWidget key t mf =  View .  StateT $ \s ->  do
                    ,mfPIndex= mfPIndex s2
                    ,mfPageIndex= mfPageIndex s2
                    ,mfSeqCache= mfSeqCache s + mfSeqCache s2 - sec}
-        return $ (mfSeqCache s'') `seq`  ((FormElm form mx2), s'')
+        return $ (mfSeqCache s'') `seq` form `seq`  ((FormElm form mx2), s'')
         -- !> ("enter: "++show (mfSeqCache s) ++" exit: "++ show ( mfSeqCache s2))
         where
-        proc mf s= runStateT (runView mf) s >>= \(r,_) ->mfSeqCache s `seq` return (r,mfSeqCache s )
+        proc mf s= runStateT (runView mf) s >>= \(r,_) -> mfSeqCache s `seq` return (r,mfSeqCache s )
 
 -- | A shorter name for `cachedWidget`
 wcached :: (MonadIO m,Typeable view

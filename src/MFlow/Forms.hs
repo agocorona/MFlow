@@ -75,7 +75,7 @@ typed responses. The user interface definitions are  based on a extension of
 formLets (<http://www.haskell.org/haskellwiki/Formlets>) with the addition of caching, links, formatting, attributes,
  extra combinators, callbaks and modifiers.
 The interaction with the user is  stateful. In the same computation there may be  many
-request-response interactions, in the same way than in the case of a console applications. 
+request-response interactions, in the same way than in the case of a console applications.
 
 * APPLICATION SERVER
 
@@ -710,7 +710,7 @@ setOption1 nam  val check= View $ do
          -> View view m a
          -> View view m a
 (<<<) v form= View $ do
-  FormElm f mx <- runView form 
+  FormElm f mx <- runView form
   return $ FormElm [v $ mconcat f] mx
 
 
@@ -1085,7 +1085,7 @@ ask w =  do
   -- END AJAX
 
    _ ->   do
-     let st= st1{needForm= False, inSync= False, mfRequirements= [], linkMatched= False} 
+     let st= st1{needForm= False, inSync= False, mfRequirements= [], linkMatched= False}
      put st
 
      FormElm forms mx <- FlowM . lift  $ runView  w
@@ -1335,19 +1335,33 @@ wlabel str w = do
 
 getRestParam :: (Read a, Typeable a,Monad m,Functor m, FormInput v) => FlowM v m (Maybe a)
 getRestParam= do
-   st <- get
-   let lpath = mfPath st
-   let index' = mfPIndex st
-                 + if linkMatched st then -1 else 0
-                 + if Just (mfPIndex st)== mfPageIndex st then 1 else 0
-       index = if index'== 0 then 1 else index'
-
-   case  index < length lpath  of
-             True -> do
-                  modify $ \s -> s{inSync= True
-                                 ,linkMatched= True, mfPIndex= index+1 }  -- !> (name ++ "<-" ++show index++ " MATCHED")
-                  fmap valToMaybe $ readParam $ lpath !! index
-             False ->  return Nothing
+  st <- get
+  let lpath = mfPath st
+      index' = mfPIndex st + if Just (mfPIndex st)== mfPageIndex st then 1 else 0
+      index = if index'== 0 then 1 else index'
+      name =  lpath !! index
+  if linkMatched st
+   then return Nothing 
+   else if  isJust $ mfPageIndex st
+    then
+     case  M.lookup name $ mfLinks st  of 
+       Just 0 -> do
+         modify $ \st -> st{ inSync= True}
+         return Nothing  -- !> (name ++ " 0 Fail")
+       Just n ->  do
+         modify $ \st -> st{ inSync= True,linkMatched= True
+                          , mfPIndex= index + 1
+                          , mfLinks= M.insert name (n-1) $ mfLinks st}
+         fmap valToMaybe $ readParam name       
+       Nothing -> return Nothing  -- !> (name ++ " 0 Fail")
+             
+    else case index < length lpath  of
+     True -> do
+          modify $ \s -> s{inSync= True
+                         ,linkMatched= True
+                         ,mfPIndex= index+1 } 
+          fmap valToMaybe $ readParam name
+     False ->  return Nothing
 
 
 -- | Creates a link wiget. A link can be composed with other widget elements,
@@ -1388,7 +1402,7 @@ wlink x v= View $ do
                      modify $ \st -> st{ inSync= True,linkMatched= True
                                       , mfPIndex= index + 1
                                       , mfLinks= M.insert name (n-1) $ mfLinks st}
-                                           -- !> (name ++" "++ show n ++ " Match")
+                                          -- !> (name ++" "++ show n ++ " Match in pageFLow")
                      return $ Just x
                  Nothing -> return Nothing  -- !> (name ++ " 0 Fail")
              else
@@ -1397,7 +1411,7 @@ wlink x v= View $ do
                   modify $ \s -> s{inSync= True
                                  ,linkMatched= True, mfPIndex= index+1 }
 
-                  return $ Just x -- !> (name ++ "<-" ++show index++ " " ++ show (mfPIndex st))
+                  return $ Just x   -- !> (name ++ "<-" ++show index++ " " ++ show (mfPIndex st))
              False ->  return Nothing                                      -- !> ( "NOT MATCHED "++name++"<-" ++show index++ " "++(if index < length lpath then lpath !! index else ""))
 
       return $ FormElm [toSend] r

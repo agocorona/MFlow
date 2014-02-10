@@ -18,7 +18,7 @@ combination =  page $
      ++> p << "with Ajax. If Ajax is not active, they will refresh by sending a new page."
      ++> hr 
      ++> p << "Login widget (use admin/admin)" ++>  pageFlow  "r" (autoRefresh wlogin1)  <++ hr
-     **> p << "Counter widget" ++> pageFlow "c" (autoRefresh $ counterWidget 0)  <++ hr
+     **> p << "Counter widget" ++> pageFlow "c" (autoRefresh $ counterWidget 0 )  <++ hr
      **> p << "Dynamic form widget" ++> pageFlow "f" (autoRefresh formWidget) <++ hr
      **> wlink () << b << "exit"
 

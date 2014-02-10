@@ -42,16 +42,15 @@ edadmin= "editor"
 ask w= MF.ask $ do
     filename <- getSessionData
     tFieldEd edadmin "head" "set Header"
-       **> (El.div ! At.style "float:right" <<< pageFlow "login" (autoRefresh wlogin) )
+       **> (El.div ! At.style "float:right" <<<   wlogin )
        <++ hr
        **> (divmenu <<< br ++>  retry  mainMenu)
        **> (El.div ! At.style "float:right;width:65%;overflow:auto;"
             <<< (insertForm $ widgetAndSource filename w))
   
 divmenu= El.div
-     ! At.style ( "background-color:#EEEEEE;float:left\
-                 \;width:30%\
-                 \;margin-left:10px;margin-right:10px;overflow:auto;")
+     ! At.style ("background-color:#EEEEEE;float:left\
+                 \;width:30%;margin-left:10px;margin-right:10px;overflow:auto;")
 
 --topLogin= El.div ! At.style "float:right;top:5px;left:5px"
 --              <<< autoRefresh (pageFlow "login"  wlogin)
@@ -374,13 +373,12 @@ getSource file = liftIO $ cachedByKey file 0 $ do
                 ++ "</font>"
 
 wiki =  do
-  pag <- getRestParam `onNothing` return "index"
+  pagname <- getRestParam `onNothing` return "index"
   page $
-   (docTypeHtml $ do
-       El.head $ El.title << pag)
+   (docTypeHtml $ El.head $ El.title << pagname)
         ++> (El.body
-        <<<   ( h1 ! At.style "text-align:center" <<<  tFieldEd "editor" (wikip ++pag ++ "title.html") (fromString pag))
-        **>   tFieldEd "editor" (wikip ++ pag ++ "body.html") "Enter the body"
+        <<<   ( h1 ! At.style "text-align:center" <<<  tFieldEd "editor" (wikip ++pagname ++ "title.html") (fromString pagname))
+        **>   tFieldEd "editor" (wikip ++ pagname ++ "body.html") "Enter the body"
 --        <++ shareHtml
 --        <>  shareScript
         )
