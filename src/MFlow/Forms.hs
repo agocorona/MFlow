@@ -75,7 +75,7 @@ typed responses. The user interface definitions are  based on a extension of
 formLets (<http://www.haskell.org/haskellwiki/Formlets>) with the addition of caching, links, formatting, attributes,
  extra combinators, callbaks and modifiers.
 The interaction with the user is  stateful. In the same computation there may be  many
-request-response interactions, in the same way than in the case of a console applications.
+request-response interactions, in the same way than in the case of a console applications. 
 
 * APPLICATION SERVER
 
@@ -358,7 +358,7 @@ waction f ac = do
   s <- get
   let env =  mfEnv s
   let seq = mfSequence s
-  put s{mfSequence=mfSequence s+ 100,mfEnv=[],newAsk=True{-,mfLinkSelected= False-}}
+  put s{mfSequence=mfSequence s+ 100,mfEnv=[],newAsk=True}
   r <- flowToView $ ac x
   modify $ \s-> s{mfSequence= seq, mfEnv= env}
   return r
@@ -710,7 +710,7 @@ setOption1 nam  val check= View $ do
          -> View view m a
          -> View view m a
 (<<<) v form= View $ do
-  FormElm f mx <- runView form
+  FormElm f mx <- runView form 
   return $ FormElm [v $ mconcat f] mx
 
 
@@ -1085,7 +1085,7 @@ ask w =  do
   -- END AJAX
 
    _ ->   do
-     let st= st1{needForm= False, inSync= False, mfRequirements= [], linkMatched= False}
+     let st= st1{needForm= False, inSync= False, mfRequirements= [], linkMatched= False} 
      put st
 
      FormElm forms mx <- FlowM . lift  $ runView  w
@@ -1096,13 +1096,8 @@ ask w =  do
       else
       case mx  of
        Just x -> do
-         put st'{newAsk= True, mfEnv=[]
-                ,mfPageIndex=Nothing
-                ,mfPIndex= case isJust $ mfPageIndex st' of
-                            True -> length (mfPath st') -- -1
-                            False -> mfPIndex st'
-         }
-         breturn x                                       -- !> "BRETURN"
+         put st'{newAsk= True, mfEnv=[]}
+         breturn x                                        -- !> "BRETURN"
 
        Nothing ->
          if  not (inSync st')  && not (newAsk st')
@@ -1132,9 +1127,10 @@ ask w =  do
              let HttpData ctype c s= toHttpData cont
              liftIO . sendFlush t $ HttpData (ctype ++ mfHttpHeaders st') (mfCookies st' ++ c) s
 
-             resetState st st'
 
+             resetState st st'
              FlowM $ lift  nextMessage       -- !> "NEXTMESSAGE"
+
              ask w
     where
     resetState st st'=
@@ -1145,7 +1141,7 @@ ask w =  do
                    ,mfPageIndex= mfPageIndex st'
                    ,mfAjax= mfAjax st'
                    ,mfSeqCache= mfSeqCache st'
-                   ,mfData= mfData st' }
+                   ,mfData= mfData st' } 
 
 
 -- | A synonym of ask.
@@ -1157,8 +1153,8 @@ page
       View view IO a -> FlowM view IO a
 page= ask
 
-nextMessage :: MonadIO m => WState view m ()
-nextMessage= do
+nextMessage :: MonadIO m =>  WState view m ()
+nextMessage = do
      st <- get
      let t= mfToken st
          t1= mfkillTime st
@@ -1173,13 +1169,14 @@ nextMessage= do
                     _ -> Nothing
          comparep= comparePaths (mfPIndex st) 1 (tail path) (tail npath)
      put st{ mfPath= npath
-           , mfPIndex= case inPageFlow of
-                         Just n -> n
-                         Nothing -> comparep
+           , mfPIndex=  min (mfPIndex st)  comparep  -- case inPageFlow of
+--                         Just n -> n
+--                         Nothing -> comparep
 
-           , mfPageIndex= inPageFlow
-           , mfLinks= if isNothing inPageFlow then M.empty else mfLinks st
-           , mfEnv= env }                        -- !> show req
+           , mfPageIndex= inPageFlow -- !> ("pageflow="++ (show $ mfPageIndex st)
+                                                      --   ++  " "++show inPageFlow)
+
+           , mfEnv= env }                       
 
 
      where
@@ -1337,32 +1334,20 @@ getRestParam :: (Read a, Typeable a,Monad m,Functor m, FormInput v) => FlowM v m
 getRestParam= do
   st <- get
   let lpath = mfPath st
-      index' = mfPIndex st + if Just (mfPIndex st)== mfPageIndex st then 1 else 0
+      index' = mfPIndex st -- + if Just (mfPIndex st)== mfPageIndex st then 1 else 0
       index = if index'== 0 then 1 else index'
       name =  lpath !! index
   if linkMatched st
-   then return Nothing 
-   else if  isJust $ mfPageIndex st
-    then
-     case  M.lookup name $ mfLinks st  of 
-       Just 0 -> do
-         modify $ \st -> st{ inSync= True}
-         return Nothing  -- !> (name ++ " 0 Fail")
-       Just n ->  do
-         modify $ \st -> st{ inSync= True,linkMatched= True
-                          , mfPIndex= index + 1
-                          , mfLinks= M.insert name (n-1) $ mfLinks st}
-         fmap valToMaybe $ readParam name       
-       Nothing -> return Nothing  -- !> (name ++ " 0 Fail")
-             
-    else case index < length lpath  of
+   then return Nothing          
+   else case index < length lpath  of
      True -> do
           modify $ \s -> s{inSync= True
                          ,linkMatched= True
                          ,mfPIndex= index+1 } 
           fmap valToMaybe $ readParam name
      False ->  return Nothing
-
+     
+    
 
 -- | Creates a link wiget. A link can be composed with other widget elements,
 wlink :: (Typeable a, Show a, MonadIO m,  FormInput view)
@@ -1370,14 +1355,13 @@ wlink :: (Typeable a, Show a, MonadIO m,  FormInput view)
 wlink x v= View $ do
       verb <- getWFName
       st   <- get
-
       let
           name = mfPrefix st ++ (map toLower $ if typeOf x== typeOf(undefined :: String)
                                    then unsafeCoerce x
                                    else show x)
-          index' = mfPIndex st
+          index' =   mfPIndex st
                  + if linkMatched st then -1 else 0
-                 + if Just (mfPIndex st)== mfPageIndex st then 1 else 0
+           --      + if Just (mfPIndex st)== mfPageIndex st then 1 else 0
 
           index = if index'== 0 then 1 else index'
           lpath = mfPath st
@@ -1385,33 +1369,18 @@ wlink x v= View $ do
           back =  True -- not $ inSync st  || (inSync st && linkMatched st)
 
       let path=   currentPath back index lpath verb ++ ('/':name)
-                                       -- !> (show $ mfPath st)
+                                                                -- !> (show $ mfPath st)
           toSend = flink path v
 
 
       r <- if linkMatched st then return Nothing -- only a link match per page or monadic sentence in page
            else
-           if isJust $ mfPageIndex st -- !> (show $ mfPageIndex st)
-             then
-             case  M.lookup name $ mfLinks st of
-                 Just 0 -> do
-                     modify $ \st -> st{ inSync= True}
-                     return Nothing  -- !> (name ++ " 0 Fail")
-
-                 Just n ->  do
-                     modify $ \st -> st{ inSync= True,linkMatched= True
-                                      , mfPIndex= index + 1
-                                      , mfLinks= M.insert name (n-1) $ mfLinks st}
-                                          -- !> (name ++" "++ show n ++ " Match in pageFLow")
-                     return $ Just x
-                 Nothing -> return Nothing  -- !> (name ++ " 0 Fail")
-             else
              case  index < length lpath && name== lpath !! index   of
              True -> do
                   modify $ \s -> s{inSync= True
                                  ,linkMatched= True, mfPIndex= index+1 }
 
-                  return $ Just x   -- !> (name ++ "<-" ++show index++ " " ++ show (mfPIndex st))
+                  return $ Just x                             -- !> (name ++ "<-" ++show index++ " " ++ show (mfPIndex st))
              False ->  return Nothing                                      -- !> ( "NOT MATCHED "++name++"<-" ++show index++ " "++(if index < length lpath then lpath !! index else ""))
 
       return $ FormElm [toSend] r
@@ -1655,18 +1624,18 @@ pageFlow str widget=do
        then do
        put s{mfPrefix= str ++ mfPrefix s
             ,mfSequence=0
-            ,mfLinks= acum M.empty $ drop (mfPIndex s) (mfPath s)
-            ,mfPageIndex= Just $ mfPIndex s }                                                   -- !> ("PARENT pageflow. prefix="++ str)
+            ,mfPageIndex= Just $ mfPIndex s
+             }                              -- !> ("PARENT pageflow. prefix="++ str)
 
-       widget <** (modify (\s' -> s'{mfSequence= mfSequence s
-                                 ,mfPrefix= mfPrefix s}))
-                                                                                                   -- !> ("END PARENT pageflow. prefix="++ str))
+       r<- widget <** (modify (\s' -> s'{mfSequence= mfSequence s
+                                   ,mfPrefix= mfPrefix s
+                                   }))
+       modify (\s -> s{mfPageIndex=Nothing} )
+       return r                                                                                 -- !> ("END PARENT pageflow. prefix="++ str))
 
 
        else do
-       put s{mfPrefix= str++ mfPrefix s
-            ,mfLinks= acum M.empty $ drop (fromJust $ mfPageIndex s) (mfPath s)
-            ,mfSequence=0}                                                                       --  !> ("CHILD pageflow. prefix="++ str)
+       put s{mfPrefix= str++ mfPrefix s,mfSequence=0}                                                                       --  !> ("CHILD pageflow. prefix="++ str)
 
        widget <** (modify (\s' -> s'{mfSequence= mfSequence s
                                  ,mfPrefix= mfPrefix s}))

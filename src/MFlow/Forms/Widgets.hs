@@ -80,7 +80,7 @@ import Control.Exception
 jqueryScript= cjqueryScript config
 jqueryCSS= cjqueryCSS config
 jqueryUI= cjqueryUI config
-
+nicEditUrl= cnicEditUrl config
 ------- User Management ------
 
 -- | Present a user form if not logged in. Otherwise, the user name and a logout link is presented.
@@ -497,7 +497,7 @@ htmlEdit buttons jsuser w = do
   requires [JScriptFile nicEditUrl [installHtmlField,install]]
   w <! [("id",id)]
 
-nicEditUrl= "//js.nicedit.com/nicEdit-latest.js"
+
 
 
 -- | A widget that display the content of an  html, But if the user has edition privileges,

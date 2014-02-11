@@ -1,7 +1,7 @@
 {-# OPTIONS  -XCPP #-}
 module IncreaseString ( clicks) where
 
-import MFlow.Wai.Blaze.Html.All hiding(page)
+
 -- #define ALONE -- to execute it alone, uncomment this
 #ifdef ALONE
 import MFlow.Wai.Blaze.Html.All

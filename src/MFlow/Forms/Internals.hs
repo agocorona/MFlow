@@ -540,7 +540,7 @@ data MFlowState view= MFlowState{
    mfPIndex         :: Int,
    mfPageIndex      :: Maybe Int,
    linkMatched      :: Bool,
-   mfLinks          :: M.Map String Int,
+
 
    mfAutorefresh   :: Bool,
    mfTrace          :: [String],
@@ -553,7 +553,7 @@ type Void = Char
 mFlowState0 :: (FormInput view) => MFlowState view
 mFlowState0 = MFlowState 0 False  True  True  "en"
                 [] False  (error "token of mFlowState0 used")
-                0 0 [] [] stdHeader False [] M.empty  Nothing 0 False    []   ""   1 Nothing False M.empty False [] False
+                0 0 [] [] stdHeader False [] M.empty  Nothing 0 False    []   ""   1 Nothing False  False [] False
 
 
 -- | Set user-defined data in the context of the session.

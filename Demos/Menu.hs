@@ -80,11 +80,89 @@ mainMenu= autoRefresh  $
    ++> tFieldEd "editor" "othermenu"  "Other menu options"
    **> (li <<<  ((absLink Wiki << b "Wiki") <! [("class", "_noAutoRefresh")]))
    <|> li << (b "About this menu" <> article cascade <> article menuarticle)
-   ++> (li <<<  do
+   ++> hr
+   ++> (li <<< do
+          absLink BasicWidgets << b  "Basic Widgets"
+          ul <<<        
+           (hr
+           ++> (li <<< (absLink CountI << b  "Increase an Int") <! noAutoRefresh
+                       <++ b " A loop that increases the Int value of a text box"
+                                   
+           <|> li <<< (absLink CountS  << b  "Increase a String") <! noAutoRefresh
+                       <++ b " A loop that concatenate text in a text box"
+                                   
+           <|> li <<< (absLink Select  << b  "Select options") <! noAutoRefresh
+                       <++ b " A combo box"
+                                   
+           <|> li <<< (absLink CheckBoxes   << b  "Checkboxes") <! noAutoRefresh
+           
+           <|> li <<< (absLink Radio        << b  "Radio buttons") <! noAutoRefresh
+           <++ hr))
+
+    <|> li <<< do
+          absLink DynamicWidgets << b "Dynamic Widgets"
+             <++ " Widgets with Ajax and containers of other widgets"
+          ul <<<
+           (hr
+           ++>(li <<< (absLink Ajax         << b  "AJAX example")  <! noAutoRefresh
+                 <++ b " A onclick event in a text box invokes a server procedure that \
+                          \increment the integer value"
+                 <> article ajaxl
+
+           <|> li <<< (absLink Autocomp     << b  "autocomplete")  <! noAutoRefresh
+                 <++ b " Example of autocomplete, a widget which takes the suggested values from a \
+                 \ server procedure"  
+
+           <|> li <<< (absLink AutocompList << b  "autocomplete List")   <! noAutoRefresh
+                 <++ b " Example of a widget that generates a set of return values, suggested by a \
+                 \ autocomplete input box"
+                 <> article editList
+
+           <|> li <<< (absLink ListEdit     << b  "list edition")    <! noAutoRefresh
+                 <++ b " Example of a widget that edit, update and delete a list of user-defined \
+                 \ widgets"
+
+           <|> li <<< (absLink Grid         << b  "grid")    <! noAutoRefresh
+                 <++ b " Example of the same widget In this case, containing a row of two fields,\
+                 \ aranged in a table"
+                 <> article gridl
+           <> hr))
+
+    <|> li <<< do
+          absLink MonadicWidgets << b  "Monadic widgets, actions and callbacks"
+             <++ " autoRefresh, page flows, dialogs etc"
+          ul <<<                   
+            (hr
+            ++>(li <<< (absLink Action      << b  "Example of action") <! noAutoRefresh
+                <++ " executed when a widget is validated"
+
+            <|> li <<< (absLink FViewMonad   << b  "in page flow: sum of three numbers") <! noAutoRefresh
+                 <++ b " Page flows are monadic widgets that modifies themselves in the page"
+                 <> article pageflow
+
+            <|> li <<< (absLink Counter      << b  "Counter")  <! noAutoRefresh
+                 <++ b " A page flow which increases a counter by using a callback"
+                 <> article callbacks
+
+            <|> li <<< (absLink Multicounter << b  "Multicounter")  <! noAutoRefresh
+                 <++ b " Page flow with many independent counters with autoRefresh, so they modify themselves in-place"
+                 <> article callbacks
+
+            <|> li <<< (absLink Combination  << b  "Combination of three dynamic widgets") <! noAutoRefresh
+                 <++ b " Combination of autoRefreshe'd widgets in the same page, with\
+                          \ different behaviours"
+                 <> article combinationl
+
+            <|> li <<< (absLink WDialog      << b  "Modal dialog")   <! noAutoRefresh
+                 <++ b " A modal Dialog box with a form within a page flow"
+            <> hr))
+
+   <|> li <<<  do
           absLink DatabaseSamples << b  "Database examples"
              <++ " with different backends"
           ul <<<
-           (li <<< (absLink SearchCart <<  b  "Shopping with data tier, queries and full text search") <! noAutoRefresh
+           (hr
+           ++>(li <<< (absLink SearchCart <<  b  "Shopping with data tier, queries and full text search") <! noAutoRefresh
                 <++ b " The shopping example completed with a dynamic catalog stored using TCache"
                 <> article searchcart
 
@@ -101,36 +179,40 @@ mainMenu= autoRefresh  $
                      <> article amazonarticle
            <|> li <<< (absLink AcidState << b  "Acid State") <! noAutoRefresh
                      <++ do  -- blaze-html monad
-                        b " Create, Store and retrieve lines of text from"
+                        b " Create, Store and retrieve lines of text from "
                         a ! href "http://hackage.haskell.org/package/acid-state" $ "Acid State"
+                        hr))
 
-
-                     ))
    <|> li <<<  do
           absLink PushSamples << b  "Push Samples"
              <++ " using long polling"
           ul <<<
-           (li <<< (absLink Push << b  "Push example") <! noAutoRefresh
+           (hr
+           ++>(li <<< (absLink Push << b  "Push example") <! noAutoRefresh
                      <++ b " A push widget in append mode receives input from \
                              \a text box with autorefresh"
                      <> article pushl
                      
            <|>   li <<< (absLink PushDec << b  "A push counter") <! noAutoRefresh
                      <++ b " Show a countdown. Then goes to the main menu"
-                     <> article pushdec)
+                     <> article pushdec
+                     <> hr))
    <|> li <<< do
 
           absLink ErrorTraces << b  "Error Traces"
           ul <<<
-            (li <<< (absLink Trace << b  " Execution traces for errors") <! noAutoRefresh
+            (hr
+            ++>(li <<< (absLink Trace << b  " Execution traces for errors") <! noAutoRefresh
                  <++ b " produces an error and show the complete execution trace"
-                 <> article errorTrace)
+                 <> article errorTrace
+                 <> hr))
                  
    <|> li <<< do
 
           absLink Flows << b  "Different kinds of flows"
           ul <<< 
-           (li <<< (absLink RESTNav  << b  " REST navigation") <! noAutoRefresh
+           (hr
+           ++>(li <<< (absLink RESTNav  << b  " REST navigation") <! noAutoRefresh
                 <++ b " Navigates trough  menus and a sucession of GET pages"
                 <> article navigation
 
@@ -158,93 +240,28 @@ mainMenu= autoRefresh  $
                  <++ b " the user is asked for some questions initially that never will be asked again \
                        \ unless he likes to change them (all in session parameters)"
 
-                 )
+                 <> hr))
 
-  <|> li <<< do
-          absLink BasicWidgets << b  "Basic Widgets"
-          ul <<<        
-           (li <<< (absLink CountI << b  "Increase an Int") <! noAutoRefresh
-                       <++ b " A loop that increases the Int value of a text box"
-                                   
-           <|> li <<< (absLink CountS  << b  "Increase a String") <! noAutoRefresh
-                       <++ b " A loop that concatenate text in a text box"
-                                   
-           <|> li <<< (absLink Select  << b  "Select options") <! noAutoRefresh
-                       <++ b " A combo box"
-                                   
-           <|> li <<< (absLink CheckBoxes   << b  "Checkboxes") <! noAutoRefresh
-           
-           <|> li <<< (absLink Radio        << b  "Radio buttons") <! noAutoRefresh)
-
-  <|> li <<< do
-          absLink MonadicWidgets << b  "Monadic widgets, actions and callbacks"
-             <++ " autoRefresh, page flows, dialogs etc"
-          ul <<<                   
-            (li <<< (absLink Action      << b  "Example of action") <! noAutoRefresh
-                <++ " executed when a widget is validated"
-
-            <|> li <<< (absLink FViewMonad   << b  "in page flow: sum of three numbers") <! noAutoRefresh
-                 <++ b " Page flows are monadic widgets that modifies themselves in the page"
-                 <> article pageflow
-
-            <|> li <<< (absLink Counter      << b  "Counter")  <! noAutoRefresh
-                 <++ b " A page flow which increases a counter by using a callback"
-                 <> article callbacks
-
-            <|> li <<< (absLink Multicounter << b  "Multicounter")  <! noAutoRefresh
-                 <++ b " Page flow with many independent counters with autoRefresh, so they modify themselves in-place"
-                 <> article callbacks
-
-            <|> li <<< (absLink Combination  << b  "Combination of three dynamic widgets") <! noAutoRefresh
-                 <++ b " Combination of autoRefreshe'd widgets in the same page, with\
-                          \ different behaviours"
-                 <> article combinationl
-
-            <|> li <<< (absLink WDialog      << b  "Modal dialog")   <! noAutoRefresh
-                 <++ b " A modal Dialog box with a form within a page flow")         
-
-   <|> li <<< do
-          absLink DynamicWidgets << b "Dynamic Widgets"
-             <++ " Widgets with Ajax and containers of other widgets"
-          ul <<<
-           (li <<< (absLink Ajax         << b  "AJAX example")  <! noAutoRefresh
-                 <++ b " A onclick event in a text box invokes a server procedure that \
-                          \increment the integer value"
-                 <> article ajaxl
-
-           <|> li <<< (absLink Autocomp     << b  "autocomplete")  <! noAutoRefresh
-                 <++ b " Example of autocomplete, a widget which takes the suggested values from a \
-                 \ server procedure"  
-
-           <|> li <<< (absLink AutocompList << b  "autocomplete List")   <! noAutoRefresh
-                 <++ b " Example of a widget that generates a set of return values, suggested by a \
-                 \ autocomplete input box"
-                 <> article editList
-
-           <|> li <<< (absLink ListEdit     << b  "list edition")    <! noAutoRefresh
-                 <++ b " Example of a widget that edit, update and delete a list of user-defined \
-                 \ widgets"
-
-           <|> li <<< (absLink Grid         << b  "grid")    <! noAutoRefresh
-                 <++ b " Example of the same widget In this case, containing a row of two fields,\
-                 \ aranged in a table"
-                 <> article gridl)
+  
    <|> li <<< do
           absLink Templates << b "Runtime templates"
              <++ " Templates and content management modifiable at runtime"
           ul <<<
-           (li <<<(absLink RuntimeTemplates  << b "Runtime templates") <! noAutoRefresh
+           (hr
+           ++>(li <<<(absLink RuntimeTemplates  << b "Runtime templates") <! noAutoRefresh
                  <++ b " Example of form templates and result templates modified at runtime"
            <|> li <<< (absLink TextEdit     << b  "Content Management")  <! noAutoRefresh
-                 <++ b " Example of content management primitives defined in MFlow.Forms.Widgets")
+                 <++ b " Example of content management primitives defined in MFlow.Forms.Widgets"
+                 <>hr))
 
    <|> li <<< do
           absLink LoginLogout << b "Login/logout"
-          ul <<<(li <<< (absLink Login        << b  "login/logout")   <! noAutoRefresh
-                            <++ b " Example of using the login and/or logout")
+          ul <<<(hr ++> (li <<< (absLink Login        << b  "login/logout")   <! noAutoRefresh
+                            <++ b " Example of using the login and/or logout"
+                            <> hr))
 
        )
-   <|> (El.div ! At.style "display:none" <<< mainMenu1)
+   <|> (El.div ! At.style "display:none" <<< mainMenu1))
 
 
 
@@ -337,9 +354,13 @@ stdheader  c= docTypeHtml $ do
 --          ! type_ "text/css"
 --          ! href ( "http://jqueryui.com/resources/demos/style.css")
      El.style $ "body {\n\
-	      \font-family: \"rebuchet MS\", \"Helvetica\", \"Arial\",  \"Verdana\", \"sans-serif\";\n\
-	    \font-size: 80.5%;\n\
-            \}\n"
+            \font-family: \"rebuchet MS\", \"Helvetica\", \"Arial\",  \"Verdana\", \"sans-serif\";\n\
+            \font-size: 80.5%;}\n\
+            \a:link {text-decoration:none;}\
+            \a:visited {text-decoration:none;}\
+            \a:hover {text-decoration:underline;}\
+            \a:active {text-decoration:underline;}\
+            \"
    body  $ do
       [shamlet|
          <script>

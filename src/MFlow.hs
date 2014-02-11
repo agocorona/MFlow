@@ -55,7 +55,7 @@ Fragment based streaming: 'sendFragment'  are  provided only at this level.
               ,OverloadedStrings
               ,ScopedTypeVariables
               ,TemplateHaskell
-               #-}
+               #-}  
 module MFlow (
 Flow, Params, HttpData(..),Processable(..)
 , Token(..), ProcList
@@ -77,20 +77,21 @@ btag, bhtml, bbody,Attribs, addAttrs
 -- * internal use
 ,addTokenToList,deleteTokenInList, msgScheduler,serveFile,newFlow
 ,UserStr,PasswdStr, User(..),eUser
-)
 
+)
 where
-import Control.Concurrent.MVar
+import Control.Concurrent.MVar 
 import Data.IORef
 import GHC.Conc(unsafeIOToSTM)
 import Data.Typeable
 import Data.Maybe(isJust, isNothing, fromMaybe, fromJust)
-import Data.Char(isSeparator, toLower)
+import Data.Char(isSeparator) 
 import Data.List(isPrefixOf,isSuffixOf,isInfixOf, elem , span, (\\),intersperse)
-import Control.Monad(when)
+import Control.Monad(when) 
 
 import Data.Monoid
 import Control.Concurrent(forkIO,threadDelay,killThread, myThreadId, ThreadId)
+import Data.Char(toLower)
 
 import Unsafe.Coerce
 import System.IO.Unsafe
@@ -136,16 +137,16 @@ instance Read Token where
 
         (ui,str')= span(/='@') str1
         i        = drop (length anonymous) ui
-        (w,str2) = break isSeparator $ tail str'
-        newVar _ = unsafePerformIO newEmptyMVar
+        (w,str2) = span (not . isSeparator) $ tail str'
+        newVar _= unsafePerformIO  $ newEmptyMVar
 
 
      readsPrec _ str= error $ "parse error in Token read from: "++ str
 
 instance Serializable Token  where
-  serialize    = B.pack . show
-  deserialize  = read . B.unpack
-  setPersist _ = Just filePersist
+  serialize  = B.pack . show
+  deserialize= read . B.unpack
+  setPersist =   \_ -> Just filePersist
 
 iorefqmap= unsafePerformIO  . newMVar $ M.empty
 
@@ -197,7 +198,7 @@ type Params =  [(String,String)]
 
 class Processable a where
      pwfname :: a -> String
-     pwfname s= Prelude.head $ pwfPath s
+     pwfname s= Prelude.head $ pwfPath s 
      pwfPath :: a -> [String]
      puser :: a -> String
      pind :: a -> String
@@ -210,14 +211,14 @@ instance Processable Token where
      pind = tind
      getParams = tenv
 
-instance Processable  Req   where
+instance Processable  Req   where 
     pwfname (Req x)= pwfname x
     pwfPath (Req x)= pwfPath x
     puser (Req x)= puser x
-    pind (Req x)= pind x
+    pind (Req x)= pind x   
     getParams (Req x)= getParams  x
 --    getServer (Req x)= getServer  x
---    getPort (Req x)= getPort  x
+--    getPort (Req x)= getPort  x 
 
 data Resp  = Fragm HttpData
            | EndFragm HttpData
@@ -246,10 +247,10 @@ instance  (Monad m, Show a) => Traceable (Workflow m a) where
               x <- iox
               return $ debug x (str++" => Workflow "++ show x)
 -}
--- | send a complete response
+-- | send a complete response 
 --send ::   Token  -> HttpData -> IO()
 send  t@(Token _ _ _ _ _ _ qresp) msg=   do
-      ( putMVar qresp  . Resp $  msg )  -- !> ("<<<<< send "++ thread t)
+      ( putMVar qresp  . Resp $  msg )  -- !> ("<<<<< send "++ thread t) 
 
 sendFlush t msg= flushRec t >> send t msg     -- !> "sendFlush "
 
@@ -292,7 +293,7 @@ receiveReqTimeout time time2 t=
 delMsgHistory t = do
       let statKey=  keyWF (twfname t)  t                  -- !> "wf"      --let qnme= keyWF wfname t
       delWFHistory1 statKey                               -- `debug` "delWFHistory"
-
+      
 
 
 -- | executes a simple request-response computation that receive the params and return a response
@@ -317,7 +318,7 @@ stateless f = transient proc
 -- not store its state in permanent storage. The process once stopped, will restart anew 
 --
 ---- It is used with `addMessageFlows` `hackMessageFlow` or `waiMessageFlow`
-transient :: (Token -> IO ()) -> Flow
+transient :: (Token -> IO ()) -> Flow   
 transient f=  unsafeIOtoWF . f -- WF(\s -> f t>>= \x-> return (s, x) )
 
 
@@ -337,13 +338,13 @@ getMessageFlows = readMVar _messageFlows
 delMessageFlow wfname= modifyMVar_ _messageFlows (\ms -> return $ M.delete wfname ms)
 
 --class ToHttpData a  where
---    toHttpData :: a -> HttpData
+--    toHttpData :: a -> HttpData  
 
 
 sendToMF Token{..} msg= putMVar tsendq $ Req msg
 
 --recFromMF :: (Typeable a,  Typeable c, Processable a) => Token -> a -> IO c
-recFromMF Token{..}  = do
+recFromMF Token{..}  = do  
     m <-  takeMVar trecq                  -- !> ("<<<<<< recFromMF"++ thread t)
     case m  of
         Resp r  ->  return  r              -- !> ("recibido  recFromMF"++ thread t)
@@ -353,13 +354,12 @@ recFromMF Token{..}  = do
 
     where
     getStream r =  do
-         mr <-  takeMVar trecq
+         mr <-  takeMVar trecq 
          case mr of
             Fragm h -> do
                  rest <- unsafeInterleaveIO $  getStream  h
                  let result=  mappend  r   rest
-                 return  result
-
+                 return  result 
             EndFragm h -> do
                  let result=  mappend r   h
                  return  result
@@ -382,13 +382,13 @@ msgScheduler
 msgScheduler x  = do
   token <- getToken x
   let wfname = takeWhile (/='/') $ pwfname x
-  sendToMF token x
-  th <- startMessageFlow wfname token
-  r  <- recFromMF token                            --  !> let HttpData _ _ r1=r in unpack r1
+  sendToMF token x                                 
+  th <- startMessageFlow wfname token     
+  r  <- recFromMF token                            --  !> let HttpData _ _ r1=r in unpack r1 
   return (r,th)
   where
   --start the flow if not started yet
-  startMessageFlow wfname token =
+  startMessageFlow wfname token = 
    forkIO $ do
         wfs <- getMessageFlows
         r   <- startWF wfname  token   wfs          -- !>( "init wf " ++ wfname)
@@ -405,13 +405,13 @@ msgScheduler x  = do
           Left Timeout -> do
               hFlush stdout                                       -- !>  ("TIMEOUT in msgScheduler" ++ (show $ unsafePerformIO myThreadId))
               deleteTokenInList token
-
+             
           Left (WFException e)-> do
               showError wfname token e
               moveState wfname token token{tind= "error/"++tuser token}
               deleteTokenInList token                       -- !> "DELETETOKEN"
-
-
+              
+              
           Right _ ->  delMsgHistory token >> return ()      -- !> ("finished " ++ wfname)
 
 
@@ -487,8 +487,8 @@ instance  Serializable User where
   serialize=  B.pack . show
   deserialize=   read . B.unpack
   setPersist =   \_ -> Just filePersist
-
--- | Register an user/password
+  
+-- | Register an user/password 
 tCacheRegister ::  String -> String  -> IO (Maybe String)
 tCacheRegister user password  =  atomically $ do
      withSTMResources [newuser]  doit
@@ -504,7 +504,7 @@ tCacheValidate  u p =
      $ withSTMResources [user]
      $ \ mu -> case mu of
          [Nothing] -> resources{toReturn= err }
-         [Just (User _ pass )] -> resources{toReturn=
+         [Just (User _ pass )] -> resources{toReturn= 
                case pass==p  of
                  True -> Nothing
                  False -> err
@@ -523,13 +523,15 @@ userRegister u p= liftIO $ do
 data Config = Config{cadmin :: UserStr    -- ^ Administrator name
                     ,cjqueryScript        -- ^ URL of jquery
                     ,cjqueryCSS           -- ^ URL of jqueryCSS
-                    ,cjqueryUI :: String  -- ^ URL of jqueryUI
+                    ,cjqueryUI            -- ^ URL of jqueryUI
+                    ,cnicEditUrl :: String -- ^ URL of the nicEdit  editor
                     }
                     deriving (Read, Show, Typeable)
 
 defConfig= Config "admin" "//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"
                           "//code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css"
                           "//code.jquery.com/ui/1.10.3/jquery-ui.js"
+                          "//js.nicedit.com/nicEdit-latest.js"
 
 config= unsafePerformIO $! atomically $! readConfig
 
@@ -576,7 +578,7 @@ defNotFoundResponse isAdmin msg= fresp $
    "<html><h4>Error 404: Page not found or error ocurred</h4> <p style=\"font-family:courier\">" <> msg <>"</p>" <>
    "<br/>" <> opts <> "<br/><a href=\"/\" >press here to go home</a></html>"
 
-
+   
   paths= Prelude.map B.pack . M.keys $ unsafePerformIO getMessageFlows
   opts=  "options: " <> B.concat (Prelude.map  (\s ->
                           "<a href=\"/"<>  s <>"\">"<> s <>"</a>, ") $ filter (\s -> B.head s /= '_') paths)
@@ -590,10 +592,10 @@ notFoundResponse=  unsafePerformIO $ newIORef defNotFoundResponse
 --  -> String      The error string
 --  -> HttpData)   The response. See `defNotFoundResponse` code for an example
 
-setNotFoundResponse ::
-    (Bool
-  -> String
-  -> ByteString)
+setNotFoundResponse :: 
+    (Bool    
+  -> String     
+  -> ByteString)  
   -> IO ()
 
 setNotFoundResponse f= liftIO $ writeIORef notFoundResponse  f
@@ -636,7 +638,7 @@ addAttrs other _ = error  $ "addAttrs: byteString is not a tag: " ++ show other
 -- The files are cached (memoized) according with the "Data.TCache" policies in the program space. This avoid the blocking of
 -- the efficient GHC threads by frequent IO calls.So it enhances the performance
 -- in the context of heavy concurrence.
--- It uses 'Data.TCache.Memoization'.
+-- It uses 'Data.TCache.Memoization'. 
 -- The caching-uncaching follows the `setPersist` criteria
 setFilesPath :: MonadIO m => String -> m ()
 setFilesPath path= liftIO $ writeIORef rfilesPath path
@@ -680,7 +682,7 @@ rflow= getDBRef . key $ NFlow undefined
 
 newFlow=  do
         TOD t _ <- getClockTime
-        atomically $ do
+        atomically $ do 
                     NFlow n <- readDBRef rflow `onNothing` return (NFlow 0)
                     writeDBRef rflow . NFlow $ n+1
                     return . SB.pack . show $ t + n
@@ -691,7 +693,7 @@ mimeTable=[
     ("htm",	"text/html"),
     ("txt",	"text/plain"),
     ("hs",      "text/plain"),
-    ("lhs",      "text/plain"),
+    ("lhs",      "text/plain"), 
     ("jpeg",	"image/jpeg"),
     ("pdf",	"application/pdf"),
     ("js",	"application/x-javascript"),
@@ -896,3 +898,4 @@ mimeTable=[
 --showLoc Loc{loc_module=mod, loc_filename=filename, loc_start=start} =
 --         {- text package <> char '.' <> -}
 --         printf "%s (%s). %s" mod filename (show start)
+
