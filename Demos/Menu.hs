@@ -147,7 +147,7 @@ mainMenu=
 
             <|> li <<< (absLink Multicounter << b  "Multicounter")  <! noAutoRefresh
                  <++ b " Page flow with many independent counters with autoRefresh, so they modify themselves in-place"
-                 <> article callbacks
+                 <> article  callbacks
 
             <|> li <<< (absLink Combination  << b  "Combination of three dynamic widgets") <! noAutoRefresh
                  <++ b " Combination of autoRefreshe'd widgets in the same page, with\
