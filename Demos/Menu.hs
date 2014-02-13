@@ -73,15 +73,16 @@ data Options= Wiki | CountI | CountS | Radio
 
 absLink ref = wcached  (show ref) 0 . wlink ref
 
+autoLi w= autoRefresh $ li <<< w
 
 mainMenu :: View Html IO Options
-mainMenu= autoRefresh  $
+mainMenu=
   ul<<<(li << a ! href "/" ! At.class_ "_noAutoRefresh" << b "HOME"
    ++> tFieldEd "editor" "othermenu"  "Other menu options"
    **> (li <<<  ((absLink Wiki << b "Wiki") <! [("class", "_noAutoRefresh")]))
    <|> li << (b "About this menu" <> article cascade <> article menuarticle)
    ++> hr
-   ++> (li <<< do
+   ++> ((autoRefresh $ li <<< do
           absLink BasicWidgets << b  "Basic Widgets"
           ul <<<        
            (hr
@@ -97,9 +98,9 @@ mainMenu= autoRefresh  $
            <|> li <<< (absLink CheckBoxes   << b  "Checkboxes") <! noAutoRefresh
            
            <|> li <<< (absLink Radio        << b  "Radio buttons") <! noAutoRefresh
-           <++ hr))
+           <++ hr)))
 
-    <|> li <<< do
+    <|> (autoRefresh $ li <<<   do
           absLink DynamicWidgets << b "Dynamic Widgets"
              <++ " Widgets with Ajax and containers of other widgets"
           ul <<<
@@ -126,9 +127,9 @@ mainMenu= autoRefresh  $
                  <++ b " Example of the same widget In this case, containing a row of two fields,\
                  \ aranged in a table"
                  <> article gridl
-           <> hr))
+           <> hr)))
 
-    <|> li <<< do
+    <|> (autoRefresh $ li <<<   do
           absLink MonadicWidgets << b  "Monadic widgets, actions and callbacks"
              <++ " autoRefresh, page flows, dialogs etc"
           ul <<<                   
@@ -155,9 +156,9 @@ mainMenu= autoRefresh  $
 
             <|> li <<< (absLink WDialog      << b  "Modal dialog")   <! noAutoRefresh
                  <++ b " A modal Dialog box with a form within a page flow"
-            <> hr))
+            <> hr)))
 
-   <|> li <<<  do
+   <|> (autoRefresh $ li <<<   do
           absLink DatabaseSamples << b  "Database examples"
              <++ " with different backends"
           ul <<<
@@ -181,9 +182,9 @@ mainMenu= autoRefresh  $
                      <++ do  -- blaze-html monad
                         b " Create, Store and retrieve lines of text from "
                         a ! href "http://hackage.haskell.org/package/acid-state" $ "Acid State"
-                        hr))
+                        hr)))
 
-   <|> li <<<  do
+   <|> (autoRefresh $ li <<<   do
           absLink PushSamples << b  "Push Samples"
              <++ " using long polling"
           ul <<<
@@ -196,19 +197,18 @@ mainMenu= autoRefresh  $
            <|>   li <<< (absLink PushDec << b  "A push counter") <! noAutoRefresh
                      <++ b " Show a countdown. Then goes to the main menu"
                      <> article pushdec
-                     <> hr))
-   <|> li <<< do
+                     <> hr)))
 
+   <|> (autoRefresh $ li <<<   do
           absLink ErrorTraces << b  "Error Traces"
           ul <<<
             (hr
             ++>(li <<< (absLink Trace << b  " Execution traces for errors") <! noAutoRefresh
                  <++ b " produces an error and show the complete execution trace"
                  <> article errorTrace
-                 <> hr))
+                 <> hr)))
                  
-   <|> li <<< do
-
+   <|> (autoRefresh $ li <<<   do
           absLink Flows << b  "Different kinds of flows"
           ul <<< 
            (hr
@@ -240,10 +240,10 @@ mainMenu= autoRefresh  $
                  <++ b " the user is asked for some questions initially that never will be asked again \
                        \ unless he likes to change them (all in session parameters)"
 
-                 <> hr))
+                 <> hr)))
 
   
-   <|> li <<< do
+   <|> (autoRefresh $ li <<<   do
           absLink Templates << b "Runtime templates"
              <++ " Templates and content management modifiable at runtime"
           ul <<<
@@ -252,13 +252,13 @@ mainMenu= autoRefresh  $
                  <++ b " Example of form templates and result templates modified at runtime"
            <|> li <<< (absLink TextEdit     << b  "Content Management")  <! noAutoRefresh
                  <++ b " Example of content management primitives defined in MFlow.Forms.Widgets"
-                 <>hr))
+                 <>hr)))
 
-   <|> li <<< do
+   <|> (autoRefresh $ li <<<   do
           absLink LoginLogout << b "Login/logout"
           ul <<<(hr ++> (li <<< (absLink Login        << b  "login/logout")   <! noAutoRefresh
                             <++ b " Example of using the login and/or logout"
-                            <> hr))
+                            <> hr)))
 
        )
    <|> (El.div ! At.style "display:none" <<< mainMenu1))

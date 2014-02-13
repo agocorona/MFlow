@@ -1,16 +1,3 @@
------------------------------------------------------------------------------
---
--- Module      :  SearchCart
--- Copyright   :
--- License     :  BSD3
---
--- Maintainer  :  agocorona@gmail.com
--- Stability   :  experimental
--- Portability :
---
--- |
---
------------------------------------------------------------------------------
 {-# OPTIONS   -XCPP -XDeriveDataTypeable #-}
 module SearchCart (
  searchCart
