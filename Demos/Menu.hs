@@ -26,7 +26,7 @@ import Data.List(isPrefixOf)
 import Language.Haskell.HsColour
 import Language.Haskell.HsColour.Colourise
 import Text.Hamlet
-
+import System.IO.Unsafe
 
 
 import Debug.Trace
@@ -77,9 +77,9 @@ autoLi w= autoRefresh $ li <<< w
 
 mainMenu :: View Html IO Options
 mainMenu=
-  ul<<<(li << a ! href "/" ! At.class_ "_noAutoRefresh" << b "HOME"
+  ul<<<(li << a ! href "/" << b "HOME"
    ++> tFieldEd "editor" "othermenu"  "Other menu options"
-   **> (li <<<  ((absLink Wiki << b "Wiki") <! [("class", "_noAutoRefresh")]))
+   **> (li <<<  (absLink Wiki << b "Wiki") )
    <|> li << (b "About this menu" <> article cascade <> article menuarticle)
    ++> hr
    ++> ((autoRefresh $ li <<< do
@@ -390,8 +390,10 @@ getSource file = liftIO $ cachedByKey file 0 $ do
    source <- readFile $ "Demos/" ++ file
    return . preEscapedToHtml
                 $  "<font size=2>"
-                ++ hscolour HTML defaultColourPrefs False True file False source
+                ++ hscolour HTML colourPrefs False True file False source
                 ++ "</font>"
+                
+colourPrefs= unsafePerformIO readColourPrefs
 
 wiki =  do
   pagname <- getRestParam `onNothing` return "index"
