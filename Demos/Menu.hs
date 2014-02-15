@@ -73,7 +73,6 @@ data Options= Wiki | CountI | CountS | Radio
 
 absLink ref = wcached  (show ref) 0 . wlink ref
 
-autoLi w= autoRefresh $ li <<< w
 
 mainMenu :: View Html IO Options
 mainMenu=

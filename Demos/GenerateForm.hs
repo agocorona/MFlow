@@ -30,21 +30,37 @@ import Debug.Trace
 main=runNavigation "nav" $ step $ do
     desc <-  ask $ createForm [] "form"
     ask$  p << show desc ++> noWidget
+--    r <- ask $ generateForm desc
+--    ask $ p << (show r) ++> noWidget
 
+data WType= Intv | Stringv | TextArea |OptionBox[String]
+          | Combo [String] deriving (Typeable,Read,Show)
 
-createForm desc title'= (do
+class GenerateForm a where
+  generateForm :: [WType] -> a
+
+instance (GenerateForm a, GenerateForm b)=> GenerateForm (a,b) where
+  generateForm (f:fs)= (,) <$> generateForm [f] <*> generateForm fs
+
+--generateForm (f:fs)= (,) <$> genElem f <*> generateForm fs
+-- where
+-- genElem  Intv= getInt Nothing
+-- genElem  Stringv= getString Nothing
+-- genElem TextArea= getMultilineText $ fromString ""
+-- OptionBox xs = getSelect (setSelectedOption ""
+--                           (p  << "select a option") <|>
+--                           firstOf[setOption op  (b <<  op) | op <- xs])
+
+createForm desc title'= do
    wdesc <- chooseWidget <++ hr
    let title= title' ++".html"
-   content <- liftIO $ readtField  (b << "HOHAHAHAHAHAHAH") title
+   content <- liftIO $ readtField  mempty title
    fieldview <- generate  wdesc
-   liftIO . writetField title $ content <> fieldview
-   let ndesc= desc++ [wdesc]
-   edTemplate "editor" title $ return ()
-   return ndesc
-  <+> wlink "save" << p << "save")
- `wcallback` \r ->   case r of
-   (Just desc', _) -> createForm desc' title'
-   (_, Just _) ->     return desc
+   liftIO . writetField title $ content <> br <> fieldview
+
+   edTemplate "editor" title $ return ()  **> wlink "save" << p << "save"
+   return $  desc++ [wdesc]
+
 
 
 newtype Seq= Seq Int deriving (Typeable)
@@ -68,7 +84,7 @@ generate desc= View $ do
 
     return $ FormElm [] $ Just ( mconcat render :: Html)
 
-data WType= Intv | Stringv | TextArea |OptionBox[String] | Combo [String] deriving (Typeable,Read,Show)
+
 
 chooseWidget=
     ul <<<(li <<< do
