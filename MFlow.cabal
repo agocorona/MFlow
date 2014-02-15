@@ -93,9 +93,7 @@ extra-source-files: Demos/demos-blaze.hs Demos/TestREST.hs
                     Demos/PreventGoingBack.hs Demos/Counter.hs Demos/PushDecrease.hs
                     Demos/Dialog.hs Demos/PushSample.hs Demos/Grid.hs Demos/Radio.hs
                     Demos/SumView.hs Demos/AcidState.hs Demos/SearchCart.hs
-                    Demos/InitialConfig.hs
-                    src/MFlow/Hack.hs
-                    src/MFlow/Hack/Response.hs
+                    Demos/InitialConfig.hs src/MFlow/Hack.hs src/MFlow/Hack/Response.hs
                     Demos/MCounter.hs src/MFlow/Hack/XHtml.hs
                     src/MFlow/Hack/XHtml/All.hs src/MFlow/Forms/HSP.hs
 
@@ -108,10 +106,11 @@ library
                    extensible-exceptions -any, xhtml -any, base >4.0 && <5,
                    bytestring -any, containers -any, RefSerialize -any, TCache -any,
                    stm >2, old-time -any, vector -any, directory -any,
-                   utf8-string -any, wai >= 2.0.0, case-insensitive -any, http-types -any,
-                   conduit -any, text -any, parsec -any, warp -any, warp-tls -any, random -any,
-                   blaze-html -any, blaze-markup -any, monadloc -any, hamlet -any, clientsession == 0.9.0.3,
-                   safecopy -any, acid-state -any, hscolour -any
+                   utf8-string -any, wai >=2.0.0, case-insensitive -any,
+                   http-types -any, conduit -any, text -any, parsec -any, warp -any,
+                   warp-tls -any, random -any, blaze-html -any, blaze-markup -any,
+                   monadloc -any, hamlet -any, clientsession ==0.9.0.3, safecopy -any,
+                   acid-state -any, hscolour -any
     exposed-modules: MFlow MFlow.Wai.Blaze.Html.All MFlow.Forms
                      MFlow.Forms.Admin MFlow.Cookies MFlow.Wai MFlow.Wai.XHtml.All
                      MFlow.Forms.XHtml MFlow.Forms.Blaze.Html MFlow.Forms.Test
@@ -121,7 +120,6 @@ library
     hs-source-dirs: src .
     other-modules:  MFlow.Wai.Response
 
-
 executable demos-blaze
     build-depends: MFlow -any, RefSerialize -any, TCache -any,
                    tcache-AWS -any, directory -any, Workflow -any, base -any,
@@ -129,10 +127,11 @@ executable demos-blaze
                    old-time -any, stm -any, text -any, transformers -any, vector -any,
                    hamlet -any, monadloc -any, aws -any, network -any, hscolour -any,
                    persistent-template -any, persistent-sqlite -any, persistent -any,
-                   conduit -any, http-conduit -any, monad-logger -any
-                   ,safecopy -any, acid-state -any
+                   conduit -any, http-conduit -any, monad-logger -any, safecopy -any,
+                   acid-state -any
     main-is: demos-blaze.hs
     buildable: True
     hs-source-dirs: Demos
-    other-modules:
+    other-modules: GenerateForm
     ghc-options: -O -iDemos -threaded -rtsopts
+

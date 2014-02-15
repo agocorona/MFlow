@@ -395,10 +395,9 @@ getSource file = liftIO $ cachedByKey file 0 $ do
                 
 colourPrefs= unsafePerformIO readColourPrefs
 
-wiki =  do
-  pagname <- getRestParam `onNothing` return "index"
-  page $
-   (docTypeHtml $ El.head $ El.title << pagname)
+wiki =  page $ do
+    pagname <- getRestParam `onNothing` return "index"
+    (docTypeHtml $ El.head $ El.title << pagname)
         ++> (El.body
         <<<   ( h1 ! At.style "text-align:center" <<<  tFieldEd "editor" (wikip ++pagname ++ "title.html") (fromString pagname))
         **>   tFieldEd "editor" (wikip ++ pagname ++ "body.html") "Enter the body"

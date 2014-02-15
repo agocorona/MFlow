@@ -37,7 +37,7 @@ delEdited, getEdited, setEdited, prependWidget,appendWidget,setWidget
 ,mFieldEd, mField
 
 -- * utility
-,insertForm
+,insertForm, readtField, writetField
 
 
 ) where
@@ -480,7 +480,18 @@ readtField text k= atomically $ do
     Just (TField k v) -> if v /= mempty then return $ fromStrNoEncode $ B.unpack v else return text
     Nothing -> return text
 
-
+-- |
+-- cretates a rich text editor aroun a text field or a text area widget
+--
+-- This code:
+--
+-- page $   p "Insert the text"
+-- >  ++> htmlEdit ["bold","italic"] ""  -- rich text editor with bold and italic buttons
+-- >           (getMultilineText "" <! [("rows","3"),("cols","80")]) <++ br
+-- >  <** submitButton "enter"
+--
+-- Creates a rich text area with bold and italic buttons. The buttons are the ones alled
+-- in the nicEdit editor.
 htmlEdit :: (Monad m, FormInput v) =>  [String] -> UserStr -> View v m a -> View v m a
 htmlEdit buttons jsuser w = do
   id <- genNewId

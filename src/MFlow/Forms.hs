@@ -1330,7 +1330,7 @@ wlabel str w = do
 --                       False -> s{mfSequence= mfSequence s -1}
    ftag "label" str `attrs` [("for",id)] ++> w <! [("id",id)]
 
-getRestParam :: (Read a, Typeable a,Monad m,Functor m, FormInput v) => FlowM v m (Maybe a)
+getRestParam :: (Read a, Typeable a,Monad m,Functor m, FormInput v) => View v m (Maybe a)
 getRestParam= do
   st <- get
   let lpath = mfPath st
