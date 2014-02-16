@@ -11,7 +11,7 @@
 -- |
 --
 -----------------------------------------------------------------------------
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveDataTypeable, ExistentialQuantification #-}
 module GenerateForm (
 
 ) where
@@ -29,27 +29,37 @@ import Debug.Trace
 
 main=runNavigation "nav" $ step $ do
     desc <-  ask $ createForm [] "form"
-    ask$  p << show desc ++> noWidget
---    r <- ask $ generateForm desc
---    ask $ p << (show r) ++> noWidget
+    ask $  p << show desc ++> noWidget
+    ask $ generateForm desc
 
-data WType= Intv | Stringv | TextArea |OptionBox[String]
-          | Combo [String] deriving (Typeable,Read,Show)
 
-class GenerateForm a where
-  generateForm :: [WType] -> a
+data WType = Intv | Stringv | TextArea |OptionBox[String]
+           | Combo [String] deriving (Typeable,Read,Show)
 
-instance (GenerateForm a, GenerateForm b)=> GenerateForm (a,b) where
-  generateForm (f:fs)= (,) <$> generateForm [f] <*> generateForm fs
 
---generateForm (f:fs)= (,) <$> genElem f <*> generateForm fs
--- where
--- genElem  Intv= getInt Nothing
--- genElem  Stringv= getString Nothing
--- genElem TextArea= getMultilineText $ fromString ""
--- OptionBox xs = getSelect (setSelectedOption ""
---                           (p  << "select a option") <|>
---                           firstOf[setOption op  (b <<  op) | op <- xs])
+
+
+
+data Form = forall a.Form (View Html IO a)
+
+generateForm :: [WType] -> View Html IO a
+generateForm xs=
+   case genElems xs of Form f -> f
+
+genElem  Intv= Form $ getInt Nothing
+genElem  Stringv= Form $ getString Nothing
+genElem TextArea= Form $ getMultilineText $ fromString ""
+genElem (OptionBox xs) = Form $ getSelect (setSelectedOption ""
+                           (p  << "select a option") <|>
+                           firstOf[setOption op  (b <<  op) | op <- xs])
+
+
+
+
+genElems (x:xs)=
+    case genElems xs of
+       Form r -> case genElem x of
+        Form r1 ->  Form $ (,) <$> r1 <*> r
 
 createForm desc title'= do
    wdesc <- chooseWidget <++ hr

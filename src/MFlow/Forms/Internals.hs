@@ -1124,6 +1124,7 @@ fromValidated NoParam= error $ "fromValidated : NoParam"
 fromValidated (NotValidated s err)= error $ "fromValidated: NotValidated "++ s
 
 
+
 getParam1 :: (Monad m, MonadState (MFlowState v) m, Typeable a, Read a, FormInput v)
           => String -> Params ->  m (ParamResult v a)
 getParam1 par req =   case lookup  par req of
