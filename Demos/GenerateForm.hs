@@ -24,10 +24,11 @@ import Data.Monoid
 import Data.String
 import Prelude hiding (div)
 import Text.Blaze.Html5.Attributes as At hiding (step)
+import Data.List(nub)
 
---import Debug.Trace
---
---(!>)= flip trace
+import Debug.Trace
+
+(!>)= flip trace
 
 main=do
  userRegister "edituser" "edituser"
@@ -56,6 +57,7 @@ initFormTemplate title= do
       p  "( delete thiss line. Press the save button to save the edits)"
 
   setSessionData ([] :: [WType])
+  setSessionData $ Seq 0
 
 data Result = forall a.(Typeable a, Show a) => Result a deriving (Typeable)
 
@@ -90,8 +92,8 @@ createForm  title= do
  wraw $ h4 "1- login as edituser/edituser, 2- choose form elements, 3- edit the template \
            \4- save the template, 5- Save the form"
  divmenu <<<  (pageFlow "login" wlogin
-  **> do p "when finished,"
-            ++> wlink ("save" :: String) << b  "save the form and continue"
+  **> do br ++> wlink ("save" :: String) << b  "save the form and continue"
+            <++ br <> "(when finished)"
          getSessionData `onNothing` return []
   <** do
        wdesc <- chooseWidget <++ hr
@@ -124,42 +126,51 @@ generateView desc= View $ do
 
 
 chooseWidget=
-       p <<< do wlink ("text":: String)  "text field"
-                ul <<<(li <<< wlink Intv "returning Int"
-                   <|> li <<< wlink Stringv  "returning string")
+       (p $ a ! At.href "/" $ "reset") ++>
+       (p <<< do wlink ("text":: String)  "text field"
+                 ul <<<(li <<< wlink Intv "returning Int"
+                    <|> li <<< wlink Stringv  "returning string"))
        <|> p <<< do wlink TextArea "text area"
        <|> p <<< do
               wlink  ("options" :: String)  "options"
-              ul <<< (OptionBox <$> getOptions "opt" [])
+              ul <<< (OptionBox <$> getOptions "opt" )
 
 
        <|> p <<< do
               wlink ("check" :: String)  "checkBoxes"
-              ul <<< (CheckBoxes <$> getOptions "comb" [])
+              ul <<< (CheckBoxes <$> getOptions "comb" )
 
 
-newtype Options= Options [String] deriving Typeable
+data Options= Options [String] deriving Typeable
 
-getOptions pf ops=  pageFlow pf  $
+getOptions pf =  pageFlow pf  $
 
      do wlink ("enter" ::String) << p  " create"
-        getOptions
-
-    <** do
         ops <- getOptions
-        op <- getString Nothing <! [("size","8"),("placeholder","option")]
-               <** submitButton "add" <++ br
-        let ops'= op:ops
-        setSessionData . Options $ ops'
-        wraw $ mconcat [p << op | op <- ops']
+        setSessionData $ Options []
+        return ops
 
 
     <** do
-        wlink ("del" :: String) << p "delete options"
-        setSessionData $ Options []
+        op <- getString Nothing <! [("size","8"),("placeholder","option")
+                                   ,("value","1")]
+               <** submitButton "add" <++ br
+        mops <- (Just <$> getOptions) <|> return Nothing
+        case mops of
+          Nothing -> setSessionData $ Options []
+          Just ops -> do
+            let ops'= nub $ op:ops
+            setSessionData . Options $ ops'
+            wraw $ mconcat [p << op | op <- ops']
+
+
+
+
 
    where
    getOptions= do
-     Options ops <-  getSessionData `onNothing`  return (Options [])
+     Options ops <- getSessionData `onNothing`  return (Options [])
      return ops
+
+
 
