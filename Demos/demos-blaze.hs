@@ -46,7 +46,7 @@ import TraceSample
 import AcidState
 import SearchCart
 import InitialConfig
-
+import GenerateForm
 
 import Data.TCache.DefaultPersistence
 import Data.ByteString.Lazy.Char8 hiding (index)
