@@ -221,7 +221,7 @@ ask, page, askt, clearEnv, wstateless, pageFlow,
 getString,getInt,getInteger, getTextBox
 ,getMultilineText,getBool,getSelect, setOption,setSelectedOption, getPassword,
 getRadio, setRadio, setRadioActive, wlabel, getCheckBoxes, genCheckBoxes, setCheckBox,
-submitButton,resetButton, whidden, wlink, getRestParam, returning, wform, firstOf, manyOf, wraw, wrender, notValid
+submitButton,resetButton, whidden, wlink, absLink, getRestParam, getParam, returning, wform, firstOf, manyOf, allOf, wraw, wrender, notValid
 -- * FormLet modifiers
 ,validate, noWidget, waction, wcallback, clear, wmodify,
 
@@ -1351,7 +1351,10 @@ getRestParam= do
      
     
 
--- | Creates a link wiget. A link can be composed with other widget elements,
+-- | Creates a link to a the next step within the flow.
+-- A link can be composed with other widget elements.
+--  It can not be broken by its own definition.
+-- It points to the page that created it. 
 wlink :: (Typeable a, Show a, MonadIO m,  FormInput view)
          => a -> view -> View  view m a
 wlink x v= View $ do
@@ -1362,15 +1365,15 @@ wlink x v= View $ do
                                    then unsafeCoerce x
                                    else show x)
           index' =   mfPIndex st
-                 + if linkMatched st then -1 else 0
-           --      + if Just (mfPIndex st)== mfPageIndex st then 1 else 0
+                  + if linkMatched st then -1 else 0
+
 
           index = if index'== 0 then 1 else index'
           lpath = mfPath st
 
           back =  True -- not $ inSync st  || (inSync st && linkMatched st)
 
-      let path=   currentPath back index lpath verb ++ ('/':name)
+          path= currentPath back index lpath verb ++ ('/':name)
                                                                 -- !> (show $ mfPath st)
           toSend = flink path v
 
@@ -1387,8 +1390,18 @@ wlink x v= View $ do
 
       return $ FormElm [toSend] r
 
-
-
+-- Creates an absolute link. While a `wlink` path depend on the page where it is located and
+-- ever points to the code of the page that had it inserted, an absLink point to the first page
+-- in the flow that inserted it. It is useful to create a backtracking in combination with `retry`
+--
+-- >   page $ absLink "here" << p << "here link"
+-- >   page $ p << "second page" ++> wlink () << p << "click here"
+-- >   page $ p << "third page" ++> retry (absLink "here" << p << "will go back")
+--
+-- after navigating to the third page, when
+-- ckicking in the link, will backtrack to the first, and will validate the first link as if the click
+-- where done in the first page. Then the second page would be displayed.
+absLink ref = wcached  (show ref) 0 . wlink ref
 
 -- | When some user interface return some response to the server, but it is not produced by
 -- a form or a link, but for example by an script, @returning@  convert this code into a

@@ -71,7 +71,7 @@ data Options= Wiki | CountI | CountS | Radio
             | Templates | RuntimeTemplates | LoginWidget
             deriving (Bounded, Enum,Read, Show,Typeable)
 
-absLink ref =  wcached  (show ref) 0 . wlink ref
+
 
 
 mainMenu :: View Html IO Options

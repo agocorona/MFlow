@@ -49,8 +49,9 @@ main=do
     ask $  h3 "results of the form:" ++> p << show r ++> noWidget
     return()
 
+type Template= String
 data WType = Intv | Stringv | TextArea |OptionBox[String]
-           | CheckBoxes [String] deriving (Typeable,Read,Show)
+           | CheckBoxes [String] | Form Template [WType] deriving (Typeable,Read,Show)
 
 initFormTemplate title= do
   liftIO $ writetField title $
@@ -58,6 +59,7 @@ initFormTemplate title= do
 
   setSessionData ([] :: [WType])
   setSessionData $ Seq 0
+  setSessionData $ Options []
 
 data Result = forall a.(Typeable a, Show a) => Result a deriving (Typeable)
 
@@ -74,25 +76,21 @@ genElem (OptionBox xs) =
 genElem (CheckBoxes xs) =
     Result <$> getCheckBoxes(firstOf[setCheckBox False x <++ (b << x) | x <- xs])
 
+genElem (Form temp desc)= Result <$> generateForm temp desc
 
 generateForm title xs=
            input ! At.type_ "hidden" ! name "p0" ! value "()"
            ++> template title
            (pageFlow "" $ allOf $ map genElem xs )
 
-allOf xs= manyOf xs `validate` \rs ->
-      if length rs== length xs
-         then return Nothing
-         else return $ Just mempty
-
-
 
 createForm  title= do
- wraw $ h3 "Create a form"
- wraw $ h4 "1- login as edituser/edituser, 2- choose form elements, 3- edit the template \
-           \4- save the template, 5- Save the form"
+ wraw $ do
+   h3 "Create a form"
+   h4 "1- login as edituser/edituser, 2- choose form elements, 3- edit the template \
+      \4- save the template, 5- Save the form"
  divmenu <<<  (pageFlow "login" wlogin
-  **> do br ++> wlink ("save" :: String) << b  "save the form and continue"
+  **> do br ++> wlink ("save" :: String) << b  "Save the form and continue"
             <++ br <> "(when finished)"
          getSessionData `onNothing` return []
   <** do
@@ -123,7 +121,7 @@ generateView desc= View $ do
 
     return $ FormElm [] $ Just ( mconcat render :: Html)
 
-absLink ref = wcached  (show ref) 0 . wlink ref
+
 
 chooseWidget=
        (p $ a ! At.href "/" $ "reset") ++>

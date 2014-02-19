@@ -70,8 +70,5 @@ main  = runNavigation "api" . step . ask $
 
 wint p= wparam p :: View Html IO Int
 
-getParam par= do
-  st <- get
-  r <- getParam1 par $ mfEnv st
-  return $ valToMaybe r
+
 

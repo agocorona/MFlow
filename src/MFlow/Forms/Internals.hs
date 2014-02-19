@@ -1131,6 +1131,12 @@ getParam1 par req =   case lookup  par req of
     Just x1 -> readParam x1 
     Nothing  -> return  NoParam
 
+-- | return the value of a post or get param in the form ?param=value
+getParam par= do
+  st <- get
+  r <- getParam1 par $ mfEnv st
+  return $ valToMaybe r
+  
 readParam :: (Monad m, MonadState (MFlowState v) m, Typeable a, Read a, FormInput v)
            => String -> m (ParamResult v a)
 readParam x1 = r
