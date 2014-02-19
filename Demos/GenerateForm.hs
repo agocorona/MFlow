@@ -54,7 +54,7 @@ data WType = Intv | Stringv | TextArea |OptionBox[String]
 
 initFormTemplate title= do
   liftIO $ writetField title $
-      p  "( delete thiss line. Press the save button to save the edits)"
+      p  "( delete this line. Press the save button to save the edits)"
 
   setSessionData ([] :: [WType])
   setSessionData $ Seq 0
@@ -123,25 +123,30 @@ generateView desc= View $ do
 
     return $ FormElm [] $ Just ( mconcat render :: Html)
 
-
+absLink ref = wcached  (show ref) 0 . wlink ref
 
 chooseWidget=
        (p $ a ! At.href "/" $ "reset") ++>
-       (p <<< do wlink ("text":: String)  "text field"
+
+       (p <<< do absLink ("text":: String)  "text field"
                  ul <<<(li <<< wlink Intv "returning Int"
                     <|> li <<< wlink Stringv  "returning string"))
-       <|> p <<< do wlink TextArea "text area"
+
+       <|> p <<< do absLink TextArea "text area"
+
        <|> p <<< do
-              wlink  ("options" :: String)  "options"
+              absLink ("check" :: String)  "checkBoxes"
+              ul <<< (CheckBoxes <$> getOptions "comb" )
+
+       <|> p <<< do
+              absLink  ("options" :: String)  "options"
               ul <<< (OptionBox <$> getOptions "opt" )
 
 
-       <|> p <<< do
-              wlink ("check" :: String)  "checkBoxes"
-              ul <<< (CheckBoxes <$> getOptions "comb" )
 
+data Options= Options [String]  deriving Typeable
 
-data Options= Options [String] deriving Typeable
+--stop= noWidget
 
 getOptions pf =  pageFlow pf  $
 
@@ -162,10 +167,6 @@ getOptions pf =  pageFlow pf  $
             let ops'= nub $ op:ops
             setSessionData . Options $ ops'
             wraw $ mconcat [p << op | op <- ops']
-
-
-
-
 
    where
    getOptions= do
