@@ -221,7 +221,7 @@ ask, page, askt, clearEnv, wstateless, pageFlow,
 getString,getInt,getInteger, getTextBox
 ,getMultilineText,getBool,getSelect, setOption,setSelectedOption, getPassword,
 getRadio, setRadio, setRadioActive, wlabel, getCheckBoxes, genCheckBoxes, setCheckBox,
-submitButton,resetButton, whidden, wlink, absLink, getRestParam, getParam, returning, wform, firstOf, manyOf, allOf, wraw, wrender, notValid
+submitButton,resetButton, whidden, wlink, absLink, getKeyValueParam, getRestParam, returning, wform, firstOf, manyOf, allOf, wraw, wrender, notValid
 -- * FormLet modifiers
 ,validate, noWidget, waction, wcallback, clear, wmodify,
 

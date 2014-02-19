@@ -1131,8 +1131,8 @@ getParam1 par req =   case lookup  par req of
     Just x1 -> readParam x1 
     Nothing  -> return  NoParam
 
--- | return the value of a post or get param in the form ?param=value
-getParam par= do
+-- | return the value of a post or get param in the form ?param=value&param2=value2...
+getKeyValueParam par= do
   st <- get
   r <- getParam1 par $ mfEnv st
   return $ valToMaybe r

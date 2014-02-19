@@ -59,7 +59,7 @@ initFormTemplate title= do
 
   setSessionData ([] :: [WType])
   setSessionData $ Seq 0
-  setSessionData $ Options []
+
 
 data Result = forall a.(Typeable a, Show a) => Result a deriving (Typeable)
 
@@ -134,42 +134,48 @@ chooseWidget=
 
        <|> p <<< do
               absLink ("check" :: String)  "checkBoxes"
-              ul <<< (CheckBoxes <$> getOptions "comb" )
+              ul <<<  getOptions "comb"
 
        <|> p <<< do
               absLink  ("options" :: String)  "options"
-              ul <<< (OptionBox <$> getOptions "opt" )
+              ul <<<  getOptions "opt"
 
 
 
-data Options= Options [String]  deriving Typeable
 
---stop= noWidget
+stop= noWidget
 
 getOptions pf =  pageFlow pf  $
+     do
+      wlink ("enter" ::String) << p  " create"
+      ops <- getSessionData
+      case ops of
+        Nothing -> stop
+        Just elem -> return elem
 
-     do wlink ("enter" ::String) << p  " create"
-        ops <- getOptions
-        setSessionData $ Options []
-        return ops
 
 
     <** do
         op <- getString Nothing <! [("size","8"),("placeholder","option")
                                    ,("value","1")]
                <** submitButton "add" <++ br
-        mops <- (Just <$> getOptions) <|> return Nothing
-        case mops of
-          Nothing -> setSessionData $ Options []
-          Just ops -> do
-            let ops'= nub $ op:ops
-            setSessionData . Options $ ops'
-            wraw $ mconcat [p << op | op <- ops']
+        mops <- getSessionData
+        ops' <- case (mops,pf) of
+           (Nothing, "comb") -> do setSessionData $CheckBoxes [op] ; return [op]
+           (Nothing, "opt") -> do setSessionData $ OptionBox [op] ; return [op]
+           (Just (OptionBox _), "comb") -> do setSessionData $ CheckBoxes [op] ; return [op]
+           (Just (CheckBoxes _),"opt") -> do setSessionData $ OptionBox [op] ; return [op]
+           (Just (CheckBoxes ops),"comb") -> do
+               let ops'= nub $ op:ops
+               setSessionData . CheckBoxes $ ops'
+               return ops'
+           (Just (OptionBox ops),"opt") ->  do
+               let ops'= nub $ op:ops
+               setSessionData . OptionBox $ ops'
+               return ops'
+        wraw $ mconcat [p << op | op <- ops']
 
-   where
-   getOptions= do
-     Options ops <- getSessionData `onNothing`  return (Options [])
-     return ops
+
 
 
 
