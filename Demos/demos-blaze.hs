@@ -47,7 +47,7 @@ import AcidState
 import SearchCart
 import InitialConfig
 import GenerateForm
-
+import WebService
 import Data.TCache.DefaultPersistence
 import Data.ByteString.Lazy.Char8 hiding (index)
 instance Serializable Int where
@@ -65,6 +65,10 @@ main= do
    syncWrite  $ Asyncronous 120 defaultCheck  1000
    db <- initAcid -- for the AcidState example
    setFilesPath "Demos/"
+   addMessageFlows[
+       ("apirest", wstateless restService),
+       ("apikv", wstateless keyValueService),
+       ("apiparser",wstateless  parserService)]
    runNavigation "" $ do
        setHeader $ stdheader 
        setTimeouts 400 $ 60 * 60

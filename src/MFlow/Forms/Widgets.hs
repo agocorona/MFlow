@@ -1026,8 +1026,8 @@ update method w= do
                ++ "ajaxPostForm('"++id++"');"
                ++ "})\n"
 
-    let r= lookup ("auto"++id) $ mfEnv st           -- !> ("TIMEOUT="++ show t)
-    case r of
+    let r= lookup ("auto"++id) $ mfEnv st         -- !> ("TIMEOUT="++ show t)
+    case r  of
       Nothing -> do
          requires [JScript $ timeoutscript t
                   ,JScript ajaxGetLink

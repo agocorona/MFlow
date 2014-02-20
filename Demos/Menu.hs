@@ -75,7 +75,7 @@ data Options= Wiki | CountI | CountS | Radio
 
 
 mainMenu :: View Html IO Options
-mainMenu=
+mainMenu= pageFlow "" $
   ul<<<(li << a ! href "/" << b "HOME"
    ++> tFieldEd "editor" "othermenu"  "Other menu options"
    **> (li <<<  (absLink Wiki << b "Wiki") )
