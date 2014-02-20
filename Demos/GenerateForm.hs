@@ -118,8 +118,7 @@ generateView desc= View $ do
     FormElm render _ <- runView $ genElem desc
     n'' <- gets mfSequence
     setSessionData $ Seq n''
-
-    return $ FormElm [] $ Just ( mconcat render :: Html)
+    return $ FormElm [] $ Just ( br <> br <> mconcat render :: Html)
 
 
 

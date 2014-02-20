@@ -2,11 +2,11 @@
 module Main where
 
 import MFlow.Wai.Blaze.Html.All
-
+import MFlow.Forms.Internals
 import Control.Monad.State
 import Debug.Trace
 
-(!>)= flip trace
+
 
 stop= noWidget
 
@@ -37,6 +37,18 @@ main1= runNavigation "api" . step $ ask $ do
                      h3 << "http://server/api/prod?t1=[Int]&t2=[Int]"
                   ++> stop
 
+main  = runNavigation "api" . step . asks $
+             do rest "sum"  ; disp $ (+) <$> wint "t1" <*> wint "t2"
+         <|> do rest "prod" ; disp $ (*) <$> wint "t1" <*> wint "t2"
+         <?> do -- blaze Html
+                h1 << "ERROR. API usage:"
+                h3 << "http://server/api/sum?t1=[Int]&t2=[Int]"
+                h3 << "http://server/api/prod?t1=[Int]&t2=[Int]"
+
+
+-- To add to WService.hs  or so --
+
+
 wrestParam = View $ do
    mr <- getRestParam
    return $ FormElm [] mr
@@ -49,23 +61,23 @@ wparam par= View $ do
    mr <- getKeyValueParam par
    return $ FormElm [] mr
 
-
---disp w= View $ do
---   elm@(FormElm f mx) <- runView w
---   case mx of
---     Nothing -> return elm
---     justx@(Just x) -> return $ FormElm (f++[fromStr $ show x]) justx
-
-main  = runNavigation "api" . step . ask $
-             do rest "sum"  ; wrender ((+) <$> wint "t1" <*> wint "t2") **> stop
-         <|> do rest "prod" ; wrender ((*) <$> wint "t1" <*> wint "t2") **> stop
-         <|> do -- blaze Html
-                 h1 << "ERROR. API usage:"
-                 h3 << "http://server/api/sum?t1=[Int]&t2=[Int]"
-                 h3 << "http://server/api/prod?t1=[Int]&t2=[Int]"
-              ++> stop
+disp :: Show a => View Html IO a -> View Html IO ()
+disp w= View $ do
+   elm@(FormElm f mx) <- runView w
+   case mx of
+     Nothing -> return $ FormElm f Nothing
+     justx@(Just x) -> return $ FormElm (f++[fromStr $ show x]) $ return ()
 
 
+
+asks w= ask $ w >> stop
+
+infixl 3 <?>
+(<?>) w v= View $ do
+  r@(FormElm f mx) <- runView w
+  case mx of
+    Nothing -> runView $ v ++> stop
+    Just _ -> return r
 
 wint p= wparam p :: View Html IO Int
 

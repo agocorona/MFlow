@@ -862,7 +862,7 @@ The flow is executed in a loop. When the flow is finished, it is started again
 runFlow :: (FormInput view, MonadIO m)
         => FlowM view m () -> Token -> m () 
 runFlow  f t=
-  loop (startState t) f   t --evalStateT (runSup . runFlowM $ breturn() >>  f)  mFlowState0{mfToken=t,mfEnv= tenv t}  >> return ()  -- >> return ()
+  loop (startState t) f   t 
   where
   loop  s f t = do
     (mt,s) <- runFlowOnce2 s f t
@@ -883,7 +883,7 @@ runFlowOnce1 f t  = runFlowOnce2 (startState t) f t
 
 startState t= mFlowState0{mfToken=t
                    ,mfPath= tpath t
-                   ,mfEnv= tenv t}  -- >>= return . fromFailBack
+                   ,mfEnv= tenv t }  
 
 runFlowOnce2 s f t =
   runStateT (runSup . runFlowM $ do
@@ -897,7 +897,7 @@ runFlowOnce2 s f t =
      s <- get                       -- !> "BackInit"
      case mfTrace s of
        [] -> do
-         modify $ \s -> s{mfEnv=[], newAsk= True}
+         modify $ \s -> s{{-mfEnv=[],-} newAsk= True}
          breturn ()
        tr -> do
 
