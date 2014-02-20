@@ -2,17 +2,17 @@
 module CheckBoxes ( checkBoxes) where
 
 import Data.Monoid
--- #define ALONE -- to execute it alone, uncomment this
+#define ALONE -- to execute it alone, uncomment this
 #ifdef ALONE
 import MFlow.Wai.Blaze.Html.All
-main= runNavigation "" $ transientNav autocomplete1
+main= runNavigation "" $ transientNav checkBoxes
 #else
 import MFlow.Wai.Blaze.Html.All hiding(page)
 import Menu
 #endif
 
 checkBoxes= do
-   r <- page  $ getCheckBoxes(  (setCheckBox False "Red"   <++ b <<  "red")
+   r <- page  $ getCheckBoxes((setCheckBox False "Red"   <++ b <<  "red")
                            <> (setCheckBox False "Green" <++ b <<  "green")
                            <> (setCheckBox False "blue"  <++ b <<  "blue"))
               <** submitButton "submit"

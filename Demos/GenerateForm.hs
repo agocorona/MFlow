@@ -71,16 +71,16 @@ genElem  Stringv=  Result <$> getString Nothing
 genElem TextArea=  Result <$> getMultilineText (fromString "")
 genElem (OptionBox xs) =
     Result <$> getSelect (setSelectedOption ""(p   "select a option") <|>
-               firstOf[setOption op  (b <<  op) | op <- xs])
+               firstOf[setOption op  (fromStr  op) | op <- xs])
 
 genElem (CheckBoxes xs) =
-    Result <$> getCheckBoxes(firstOf[setCheckBox False x <++ (b << x) | x <- xs])
+    Result <$> getCheckBoxes(mconcat[setCheckBox False x <++ (b << x) | x <- xs])
 
 genElem (Form temp desc)= Result <$> generateForm temp desc
 
 generateForm title xs=
            input ! At.type_ "hidden" ! name "p0" ! value "()"
-           ++> template title
+           ++>  template title
            (pageFlow "" $ allOf $ map genElem xs )
 
 
