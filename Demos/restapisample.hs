@@ -8,7 +8,7 @@ import Debug.Trace
 
 
 
-stop= noWidget
+
 
 main2= runNavigation "api" . step $ ask $ do
          op <- getRestParam
@@ -44,10 +44,12 @@ main  = runNavigation "api" . step . asks $
                 h1 << "ERROR. API usage:"
                 h3 << "http://server/api/sum?t1=[Int]&t2=[Int]"
                 h3 << "http://server/api/prod?t1=[Int]&t2=[Int]"
-
+    where
+    asks w= ask $ w >> stop
 
 -- To add to WService.hs  or so --
 
+stop= noWidget
 
 wrestParam = View $ do
    mr <- getRestParam
@@ -70,7 +72,7 @@ disp w= View $ do
 
 
 
-asks w= ask $ w >> stop
+
 
 infixl 3 <?>
 (<?>) w v= View $ do
