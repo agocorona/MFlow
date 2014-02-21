@@ -153,14 +153,14 @@ getOptions pf =
     <** do
        wform $ submitButton "clear" -- wlink ("clear" ::String) "clear"  <++ br
        delSessionData (undefined :: WType)
-       boxid <- getSessionData `onNothing` error "boxid"
-       delParam boxid
+--       boxid <- getSessionData `onNothing` error "boxid"
+--       delParam boxid
 
 
 
     <** do
-        boxid <- getNextId
-        setSessionData boxid
+--        boxid <- getNextId
+--        setSessionData boxid
         op <- wform $ getString Nothing <! [("size","8")
                                    ,("placeholder","option")]
                        <** submitButton "add" <++ br
@@ -184,4 +184,4 @@ getOptions pf =
 
 
 
-delParam par=  modify  $ \s -> s{mfEnv=filter ( (par /=) . fst) $ mfEnv s}
+--delParam par=  modify  $ \s -> s{mfEnv=filter ( (par /=) . fst) $ mfEnv s}
