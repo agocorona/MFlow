@@ -69,6 +69,7 @@ data Options= Wiki | CountI | CountS | Radio
             | DatabaseSamples |PushSamples | ErrorTraces | Flows
             | BasicWidgets | MonadicWidgets | DynamicWidgets | LoginLogout
             | Templates | RuntimeTemplates | LoginWidget
+            | WebService | RestService | KeyValueService | ParserService
             deriving (Bounded, Enum,Read, Show,Typeable)
 
 
@@ -242,27 +243,26 @@ mainMenu= pageFlow "" $
                  <> hr)))
 
   
-   <|> (autoRefresh $ li <<<   do
+   <|> (autoRefresh $ li <<< do
           absLink Templates << b "Runtime templates"
              <++ " Templates and content management modifiable at runtime"
           ul <<<
            (hr
-           ++>(li <<<(absLink RuntimeTemplates  << b "Runtime templates") <! noAutoRefresh
-                 <++ b " Example of form templates and result templates modified at runtime"
-           <|> li <<< (absLink TextEdit     << b  "Content Management")  <! noAutoRefresh
-                 <++ b " Example of content management primitives defined in MFlow.Forms.Widgets"
-                 <>hr)))
+           ++>(li <<< (absLink RuntimeTemplates << b "Runtime templates") <! noAutoRefresh
+                  <++ b " Example of form templates and result templates modified at runtime"
+           <|> li <<< (absLink TextEdit << b "Content Management") <! noAutoRefresh
+                  <++ b " Example of content management primitives defined in MFlow.Forms.Widgets"
+                  <> hr)))
 
-   <|> (autoRefresh $ li <<<   do
+   <|> (autoRefresh $ li <<< do
           absLink LoginLogout << b "Login/logout"
-          ul <<<(hr ++> (li <<< (absLink Login        << b  "login/logout")   <! noAutoRefresh
-                            <++ b " Example of using the login and/or logout"
-                            <> hr)))
+          ul <<< (hr ++> (li <<< (absLink Login << b  "login/logout")   <! noAutoRefresh
+                             <++ b " Example of using the login and/or logout"
+                             <>  hr)))
 
-       )
+   <++ li << (a ! href "/noscript/wiki/webservices" $ b "Web Services"))
+                    
    <|> (El.div ! At.style "display:none" <<< mainMenu1))
-
-
 
 
  -- for compatibility with older paths published that did not have two-step cascaded menus

@@ -13,33 +13,33 @@ import Debug.Trace
 -- mainRest= runNavigation "apirest" . step $ ask $
 
 restService= do
-         op <- getRestParam
-         term1 <- getRestParam
-         term2 <- getRestParam
-         case (op, term1,term2) of
-           (Just  "sum", Just x, Just y) ->  wrender (x + y :: Int) **> stop
-           (Just "prod", Just x, Just y) ->  wrender (x * y) **> stop
-           _  ->do -- blaze Html
-                     h1 << "ERROR. API usage:"
-                     h3 << "http://server/api/sum/[Int]/[Int]"
-                     h3 << "http://server/api/prod/[Int]/[Int]"
-                  ++> stop
+     op <- getRestParam
+     term1 <- getRestParam
+     term2 <- getRestParam
+     case (op, term1,term2) of
+       (Just  "sum", Just x, Just y) ->  wrender (x + y :: Int) **> stop
+       (Just "prod", Just x, Just y) ->  wrender (x * y) **> stop
+       _  ->do -- blaze Html
+                 h1 << "ERROR. API usage:"
+                 h3 << "http://server/api/sum/[Int]/[Int]"
+                 h3 << "http://server/api/prod/[Int]/[Int]"
+              ++> stop
 
 
 --mainService= runNavigation "apikv" . step $ ask $
 
 keyValueService= do
-         op <- getRestParam
-         term1 <- getKeyValueParam "t1"
-         term2 <- getKeyValueParam "t2"
-         case (op, term1,term2) of
-           (Just  "sum", Just x, Just y) ->  wrender (x + y :: Int) **> stop
-           (Just "prod", Just x, Just y) ->  wrender (x * y) **> stop
-           _  ->do -- blaze Html
-                     h1 << "ERROR. API usage:"
-                     h3 << "http://server/api/sum?t1=[Int]&t2=[Int]"
-                     h3 << "http://server/api/prod?t1=[Int]&t2=[Int]"
-                  ++> stop
+     op <- getRestParam
+     term1 <- getKeyValueParam "t1"
+     term2 <- getKeyValueParam "t2"
+     case (op, term1,term2) of
+       (Just  "sum", Just x, Just y) ->  wrender (x + y :: Int) **> stop
+       (Just "prod", Just x, Just y) ->  wrender (x * y) **> stop
+       _  ->do -- blaze Html
+                 h1 << "ERROR. API usage:"
+                 h3 << "http://server/api/sum?t1=[Int]&t2=[Int]"
+                 h3 << "http://server/api/prod?t1=[Int]&t2=[Int]"
+              ++> stop
 
 --mainParser  = runNavigation "apiparser" . step . asks $
 -- or
@@ -48,12 +48,12 @@ keyValueService= do
 --  wait $ run 80 waiMessageFlow
 
 parserService=
-             do rest "sum"  ; disp $ (+) <$> wint "t1" <*> wint "t2"
-         <|> do rest "prod" ; disp $ (*) <$> wint "t1" <*> wint "t2"
-         <?> do -- blaze Html
-                h1 << "ERROR. API usage:"
-                h3 << "http://server/api/sum?t1=[Int]&t2=[Int]"
-                h3 << "http://server/api/prod?t1=[Int]&t2=[Int]"
+         do rest "sum"  ; disp $ (+) <$> wint "t1" <*> wint "t2"
+     <|> do rest "prod" ; disp $ (*) <$> wint "t1" <*> wint "t2"
+     <?> do -- blaze Html
+            h1 << "ERROR. API usage:"
+            h3 << "http://server/api/sum?t1=[Int]&t2=[Int]"
+            h3 << "http://server/api/prod?t1=[Int]&t2=[Int]"
     where
     asks w= ask $ w >> stop
 

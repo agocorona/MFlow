@@ -18,12 +18,10 @@ module GenerateForm (
 import MFlow.Wai.Blaze.Html.All
 import MFlow.Forms.Internals
 import Control.Monad.State
-import Unsafe.Coerce
 import Data.Typeable
 import Data.Monoid
-import Data.String
 import Prelude hiding (div)
-import Text.Blaze.Html5.Attributes as At hiding (step)
+import Text.Blaze.Html5.Attributes as At hiding (step,span)
 import Data.List(nub)
 
 import Debug.Trace
@@ -40,7 +38,7 @@ main=do
 
     desc <-  ask $ createForm title
 
-    r <- ask $ b "This is the form created asking for input"
+    r <- ask $ b "This is the form created, asking for input"
            ++> hr
            ++> generateForm title desc
            <++ br
@@ -68,20 +66,20 @@ instance Show Result where
 
 genElem  Intv= Result <$> getInt Nothing
 genElem  Stringv=  Result <$> getString Nothing
-genElem TextArea=  Result <$> getMultilineText (fromString "")
+genElem TextArea=  Result <$> getMultilineText  ""
 genElem (OptionBox xs) =
     Result <$> getSelect (setSelectedOption ""(p   "select a option") <|>
                firstOf[setOption op  (fromStr  op) | op <- xs])
 
 genElem (CheckBoxes xs) =
-    Result <$> getCheckBoxes(mconcat[setCheckBox False x <++ (b << x) | x <- xs])
+    Result <$> getCheckBoxes(mconcat[setCheckBox False x <++ (fromStr x) | x <- xs])
 
 genElem (Form temp desc)= Result <$> generateForm temp desc
 
 generateForm title xs=
-           input ! At.type_ "hidden" ! name "p0" ! value "()"
-           ++>  template title
-           (pageFlow "" $ allOf $ map genElem xs )
+   input ! At.type_ "hidden" ! name "p0" ! value "()"
+   ++>  template title
+   (pageFlow "" $ allOf $ map genElem xs )
 
 
 createForm  title= do
@@ -89,8 +87,9 @@ createForm  title= do
    h3 "Create a form"
    h4 "1- login as edituser/edituser, 2- choose form elements, 3- edit the template \
       \4- save the template, 5- Save the form"
- divmenu <<<  (pageFlow "login" wlogin
-  **> do br ++> wlink ("save" :: String) << b  "Save the form and continue"
+ divmenu <<<  ( pageFlow "login" wlogin
+  **>
+      do br ++> wlink ("save" :: String) << b  "Save the form and continue"
             <++ br <> "(when finished)"
          getSessionData `onNothing` return []
   <** do
@@ -101,7 +100,7 @@ createForm  title= do
        fieldview <- generateView  wdesc
        liftIO . writetField title $ content <> br <> fieldview
        )
- <**  divbody <<<  edTemplate "edituser" title (return ())
+ <**  divbody <<<  wform (edTemplate "edituser" title (return ()) )
 
 divbody= div ! At.style "float:right;width:65%"
 divmenu= div ! At.style "background-color:#EEEEEE;float:left\
@@ -144,24 +143,32 @@ chooseWidget=
 
 stop= noWidget
 
-getOptions pf =  pageFlow pf  $
+getOptions pf =
      do
-      wlink ("enter" ::String) << p  " create"
+      wform $ submitButton "create "
       ops <- getSessionData
       case ops of
         Nothing -> stop
         Just elem -> return elem
+    <** do
+       wform $ submitButton "clear" -- wlink ("clear" ::String) "clear"  <++ br
+       delSessionData (undefined :: WType)
+       boxid <- getSessionData `onNothing` error "boxid"
+       delParam boxid
 
 
 
     <** do
-        op <- getString Nothing <! [("size","8"),("placeholder","option")
-                                   ,("value","1")]
-               <** submitButton "add" <++ br
+        boxid <- getNextId
+        setSessionData boxid
+        op <- wform $ getString Nothing <! [("size","8")
+                                   ,("placeholder","option")]
+                       <** submitButton "add" <++ br
+
         mops <- getSessionData
         ops' <- case (mops,pf) of
-           (Nothing, "comb") -> do setSessionData $CheckBoxes [op] ; return [op]
-           (Nothing, "opt") -> do setSessionData $ OptionBox [op] ; return [op]
+           (Nothing, "comb") -> do setSessionData $ CheckBoxes [op] ; return [op]
+           (Nothing, "opt")  -> do setSessionData $ OptionBox [op] ; return [op]
            (Just (OptionBox _), "comb") -> do setSessionData $ CheckBoxes [op] ; return [op]
            (Just (CheckBoxes _),"opt") -> do setSessionData $ OptionBox [op] ; return [op]
            (Just (CheckBoxes ops),"comb") -> do
@@ -177,4 +184,4 @@ getOptions pf =  pageFlow pf  $
 
 
 
-
+delParam par=  modify  $ \s -> s{mfEnv=filter ( (par /=) . fst) $ mfEnv s}

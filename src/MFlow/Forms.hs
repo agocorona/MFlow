@@ -1650,8 +1650,9 @@ pageFlow str widget=do
 
        r<- widget <** (modify (\s' -> s'{mfSequence= mfSequence s
                                    ,mfPrefix= mfPrefix s
+                                   ,mfPageIndex=Nothing
                                    }))
-       modify (\s -> s{mfPageIndex=Nothing} )
+--       modify (\s -> s{mfPageIndex=Nothing} )
        return r                                                                                 -- !> ("END PARENT pageflow. prefix="++ str))
 
 
