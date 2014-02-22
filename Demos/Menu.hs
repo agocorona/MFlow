@@ -69,7 +69,7 @@ data Options= Wiki | CountI | CountS | Radio
             | DatabaseSamples |PushSamples | ErrorTraces | Flows
             | BasicWidgets | MonadicWidgets | DynamicWidgets | LoginLogout
             | Templates | RuntimeTemplates | LoginWidget
-            | WebService | RestService | KeyValueService | ParserService
+            | ComplexThings | GenerateForm
             deriving (Bounded, Enum,Read, Show,Typeable)
 
 
@@ -258,6 +258,12 @@ mainMenu= pageFlow "" $
           absLink LoginLogout << b "Login/logout"
           ul <<< (hr ++> (li <<< (absLink Login << b  "login/logout")   <! noAutoRefresh
                              <++ b " Example of using the login and/or logout"
+                             <>  hr)))
+
+   <|> (autoRefresh $ li <<< do 
+          absLink ComplexThings << b "Really complex things" <++ " Reference impementations for GUI-like apps"
+          ul <<< (hr ++> (li <<< (absLink GenerateForm << b  "A form generator and editor")   <! noAutoRefresh
+                             <++ b " Add widgets and edit the layout. Execute the generated form and see the results"
                              <>  hr)))
 
    <++ li << (a ! href "/noscript/wiki/webservices" $ b "Web Services"))

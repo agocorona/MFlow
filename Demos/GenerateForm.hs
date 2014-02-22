@@ -11,9 +11,10 @@
 -- |
 --
 -----------------------------------------------------------------------------
+{-# OPTIONS  -XCPP #-}
 {-# LANGUAGE DeriveDataTypeable, OverloadedStrings, ExistentialQuantification #-}
 module GenerateForm (
-
+genForm
 ) where
 import MFlow.Wai.Blaze.Html.All
 import MFlow.Forms.Internals
@@ -24,32 +25,33 @@ import Prelude hiding (div)
 import Text.Blaze.Html5.Attributes as At hiding (step,span)
 import Data.List(nub)
 
-import Debug.Trace
 
-(!>)= flip trace
 
+#ifdef ALONE
 main=do
  userRegister "edituser" "edituser"
- runNavigation "nav" . step $ do
+ runNavigation "nav" . step $ generateForm
+#endif
 
+
+genForm= do
     let title= "form.html"
-
     initFormTemplate title
 
-    desc <-  ask $ createForm title
+    desc <-  page $ createForm title
 
-    r <- ask $ b "This is the form created, asking for input"
+    r <- page $ b "This is the form created, asking for input"
            ++> hr
            ++> generateForm title desc
            <++ br
            <** pageFlow "button" (submitButton "submit")
 
-    ask $  h3 "results of the form:" ++> p << show r ++> noWidget
+    page $  h3 "results of the form:" ++> p << show r ++> noWidget
     return()
 
 type Template= String
 data WType = Intv | Stringv | TextArea |OptionBox[String]
-           | CheckBoxes [String] | Form Template [WType] deriving (Typeable,Read,Show)
+           | WCheckBoxes [String] | Form Template [WType] deriving (Typeable,Read,Show)
 
 initFormTemplate title= do
   liftIO $ writetField title $
@@ -71,7 +73,7 @@ genElem (OptionBox xs) =
     Result <$> getSelect (setSelectedOption ""(p   "select a option") <|>
                firstOf[setOption op  (fromStr  op) | op <- xs])
 
-genElem (CheckBoxes xs) =
+genElem (WCheckBoxes xs) =
     Result <$> getCheckBoxes(mconcat[setCheckBox False x <++ (fromStr x) | x <- xs])
 
 genElem (Form temp desc)= Result <$> generateForm temp desc
@@ -87,7 +89,7 @@ createForm  title= do
    h3 "Create a form"
    h4 "1- login as edituser/edituser, 2- choose form elements, 3- edit the template \
       \4- save the template, 5- Save the form"
- divmenu <<<  ( pageFlow "login" wlogin
+ divmenu <<<  (  wlogin
   **>
       do br ++> wlink ("save" :: String) << b  "Save the form and continue"
             <++ br <> "(when finished)"
@@ -95,16 +97,15 @@ createForm  title= do
   <** do
        wdesc <- chooseWidget <++ hr
        desc <- getSessionData `onNothing` return []
-       setSessionData $ desc ++ [wdesc]
+       setSessionData $ mappend desc [wdesc]
        content <- liftIO $ readtField  mempty title
        fieldview <- generateView  wdesc
        liftIO . writetField title $ content <> br <> fieldview
        )
- <**  divbody <<<  wform (edTemplate "edituser" title (return ()) )
+  <** divbody <<<  wform (edTemplate "edituser" title (return ()) )
 
 divbody= div ! At.style "float:right;width:65%"
-divmenu= div ! At.style "background-color:#EEEEEE;float:left\
-                 \;margin-left:10px;margin-right:10px;overflow:auto;"
+divmenu= div ! At.style "background-color:#EEEEEE;float:left;margin-left:10px;margin-right:10px;overflow:auto;"
 
 
 newtype Seq= Seq Int deriving (Typeable)
@@ -145,35 +146,32 @@ stop= noWidget
 
 getOptions pf =
      do
-      wform $ submitButton "create "
-      ops <- getSessionData
-      case ops of
-        Nothing -> stop
-        Just elem -> return elem
+      r <- wform $ submitButton "create" <|> submitButton "clear"
+
+      case r of
+        "create" -> do
+          ops <- getSessionData
+          case ops of
+            Nothing -> stop
+            Just elem -> return elem
+        "clear" -> do
+           delSessionData (undefined :: WType)
+           stop
+
     <** do
-       wform $ submitButton "clear" -- wlink ("clear" ::String) "clear"  <++ br
-       delSessionData (undefined :: WType)
---       boxid <- getSessionData `onNothing` error "boxid"
---       delParam boxid
-
-
-
-    <** do
---        boxid <- getNextId
---        setSessionData boxid
         op <- wform $ getString Nothing <! [("size","8")
                                    ,("placeholder","option")]
                        <** submitButton "add" <++ br
 
         mops <- getSessionData
         ops' <- case (mops,pf) of
-           (Nothing, "comb") -> do setSessionData $ CheckBoxes [op] ; return [op]
+           (Nothing, "comb") -> do setSessionData $ WCheckBoxes [op] ; return [op]
            (Nothing, "opt")  -> do setSessionData $ OptionBox [op] ; return [op]
-           (Just (OptionBox _), "comb") -> do setSessionData $ CheckBoxes [op] ; return [op]
-           (Just (CheckBoxes _),"opt") -> do setSessionData $ OptionBox [op] ; return [op]
-           (Just (CheckBoxes ops),"comb") -> do
+           (Just (OptionBox _), "comb") -> do setSessionData $ WCheckBoxes [op] ; return [op]
+           (Just (WCheckBoxes _),"opt") -> do setSessionData $ OptionBox [op] ; return [op]
+           (Just (WCheckBoxes ops),"comb") -> do
                let ops'= nub $ op:ops
-               setSessionData . CheckBoxes $ ops'
+               setSessionData . WCheckBoxes $ ops'
                return ops'
            (Just (OptionBox ops),"opt") ->  do
                let ops'= nub $ op:ops
