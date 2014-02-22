@@ -2,7 +2,7 @@
 module CheckBoxes ( checkBoxes) where
 
 import Data.Monoid
-#define ALONE -- to execute it alone, uncomment this
+-- #define ALONE -- to execute it alone, uncomment this
 #ifdef ALONE
 import MFlow.Wai.Blaze.Html.All
 main= runNavigation "" $ transientNav checkBoxes

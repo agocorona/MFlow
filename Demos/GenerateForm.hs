@@ -33,20 +33,22 @@ main=do
  runNavigation "nav" . step $ generateForm
 #endif
 
+-- page with header
+hpage w = page $ tFieldEd "editor"  "genFormHeader.html" "header" **> w
 
 genForm= do
     let title= "form.html"
     initFormTemplate title
 
-    desc <-  page $ createForm title
+    desc <-  hpage $ createForm title
 
-    r <- page $ b "This is the form created, asking for input"
+    r <- hpage $ b "This is the form created, asking for input"
            ++> hr
            ++> generateForm title desc
            <++ br
            <** pageFlow "button" (submitButton "submit")
 
-    page $  h3 "results of the form:" ++> p << show r ++> noWidget
+    hpage $  h3 "results of the form:" ++> p << show r ++> noWidget
     return()
 
 type Template= String
@@ -125,18 +127,18 @@ generateView desc= View $ do
 chooseWidget=
        (p $ a ! At.href "/" $ "reset") ++>
 
-       (p <<< do absLink ("text":: String)  "text field"
+       (p <<< do wlink ("text":: String)  "text field"
                  ul <<<(li <<< wlink Intv "returning Int"
                     <|> li <<< wlink Stringv  "returning string"))
 
-       <|> p <<< do absLink TextArea "text area"
+       <|> p <<< do wlink TextArea "text area"
 
        <|> p <<< do
-              absLink ("check" :: String)  "checkBoxes"
+              wlink ("check" :: String)  "checkBoxes"
               ul <<<  getOptions "comb"
 
        <|> p <<< do
-              absLink  ("options" :: String)  "options"
+              wlink ("options" :: String)  "options"
               ul <<<  getOptions "opt"
 
 

@@ -112,7 +112,7 @@ main= do
              AcidState        -> step (acidState db)     `showSource` "AcidState.hs"
              InitialConfig -> initialConfig              `showSource` "InitialConfig.hs"
              SearchCart    -> searchCart                `showSource` "SearchCart.hs"
-             GenerateForm  -> step genForm              `showSource` "GenerateForm.hs"
+             GenerateForm  -> step genForm
 
 
 
