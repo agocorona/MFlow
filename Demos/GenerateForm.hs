@@ -27,11 +27,10 @@ import Data.List(nub)
 
 
 
-#ifdef ALONE
 main=do
  userRegister "edituser" "edituser"
- runNavigation "nav" . step $ generateForm
-#endif
+ runNavigation "nav" . step $ genForm
+
 
 -- page with header
 hpage w = page $ tFieldEd "editor"  "genFormHeader.html" "header" **> w
@@ -87,10 +86,6 @@ generateForm title xs=
 
 
 createForm  title= do
- wraw $ do
-   h3 "Create a form"
-   h4 "1- login as edituser/edituser, 2- choose form elements, 3- edit the template \
-      \4- save the template, 5- Save the form"
  divmenu <<<  (  wlogin
   **>
       do br ++> wlink ("save" :: String) << b  "Save the form and continue"
@@ -125,7 +120,7 @@ generateView desc= View $ do
 
 
 chooseWidget=
-       (p $ a ! At.href "/" $ "reset") ++>
+       (p $ a ! At.href "/" $ "home/reset") ++>
 
        (p <<< do wlink ("text":: String)  "text field"
                  ul <<<(li <<< wlink Intv "returning Int"

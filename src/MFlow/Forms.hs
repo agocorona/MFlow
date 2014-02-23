@@ -918,8 +918,8 @@ login' uname setCookieFunc = do
      when (u /= uname) $ do
          let t'= t{tuser= uname}
     --     moveState (twfname t) t t'
-         put st{mfToken= t'}
---         liftIO $ deleteTokenInList t
+         put st{mfToken= t'} 
+         liftIO $ deleteTokenInList t
          liftIO $ addTokenToList t'
          setCookieFunc cookieuser   uname "/"  (Just $ 365*24*60*60)
 

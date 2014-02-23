@@ -128,20 +128,20 @@ instance (Typeable view, Typeable a)
 wlogin :: (MonadIO m,Functor m,FormInput v) => View v m ()
 wlogin= insertForm $ do
    username <- getCurrentUser
-   if username /= anonymous
-         then return username
+   if username /= anonymous  
+         then return username 
          else do
           name <- getString Nothing <! hint "login name" <! size 9 <++ ftag "br" mempty
           pass <- getPassword <! hint "password" <! size 9
                      <++ ftag "br" mempty
                      <** submitButton "login" 
-          val  <- userValidate (name,pass)
+          val  <- userValidate (name,pass)  
           case val of
             Just msg -> notValid msg
-            Nothing  -> login name >> return name
+            Nothing  -> login name >> (return name)
        
-   `wcallback` (\name -> ftag "b" (fromStr $ "logged as " ++ name)
-                     ++>  wlink ("logout" :: String) (ftag "b" $ fromStr " logout"))
+   `wcallback` (\name -> ftag "b" (fromStr $ "logged as " ++ name++ " ")
+                     ++> submitButton "logout") -- wlink ("logout" :: String) (ftag "b" $ fromStr " logout")) 
    `wcallback`  const (logout >> wlogin)
    
 focus = [("onload","this.focus()")]

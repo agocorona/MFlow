@@ -63,7 +63,7 @@ instance Processable Request  where
             p' -> if T.null $ head p' then  reverse(tail  p') else p
 
 
-   puser env = fromMaybe anonymous $ fmap SB.unpack $ lookup ( mk $SB.pack cookieuser) $ requestHeaders env
+   puser env = fromMaybe anonymous $ fmap SB.unpack $ lookup ( mk $ SB.pack cookieuser) $ requestHeaders env
 
    pind env= fromMaybe (error ": No FlowID") $ fmap SB.unpack $ lookup  (mk flow) $ requestHeaders env
    getParams=    mkParams1 . requestHeaders
