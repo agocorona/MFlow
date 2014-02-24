@@ -1131,6 +1131,25 @@ getParam1 par req =   case lookup  par req of
     Just x1 -> readParam x1 
     Nothing  -> return  NoParam
 
+-- Read a segment in the REST path. if it does not match with the type requested
+-- or if there is no remaining segment, it returns Nothing
+getRestParam :: (Read a, Typeable a,Monad m,Functor m,  MonadState (MFlowState v) m, FormInput v) => m (Maybe a)
+getRestParam= do
+  st <- get
+  let lpath = mfPath st
+      index' = mfPIndex st -- + if Just (mfPIndex st)== mfPageIndex st then 1 else 0
+      index = if index'== 0 then 1 else index'
+      name =  lpath !! index
+  if linkMatched st
+   then return Nothing          
+   else case index < length lpath  of
+     True -> do
+          modify $ \s -> s{inSync= True
+                         ,linkMatched= True
+                         ,mfPIndex= index+1 } 
+          fmap valToMaybe $ readParam name
+     False ->  return Nothing
+
 -- | return the value of a post or get param in the form ?param=value&param2=value2...
 getKeyValueParam par= do
   st <- get

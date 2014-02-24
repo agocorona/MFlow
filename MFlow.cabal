@@ -115,6 +115,7 @@ library
                      MFlow.Forms.Admin MFlow.Cookies MFlow.Wai MFlow.Wai.XHtml.All
                      MFlow.Forms.XHtml MFlow.Forms.Blaze.Html MFlow.Forms.Test
                      MFlow.Forms.Widgets MFlow.Forms.Internals
+                     MFlow.Forms.WebApi
     exposed: True
     buildable: True
     hs-source-dirs: src .

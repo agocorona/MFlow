@@ -11,22 +11,40 @@
 -- |
 --
 -----------------------------------------------------------------------------
-
+{-# LANGUAGE DeriveDataTypeable #-}
 module Todo (
 
 ) where
 
-import MFlow.Forms.Wai.Blaze.Html.All
+import MFlow.Wai.Blaze.Html.All
+import Data.TCache.DefaultPersistence
+import Data.ByteString.Lazy.Char8
+import Data.Typeable
 
+import Debug.Trace
+(!>)= flip trace
 
-main= runNavigation "todo" $ transientNav $ page $ witerate do
-        new <- getString Nothing <! [("","Enter new task here")] >>= return . Just
-             `onNothing` return Nothing
-        todos  <- readDBRef rtodos `onNothing` return  []
-        todos' <- case new of
-          Nothing -> return todos
-          Just todo -> do
-              let todos'= todo:todos
-              writeDBRef rtodos  (todos'
-              return todos'
-        dfield . wraw $ ul [li $ todo | todo <- todos']
+newtype Todos= Todos [String] deriving (Read,Show, Typeable)
+
+instance Indexable Todos where key= const "todos"
+instance Serializable Todos where
+  serialize= pack . show
+  deserialize= read . unpack
+
+rtodos= getDBRef "todos"
+
+main= runNavigation "todo" $ step $ page $ do
+     new <- ((do
+              r <- getString Nothing <! [("placeholder","Enter new task here")]
+              return $ Just r)
+            <|> return Nothing)
+     ul <<< do push "append" $ do
+               case new !>  show new of
+                  Nothing -> noWidget
+                  Just todo -> do
+                   liftIO $ atomically $ do
+                    Todos todos  <- readDBRef rtodos `onNothing` return (Todos [])
+
+                    writeDBRef rtodos  . Todos $  todo:todos
+                   wraw $ li << todo
+                   noWidget

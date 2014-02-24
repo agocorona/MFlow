@@ -1,0 +1,91 @@
+-----------------------------------------------------------------------------
+--
+-- Module      :  MFlow.Forms.WebApi
+-- Copyright   :
+-- License     :  BSD3
+--
+-- Maintainer  :  agocorona@gmail.com
+-- Stability   :  experimental
+-- Portability :
+--
+
+--
+-- > parserService :: View Html IO ()
+-- > parserService=
+-- >        do rest "sum"  ; disp $ (+) <$> wint "t1" <*> wint "t2"
+-- >    <|> do rest "prod" ; disp $ (*) <$> wint "t1" <*> wint "t2"
+-- >    <?> do -- blaze Html
+-- >           h1 << "ERROR. API usage:"
+-- >           h3 << "http://server/api/sum?t1=[Int]&t2=[Int]"
+-- >           h3 << "http://server/api/prod?t1=[Int]&t2=[Int]"
+-- >   where
+-- >   asks w= ask $ w >> stop
+-- >   wint p= wparam p :: View Html IO Int
+--
+-- Can be called with:
+--
+-- > mainParser  = runNavigation "apiparser" . step . asks (parserService >> stop)
+--
+-- or
+--
+-- > mainParser =do
+-- >   addMessageFlows[("apiparser",wstateless  parserService)]
+-- >   wait $ run 80 waiMessageFlow
+-----------------------------------------------------------------------------
+
+module MFlow.Forms.WebApi (
+restp, rest, wparam, disp,(<?>)
+) where
+import MFlow.Forms.Internals
+import MFlow.Forms(stop,(++>))
+import Control.Monad.State
+import Data.Typeable
+
+-- | Get the next segment of the REST path. if there is no one or if the data does not match
+-- with the type expected, then ir return invalid.
+--  Therefore a monadic sequence in the View monad will not continue
+restp :: (Monad m,Functor m, FormInput v,Typeable a,Read a) => View v m a
+restp =  View $ do
+   mr <- getRestParam
+   return $ FormElm [] mr
+
+
+
+-- | check that the next rest segment has a certain value. It return invalid otherwise.
+-- therefore a monadic sequence in the View monad will not continue
+rest v= do
+   r <- restp
+   if r==v then return v else modify (\s -> s{mfPIndex= mfPIndex s-1}) >> stop
+
+-- | get a parameter from a GET or POST key-value input.
+wparam par= View $ do
+   mr <- getKeyValueParam par
+   return $ FormElm [] mr
+
+-- | append to the output the result of an expression
+dispv :: (Monad m, FormInput v) => View v m v -> View  v m ()
+dispv w= View $ do
+   FormElm f mx <- runView w
+   case mx of
+     Nothing -> return $ FormElm f Nothing
+     justx@(Just x) -> return $ FormElm (f++[x]) $ return ()
+
+
+-- | append to the output the result of an expression
+disp :: (Monad m, FormInput v, Show a) => View v m a -> View  v m ()
+disp w= View $ do
+   FormElm f mx <- runView w
+   case mx of
+     Nothing -> return $ FormElm f Nothing
+     justx@(Just x) -> return $ FormElm (f++[fromStr $ show x]) $ return ()
+
+-- | error message when a applicative expression do not match
+infixl 3 <?>
+(<?>) w v= View $ do
+  r@(FormElm f mx) <- runView w
+  case mx of
+    Nothing -> runView $ v ++> stop
+    Just _ -> return r
+
+
+

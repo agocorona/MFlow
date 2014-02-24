@@ -122,8 +122,6 @@ waiMessageFlow req1=   do
                    return . Prelude.map (\(x,y) -> (x,fromMaybe "" y)) $ queryString req1
 
 
-
-
      let req = case retcookies of
           [] -> req1{requestHeaders= mkParams (input ++ cookies) ++ requestHeaders req1}  -- !> "REQ"
           _  -> req1{requestHeaders= mkParams ((flow, flowval): input ++ cookies) ++ requestHeaders req1}  --  !> "REQ"

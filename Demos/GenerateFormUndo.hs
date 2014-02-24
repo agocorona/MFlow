@@ -24,7 +24,7 @@ import Data.Monoid
 import Prelude hiding (div)
 import Text.Blaze.Html5.Attributes as At hiding (step,span)
 import Data.List(nub)
-
+import Control.Monad
 
 
 main=do
@@ -39,7 +39,7 @@ genForm= do
     let title= "form.html"
     initFormTemplate title
 
-    desc <-  hpage $ createForm title
+    desc <-  createForm 0 title
 
     r <- hpage $ b "This is the form created, asking for input"
            ++> hr
@@ -55,7 +55,7 @@ data WType = Intv | Stringv | TextArea |OptionBox[String]
            | WCheckBoxes [String] | Form Template [WType] deriving (Typeable,Read,Show)
 
 initFormTemplate title= do
-  liftIO $ writetField title $
+  liftIO $ writetField (title ++ show 1) $
       p  "( delete this line. Press the save button to save the edits)"
 
   setSessionData ([] :: [WType])
@@ -85,21 +85,31 @@ generateForm title xs=
    (pageFlow "" $ allOf $ map genElem xs )
 
 
-createForm  title= do
- divmenu <<<  (  wlogin
-  **>
-      do br ++> wlink ("save" :: String) << b  "Save the form and continue"
-            <++ br <> "(when finished)"
-         getSessionData `onNothing` return []
-  <** do
-       wdesc <- chooseWidget <++ hr
-       desc <- getSessionData `onNothing` return []
-       setSessionData $ mappend desc [wdesc]
-       content <- liftIO $ readtField  mempty title
-       fieldview <- generateView  wdesc
-       liftIO . writetField title $ content <> br <> fieldview
-       )
-  <** divbody <<<  wform (edTemplate "edituser" title (return ()) )
+createForm n title= do
+ desc <- getSessionData `onNothing` return []
+ Seq seq <-getSessionData `onNothing` return (Seq 0)
+ liftIO $ print n
+ r <- hpage $
+    divmenu <<<(wlogin
+       **>
+          do br ++> wlink ("save" :: String) << b  "Save the form and continue"
+                <++ br <> "(when finished)"
+             content <- liftIO $ readtField  (mempty :: Html) (title ++ show n)
+             liftIO . writetField title $ content
+             liftIO $ forM_ [1 .. n] $ \n -> writetField (title ++ show n)  ("" :: Html)
+             Just <$> getSessionData `onNothing` return []
+       <|> do
+           wdesc <- chooseWidget <++ hr
+           setSessionData $ mappend desc [wdesc]
+           content <- liftIO $ readtField  mempty (title ++ show n)
+           fieldview <- generateView  wdesc seq
+           liftIO . writetField (title ++ show (n+1)) $ content <> br <> fieldview
+           return Nothing
+           )
+     <** divbody <<<  wform (edTemplate "edituser" (title ++ show n) (return ()) )
+ case r of
+   Just desc -> return desc
+   Nothing -> createForm (n+1) title
 
 divbody= div ! At.style "float:right;width:65%"
 divmenu= div ! At.style "background-color:#EEEEEE;float:left;margin-left:10px;margin-right:10px;overflow:auto;"
@@ -107,8 +117,7 @@ divmenu= div ! At.style "background-color:#EEEEEE;float:left;margin-left:10px;ma
 
 newtype Seq= Seq Int deriving (Typeable)
 
-generateView desc= View $ do
-    Seq n <- getSessionData `onNothing` return (Seq 0)
+generateView desc n= View $ do
     s <- get
     let n'= if n== 0 then 1 else n
     put s{mfSequence= n'}
@@ -139,7 +148,7 @@ chooseWidget=
 
 
 
-
+stop= noWidget
 
 getOptions pf =
      do

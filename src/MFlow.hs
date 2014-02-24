@@ -886,16 +886,4 @@ mimeTable=[
     ("z",	"application/x-compress")
 
  ]
---
--- -- inspired by Pepe Iborra withLocTH
---locTH :: Q Exp
---locTH = do
---  loc <- qLocation
---  let loc_msg = showLoc loc
---  [|loc_msg |]
---
---showLoc :: Loc -> String
---showLoc Loc{loc_module=mod, loc_filename=filename, loc_start=start} =
---         {- text package <> char '.' <> -}
---         printf "%s (%s). %s" mod filename (show start)
 

@@ -223,7 +223,7 @@ getString,getInt,getInteger, getTextBox
 getRadio, setRadio, setRadioActive, wlabel, getCheckBoxes, genCheckBoxes, setCheckBox,
 submitButton,resetButton, whidden, wlink, absLink, getKeyValueParam, getRestParam, returning, wform, firstOf, manyOf, allOf, wraw, wrender, notValid
 -- * FormLet modifiers
-,validate, noWidget, waction, wcallback, clear, wmodify,
+,validate, noWidget, stop, waction, wcallback, clear, wmodify,
 
 -- * Caching widgets
 cachedWidget, wcached, wfreeze,
@@ -791,13 +791,19 @@ userLogin=
 
 
 
--- | Empty widget that return Nothing. May be used as \"empty boxes\" inside larger widgets.
+-- | Empty widget that does not validate. May be used as \"empty boxes\" inside larger widgets.
 --
 -- It returns a non valid value.
 noWidget ::  (FormInput view,
      Monad m) =>
      View view m a
 noWidget= View . return $ FormElm  [] Nothing
+
+-- | a sinonym of noWidget that can be used in a monadic expression in the View monad does not continue
+stop :: (FormInput view,
+     Monad m) =>
+     View view m a
+stop= noWidget
 
 -- | Render a Show-able  value and return it
 wrender
@@ -1211,7 +1217,7 @@ isparam _= False
 wstateless
   :: (Typeable view,  FormInput view) =>
      View view IO () -> Flow
-wstateless w = transient . runFlow . ask $ w **> noWidget -- loop
+wstateless w = transient . runFlow . ask $ w **> stop -- loop
 --  where
 --  loop= do
 --      ask w
@@ -1330,24 +1336,7 @@ wlabel str w = do
 --                       False -> s{mfSequence= mfSequence s -1}
    ftag "label" str `attrs` [("for",id)] ++> w <! [("id",id)]
 
--- Read a segment in the REST path. if it does not match with the type requested
--- or if there is no remaining segment, it returns Nothing
-getRestParam :: (Read a, Typeable a,Monad m,Functor m,  MonadState (MFlowState v) m, FormInput v) => m (Maybe a)
-getRestParam= do
-  st <- get
-  let lpath = mfPath st
-      index' = mfPIndex st -- + if Just (mfPIndex st)== mfPageIndex st then 1 else 0
-      index = if index'== 0 then 1 else index'
-      name =  lpath !! index
-  if linkMatched st
-   then return Nothing          
-   else case index < length lpath  of
-     True -> do
-          modify $ \s -> s{inSync= True
-                         ,linkMatched= True
-                         ,mfPIndex= index+1 } 
-          fmap valToMaybe $ readParam name
-     False ->  return Nothing
+
      
     
 
