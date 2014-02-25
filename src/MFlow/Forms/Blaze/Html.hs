@@ -36,7 +36,7 @@ infixr 7 <<
 --fromUtf8 = toValue . encodeUtf8 . T.pack
 
 instance FormInput Html where
-    toByteString  =  renderMarkup
+    toByteString  =  renderHtml
     toHttpData = HttpData [contentHtml ] [] . toByteString
     ftag x=  I.Parent (fromString x) (fromString $ "<"++x) (fromString $ "</"++ x ++">")
               -- (mempty :: I.MarkupM () )
