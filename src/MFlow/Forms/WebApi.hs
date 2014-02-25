@@ -1,14 +1,12 @@
 -----------------------------------------------------------------------------
 --
--- Module      :  MFlow.Forms.WebApi
--- Copyright   :
--- License     :  BSD3
+-- A haskell formlet is the combination of a parameter parser plus a writer to generate HTTP
+-- output
 --
--- Maintainer  :  agocorona@gmail.com
--- Stability   :  experimental
--- Portability :
+-- I use this similarity to create parsec-like combinators that use the formlet monad in MFlow
+--(the View monad) to parse the web service parameters and to generate the output.
 --
-
+-- This service below implements a service that sum or multiply two Int-egers.
 --
 -- > parserService :: View Html IO ()
 -- > parserService=

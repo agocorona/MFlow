@@ -12,17 +12,18 @@ import MFlow
 import MFlow.Forms
 import MFlow.Cookies(contentHtml)
 import Data.ByteString.Lazy.Char8
-
+import Data.String
 import Text.Blaze.Html
 import qualified Text.Blaze.Internal as I
 import Text.Blaze.Html5 as St
 import Text.Blaze.Html5.Attributes as At
-import Text.Blaze.Html.Renderer.Utf8 (renderHtml)
+import Text.Blaze.Html.Renderer.Utf8 -- (renderHtml)
 import Control.Monad.Trans
 import Data.Typeable
-import Data.String
 import Data.Monoid
-import Unsafe.Coerce
+import Data.Text.Encoding
+import Data.Text as T
+import Text.Blaze.Internal
 
 -- | used to insert html elements within a tag with the appropriate infix priority for the
 -- other operators used in MFlow. Also it can be used for adding markup to
@@ -32,8 +33,10 @@ import Unsafe.Coerce
 
 infixr 7 <<
 
+--fromUtf8 = toValue . encodeUtf8 . T.pack
+
 instance FormInput Html where
-    toByteString  =  renderHtml
+    toByteString  =  renderMarkup
     toHttpData = HttpData [contentHtml ] [] . toByteString
     ftag x=  I.Parent (fromString x) (fromString $ "<"++x) (fromString $ "</"++ x ++">")
               -- (mempty :: I.MarkupM () )

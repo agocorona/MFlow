@@ -355,6 +355,7 @@ divsample= El.div ! At.style ( "background-color:#FFEEEE;")
 stdheader  c= docTypeHtml $ do
    El.head $ do
      El.title "MFlow examples"
+     El.meta ! content "text/html; charset=UTF-8" ! httpEquiv "content-type"
 --     link ! rel   "stylesheet"
 --          ! type_ "text/css"
 --          ! href ( "http://jqueryui.com/resources/demos/style.css")

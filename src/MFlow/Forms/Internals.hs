@@ -48,7 +48,7 @@ import Data.List
 import System.IO.Unsafe
 import Control.Concurrent.MVar
 import qualified Data.Text as T
-
+import Data.Char
 --
 ---- for traces
 --
@@ -1169,15 +1169,15 @@ readParam x1 = r
  x= getType r
  maybeRead str= do
    let typeofx = typeOf x
-   if typeofx == typeOf  ( undefined :: String)   then return . Validated $ unsafeCoerce  str
-    else if typeofx == typeOf (undefined :: T.Text) then return . Validated . unsafeCoerce  $ T.pack str
+   if typeofx == typeOf  ( undefined :: String)   then
+           return . Validated $ unsafeCoerce str
+    else if typeofx == typeOf (undefined :: T.Text) then
+           return . Validated . unsafeCoerce  $ T.pack str
     else case readsPrec 0 $ str of
               [(x,"")] ->  return $ Validated x
               _ -> do
-
                    let err= inred . fromStr $ "can't read \"" ++ str ++ "\" as type " ++  show (typeOf x)
                    return $ NotValidated str err
-
 
 ---- Requirements
 
@@ -1185,7 +1185,7 @@ readParam x1 = r
 -- | Requirements are javascripts, Stylesheets or server processes (or any instance of the 'Requirement' class) that are included in the
 -- Web page or in the server when a widget specifies this. @requires@ is the
 -- procedure to be called with the list of requirements.
--- Varios widgets in the page can require the same element, MFlow will install it once.
+-- Various widgets in the page can require the same element, MFlow will install it once.
 requires rs =do
     st <- get 
     let l = mfRequirements st
