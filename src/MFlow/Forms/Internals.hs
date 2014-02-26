@@ -31,8 +31,8 @@ import Control.Applicative
 import Data.Monoid
 import Control.Monad.Trans
 import Control.Monad.State
-import qualified Data.ByteString.Lazy.Char8 as B
-import qualified Data.ByteString.Char8 as SB
+import Data.ByteString.Lazy.UTF8  as B hiding (length, foldr, take)
+import qualified Data.ByteString.UTF8 as SB
 import Data.Typeable
 import Data.RefSerialize hiding((<|>))
 import Data.TCache
@@ -49,6 +49,7 @@ import System.IO.Unsafe
 import Control.Concurrent.MVar
 import qualified Data.Text as T
 import Data.Char
+--import Data.String
 --
 ---- for traces
 --
@@ -65,9 +66,9 @@ data FailBack a = BackPoint a | NoBack a | GoBack   deriving (Show,Typeable)
 
 
 instance (Serialize a) => Serialize (FailBack a ) where
-   showp (BackPoint x)= insertString (B.pack iCanFailBack) >> showp x
-   showp (NoBack x)   = insertString (B.pack noFailBack) >> showp x
-   showp GoBack       = insertString (B.pack repeatPlease)
+   showp (BackPoint x)= insertString (fromString iCanFailBack) >> showp x
+   showp (NoBack x)   = insertString (fromString noFailBack) >> showp x
+   showp GoBack       = insertString (fromString repeatPlease)
 
    readp = choice [icanFailBackp,repeatPleasep,noFailBackp]
     where
@@ -667,10 +668,10 @@ setCookie :: MonadState (MFlowState view) m
           -> m ()
 setCookie n v p me=
     modify $ \st -> st{mfCookies= (UnEncryptedCookie
-                                   ( SB.pack n,
-                                     SB.pack v,
-                                     SB.pack p,
-                                     fmap (SB.pack . show) me)):mfCookies st }
+                                   ( SB.fromString n,
+                                     SB.fromString v,
+                                     SB.fromString p,
+                                     fmap (SB.fromString . show) me)):mfCookies st }
 
 setParanoidCookie n v p me = setEncryptedCookie' n v p me paranoidEncryptCookie
 
@@ -679,10 +680,10 @@ setEncryptedCookie n v p me = setEncryptedCookie' n v p me encryptCookie
 setEncryptedCookie' n v p me encFunc=
     modify $ \st -> st{mfCookies =
                           (unsafePerformIO $ encFunc
-                           ( SB.pack n,
-                             SB.pack v,
-                             SB.pack p,
-                             fmap  (SB.pack . show) me)):mfCookies st }
+                           ( SB.fromString n,
+                             SB.fromString v,
+                             SB.fromString p,
+                             fmap  (SB.fromString . show) me)):mfCookies st }
 
 -- | Set an HTTP Response header
 setHttpHeader :: MonadState (MFlowState view) m
@@ -690,7 +691,7 @@ setHttpHeader :: MonadState (MFlowState view) m
           -> SB.ByteString  -- ^ value
           -> m ()
 setHttpHeader n v =
-    modify $ \st -> st{mfHttpHeaders=  (n,v):mfHttpHeaders st }
+    modify $ \st -> st{mfHttpHeaders = nubBy (\ x y -> fst x == fst y) $ (n,v):mfHttpHeaders st }
 
 
 -- | Set
@@ -1128,7 +1129,7 @@ fromValidated (NotValidated s err)= error $ "fromValidated: NotValidated "++ s
 getParam1 :: (Monad m, MonadState (MFlowState v) m, Typeable a, Read a, FormInput v)
           => String -> Params ->  m (ParamResult v a)
 getParam1 par req =   case lookup  par req of
-    Just x1 -> readParam x1 
+    Just x -> readParam x  
     Nothing  -> return  NoParam
 
 -- Read a segment in the REST path. if it does not match with the type requested

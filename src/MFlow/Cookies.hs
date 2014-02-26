@@ -31,7 +31,7 @@ import System.Environment
 --(!>)= flip trace
 
 contentHtml :: (ByteString, ByteString)
-contentHtml= ("Content-Type", "text/html")
+contentHtml= ("Content-Type", "text/html; charset=UTF-8")
 
 type CookieT =  (B.ByteString,B.ByteString,B.ByteString,Maybe B.ByteString)
 
@@ -78,103 +78,8 @@ splitCookies cookies  = f cookies []
           xs5  = B.dropWhile (==' ') xs4
       in  f xs5 ((name,val):r)
 
------------------------------
+----------------------------
 
----------------------------------------------
-
--- %***************************************************************************
--- %*                                                                         *
--- \subsection[CGI-Parser]{Yet another combinator parser library}. chuck of code taken from Erik Meijer
--- %*                                                                         *
--- %***************************************************************************
-
--- NOTE: This is all a little bit of a sledgehammer here for the simple task
--- at hand...
-
--- The parser monad
-
---
---newtype Parser a = Parser (String -> [(a,String)])
---
---instance Functor Parser where
---   -- map :: (a -> b) -> (Parser a -> Parser b)
---   fmap f (Parser p) = Parser (\inp -> [(f v, out) | (v, out) <- p inp])
---
---instance Monad Parser where
---   -- return :: a -> Parser a
---   return v = Parser (\inp -> [(v,inp)])
---
---   -- >>= :: Parser a -> (a -> Parser b) -> Parser b
---   (Parser p) >>= f = Parser (\inp -> concat [papply (f v) out
---                                             | (v,out) <- p inp])
---
---instance MonadPlus Parser where
---   -- zero :: Parser a
---   mzero = Parser (\_ -> [])
---   -- (++) :: Parser a -> Parser a -> Parser a
---   (Parser p) `mplus` (Parser q) = Parser (\inp -> (p inp ++ q inp))
---       
---
----- Other primitive parser combinators
---
---       
---item :: Parser Char
---item = Parser (\inp -> case inp of
---                     []     -> []
---                     (x:xs) -> [(x,xs)])
---
---force :: Parser a -> Parser a
---force (Parser p) = Parser (\inp -> let x = p inp in
---                             (fst (head x), snd (head x)) :  tail x)
---
---first :: Parser a -> Parser a
---first (Parser p) = Parser (\inp -> case p inp of
---                            []    -> []
---                            (x:_) -> [x])
---
---papply :: Parser a -> String -> [(a,String)]
---papply (Parser p) inp = p inp
---       
---
----- Derived combinators
---
---       
---(+++) :: Parser a -> Parser a -> Parser a
---p +++ q = first (p `mplus` q)
---
---sat :: (Char -> Bool) -> Parser Char
---sat p = do {x <- item; guard (p x); return x}
---
---many :: Parser a -> Parser [a]
---many p = force (many1 p +++ return [])
---
---many1 :: Parser a -> Parser [a]
---many1 p = do {x <- p; xs <- many p; return (x:xs)}
---
---sepby :: Parser a -> Parser b -> Parser [a]
---p `sepby` sep = (p `sepby1` sep) +++ return []
---
---sepby1 :: Parser a -> Parser b -> Parser [a]
---p `sepby1` sep = do x  <- p
---                    xs <- many (do {sep; p})
---                    return(x:xs)
---
---char :: Char -> Parser Char
---char x = sat (x==)
---
---alphanum :: Parser Char
---alphanum = sat (\c -> isAlphaNum c || c == '@' || c =='\'' )    -- Added @ as a valid character
---
---string :: String -> Parser String
---string ""     = return ""
---string (x:xs) = do char x
---                   string xs
---                   return (x:xs)
---
---hexdigit :: Parser Char
---hexdigit = sat isHexDigit
---       
---
 --readEnv :: Parser [(String,String)] 
 readEnv = (do
           n <-  urlEncoded
@@ -204,20 +109,7 @@ hexadecimal = do d1 <- hexDigit
          toInt d | isHexDigit d = (ord d - ord 'A') + 10
          toInt d                = error ("hex2int: illegal hex digit " ++ [d])
 
---type HexString = String
 
---hex2int :: HexString -> Int
---hex2int ds = Prelude.foldl (\n d -> n*16+d) 0 (Prelude.map (toInt . toUpper) ds)
---   where toInt d | isDigit d    =  ord d - ord '0'
---         toInt d | isHexDigit d = (ord d - ord 'A') + 10
---         toInt d                = error ("hex2int: illegal hex digit " ++ [d])
-
-
---urlDecode :: String -> [([(String, String)],String)]
---urlDecode str= case parse readEnv "" str of  -- let Parser p= readEnv in  p str
---                     Left err  -> error $ "urlDecode: decode  error: " ++ show err
---                     Right r  ->   r
---               !> ("decode="++str)
 
 decryptCookie :: Cookie -> IO Cookie
 decryptCookie c@(UnEncryptedCookie _) = return c

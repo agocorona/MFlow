@@ -21,7 +21,8 @@ import Control.Monad(when)
 
 import qualified Data.ByteString.Lazy.Char8 as B(empty,pack, unpack, length, ByteString,tail)
 import Data.ByteString.Lazy(fromChunks)
-import qualified Data.ByteString.Char8 as SB
+import Data.ByteString.UTF8  hiding (span)
+import qualified Data.ByteString as SB
 import Control.Concurrent(ThreadId(..))
 import System.IO.Unsafe
 import Control.Concurrent.MVar
@@ -48,8 +49,8 @@ import System.Time
 import qualified Data.Text as T
 
 
---import Debug.Trace
---(!>) = flip trace
+import Debug.Trace
+(!>) = flip trace
 
 flow=  "flow"
 
@@ -63,13 +64,13 @@ instance Processable Request  where
             p' -> if T.null $ head p' then  reverse(tail  p') else p
 
 
-   puser env = fromMaybe anonymous $ fmap SB.unpack $ lookup ( mk $ SB.pack cookieuser) $ requestHeaders env
+   puser env = fromMaybe anonymous $ fmap toString $ lookup ( mk $ fromString cookieuser) $ requestHeaders env
 
-   pind env= fromMaybe (error ": No FlowID") $ fmap SB.unpack $ lookup  (mk flow) $ requestHeaders env
+   pind env= fromMaybe (error ": No FlowID") $ fmap toString $ lookup  (mk flow) $ requestHeaders env
    getParams=    mkParams1 . requestHeaders
      where
      mkParams1 = Prelude.map mkParam1
-     mkParam1 ( x,y)= (SB.unpack $ original  x, SB.unpack y)
+     mkParam1 ( x,y)= (toString $ original  x, toString y)
 
 --   getServer env= serverName env
 --   getPath env= pathInfo env
@@ -111,7 +112,7 @@ waiMessageFlow req1=   do
 -- #else
 --                   inp <- liftIO $ runResourceT (requestBody req1 $$ CList.consume)
 -- #endif
-                   return . parseSimpleQuery $ SB.concat inp
+                   return . parseSimpleQuery $ SB.concat inp !>  show inp
 
 
 
@@ -123,7 +124,7 @@ waiMessageFlow req1=   do
 
 
      let req = case retcookies of
-          [] -> req1{requestHeaders= mkParams (input ++ cookies) ++ requestHeaders req1}  -- !> "REQ"
+          [] -> req1{requestHeaders= mkParams (input  ++ cookies) ++ requestHeaders req1}  -- !> "REQ"
           _  -> req1{requestHeaders= mkParams ((flow, flowval): input ++ cookies) ++ requestHeaders req1}  --  !> "REQ"
 
 

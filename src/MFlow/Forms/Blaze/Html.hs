@@ -11,8 +11,8 @@ module MFlow.Forms.Blaze.Html where
 import MFlow
 import MFlow.Forms
 import MFlow.Cookies(contentHtml)
-import Data.ByteString.Lazy.Char8
-import Data.String
+import Data.ByteString.Lazy.UTF8
+import qualified Data.String as S
 import Text.Blaze.Html
 import qualified Text.Blaze.Internal as I
 import Text.Blaze.Html5 as St
@@ -21,8 +21,8 @@ import Text.Blaze.Html.Renderer.Utf8 -- (renderHtml)
 import Control.Monad.Trans
 import Data.Typeable
 import Data.Monoid
-import Data.Text.Encoding
-import Data.Text as T
+--import Data.Text.Encoding
+--import Data.Text as T
 import Text.Blaze.Internal
 
 -- | used to insert html elements within a tag with the appropriate infix priority for the
@@ -35,37 +35,38 @@ infixr 7 <<
 
 --fromUtf8 = toValue . encodeUtf8 . T.pack
 
+
 instance FormInput Html where
     toByteString  =  renderHtml
-    toHttpData = HttpData [contentHtml ] [] . toByteString
-    ftag x=  I.Parent (fromString x) (fromString $ "<"++x) (fromString $ "</"++ x ++">")
+    toHttpData = HttpData [contentHtml] [] . toByteString
+    ftag x=  I.Parent (S.fromString x) (S.fromString $ "<" ++ x) (S.fromString $ "</"++ x ++">")
               -- (mempty :: I.MarkupM () )
 
-    inred =  b ! At.style (fromString "color:red")
+    inred =  b ! At.style  "color:red"
 
     finput n t v f c=
        let
-        tag= input ! type_ (fromString t) ! name  (fromString n) !value  (fromString v)
-        tag1= if f then tag  ! checked (fromString "") else tag
-       in case c of Just s -> tag1 ! onclick  (fromString s) ; _ -> tag1
+        tag= input ! type_ (toValue t) ! name  (toValue n) !value (toValue v)
+        tag1= if f then tag  ! checked (toValue ("" ::String)) else tag
+       in case c of Just s -> tag1 ! onclick  (toValue s) ; _ -> tag1
 
-    ftextarea nam text=  textarea ! name  (fromString nam) <<  text
+    ftextarea nam text=  textarea ! name  (toValue nam) <<  text
 
-    fselect nam list = select ! name  (fromString nam) << list
+    fselect nam list = select ! name  (toValue nam) << list
     foption  name v msel=
-      let tag=  option ! value  (fromString name)  <<  v
-      in if msel then tag ! selected (fromString "") else tag
+      let tag=  option ! value  (toValue name)  <<  v
+      in if msel then tag ! selected (toValue ("" ::String)) else tag
 
 
-    formAction action form = St.form ! At.action  (fromString action) ! method  (fromString "post") $ form
+    formAction action form = St.form !  acceptCharset "UTF-8" ! At.action  (toValue action) ! method  (toValue ("post" :: String)) $ form
 
     fromStr= toMarkup
     fromStrNoEncode  = preEscapedToMarkup
-    flink  v str = a ! href  (fromString  v) << str
+    flink  v str = a ! href  (toValue  v) << str
 
     attrs tag  [] = tag
     attrs tag ((n,v):attribs) =
-       let tag'= tag ! (customAttribute $ stringTag n) (fromString v)
+       let tag'= tag ! (customAttribute $ stringTag n) (toValue v)
        in attrs tag' attribs
 
 

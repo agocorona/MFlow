@@ -258,6 +258,7 @@ cachedWidget, wcached, wfreeze,
 ,goingBack,returnIfForward, breturn, preventGoingBack, compensate, onBacktrack, retry
 
 -- * Setting parameters
+,setHttpHeader
 ,setHeader
 ,addHeader
 ,getHeader
@@ -297,7 +298,9 @@ import Data.TCache.Memoization
 import MFlow
 import MFlow.Forms.Internals
 import MFlow.Cookies
-import Data.ByteString.Lazy.Char8 as B(ByteString,cons,pack,unpack,append,empty,fromChunks)
+import Data.ByteString.Lazy as B(ByteString,cons,append,empty,fromChunks)
+import Data.ByteString.Lazy.UTF8 hiding (length, take)
+import qualified Data.String as S
 import qualified Data.Text as T
 import Data.Text.Encoding
 import Data.List
@@ -318,7 +321,7 @@ import qualified Data.Map as M
 import System.IO.Unsafe
 import Data.Char(isNumber,toLower)
 import Network.HTTP.Types.Header
-import Data.String
+
 
 -- | Validates a form or widget result against a validating procedure
 --
@@ -879,7 +882,7 @@ userWidget' muser formuser login1Func = do
 
    val mu (Just us, Just p)=
       if isNothing mu || isJust mu && fromJust mu == fst us
-        then  if  length p > 0 && snd us== p
+        then  if  Data.List.length p > 0 && snd us== p
                   then return Nothing
                   else return . Just $ fromStr "The passwords do not match"
         else return . Just $ fromStr "wrong user for the operation"
@@ -912,7 +915,7 @@ paranoidLogin uname = login' uname setParanoidCookie
 encryptedLogin uname = login' uname setEncryptedCookie
 
 login'
-  :: (Num a1, IsString a, MonadIO m,
+  :: (Num a1, S.IsString a, MonadIO m,
       MonadState (MFlowState view) m) =>
      String -> (String -> String -> a -> Maybe a1 -> m ()) -> m ()
 login' uname setCookieFunc = do
@@ -938,7 +941,7 @@ encryptedLogout = logout' setEncryptedCookie
 
 -- | logout. The user is reset to the `anonymous` user
 logout'
-  :: (Num a1, Data.String.IsString a, MonadIO m,
+  :: (Num a1,S.IsString a, MonadIO m,
       MonadState (MFlowState view) m) =>
      (String -> [Char] -> a -> Maybe a1 -> m ()) -> m ()
 logout' setCookieFunc = do
@@ -1199,7 +1202,7 @@ nextMessage = do
             fs= fst $ head req
             parms= (case findIndex (\p -> fst p == fs)  params of
                       Nothing -> params
-                      Just  i -> take i params)
+                      Just  i -> Data.List.take i params)
                     ++  req
         in parms
 --                 !> "IN PAGE FLOW"  !>  ("parms=" ++ show parms )
@@ -1320,7 +1323,7 @@ ajaxSend cmd=  View $ do
                (Just id, Just v2) -> do
                     return $ FormElm []  . Just  $ read v2
    where
-   readEvalLoop t id v = "doServer('"<> pack (twfname t)<>"','"<> pack id<>"',"<>v<>");" :: ByteString
+   readEvalLoop t id v = "doServer('"<> fromString (twfname t)<>"','"<> fromString id<>"',"<>v<>");" :: ByteString
 
 -- | Like @ajaxSend@ but the result is ignored
 ajaxSend_
@@ -1369,7 +1372,7 @@ wlink x v= View $ do
 
       r <- if linkMatched st then return Nothing -- only a link match per page or monadic sentence in page
            else
-             case  index < length lpath && name== lpath !! index   of
+             case  index < Data.List.length lpath && name== lpath !! index   of
              True -> do
                   modify $ \s -> s{inSync= True
                                  ,linkMatched= True, mfPIndex= index+1 }
@@ -1611,8 +1614,8 @@ instance FormInput  ByteString  where
 
 
     formAction action form = btag "form" [("action", action),("method", "post")]  form
-    fromStr = pack
-    fromStrNoEncode= pack
+    fromStr = fromString
+    fromStrNoEncode= fromString
 
     flink  v str = btag "a" [("href",  v)]  str
 
@@ -1654,10 +1657,10 @@ pageFlow str widget=do
 
 
 
-acum map []= map
-acum map (x:xs)  =
-  let map' = case M.lookup x map of
-                 Nothing -> M.insert  x 1 map
-                 Just n  -> M.insert  x (n+1) map
-  in acum map' xs
+--acum map []= map
+--acum map (x:xs)  =
+--  let map' = case M.lookup x map of
+--                 Nothing -> M.insert  x 1 map
+--                 Just n  -> M.insert  x (n+1) map
+--  in acum map' xs
 

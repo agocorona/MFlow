@@ -1,8 +1,14 @@
-
+{-# OPTIONS -XCPP #-}
 module IncreaseInt ( clickn) where
 
+#define ALONE
+#ifdef ALONE
+import MFlow.Wai.Blaze.Html.All 
+main= runNavigation "" . transientNav $ clickn 0
+#else
 import MFlow.Wai.Blaze.Html.All hiding(page)
 import Menu
+#endif
 
 -- |+| add a widget before and after another and return both results.
 -- in this case, a link wraps a form field
@@ -17,5 +23,3 @@ clickn n= do
     (Just _,_) -> return ()  --  page  $ wlink () << p << "thanks"
     (_, Just n') -> clickn $ n'+1
 
--- to run it alone, change page by page  and uncomment this:
---main= runNavigation "" $ transientNav sumWidget
