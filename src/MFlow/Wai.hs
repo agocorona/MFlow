@@ -22,7 +22,7 @@ import Control.Monad(when)
 import qualified Data.ByteString.Lazy.Char8 as B(empty,pack, unpack, length, ByteString,tail)
 import Data.ByteString.Lazy(fromChunks)
 import Data.ByteString.UTF8  hiding (span)
-import qualified Data.ByteString as SB
+import qualified Data.ByteString as SB hiding (pack, unpack)
 import Control.Concurrent(ThreadId(..))
 import System.IO.Unsafe
 import Control.Concurrent.MVar
@@ -49,8 +49,8 @@ import System.Time
 import qualified Data.Text as T
 
 
-import Debug.Trace
-(!>) = flip trace
+--import Debug.Trace
+--(!>) = flip trace
 
 flow=  "flow"
 
@@ -112,7 +112,7 @@ waiMessageFlow req1=   do
 -- #else
 --                   inp <- liftIO $ runResourceT (requestBody req1 $$ CList.consume)
 -- #endif
-                   return . parseSimpleQuery $ SB.concat inp !>  show inp
+                   return . parseSimpleQuery $ SB.concat inp
 
 
 

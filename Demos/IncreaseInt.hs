@@ -1,7 +1,7 @@
 {-# OPTIONS -XCPP #-}
 module IncreaseInt ( clickn) where
 
-#define ALONE
+-- #define ALONE
 #ifdef ALONE
 import MFlow.Wai.Blaze.Html.All 
 main= runNavigation "" . transientNav $ clickn 0

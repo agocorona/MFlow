@@ -45,7 +45,7 @@ import MFlow
 import MFlow.Forms
 import MFlow.Forms.Internals
 import Data.Monoid
-import qualified Data.ByteString.Lazy.Char8 as B
+import Data.ByteString.Lazy.UTF8 as B hiding (length,span)
 import Control.Monad.Trans
 import Data.Typeable
 import Data.List
@@ -218,7 +218,7 @@ modifyWidget selector modifier  w = View $ do
 -- and the list of edited widgets are deleted.
 --
 -- >    id1<- genNewId
--- >    let sel= "$('#" <>  B.pack id1 <> "')"
+-- >    let sel= "$('#" <>  fromString id1 <> "')"
 -- >    callAjax <- ajax . const $ prependWidget sel wn
 -- >    let installevents= "$(document).ready(function(){\
 -- >              \$('#clickelem').click(function(){"++callAjax "''"++"});})"
@@ -287,7 +287,7 @@ wEditList holderview w xs addId = do
     let ws=  map (w . Just) xs
         wn=  w Nothing
     id1<- genNewId
-    let sel= "$('#" <>  B.pack id1 <> "')"
+    let sel= "$('#" <>  fromString id1 <> "')"
     callAjax <- ajax . const $ prependWidget sel wn
     let installevents= "$(document).ready(function(){\
               \$('#"++addId++"').click(function(){"++callAjax "''"++"});})"
@@ -311,7 +311,7 @@ wEditList holderview w xs addId = do
 --     -> View v IO a
 --wpush  holder modifier addId expr w = do
 --    id1 <- genNewId
---    let sel= "$('#" <>  B.pack id1 <> "')"
+--    let sel= "$('#" <>  fromString id1 <> "')"
 --    callAjax <- ajax $ \s ->  appendWidget sel ( changeMonad $ w s)
 --    let installevents= "$(document).ready(function(){\
 --              \$('#"++addId++"').click(function(){"++callAjax expr ++ "});})"
@@ -351,7 +351,7 @@ wautocomplete mv autocomplete  = do
 
 
     where
-    jaddtoautocomp text1 us= "$('#"<>B.pack text1<>"').autocomplete({ source: " <> B.pack( show us) <> "  });"
+    jaddtoautocomp text1 us= "$('#"<>fromString text1<>"').autocomplete({ source: " <> fromString( show us) <> "  });"
 
 
 -- | Produces a text box. It gives a autocompletion list to the textbox. When return
@@ -380,7 +380,7 @@ wautocompleteEdit
 wautocompleteEdit phold autocomplete  elem values= do
     id1 <- genNewId
     let textx= id1++"text"
-    let sel= "$('#" <> B.pack id1 <> "')"
+    let sel= "$('#" <> fromString id1 <> "')"
     ajaxc <- ajax $ \(c:u) ->
               case c  of
                 'f' -> prependWidget sel (elem $ Just u)
@@ -419,7 +419,7 @@ wautocompleteEdit phold autocomplete  elem values= do
          \ });\
          \});"
 
-    jaddtoautocomp textx us= "$('#"<>B.pack textx<>"').autocomplete({ source: " <> B.pack( show us) <> "  });"
+    jaddtoautocomp textx us= "$('#"<>fromString textx<>"').autocomplete({ source: " <> fromString( show us) <> "  });"
 
 -- | A specialization of 'wutocompleteEdit' which make appear each chosen option with
 -- a checkbox that deletes the element when uncheched. The result, when submitted, is the list of selected elements.
@@ -458,7 +458,7 @@ instance Serializable TField where
 --                  let
 --                      [(k,rest)] =  readsPrec 0 s
 --                      [(content,_)] = readsPrec 0 $ tail rest
---                  in TField k (B.pack content)
+--                  in TField k (fromString content)
 --               _ -> error "not match"
     setPersist =   \_ -> Just filePersist
 
@@ -477,7 +477,7 @@ readtField text k= atomically $ do
    let ref = getDBRef k
    mr <- readDBRef ref
    case mr of
-    Just (TField k v) -> if v /= mempty then return $ fromStrNoEncode $ B.unpack v else return text
+    Just (TField k v) -> if v /= mempty then return $ fromStrNoEncode $ toString v else return text
     Nothing -> return text
 
 -- |
@@ -663,7 +663,7 @@ witerate  w= do
          let js = jsRequirements reqs
          liftIO . sendFlush t $ HttpData
                                 (("Cache-Control", "no-cache, no-store"):mfHttpHeaders st)
-                                (mfCookies st) (B.pack js)
+                                (mfCookies st) (fromString js)
          modify $ \st -> st{mfAutorefresh=True,inSync=True}
          return $ FormElm [] mr
 
@@ -737,10 +737,10 @@ dField w= View $ do
     IteratedId name <- getSessionData `onNothing` return (IteratedId noid)
     let r =  lookup ("auto"++name) env
     if r == Nothing || (name == noid && newAsk st== True)  then do
-       requires [JScriptFile jqueryScript ["$(document).ready(function() {setId('"++id++"','" ++ B.unpack (toByteString $ render)++"')});\n"]]
+       requires [JScriptFile jqueryScript ["$(document).ready(function() {setId('"++id++"','" ++ toString (toByteString $ render)++"')});\n"]]
        return $ FormElm[(ftag "span" render) `attrs` [("id",id)]] mx
      else do
-       requires [JScript $  "setId('"++id++"','" ++ B.unpack (toByteString $ render)++"');\n"]
+       requires [JScript $  "setId('"++id++"','" ++ toString (toByteString $ render)++"');\n"]
        return $ FormElm mempty mx
 
 noid= "noid"
@@ -759,7 +759,7 @@ noid= "noid"
 --    st <- get
 --    let t= mfkillTime st
 --    let env =  mfEnv st
---    let insertResults= "insert('" ++ id ++ "',"++ show (B.unpack $ toByteString render) ++");"
+--    let insertResults= "insert('" ++ id ++ "',"++ show (toString $ toByteString render) ++");"
 --    IteratedId name <- getSessionData `onNothing` return (IteratedId noid)
 --    let r =  lookup ("auto"++name) env           -- !> ("TIMEOUT="++ show t)
 --    if r == Nothing || (name == noid && newAsk st== True)
@@ -838,7 +838,7 @@ template k w= View $ do
 --  let  id = templ
 --  let wrapid=  "wrapper-" ++ id
 --  text <- liftIO $ readtField  (ftag "div" mempty `attrs` [("id",wrapid)])  wrapid
---  let   vwrtext= B.unpack $ toByteString (text `asTypeOf` witness ws)
+--  let   vwrtext= toString $ toByteString (text `asTypeOf` witness ws)
 --
 ----  wrapperEd wrapid vwrtext **>
 --  (ftag "div" <<< elems id wrapid vwrtext) <! [("id",wrapid)]
@@ -860,7 +860,7 @@ template k w= View $ do
 ----              ,"replacewrap('"++ wrapid ++ "','" ++ vwrtext ++ "')",
 --              jsInsertList
 --              ,"$(document).ready(function() {\
---               \insert('" ++ id ++ "',"++ show (map ( B.unpack . toByteString) vs) ++");\n\
+--               \insert('" ++ id ++ "',"++ show (map ( toString . toByteString) vs) ++");\n\
 --               \});"]]
 --
 --    let res = filter isJust $ map (\(FormElm _ r) -> r) forms
@@ -877,7 +877,7 @@ jsInsertList =
 --  wrapperEd :: (FormInput view) => String -> view -> View view IO ()
 --  wrapperEd  wrapid  wrtext = do -- autoRefresh . pageFlow "wrap" $ do
 --        vwrtext <- liftIO $ readtField  (ftag "div" mempty `attrs` [("id",wrapid)])  wrapid
---        let wrtext= B.unpack $ toByteString (vwrtext `asTypeOf` witness)
+--        let wrtext= toString $ toByteString (vwrtext `asTypeOf` witness)
 --        nwrtext<- getString  (Just wrtext)
 --                          <! [("id", wrapid++"-ed")]
 --                   <** submitButton "OK"
@@ -1255,7 +1255,7 @@ push method' wait w= push' . map toLower $ show method'
 --         let t= mfToken st
 --         FormElm form mr <- runView $ insertForm w
 --         st <- get
---         let HttpData ctype c s= toHttpData $ B.pack method <> " " <> toByteString (mconcat form)
+--         let HttpData ctype c s= toHttpData $ fromString method <> " " <> toByteString (mconcat form)
 --         liftIO . sendFlush t $ HttpData (ctype ++ ("Cache-Control", "no-cache, no-store"):mfHttpHeaders st) (mfCookies st ++ c) s
 --         put st{mfAutorefresh=True,inSync=True}
 --         return $ FormElm [] mr

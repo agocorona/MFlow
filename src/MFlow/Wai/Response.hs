@@ -4,8 +4,8 @@ module MFlow.Wai.Response where
 
 import Network.Wai
 import MFlow.Cookies
-import Data.ByteString.Char8 as SB
-import Data.ByteString.Lazy.Char8 as B
+
+import Data.ByteString.Lazy.UTF8 
 import MFlow
 import Data.Typeable
 import Data.Monoid
@@ -14,7 +14,7 @@ import Data.Map as M
 import Data.CaseInsensitive
 import Network.HTTP.Types
 import Control.Workflow(WFErrors(..))
-import Data.String
+--import Data.String
 --import Debug.Trace
 --
 --(!>)= flip trace
@@ -46,11 +46,11 @@ instance ToResponse TResp where
 instance ToResponse Response where
       toResponse = id
 
-instance ToResponse B.ByteString  where
+instance ToResponse ByteString  where
       toResponse x= responseLBS status200 [mkparam contentHtml]  x
 
 instance ToResponse String  where
-      toResponse x= responseLBS status200 [mkparam contentHtml]  $ B.pack x
+      toResponse x= responseLBS status200 [mkparam contentHtml]  $ fromString x
 
 instance  ToResponse HttpData  where
   toResponse (HttpData hs cookies x)= responseLBS status200 (mkParams ( hs <> cookieHeaders cookies)) x
