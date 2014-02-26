@@ -19,8 +19,8 @@ restService= do
        (Just "prod", Just x, Just y) ->  wrender (x * y) **> stop
        _  ->do -- blaze Html
                  h1 << "ERROR. API usage:"
-                 h3 << "http://server/api/sum/[Int]/[Int]"
-                 h3 << "http://server/api/prod/[Int]/[Int]"
+                 h3 << "http://server/apirest/sum/[Int]/[Int]"
+                 h3 << "http://server/apirest/prod/[Int]/[Int]"
               ++> stop
 
 
@@ -35,8 +35,8 @@ keyValueService= do
        (Just "prod", Just x, Just y) ->  wrender (x * y) **> stop
        _  ->do -- blaze Html
                  h1 << "ERROR. API usage:"
-                 h3 << "http://server/api/sum?t1=[Int]&t2=[Int]"
-                 h3 << "http://server/api/prod?t1=[Int]&t2=[Int]"
+                 h3 << "http://server/apikv/sum?t1=[Int]&t2=[Int]"
+                 h3 << "http://server/apikv/prod?t1=[Int]&t2=[Int]"
               ++> stop
 
 --mainParser  = runNavigation "apiparser" . step . asks $
@@ -51,8 +51,8 @@ parserService=
      <|> do rest "prod" ; disp $ (*) <$> wint "t1" <*> wint "t2"
      <?> do -- blaze Html
             h1 << "ERROR. API usage:"
-            h3 << "http://server/api/sum?t1=[Int]&t2=[Int]"
-            h3 << "http://server/api/prod?t1=[Int]&t2=[Int]"
+            h3 << "http://server/apiparser/sum?t1=[Int]&t2=[Int]"
+            h3 << "http://server/apiparser/prod?t1=[Int]&t2=[Int]"
     where
     asks w= ask $ w >> stop
     wint p= wparam p :: View Html IO Int
