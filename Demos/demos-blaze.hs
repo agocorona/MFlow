@@ -70,6 +70,7 @@ main= do
        ("apikv", wstateless keyValueService),
        ("apiparser",wstateless  parserService)]
    runNavigation "" $ do
+       setHttpHeader "Cache-Control" "no-transform,public,max-age=300"
        setHeader $ stdheader 
        setTimeouts 400 $ 60 * 60
 

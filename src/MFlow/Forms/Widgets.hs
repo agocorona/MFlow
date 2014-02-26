@@ -670,6 +670,8 @@ witerate  w= do
    delSessionData $ IteratedId name
    return ret
 
+--    \       url: actionurl+'?bustcache='+ new Date().getTime()+'&auto'+id+'='+ind,\n\
+    
 autoEvalLink = "\nfunction autoEvalLink(id,ind){\n\
     \var id1= $('#'+id);\n\
     \var ida= $('#'+id+' a[class!=\"_noAutoRefresh\"]');\n\
@@ -679,7 +681,7 @@ autoEvalLink = "\nfunction autoEvalLink(id,ind){\n\
     \ var actionurl = $(this).attr('href');\n\
     \ var dialogOpts = {\n\
     \       type: 'GET',\n\
-    \       url: actionurl+'?bustcache='+ new Date().getTime()+'&auto'+id+'='+ind,\n\
+    \       url: actionurl+'?auto'+id+'='+ind,\n\
     \       data: pdata,\n\
     \       success: function (resp) {\n\
     \           eval(resp);\n\
@@ -1040,12 +1042,13 @@ update method w= do
          FormElm form mr <- runView $ insertForm w
          st <- get
          let HttpData ctype c s= toHttpData $ method <> " " <> toByteString (mconcat form)
-         liftIO . sendFlush t $ HttpData (ctype ++ ("Cache-Control", "no-cache, no-store"):mfHttpHeaders st) (mfCookies st ++ c) s
+         liftIO . sendFlush t $ HttpData (ctype ++ {-("Cache-Control", "no-cache, no-store":) -}mfHttpHeaders st) (mfCookies st ++ c) s
          put st{mfAutorefresh=True,inSync=True}
          return $ FormElm [] mr
 
   where
   -- | adapted from http://www.codeproject.com/Articles/341151/Simple-AJAX-POST-Form-and-AJAX-Fetch-Link-to-Modal
+--    \       url: actionurl+'?bustcache='+ new Date().getTime()+'&auto'+id+'=true',\n\
   ajaxGetLink = "\nfunction ajaxGetLink(id){\n\
     \var id1= $('#'+id);\n\
     \var ida= $('#'+id+' a[class!=\"_noAutoRefresh\"]');\n\
@@ -1055,7 +1058,7 @@ update method w= do
     \var actionurl = $(this).attr('href');\n\
     \var dialogOpts = {\n\
     \       type: 'GET',\n\
-    \       url: actionurl+'?bustcache='+ new Date().getTime()+'&auto'+id+'=true',\n\
+    \       url: actionurl+'?auto'+id+'=true',\n\
     \       data: pdata,\n\
     \       success: function (resp) {\n\
     \            var ind= resp.indexOf(' ');\n\
