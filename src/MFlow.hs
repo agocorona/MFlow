@@ -423,8 +423,8 @@ showError wfname token@Token{..} e= do
                logError  msg
                fresp <- getNotFoundResponse
                let admin=  getAdminName
---               sendFlush token . Error $ fresp (tuser== admin)  $  Prelude.concat[ "<br/>"++ s | s <- lines msg]
-               sendFlush token . Error $ fresp True  $  Prelude.concat[ "<br/>"++ s | s <- lines msg]
+               sendFlush token . Error $ fresp (tuser== admin)  $  Prelude.concat[ "<br/>"++ s | s <- lines msg]
+
 
 errorMessage t e u path env=
      "\n---------------------ERROR-------------------------\
