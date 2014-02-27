@@ -158,7 +158,7 @@ mainMenu= pageFlow "" $
                  <++ b " A modal Dialog box with a form within a page flow"
             <> hr)))
 
-   <|> (autoRefresh $ li <<<   do
+   <|> (autoRefresh $ li <<< do
           absLink DatabaseSamples << b  "Database examples"
              <++ " with different backends"
           ul <<<

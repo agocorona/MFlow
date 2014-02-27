@@ -73,7 +73,6 @@ main= do
        setHttpHeader "Cache-Control" "no-transform,public,max-age=300"
        setHeader $ stdheader 
        setTimeouts 400 $ 60 * 60
-
        r <- step . page $   tFieldEd edadmin "head" "set Header" <++ hr
                        **> (El.div ! At.style "float:right" <<<   wlogin)
                        **> (divmenu  <<< br ++>  mainMenu) 

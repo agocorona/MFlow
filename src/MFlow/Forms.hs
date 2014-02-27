@@ -1144,7 +1144,7 @@ ask w =  do
     where
     resetState st st'=
              put st{mfCookies=[]
-                   ,mfHttpHeaders=[]
+                 --  ,mfHttpHeaders=[]
                    ,newAsk= False
                    ,mfToken= mfToken st'
                    ,mfPageIndex= mfPageIndex st'
