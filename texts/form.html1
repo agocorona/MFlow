@@ -1,1 +1,1 @@
-<p>( delete this line. Press the save button to save the edits)</p><br><br><br><textarea name="p1"></textarea>
+<p>( delete this line. Press the save button to save the edits)</p><br><br><br><input type="text" name="p1" value="">

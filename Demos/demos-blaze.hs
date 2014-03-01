@@ -47,8 +47,11 @@ import AcidState
 import SearchCart
 import InitialConfig
 import GenerateForm
+import GenerateFormUndo
 import WebService
 import Data.TCache.DefaultPersistence
+
+
 import Data.ByteString.Lazy.Char8 hiding (index)
 instance Serializable Int where
   serialize= pack . show
@@ -70,7 +73,7 @@ main= do
        ("apikv", wstateless keyValueService),
        ("apiparser",wstateless  parserService)]
    runNavigation "" $ do
-       setHttpHeader "Cache-Control" "no-transform,public,max-age=300"
+       setHttpHeader "Cache-Control" "public,max-age=300"
        setHeader $ stdheader 
        setTimeouts 400 $ 60 * 60
        r <- step . page $   tFieldEd edadmin "head" "set Header" <++ hr
@@ -113,6 +116,7 @@ main= do
              InitialConfig -> initialConfig              `showSource` "InitialConfig.hs"
              SearchCart    -> searchCart                `showSource` "SearchCart.hs"
              GenerateForm  -> step genForm
+             GenerateFormUndo -> step genFormUndo
 
 
 

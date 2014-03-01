@@ -11,7 +11,6 @@
 -- |
 --
 -----------------------------------------------------------------------------
-{-# OPTIONS  -XCPP #-}
 {-# LANGUAGE DeriveDataTypeable, OverloadedStrings, ExistentialQuantification #-}
 module GenerateForm (
 genForm
@@ -36,7 +35,8 @@ main=do
 hpage w = page $ tFieldEd "editor"  "genFormHeader.html" "header" **> w
 
 genForm= do
-    let title= "form.html"
+    id <- getSessionId
+    let title= id++"form.html"
     initFormTemplate title
 
     desc <-  hpage $ createForm title

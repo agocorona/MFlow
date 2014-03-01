@@ -1,12 +1,13 @@
 {-# OPTIONS  -XCPP #-}
 module TestREST where
-import Menu
 import Data.Monoid
 import Data.String
--- #define ALONE -- to execute it alone, uncomment this
+
+-- to execute it alone, uncomment this
+-- #define ALONE
 #ifdef ALONE
 import MFlow.Wai.Blaze.Html.All
-main= runNavigation "" $ transientNav grid
+main= runNavigation "" $ transientNav testREST
 #else
 import MFlow.Wai.Blaze.Html.All hiding(retry, page)
 import Menu

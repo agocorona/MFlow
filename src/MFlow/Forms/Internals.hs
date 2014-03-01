@@ -89,8 +89,7 @@ class MonadState s m => Supervise s m where
    supervise ::    m (FailBack a) -> m (FailBack a)
    supervise= id
 
---instance Monad m => Supervise () m where
---   handle= const $ return ()
+
 
 instance (Supervise s m)=> Monad (Sup  m) where
     fail   _ = Sup . return $ GoBack
@@ -209,7 +208,7 @@ instance  Monad m => Supervise (MFlowState v) (WState v m) where
    supBack st= do
       MFlowState{..} <- get
       put st{ mfEnv= mfEnv,mfToken=mfToken
-            , mfPath=mfPath,mfPIndex= mfPIndex
+            , mfPath=mfPath -- ,mfPIndex= mfPIndex
             , mfData=mfData
             , mfTrace= mfTrace
             , inSync=False,newAsk=False}
@@ -587,6 +586,10 @@ getSessionData =  resp where
       Nothing -> return $ Nothing
  typeResp :: m (Maybe x) -> x
  typeResp= undefined
+
+-- | Return the session identifier
+getSessionId :: MonadState (MFlowState v) m => m String
+getSessionId= gets mfToken >>= return . key
 
 -- | Return the user language. Now it is fixed to "en"
 getLang ::  MonadState (MFlowState view) m => m String

@@ -25,7 +25,7 @@ emptyCart= Cart $ V.fromList [0,0,0]
 shopCart= shopCart1
 
 shopCart1  =  do
-     setHeader  stdheader 
+--     setHeader  stdheader 
 --     setTimeouts 200 $ 60*60   
      prod <-
         step . page $ do

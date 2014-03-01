@@ -280,6 +280,7 @@ cachedWidget, wcached, wfreeze,
 ,WebRequirement(..)
 ,requires
 -- * Utility
+,getSessionId
 ,getLang
 ,genNewId
 ,getNextId
@@ -287,7 +288,6 @@ cachedWidget, wcached, wfreeze,
 ,FailBack
 ,fromFailBack
 ,toFailBack
-,getRawParam
 
 )
 where
@@ -543,8 +543,6 @@ getTextBox
      Maybe a ->  View view m a
 getTextBox ms  = getParam Nothing "text" ms
 
--- | return the value of a parameter from the environment
-getRawParam p=   gets mfEnv  >>=  getParam1 p >>= return . valToMaybe
 
 getParam
   :: (FormInput view,
@@ -1115,13 +1113,13 @@ ask w =  do
 --                                                        !> ("newask="++show (newAsk st'))
 --                                                        !> ("mfPIndex="++ show( mfPIndex st'))
           then do
-            let index = mfPIndex st'
-                nindex= if index== 0 then 1 else index - 1
-            put st'{mfPIndex= nindex}                     -- !> "BACKTRACK"
+--            let index = mfPIndex st'
+--                nindex= if index== 0 then 1 else index - 1
+--            put st'{mfPIndex= nindex}                     -- !> "BACKTRACK"
             fail ""                                       -- !> "FAIL**********"
           else if mfAutorefresh st' then do
                      resetState st st'
-                     FlowM (lift  nextMessage)
+                     FlowM $ lift  nextMessage
                      ask w                                -- !> "EN AUTOREFRESH"
           else do
              reqs <-  FlowM $ lift installAllRequirements     -- !> "REPEAT"
@@ -1129,8 +1127,8 @@ ask w =  do
                  t= mfToken st'
              cont <- case (needForm st') of
                       True ->  do
-                              frm <- formPrefix (mfPIndex st') (twfname t ) st' forms False
-                              return . header $  reqs <> frm
+                               frm <- formPrefix (mfPIndex st') (twfname t ) st' forms False
+                               return . header $  reqs <> frm
                       _    ->  return . header $  reqs <> mconcat  forms
 
              let HttpData ctype c s= toHttpData cont
@@ -1138,9 +1136,12 @@ ask w =  do
 
 
              resetState st st'
+             let path= mfPath st
              FlowM $ lift  nextMessage       -- !> "NEXTMESSAGE"
-
-             ask w
+             path' <- gets mfPath
+             if not $ path `isPrefixOf` path'
+              then fail ""
+              else ask w
     where
     resetState st st'=
              put st{mfCookies=[]
@@ -1170,7 +1171,7 @@ nextMessage = do
          t2= mfSessionTime st
      msg <- liftIO ( receiveReqTimeout t1 t2  t)
      let req=   getParams msg
-         env=   updateParams inPageFlow (mfEnv st) req
+         env=   updateParams inPageFlow (mfEnv st) req  -- !> ("PAGEFLOW="++ show inPageFlow)
          npath= pwfPath msg
          path=  mfPath st
          inPageFlow= case (comparep,mfPageIndex st) of
@@ -1178,9 +1179,7 @@ nextMessage = do
                     _ -> Nothing
          comparep= comparePaths (mfPIndex st) 1 (tail path) (tail npath)
      put st{ mfPath= npath
-           , mfPIndex=  min (mfPIndex st)  comparep  -- case inPageFlow of
---                         Just n -> n
---                         Nothing -> comparep
+--           , mfPIndex=   min (mfPIndex st)  comparep 
 
            , mfPageIndex= inPageFlow -- !> ("pageflow="++ (show $ mfPageIndex st)
                                                       --   ++  " "++show inPageFlow)
@@ -1334,9 +1333,6 @@ wlabel
   :: (Monad m, FormInput view) => view -> View view m a -> View view m a
 wlabel str w = do
    id <- genNewId
---   modify $ \s ->case mfCached s of
---                       True  -> s{mfSeqCache= mfSeqCache s -1}
---                       False -> s{mfSequence= mfSequence s -1}
    ftag "label" str `attrs` [("for",id)] ++> w <! [("id",id)]
 
 
@@ -1377,8 +1373,8 @@ wlink x v= View $ do
                   modify $ \s -> s{inSync= True
                                  ,linkMatched= True, mfPIndex= index+1 }
 
-                  return $ Just x                             -- !> (name ++ "<-" ++show index++ " " ++ show (mfPIndex st))
-             False ->  return Nothing                                      -- !> ( "NOT MATCHED "++name++"<-" ++show index++ " "++(if index < length lpath then lpath !! index else ""))
+                  return $ Just x                             -- !> (name ++ "<-" ++show index++ " " ++ show (mfPIndex st) ++ "lpath=" ++show lpath)
+             False ->  return Nothing                         -- !> ( "NOT MATCHED "++name++"<-" ++show index++ " LP= "++show  lpath)
 
       return $ FormElm [toSend] r
 
@@ -1636,15 +1632,15 @@ pageFlow str widget=do
      if isNothing $ mfPageIndex s
        then do
        put s{mfPrefix= str ++ mfPrefix s
-            ,mfSequence=0
+            ,mfSequence=0 
             ,mfPageIndex= Just $ mfPIndex s
              }                              -- !> ("PARENT pageflow. prefix="++ str)
 
        r<- widget <** (modify (\s' -> s'{mfSequence= mfSequence s
                                    ,mfPrefix= mfPrefix s
-                                   ,mfPageIndex=Nothing
+--                                   ,mfPageIndex=Nothing
                                    }))
---       modify (\s -> s{mfPageIndex=Nothing} )
+       modify (\s -> s{mfPageIndex=Nothing} )
        return r                                                                                 -- !> ("END PARENT pageflow. prefix="++ str))
 
 

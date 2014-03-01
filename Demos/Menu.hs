@@ -69,7 +69,7 @@ data Options= Wiki | CountI | CountS | Radio
             | DatabaseSamples |PushSamples | ErrorTraces | Flows
             | BasicWidgets | MonadicWidgets | DynamicWidgets | LoginLogout
             | Templates | RuntimeTemplates | LoginWidget
-            | ComplexThings | GenerateForm
+            | ComplexThings | GenerateForm | GenerateFormUndo
             deriving (Bounded, Enum,Read, Show,Typeable)
 
 
@@ -262,8 +262,12 @@ mainMenu= pageFlow "" $
 
    <|> (autoRefresh $ li <<< do 
           absLink ComplexThings << b "Really complex things" <++ " Reference impementations for GUI-like apps"
-          ul <<< (hr ++> (li <<< (absLink GenerateForm << b  "A form generator and editor")   <! noAutoRefresh
-                             <++ b " Add widgets and edit the layout. Execute the generated form and see the results"
+          ul <<< (hr
+                 ++> (li <<< (absLink GenerateForm << b  "A form generator and editor")   <! noAutoRefresh
+                             <++ b " Add widgets and edit the layout. Execute the generated form and see the results")
+                 <|> (li <<< (absLink GenerateFormUndo << b "form generator with undo") <! noAutoRefresh
+                             <++ b " The same above application with undo edits thanks to the backtracking mechanism of MFlow"
+
                              <>  hr)))
 
    <++ li << (a ! href "/noscript/wiki/webservices" $ b "Web Services"))
@@ -356,14 +360,16 @@ stdheader  c= docTypeHtml $ do
    El.head $ do
      El.title "MFlow examples"
      El.meta ! content "text/html; charset=UTF-8" ! httpEquiv "Content-Type"
+
+ 
      El.style $ "body {\n\
             \font-family: \"rebuchet MS\", \"Helvetica\", \"Arial\",  \"Verdana\", \"sans-serif\";\n\
             \font-size: 90.5%;}\n\
             \a:link {text-decoration:none;}\
             \a:visited {text-decoration:none;}\
             \a:hover {text-decoration:underline;}\
-            \a:active {text-decoration:underline;}\
-            \"
+            \a:active {text-decoration:underline;}"
+            
    body  $ do
       [shamlet|
          <script>

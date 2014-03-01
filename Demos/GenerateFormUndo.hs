@@ -11,10 +11,9 @@
 -- |
 --
 -----------------------------------------------------------------------------
-{-# OPTIONS  -XCPP #-}
 {-# LANGUAGE DeriveDataTypeable, OverloadedStrings, ExistentialQuantification #-}
-module GenerateForm (
-genForm
+module GenerateFormUndo (
+genFormUndo
 ) where
 import MFlow.Wai.Blaze.Html.All
 import MFlow.Forms.Internals
@@ -29,14 +28,16 @@ import Control.Monad
 
 main=do
  userRegister "edituser" "edituser"
- runNavigation "nav" . step $ genForm
+ runNavigation "nav" . step $ genFormUndo
 
 
 -- page with header
-hpage w = page $ tFieldEd "editor"  "genFormHeader.html" "header" **> w
+hpage w = page $ tFieldEd "editor"  "genFormUndoHeader.html" "header" **> w
 
-genForm= do
-    let title= "form.html"
+
+genFormUndo= do
+    id <- getSessionId
+    let title= id++"form.html"
     initFormTemplate title
 
     desc <-  createForm 0 title
@@ -88,23 +89,23 @@ generateForm title xs=
 createForm n title= do
  desc <- getSessionData `onNothing` return []
  Seq seq <-getSessionData `onNothing` return (Seq 0)
- liftIO $ print n
- r <- hpage $
+
+ r <- hpage $ do
     divmenu <<<(wlogin
-       **>
-          do br ++> wlink ("save" :: String) << b  "Save the form and continue"
+       **> do
+             br ++> wlink ("save" :: String) << b  "Save the form and continue"
                 <++ br <> "(when finished)"
              content <- liftIO $ readtField  (mempty :: Html) (title ++ show n)
              liftIO . writetField title $ content
              liftIO $ forM_ [1 .. n] $ \n -> writetField (title ++ show n)  ("" :: Html)
              Just <$> getSessionData `onNothing` return []
        <|> do
-           wdesc <- chooseWidget <++ hr
-           setSessionData $ mappend desc [wdesc]
-           content <- liftIO $ readtField  mempty (title ++ show n)
-           fieldview <- generateView  wdesc seq
-           liftIO . writetField (title ++ show (n+1)) $ content <> br <> fieldview
-           return Nothing
+             wdesc <- chooseWidget <++ hr
+             setSessionData $ mappend desc [wdesc]
+             content <- liftIO $ readtField  mempty (title ++ show n)
+             fieldview <- generateView  wdesc seq
+             liftIO . writetField (title ++ show (n+1)) $ content <> br <> fieldview
+             return Nothing
            )
      <** divbody <<<  wform (edTemplate "edituser" (title ++ show n) (return ()) )
  case r of
@@ -148,7 +149,7 @@ chooseWidget=
 
 
 
-stop= noWidget
+
 
 getOptions pf =
      do

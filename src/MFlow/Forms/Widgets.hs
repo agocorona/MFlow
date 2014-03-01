@@ -966,7 +966,7 @@ autoRefresh
      FormInput v)
   => View v m a
   -> View v m a
-autoRefresh w=  update "html" w
+autoRefresh =  update "html" 
 
 -- | In some cases, it is neccessary that a link or form inside a 'autoRefresh' or 'update' block
 -- should not be autorefreshed, since it produces side effects in the rest of the page that
@@ -1017,33 +1017,37 @@ update :: (MonadIO m, FormInput v)
   => B.ByteString
   -> View v m a
   -> View v m a
-update method w= do
+update method w= View $ do
     id <- genNewId
     st <- get
+
     let t = mfkillTime st -1
 
-    let installscript=
+        installscript=
             "$(document).ready(function(){\n"
                ++ "ajaxGetLink('"++id++"');"
                ++ "ajaxPostForm('"++id++"');"
                ++ "})\n"
-
+    FormElm form mr <-  runView $ insertForm w
+    st <- get
+    let insync =  inSync st
     let r= lookup ("auto"++id) $ mfEnv st         -- !> ("TIMEOUT="++ show t)
-    case r  of
-      Nothing -> do
+    if r == Nothing || insync == False
+      then do
          requires [JScript $ timeoutscript t
                   ,JScript ajaxGetLink
                   ,JScript ajaxPostForm
                   ,JScriptFile jqueryScript [installscript]]
-         (ftag "div" <<< insertForm w) <! [("id",id)] 
+         return $ FormElm[ftag "div" (mconcat form) `attrs` [("id",id)]] mr
 
-      Just sind -> View $ do
+      else do
          let t= mfToken st
-         FormElm form mr <- runView $ insertForm w
-         st <- get
+
          let HttpData ctype c s= toHttpData $ method <> " " <> toByteString (mconcat form)
-         liftIO . sendFlush t $ HttpData (ctype ++ {-("Cache-Control", "no-cache, no-store":) -}mfHttpHeaders st) (mfCookies st ++ c) s
-         put st{mfAutorefresh=True,inSync=True}
+                          
+         (liftIO . sendFlush t $ HttpData (ctype ++ {-("Cache-Control", "no-cache, no-store"): -}
+                                mfHttpHeaders st) (mfCookies st ++ c) s)
+         put st{mfAutorefresh=True{-,inSync=True-}}
          return $ FormElm [] mr
 
   where
