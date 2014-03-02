@@ -1,5 +1,5 @@
 name: MFlow
-version: 0.3.3
+version: 0.4.0
 cabal-version: >=1.8
 build-type: Simple
 license: BSD3
@@ -44,8 +44,9 @@ description: MFlow is a Web Framework that turns Web programing back into just o
              .
              Bindings for hack, and hsp >= 0.8,  are not compiled by Hackage, and do not appear, but are included in the package files. To use them, add then to the exported modules and execute cabal install
              .
+             The version 0.4.0 add encrypted cookies, secure sessions, add REST web services, fixes UTF8 errors, pageFlow fixes, add onBacktrack, compensate
              .
-             This version 0.3.3 run with wai 2.0
+             Thes version 0.3.3 run with wai 2.0
              .
              The version 0.3.2 add runtime templates. It also add witerate and dField, two modifiers for single page
              development. dField creates a placeholder for a widget that is updated via implicit AJAX by witerate.
