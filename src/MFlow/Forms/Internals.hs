@@ -49,6 +49,7 @@ import System.IO.Unsafe
 import Control.Concurrent.MVar
 import qualified Data.Text as T
 import Data.Char
+import Control.Concurrent.STM
 --import Data.String
 --
 ---- for traces
@@ -215,17 +216,6 @@ instance  Monad m => Supervise (MFlowState v) (WState v m) where
 
 
 
---instance  CMT.MonadCatchIO (FlowM v IO) where
---    catch f hand = FlowM . Sup $ do
---            s <- get
---            (r,s') <- lift $ execMF f s  `CE.catch` \e -> execMF (hand e) s
---
---            put s'
---            return r
---            where
---            execMF f s= runStateT (runSup (runFlowM f) ) s
-
-
 
 instance  MonadLoc (FlowM v IO) where
     withLoc loc f = FlowM . Sup $ do
@@ -372,41 +362,16 @@ wcallback (View x) f = View $ do
        runView (f k)
      Nothing -> return $ FormElm form1 Nothing
 
---clear :: Monad m => View v m ()
---clear=  View $ do
---   modify $ \s -> s{mfClear= True}
---   return . FormElm [] $ Just ()
+
 
 clear :: Monad m => View v m ()
 clear = wcallback (return()) (const $ return()) 
 
---incLink :: MonadState (MFlowState view) m => m()
---incLink= modify $ \st -> st{mfPIndex= if linkMatched st then mfPIndex  st + 1 else mfPIndex st
---                ,linkMatched= False}  -- !> "<-inc"
---incLinkDepth
---  :: MFlowState v -> Int
---incLinkDepth s=
---
---        let depth= mfLinkDepth s
---        in  if mfLinkSelected  s
---                            then
---                            depth +1
---                            else
---                            depth
 
 
 
---instance  (Monad m) => Monad (FlowM view m) where
---  --View view m a-> (a -> View view m b) -> View view m b
---    FlowM x >>= f = FlowM $ do
---                   FormElm _ mk <- x
---                   case mk of
---                     Just k  -> do
---                       FormElm _ mk <- runFlowM $ f k
---                       return $ FormElm [] mk
---                     Nothing -> return $ FormElm [] Nothing
---
---    return= FlowM .  return . FormElm  [] . Just
+
+
 
 instance MonadTrans (View view) where
   lift f = View $  (lift  f) >>= \x ->  return $ FormElm [] $ Just x
@@ -510,6 +475,28 @@ onBacktrack doit onback= do
 -- the context of long running transactions.
 compensate :: Monad m =>  m a ->  m a -> FlowM v m a
 compensate doit undoit= doit `onBacktrack` ( (lift undoit) >> fail "")
+
+orElse ::  FormInput v => FlowM v IO a -> FlowM v IO a -> FlowM v IO a
+orElse mx my= do
+    s <- get
+    let tk = mfToken s
+    (r,s) <- liftIO $ do
+        ref1 <- atomically $ newTVar Nothing
+        ref2 <- atomically $ newTVar Nothing
+        t1 <- forkIO $ (runFlowOnceReturn s mx tk) >>= atomically . writeTVar  ref1 . Just
+        t2 <- forkIO $ (runFlowOnceReturn s my tk) >>= atomically . writeTVar  ref2 . Just
+        r <- atomically $ readFrom ref1 `Control.Concurrent.STM.orElse` readFrom ref2
+        killThread t1
+        killThread t2
+        return r
+    put s
+    FlowM . Sup $ return r
+    where
+    readFrom ref = do
+      mr <- readTVar ref
+      case mr of
+        Nothing -> retry
+        Just v  -> return v
 
 type Lang=  String
 
@@ -909,6 +896,12 @@ runFlowOnce2 s f t =
      where
      disp tr= "TRACE (error in the last line):\n\n" ++(concat $ intersperse "\n" tr)
   -- to restart the flow in case of going back before the first page of the flow
+
+runFlowOnceReturn
+  ::   FormInput v => MFlowState v -> FlowM v m a -> Token -> m (FailBack a, MFlowState v)
+runFlowOnceReturn  s f t =
+  runStateT (runSup $ runFlowM f) (startState t)
+        
 
 
 -- | Run a persistent flow inside the current flow. It is identified by the procedure and

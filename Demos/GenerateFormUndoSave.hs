@@ -37,7 +37,7 @@ hpage w = page $ tFieldEd "editor"  "genFormUndoHeader.html" "header" **> w
 
 genFormUndo= do
     id <- getSessionId
-    let title= id ++ "form.html"
+    let title= id++"/form.html"
     initFormTemplate title
 
     desc <-  createForm 0 title
@@ -90,7 +90,7 @@ createForm n title= do
  desc <- getSessionData `onNothing` return []
  Seq seq <- getSessionData `onNothing` return (Seq 0)
 
- r <- hpage $ do
+ r <- checkSave n title `orElse` hpage $ do
     divmenu <<<(wlogin
        **> do
              br ++> wlink ("save" :: String) << b  "Save the form and continue"
@@ -111,6 +111,17 @@ createForm n title= do
  case r of
    Just desc -> return desc
    Nothing -> createForm (n+1) title
+
+ where
+ checkSave n title = check  Nothing
+  where
+  ref = getDBRef (title ++ show n)
+  check Nothing= do
+       r <- readDBRef ref
+       check $ Just r
+  check (Just r)= do
+     r' <- readDNRef ref
+     if r== r' then retry else return r'
 
 divbody= div ! At.style "float:right;width:65%"
 divmenu= div ! At.style "background-color:#EEEEEE;float:left;margin-left:10px;margin-right:10px;overflow:auto;"

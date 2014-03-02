@@ -255,7 +255,7 @@ cachedWidget, wcached, wfreeze,
 ,runFlow, transientNav, runFlowOnce, runFlowIn
 ,runFlowConf,MFlow.Forms.Internals.step
 -- * controlling backtracking
-,goingBack,returnIfForward, breturn, preventGoingBack, compensate, onBacktrack, retry
+,goingBack,returnIfForward, breturn, preventGoingBack, compensate, onBacktrack, retry, orElse
 
 -- * Setting parameters
 ,setHttpHeader
