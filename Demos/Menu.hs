@@ -410,20 +410,45 @@ wiki =  page $ do
         ++> (El.body
         <<<   ( h1 ! At.style "text-align:center" <<<  tFieldEd "editor" (wikip ++pagname ++ "title.html") (fromString pagname))
         **>   tFieldEd "editor" (wikip ++ pagname ++ "body.html") "Enter the body"
---        <++ shareHtml
---        <>  shareScript
+        <++ do
+           hr
+--           shareHtml
+--           shareScript
+           disquscript
+
         )
 
 wikip="wiki/"
 
+disquscript= [shamlet|
+    <div id="disqus_thread">
+    <script type="text/javascript">
+        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+        var disqus_shortname = 'mflow'; // required: replace example with your forum shortname
+
+        /* * * DON'T EDIT BELOW THIS LINE * * */
+        (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.
+    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus
+
+    |]
+
+
+
 wikientries= return . filter  (isPrefixOf wikip . fst)  =<< indexOf tfieldKey
 
-shareScript=  [shamlet|<script>
-(function(doc, script) {
-  var js,
-      fjs = doc.getElementsByTagName(script)[0],
-      frag = doc.createDocumentFragment(),
-      add = function(url, id) {
+shareScript=  [shamlet|
+ <script>
+  function(doc, script) {
+   var js,
+       fjs = doc.getElementsByTagName(script)[0],
+       frag = doc.createDocumentFragment(),
+       add = function(url, id) {
           if (doc.getElementById(id)) {return;}
           js = doc.createElement(script);
           js.src = url;
@@ -439,7 +464,7 @@ shareScript=  [shamlet|<script>
     add('//platform.twitter.com/widgets.js');
 
     fjs.parentNode.insertBefore(frag, fjs);
-}(document, 'script'));
+ }(document, 'script'));
 
 |]
 
