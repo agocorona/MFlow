@@ -15,7 +15,7 @@
 module GenerateFormUndo (
 genFormUndo
 ) where
-import MFlow.Wai.Blaze.Html.All
+import MFlow.Wai.Blaze.Html.All hiding (retry)
 import MFlow.Forms.Internals
 import Control.Monad.State
 import Data.Typeable
@@ -24,7 +24,7 @@ import Prelude hiding (div)
 import Text.Blaze.Html5.Attributes as At hiding (step,span)
 import Data.List(nub)
 import Control.Monad
-
+import Control.Concurrent.STM hiding (orElse)
 
 main=do
  userRegister "edituser" "edituser"
@@ -37,7 +37,7 @@ hpage w = page $ tFieldEd "editor"  "genFormUndoHeader.html" "header" **> w
 
 genFormUndo= do
     id <- getSessionId
-    let title= id++"/form.html"
+    let title= "generateForm/"++id ++ "/form.html"
     initFormTemplate title
 
     desc <-  createForm 0 title
@@ -90,7 +90,7 @@ createForm n title= do
  desc <- getSessionData `onNothing` return []
  Seq seq <- getSessionData `onNothing` return (Seq 0)
 
- r <- checkSave n title `orElse` hpage $ do
+ r <- checkSave n title `orElse` hpage (do
     divmenu <<<(wlogin
        **> do
              br ++> wlink ("save" :: String) << b  "Save the form and continue"
@@ -107,20 +107,20 @@ createForm n title= do
              liftIO . writetField (title ++ show (n+1)) $ content <> br <> fieldview
              return Nothing
            )
-     <** divbody <<<  wform (edTemplate "edituser" (title ++ show n) (return ()) )
+     <** divbody <<<  wform (edTemplate "edituser" (title ++ show n) (return ()) ))
  case r of
    Just desc -> return desc
    Nothing -> createForm (n+1) title
 
  where
- checkSave n title = check  Nothing
+ checkSave n title = liftIO . atomically $ check  Nothing
   where
   ref = getDBRef (title ++ show n)
-  check Nothing= do
-       r <- readDBRef ref
-       check $ Just r
-  check (Just r)= do
-     r' <- readDNRef ref
+  check Nothing = do
+     r <- readDBRef ref
+     check $ Just r
+  check (Just r) = do
+     r' <- readDBRef ref
      if r== r' then retry else return r'
 
 divbody= div ! At.style "float:right;width:65%"

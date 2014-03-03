@@ -85,17 +85,9 @@ description: MFlow is a Web Framework that turns Web programing back into just o
 category: Web, Application Server
 author: Alberto Gómez Corona
 data-dir: ""
-extra-source-files: Demos/demos-blaze.hs Demos/TestREST.hs
-                    Demos/Actions.hs Demos/IncreaseInt.hs Demos/ShopCart.hs
-                    Demos/AjaxSample.hs Demos/TraceSample.hs Demos/IncreaseString.hs
-                    Demos/AutoCompList.hs Demos/ListEdit.hs Demos/AutoComplete.hs
-                    Demos/LoginSample.hs Demos/CheckBoxes.hs Demos/Multicounter.hs
-                    Demos/Combination.hs Demos/Options.hs Demos/ContentManagement.hs
-                    Demos/PreventGoingBack.hs Demos/Counter.hs Demos/PushDecrease.hs
-                    Demos/Dialog.hs Demos/PushSample.hs Demos/Grid.hs Demos/Radio.hs
-                    Demos/SumView.hs Demos/AcidState.hs Demos/SearchCart.hs
-                    Demos/InitialConfig.hs src/MFlow/Hack.hs src/MFlow/Hack/Response.hs
-                    Demos/MCounter.hs src/MFlow/Hack/XHtml.hs
+extra-source-files: src/MFlow/Hack.hs
+                    src/MFlow/Hack/Response.hs
+                    src/MFlow/Hack/XHtml.hs
                     src/MFlow/Hack/XHtml/All.hs src/MFlow/Forms/HSP.hs
 
 source-repository head
@@ -115,8 +107,7 @@ library
     exposed-modules: MFlow MFlow.Wai.Blaze.Html.All MFlow.Forms
                      MFlow.Forms.Admin MFlow.Cookies MFlow.Wai MFlow.Wai.XHtml.All
                      MFlow.Forms.XHtml MFlow.Forms.Blaze.Html MFlow.Forms.Test
-                     MFlow.Forms.Widgets MFlow.Forms.Internals
-                     MFlow.Forms.WebApi
+                     MFlow.Forms.Widgets MFlow.Forms.Internals MFlow.Forms.WebApi
     exposed: True
     buildable: True
     hs-source-dirs: src .
@@ -134,6 +125,13 @@ executable demos-blaze
     main-is: demos-blaze.hs
     buildable: True
     hs-source-dirs: Demos
-    other-modules: GenerateForm
+    other-modules:  TestREST ShopCart AjaxSample TraceSample IncreaseString IncreaseInt
+                    AutoCompList ListEdit AutoComplete Menu RuntimeTemplates
+                    LoginSample CheckBoxes Multicounter MFlowPersistent
+                    Combination Options ContentManagement Database
+                    PreventGoingBack Counter MCounter  PushDecrease
+                    Dialog PushSample Grid Radio Actions
+                    SumView AcidState SearchCart
+                    InitialConfig GenerateForm GenerateFormUndo WebService
     ghc-options: -O -iDemos -threaded -rtsopts
 

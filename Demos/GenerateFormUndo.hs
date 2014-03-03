@@ -37,7 +37,7 @@ hpage w = page $ tFieldEd "editor"  "genFormUndoHeader.html" "header" **> w
 
 genFormUndo= do
     id <- getSessionId
-    let title= id ++ "form.html"
+    let title= "generateForm/"++id ++ "/form.html"
     initFormTemplate title
 
     desc <-  createForm 0 title

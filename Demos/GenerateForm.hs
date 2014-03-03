@@ -36,7 +36,7 @@ hpage w = page $ tFieldEd "editor"  "genFormHeader.html" "header" **> w
 
 genForm= do
     id <- getSessionId
-    let title= id++"form.html"
+    let title= "generateForm/"++id ++ "/form.html"
     initFormTemplate title
 
     desc <-  hpage $ createForm title

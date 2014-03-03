@@ -60,7 +60,7 @@ module MFlow (
 Flow, Params, HttpData(..),Processable(..)
 , Token(..), ProcList
 -- * low level comunication primitives. Use `ask` instead
-,flushRec, receive, receiveReq, receiveReqTimeout, send, sendFlush, sendFragment
+,flushRec, flushResponse, receive, receiveReq, receiveReqTimeout, send, sendFlush, sendFragment
 , sendEndFragment, sendToMF
 -- * Flow configuration
 ,setNoScript,addMessageFlows,getMessageFlows,delMessageFlow, transient, stateless,anonymous
@@ -178,12 +178,6 @@ type Flow= (Token -> Workflow IO ())
 data HttpData = HttpData [(SB.ByteString,SB.ByteString)]  [Cookie] ByteString | Error  ByteString deriving (Typeable, Show)
 
 
---instance ToHttpData HttpData where
--- toHttpData= id
---
---instance ToHttpData ByteString where
--- toHttpData bs= HttpData [] [] bs
-
 instance Monoid HttpData where
  mempty= HttpData [] [] B.empty
  mappend (HttpData h c s) (HttpData h' c' s')= HttpData (h++h') (c++ c') $ mappend s s'
@@ -254,22 +248,25 @@ send  t@(Token _ _ _ _ _ _ qresp) msg=   do
 
 sendFlush t msg= flushRec t >> send t msg     -- !> "sendFlush "
 
--- | send a response fragment. Useful for streaming. the last packet must sent trough 'send'
+-- | send a response fragment. Useful for streaming. the last packet must be sent trough 'send'
 sendFragment ::  Token  -> HttpData -> IO()
 sendFragment (Token _ _ _ _ _ _ qresp) msg=   putMVar qresp  . Fragm $  msg
 
 {-# DEPRECATED sendEndFragment "use \"send\" to end a fragmented response instead" #-}
-sendEndFragment ::   Token  -> HttpData -> IO()
-sendEndFragment (Token _ _ _ _ _ _ qresp  ) msg=  putMVar qresp  $ EndFragm   msg
+sendEndFragment :: Token -> HttpData -> IO()
+sendEndFragment (Token _ _ _ _ _ _ qresp) msg=  putMVar qresp  $ EndFragm   msg
 
 --emptyReceive (Token  queue _  _)= emptyQueue queue
 receive ::  Typeable a => Token -> IO a
 receive t= receiveReq t >>= return  . fromReq
 
+flushResponse t@(Token _ _ _ _ _ _ qresp)= do
+   empty <-  isEmptyMVar  qresp
+   when (not empty) $ takeMVar qresp >> return ()
+
 flushRec t@(Token _ _ _ _ _ queue _)= do
    empty <-  isEmptyMVar  queue
    when (not empty) $ takeMVar queue >> return ()    -- !> "flushRec"
-
 
 receiveReq ::  Token -> IO Req
 receiveReq t@(Token _ _ _ _ _ queue  _)=   readMVar queue   -- !> (">>>>>> receiveReq "++ thread t)
@@ -310,7 +307,6 @@ stateless f = transient proc
     resp <- f (getParams req)
     (putMVar qresp  $ Resp  resp  ) -- !> ("<<<<<< stateless " ++thread t)
     loop t queue qresp                          -- !>  ("enviado stateless " ++ thread t)
---
 
 
 
@@ -336,9 +332,6 @@ addMessageFlows wfs=  modifyMVar_ _messageFlows(\ms ->  return $ M.union (M.from
 getMessageFlows = readMVar _messageFlows
 
 delMessageFlow wfname= modifyMVar_ _messageFlows (\ms -> return $ M.delete wfname ms)
-
---class ToHttpData a  where
---    toHttpData :: a -> HttpData  
 
 
 sendToMF Token{..} msg= putMVar tsendq $ Req msg
@@ -372,7 +365,7 @@ recFromMF Token{..}  = do
 
 
 -- | The scheduler creates a Token with every `Processable`
--- message that arrives and send the mesage to the appropriate flow, then waht for the response
+-- message that arrives and send the mesage to the appropriate flow, then wait for the response
 -- and return it.
 --
 -- It is the core of the application server. "MFLow.Wai" and "MFlow.Hack" use it
@@ -417,13 +410,12 @@ msgScheduler x  = do
 
 
 showError wfname token@Token{..} e= do
-               t <- return . calendarTimeToString =<< toCalendarTime =<< getClockTime
-               let msg= errorMessage t e tuser (Prelude.concat $ intersperse "/" tpath) tenv
-
-               logError  msg
-               fresp <- getNotFoundResponse
-               let admin=  getAdminName
-               sendFlush token . Error $ fresp (tuser== admin)  $  Prelude.concat[ "<br/>"++ s | s <- lines msg]
+   t <- return . calendarTimeToString =<< toCalendarTime =<< getClockTime
+   let msg= errorMessage t e tuser (Prelude.concat $ intersperse "/" tpath) tenv
+   logError  msg
+   fresp <- getNotFoundResponse
+   let admin=  getAdminName
+   sendFlush token . Error $ fresp (tuser== admin)  $  Prelude.concat[ "<br/>"++ s | s <- lines msg]
 
 
 errorMessage t e u path env=

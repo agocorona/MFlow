@@ -476,6 +476,7 @@ onBacktrack doit onback= do
 compensate :: Monad m =>  m a ->  m a -> FlowM v m a
 compensate doit undoit= doit `onBacktrack` ( (lift undoit) >> fail "")
 
+
 orElse ::  FormInput v => FlowM v IO a -> FlowM v IO a -> FlowM v IO a
 orElse mx my= do
     s <- get
@@ -488,6 +489,8 @@ orElse mx my= do
         r <- atomically $ readFrom ref1 `Control.Concurrent.STM.orElse` readFrom ref2
         killThread t1
         killThread t2
+        flushResponse tk
+        flushRec tk
         return r
     put s
     FlowM . Sup $ return r
