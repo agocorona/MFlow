@@ -344,6 +344,8 @@ widgetAndSource (Just(Filename filename)) w = do
                   hr
                   h1 $ "Source code:"
                   source
+                  hr
+                  disquscript
 
       where
       host = "mflowdemo.herokuapp.com/"
