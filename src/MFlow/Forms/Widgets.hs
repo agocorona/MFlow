@@ -1032,7 +1032,7 @@ update method w= View $ do
     st <- get
     let insync =  inSync st
     let r= lookup ("auto"++id) $ mfEnv st         -- !> ("TIMEOUT="++ show t)
-    if r == Nothing || insync == False
+    if r == Nothing || insync  == False
       then do
          requires [JScript $ timeoutscript t
                   ,JScript ajaxGetLink
