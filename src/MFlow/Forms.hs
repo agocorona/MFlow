@@ -421,7 +421,7 @@ setRadioActive :: (FormInput view,  MonadIO m,
              a -> String -> View view m  (Radio a)
 setRadioActive  v n = View $ do
   st <- get
-  put st{needForm= True}
+  put st{needForm= HasElems}
   let env =  mfEnv st
   mn <- getParam1 n env
   let str = if typeOf v == typeOf(undefined :: String)
@@ -438,7 +438,7 @@ setRadio :: (FormInput view,  MonadIO m,
             a -> String -> View view m  (Radio a)
 setRadio v n= View $ do
   st <- get
-  put st{needForm= True}
+  put st{needForm= HasElems}
   let env =  mfEnv st
   mn <- getParam1 n env
   let str = if typeOf v == typeOf(undefined :: String)
@@ -473,7 +473,7 @@ setCheckBox :: (FormInput view,  MonadIO m) =>
 setCheckBox checked v= View $ do
   n <- genNewId
   st <- get
-  put st{needForm= True}
+  put st{needForm= HasElems}
   let env = mfEnv st
       strs= map snd $ filter ((==) n . fst) env
       mn= if null strs then Nothing else Just $ head strs
@@ -492,7 +492,7 @@ genCheckBoxes :: (Monad m, FormInput view) => view ->  View view m  CheckBoxes
 genCheckBoxes v= View $ do
   n <- genNewId
   st <- get
-  put st{needForm= True}
+  put st{needForm= HasElems}
   let env = mfEnv st
       strs= map snd $ filter ((==) n . fst) env
       mn= if null strs then Nothing else Just $ head strs
@@ -522,7 +522,7 @@ getCheckBoxes boxes =  View $ do
     mr  <- getParam1 n env
 
     let env = mfEnv st
-    modify $ \st -> st{needForm= True}
+    modify $ \st -> st{needForm= HasElems}
     FormElm form2 mr2 <- runView boxes
     return $ FormElm (form ++ form2) $
         case (mr `asTypeOf` Validated ("" :: String),mr2) of
@@ -563,7 +563,7 @@ getParam look type1 mvalue = View $ do
                  Nothing -> show v
     st <- get
     let env = mfEnv st
-    put st{needForm= True}
+    put st{needForm= HasElems}
     r <- getParam1 tolook env
     case r of
        Validated x        -> return $ FormElm [finput tolook type1 (nvalue $ Just x) False Nothing] $ Just x
@@ -634,7 +634,7 @@ getSelect opts = View $ do
     tolook <- genNewId
     st <- get
     let env = mfEnv st
-    put st{needForm= True}
+    put st{needForm= HasElems}
     r <- getParam1 tolook env
     setSessionData $ fmap MFOption $ valToMaybe r
     FormElm form mr <- (runView opts)
@@ -644,7 +644,7 @@ getSelect opts = View $ do
 
 newtype MFOption a= MFOption a deriving Typeable
 
-instance (Monad m, Functor m) => Monoid (View view m (MFOption a)) where
+instance (FormInput view,Monad m, Functor m) => Monoid (View view m (MFOption a)) where
   mappend =  (<|>)
   mempty = Control.Applicative.empty
 
@@ -677,7 +677,7 @@ setOption1 :: (FormInput view,
 setOption1 nam  val check= View $ do
     st <- get
     let env = mfEnv st
-    put st{needForm= True}
+    put st{needForm= HasElems}
     let n = if typeOf nam == typeOf(undefined :: String)
                    then unsafeCoerce nam
                    else show nam
@@ -990,14 +990,18 @@ userValidate (u,p) = liftIO $  do
 --
 --  > r <- ask  widget1 <+>  widget2
 --  > case r of (Just x, Nothing) -> ..
-(<+>) , mix ::  Monad m
+(<+>) , mix ::  (Monad m, FormInput view)
       => View view m a
       -> View view m b
       -> View view m (Maybe a, Maybe b)
 mix digest1 digest2= View $ do
   FormElm f1 mx' <- runView  digest1
+  s1 <- get
   FormElm f2 my' <- runView  digest2
-  return $ FormElm (f1++f2)
+  s2 <- get
+  (mix, hasform) <- controlForms s1 s2 f1 f2
+  when hasform $ put s2{needForm= HasForm}
+  return $ FormElm mix
          $ case (mx',my') of
               (Nothing, Nothing) -> Nothing
               other              -> Just other
@@ -1092,7 +1096,7 @@ ask w =  do
   -- END AJAX
 
    _ ->   do
-     let st= st1{needForm= False, inSync= False, mfRequirements= [], linkMatched= False} 
+     let st= st1{needForm= NoElems, inSync= False, mfRequirements= [], linkMatched= False} 
      put st
 
      FormElm forms mx <- FlowM . lift  $ runView  w
@@ -1125,9 +1129,9 @@ ask w =  do
              reqs <-  FlowM $ lift installAllRequirements     -- !> "REPEAT"
              let header= mfHeader st'
                  t= mfToken st'
-             cont <- case (needForm st') of
+             cont <- case (needForm1 st') of
                       True ->  do
-                               frm <- formPrefix (mfPIndex st') (twfname t ) st' forms False
+                               frm <- formPrefix  st' forms False
                                return . header $  reqs <> frm
                       _    ->  return . header $  reqs <> mconcat  forms
 
@@ -1138,10 +1142,13 @@ ask w =  do
              resetState st st'
              let path= mfPath st
              FlowM $ lift  nextMessage       -- !> "NEXTMESSAGE"
-             path' <- gets mfPath
-             if not $ path `isPrefixOf` path'
-              then fail ""
-              else ask w
+             st <-get
+             let path' = mfPath st
+                 env' = mfEnv st
+             if isJust(lookup "ajax" env') then ask w
+              else if not $ path `isPrefixOf` path'
+               then fail ""
+               else ask w
     where
     resetState st st'=
              put st{mfCookies=[]
@@ -1253,9 +1260,8 @@ wform ::  (Monad m, FormInput view)
 wform x = View $ do
      FormElm form mr <- (runView $   x )
      st <- get
-     verb  <- getWFName
-     form1 <- formPrefix (mfPIndex st) verb st form True
-     put st{needForm=False}
+     form1 <- formPrefix st form True
+     put st{needForm=HasForm}
      return $ FormElm [form1] mr
 
 
@@ -1279,7 +1285,7 @@ newtype AjaxSessionId= AjaxSessionId String deriving Typeable
 -- >        ajaxc <- ajax $ \n -> return $ elemval <> "='" <> B.pack(show(read  n +1)) <> "'"
 -- >        b <<  text "click the box"
 -- >          ++> getInt (Just 0) <! [("id","text1"),("onclick", ajaxc elemval)]
-ajax :: (MonadIO m)
+ajax :: (MonadIO m, FormInput v)
      => (String ->  View v m ByteString)  -- ^ user defined procedure, executed in the server.Receives the value of the javascript expression and must return another javascript expression that will be executed in the web browser
      ->  View v m (String -> String)      -- ^ returns a function that accept a javascript expression and return a javascript event handler expression that invokes the ajax server procedure
 ajax  f =  do
@@ -1292,7 +1298,7 @@ ajax  f =  do
           liftIO $ sendFlush t  (HttpData [("Content-Type", "text/plain")][] r )
           return ()
 
-installServerControl :: MonadIO m => String -> (String -> View v m ()) -> View v m (String -> String)
+installServerControl :: (FormInput v,MonadIO m) => String -> (String -> View v m ()) -> View v m (String -> String)
 installServerControl id f= do
       t <- gets mfToken
       st <- get

@@ -86,7 +86,7 @@ mainMenu= pageFlow "" $
           absLink BasicWidgets << b  "Basic Widgets"
           ul <<<        
            (hr
-           ++> (li <<< (absLink CountI << b  "Increase an Int") <! noAutoRefresh
+           ++> (li <<< (absLink CountI << b  "Increase an Int")  <! noAutoRefresh
                        <++ b " A loop that increases the Int value of a text box"
                                    
            <|> li <<< (absLink CountS  << b  "Increase a String") <! noAutoRefresh

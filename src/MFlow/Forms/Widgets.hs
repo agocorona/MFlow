@@ -940,7 +940,7 @@ wdialog conf title w= do
                    \idform.submit(function(){$(this).dialog(\"close\")})\n\
                 \});"
 
-    modify $ \st -> st{needForm= False}
+    modify $ \st -> st{needForm= HasForm}
     requires
       [CSSFile      jqueryCSS
       ,JScriptFile  jqueryScript []
@@ -1031,7 +1031,7 @@ update method w= View $ do
     FormElm form mr <-  runView $ insertForm w
     st <- get
     let insync =  inSync st
-    let r= lookup ("auto"++id) $ mfEnv st         -- !> ("TIMEOUT="++ show t)
+    let r= lookup ("auto"++id) $ mfEnv st        
     if r == Nothing || insync  == False
       then do
          requires [JScript $ timeoutscript t

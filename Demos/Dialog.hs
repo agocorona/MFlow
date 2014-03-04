@@ -16,7 +16,7 @@ wdialog1= do
    page  (wlink () << "out of the page flow, press here to go to the menu")
 
 wdialogw= pageFlow "diag" $ do
-   r <- wform $ p << "please enter your name" ++> getString (Just "your name") <** submitButton "ok"
+   r <- p << "please enter your name" ++> getString (Just "your name") <** submitButton "ok"
    wdialog "({modal: true})" "Question"  $ 
            p << ("Do your name is \""++r++"\"?") ++> getBool True "yes" "no" <** submitButton "ok"
 

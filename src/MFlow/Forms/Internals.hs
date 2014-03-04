@@ -253,7 +253,7 @@ instance  MonadLoc (FlowM v IO) where
 --       handler1 loc s (e :: SomeException)=
 --        return (GoBack, s{mfTrace= Just ["exception: " ++show e]}) 
 
-instance  MonadLoc (View v IO)  where
+instance  FormInput v => MonadLoc (View v IO)  where
     withLoc loc f = View $ do
        withLoc loc $ do
             s <- get
@@ -309,15 +309,19 @@ instance (Functor m, Monad m) => Applicative (View view m) where
                    g >>= \(FormElm form2 x) ->
                    return $ FormElm (form1 ++ form2) (k <*> x) 
 
-instance (Functor m, Monad m) => Alternative (View view m) where
+instance (FormInput view,Functor m, Monad m) => Alternative (View view m) where
   empty= View $ return $ FormElm [] Nothing
   View f <|> View g= View $ do
                    FormElm form1 k <- f
+                   s1 <- get
                    FormElm form2 x <- g
-                   return $ FormElm (form1 ++ form2) (k <|> x)
+                   s2 <- get
+                   (mix,hasform) <- controlForms s1 s2 form1 form2
+                   when hasform $ put s2{needForm= HasForm}
+                   return $ FormElm mix (k <|> x)
 
 
-instance  (Monad m) => Monad (View view m) where
+instance  (FormInput view, Monad m) => Monad (View view m) where
     View x >>= f = View $ do
                    FormElm form1 mk <- x
                    case mk of
@@ -325,7 +329,10 @@ instance  (Monad m) => Monad (View view m) where
                         st <- get
                         put st{linkMatched = False} 
                         FormElm form2 mk <- runView $ f k
-                        return $ FormElm (form1 ++ form2) mk
+                        st' <- get
+                        (mix, hasform) <- controlForms st st' form1 form2
+                        when hasform $ put st'{needForm= HasForm}
+                        return $ FormElm mix mk
 
                      Nothing -> 
                         return $ FormElm form1 Nothing
@@ -337,7 +344,7 @@ instance  (Monad m) => Monad (View view m) where
 
 
 
-instance (Monad m, Functor m, Monoid a) => Monoid (View v m a) where
+instance (FormInput v,Monad m, Functor m, Monoid a) => Monoid (View v m a) where
   mappend x y = mappend <$> x <*> y  -- beware that both operands must validate to generate a sum
   mempty= return mempty
 
@@ -358,13 +365,13 @@ wcallback (View x) f = View $ do
    FormElm form1 mk <- x
    case mk of
      Just k  -> do
-       modify $ \st -> st{linkMatched= False, needForm=False} 
+       modify $ \st -> st{linkMatched= False, needForm=NoElems} 
        runView (f k)
      Nothing -> return $ FormElm form1 Nothing
 
 
 
-clear :: Monad m => View v m ()
+clear :: (FormInput v,Monad m) => View v m ()
 clear = wcallback (return()) (const $ return()) 
 
 
@@ -379,7 +386,7 @@ instance MonadTrans (View view) where
 instance MonadTrans (FlowM view) where
   lift f = FlowM $ lift (lift  f) -- >>= \x ->  return x
 
-instance  (Monad m)=> MonadState (MFlowState view) (View view m) where
+instance  (FormInput view, Monad m)=> MonadState (MFlowState view) (View view m) where
   get = View $  get >>= \x ->  return $ FormElm [] $ Just x
   put st = View $  put st >>= \x ->  return $ FormElm [] $ Just x
 
@@ -388,7 +395,7 @@ instance  (Monad m)=> MonadState (MFlowState view) (View view m) where
 --  put st = FlowM $  put st >>= \x ->  return $ FormElm [] $ Just x
 
 
-instance (MonadIO m) => MonadIO (View view m) where
+instance (FormInput view,MonadIO m) => MonadIO (View view m) where
     liftIO io= let x= liftIO io in x `seq` lift x -- to force liftIO==unsafePerformIO on the Identity monad
 
 -- | Execute the widget in a monad and return the result in another.
@@ -503,6 +510,13 @@ orElse mx my= do
 
 type Lang=  String
 
+needForm1 st= case needForm st of
+   HasForm -> False
+   HasElems -> True
+   NoElems -> False
+
+data NeedForm= HasForm | HasElems | NoElems
+
 data MFlowState view= MFlowState{   
    mfSequence       :: Int,
    mfCached         :: Bool,
@@ -510,7 +524,7 @@ data MFlowState view= MFlowState{
    inSync           :: Bool,
    mfLang           :: Lang,
    mfEnv            :: Params,
-   needForm         :: Bool,
+   needForm         :: NeedForm,
    mfToken          :: Token,
    mfkillTime       :: Int,
    mfSessionTime    :: Integer,
@@ -542,7 +556,7 @@ type Void = Char
 
 mFlowState0 :: (FormInput view) => MFlowState view
 mFlowState0 = MFlowState 0 False  True  True  "en"
-                [] False  (error "token of mFlowState0 used")
+                [] NoElems  (error "token of mFlowState0 used")
                 0 0 [] [] stdHeader False [] M.empty  Nothing 0 False    []   ""   1 Nothing False  False [] False
 
 
@@ -1339,8 +1353,10 @@ ajaxScript=
         "  };" ++
         ""
 
-formPrefix index verb st form anchored= do
-     let path  = currentPath False index (mfPath st) verb
+formPrefix   st form anchored= do
+     let index= mfPIndex st
+         verb= twfname $ mfToken st
+         path  = currentPath False index (mfPath st) verb
      (anchor,anchorf)
            <- case anchored of
                True  -> do
@@ -1353,15 +1369,27 @@ formPrefix index verb st form anchored= do
 insertForm w=View $ do
     FormElm forms mx <- runView w
     st <- get
-    cont <- case needForm st of
+    cont <- case needForm1 st of
                       True ->  do
-                               frm <- formPrefix (mfPIndex st) (twfname $ mfToken st ) st forms False
-                               put st{needForm= False}
+                               frm <- formPrefix  st forms False
+                               put st{needForm= HasForm}
                                return   frm
                       _    ->  return $ mconcat  forms
-
+    
     return $ FormElm [cont] mx
 
+-- isert a form tag if necessary when two pieces of HTML have to mix as a result of >>= >> <|>  or <+> operators
+controlForms :: (FormInput v, MonadState (MFlowState v) m)
+    => MFlowState v -> MFlowState v -> [v] -> [v] -> m ([v],Bool)
+controlForms s1 s2 v1 v2= case (needForm s1, needForm s2) of
+    (HasForm,HasElems) -> do
+       v2' <- formPrefix s2 v2 False
+       return (v1 ++ [v2'], True)
+    (HasElems, HasForm) -> do
+       v1' <- formPrefix s1 v1 False
+       return ([v1'] ++ v2 , True)
+
+    _ -> return (v1 ++ v2, False)
 
 currentPath insInBackTracking index lpath verb =
     (if null lpath then verb
