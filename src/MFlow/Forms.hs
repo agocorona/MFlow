@@ -221,7 +221,9 @@ ask, page, askt, clearEnv, wstateless, pageFlow,
 getString,getInt,getInteger, getTextBox
 ,getMultilineText,getBool,getSelect, setOption,setSelectedOption, getPassword,
 getRadio, setRadio, setRadioActive, wlabel, getCheckBoxes, genCheckBoxes, setCheckBox,
-submitButton,resetButton, whidden, wlink, absLink, getKeyValueParam, getRestParam, returning, wform, firstOf, manyOf, allOf, wraw, wrender, notValid
+submitButton,resetButton, whidden, wlink, absLink, getKeyValueParam,
+getRestParam, returning, wform, firstOf, manyOf, allOf, wraw, wrender, notValid,
+fileUpload
 -- * FormLet modifiers
 ,validate, noWidget, stop, waction, wcallback, clear, wmodify,
 
@@ -255,7 +257,7 @@ cachedWidget, wcached, wfreeze,
 ,runFlow, transientNav, runFlowOnce, runFlowIn
 ,runFlowConf,MFlow.Forms.Internals.step
 -- * controlling backtracking
-,goingBack,returnIfForward, breturn, preventGoingBack, compensate, onBacktrack, retry, orElse
+,goingBack,returnIfForward, breturn, preventGoingBack, compensate, onBacktrack, retry
 
 -- * Setting parameters
 ,setHttpHeader
@@ -684,6 +686,11 @@ setOption1 nam  val check= View $ do
 
     return . FormElm [foption n val check]  . Just $ MFOption nam
 
+fileUpload :: (FormInput view,
+      Monad  m) =>
+      View view m T.Text
+fileUpload= getParam Nothing "file" Nothing
+
 
 -- | Enclose Widgets within some formating.
 -- @view@ is intended to be instantiated to a particular format
@@ -1026,9 +1033,18 @@ infixr 2 <+>, .<+>.
 --
 --  it has a low infix priority: @infixr 1@
 
-(**>) :: (Functor m, Monad m)
+(**>) :: (Functor m, Monad m, FormInput view)
       => View view m a -> View view m b -> View view m b
-(**>) form1 form2 = valid form1 *> form2
+--(**>) form1 form2 = valid form1 *> form2
+(**>) f g = View $ do
+   FormElm form1 k <- runView $ valid f
+   s1 <- get
+   FormElm form2 x <- runView g
+   s2 <- get
+   (mix,hasform) <- controlForms s1 s2 form1 form2
+   when hasform $ put s2{needForm= HasForm}
+   return $ FormElm mix (k *> x)
+
 
 infixr 1  **> , .**>. ,  <** , .<**.
 
@@ -1039,10 +1055,18 @@ infixr 1  **> , .**>. ,  <** , .<**.
 -- see the `<**` examples
 --
 --  it has a low infix priority: @infixr 1@
-(<**)
-  :: (Functor m, Monad m) =>
+(<**) :: (Functor m, Monad m, FormInput view) =>
      View view m a -> View view m b -> View view m a
-(<**) form1 form2 =  form1 <* valid form2
+-- (<**) form1 form2 =  form1 <* valid form2
+(<**) f g = View $ do
+   FormElm form1 k <- runView f
+   s1 <- get
+   FormElm form2 x <- runView $ valid g
+   s2 <- get
+   (mix,hasform) <- controlForms s1 s2 form1 form2
+   when hasform $ put s2{needForm= HasForm}
+   return $ FormElm mix (k <* x)
+
 
 
 valid form= View $ do
@@ -1131,7 +1155,7 @@ ask w =  do
                  t= mfToken st'
              cont <- case (needForm1 st') of
                       True ->  do
-                               frm <- formPrefix  st' forms False
+                               frm <- formPrefix  st' forms False 
                                return . header $  reqs <> frm
                       _    ->  return . header $  reqs <> mconcat  forms
 
@@ -1456,7 +1480,7 @@ manyOf xs= whidden () *> (View $ do
       forms <- mapM runView  xs
       let vs  = concatMap (\(FormElm v _) ->  [mconcat v]) forms
           res1= catMaybes $ map (\(FormElm _ r) -> r) forms
-      return . FormElm vs $  Just res1)
+      return . FormElm vs $ Just res1)
 
 -- | like manyOf, but does not validate if one or more of the widgets does not validate
 allOf xs= manyOf xs `validate` \rs ->

@@ -117,9 +117,6 @@ waiMessageFlow req1=   do
 
 
               Right GET ->
-                   let tail1 s | s==SB.empty =s
-                       tail1 xs= SB.tail xs 
-                   in
                    return . Prelude.map (\(x,y) -> (x,fromMaybe "" y)) $ queryString req1
 
 

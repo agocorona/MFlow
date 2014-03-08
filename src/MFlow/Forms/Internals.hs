@@ -59,8 +59,8 @@ import Control.Exception as CE
 import Control.Concurrent 
 import Control.Monad.Loc
 
---import Debug.Trace
---(!>) = flip trace 
+import Debug.Trace
+(!>) = flip trace 
 
 
 data FailBack a = BackPoint a | NoBack a | GoBack   deriving (Show,Typeable)
@@ -484,38 +484,38 @@ compensate :: Monad m =>  m a ->  m a -> FlowM v m a
 compensate doit undoit= doit `onBacktrack` ( (lift undoit) >> fail "")
 
 
-orElse ::  FormInput v => FlowM v IO a -> FlowM v IO a -> FlowM v IO a
-orElse mx my= do
-    s <- get
-    let tk = mfToken s
-    (r,s) <- liftIO $ do
-        ref1 <- atomically $ newTVar Nothing
-        ref2 <- atomically $ newTVar Nothing
-        t1 <- forkIO $ (runFlowOnceReturn s mx tk) >>= atomically . writeTVar  ref1 . Just
-        t2 <- forkIO $ (runFlowOnceReturn s my tk) >>= atomically . writeTVar  ref2 . Just
-        r <- atomically $ readFrom ref1 `Control.Concurrent.STM.orElse` readFrom ref2
-        killThread t1
-        killThread t2
-        flushResponse tk
-        flushRec tk
-        return r
-    put s
-    FlowM . Sup $ return r
-    where
-    readFrom ref = do
-      mr <- readTVar ref
-      case mr of
-        Nothing -> retry
-        Just v  -> return v
+--orElse ::  FormInput v => FlowM v IO a -> FlowM v IO a -> FlowM v IO a
+--orElse mx my= do
+--    s <- get
+--    let tk = mfToken s
+--    (r,s) <- liftIO $ do
+--        ref1 <- atomically $ newTVar Nothing
+--        ref2 <- atomically $ newTVar Nothing
+--        t1 <- forkIO $ (runFlowOnceReturn s mx tk) >>= atomically . writeTVar  ref1 . Just
+--        t2 <- forkIO $ (runFlowOnceReturn s my tk) >>= atomically . writeTVar  ref2 . Just
+--        r <- atomically $ readFrom ref1 `Control.Concurrent.STM.orElse` readFrom ref2
+--        killThread t1
+--        killThread t2
+--        flushResponse tk
+--        flushRec tk
+--        return r
+--    put s
+--    FlowM . Sup $ return r
+--    where
+--    readFrom ref = do
+--      mr <- readTVar ref
+--      case mr of
+--        Nothing -> retry
+--        Just v  -> return v
 
 type Lang=  String
 
-needForm1 st= case needForm st of
+needForm1 st=  case needForm st of
    HasForm -> False
    HasElems -> True
    NoElems -> False
 
-data NeedForm= HasForm | HasElems | NoElems
+data NeedForm= HasForm | HasElems | NoElems deriving Show
 
 data MFlowState view= MFlowState{   
    mfSequence       :: Int,
@@ -1370,11 +1370,11 @@ insertForm w=View $ do
     FormElm forms mx <- runView w
     st <- get
     cont <- case needForm1 st of
-                      True ->  do
-                               frm <- formPrefix  st forms False
-                               put st{needForm= HasForm}
-                               return   frm
-                      _    ->  return $ mconcat  forms
+              True ->  do
+                       frm <- formPrefix  st forms False
+                       put st{needForm= HasForm}
+                       return   frm
+              _    ->  return $ mconcat  forms
     
     return $ FormElm [cont] mx
 
@@ -1383,10 +1383,10 @@ controlForms :: (FormInput v, MonadState (MFlowState v) m)
     => MFlowState v -> MFlowState v -> [v] -> [v] -> m ([v],Bool)
 controlForms s1 s2 v1 v2= case (needForm s1, needForm s2) of
     (HasForm,HasElems) -> do
-       v2' <- formPrefix s2 v2 False
+       v2' <- formPrefix s2 v2 True
        return (v1 ++ [v2'], True)
     (HasElems, HasForm) -> do
-       v1' <- formPrefix s1 v1 False
+       v1' <- formPrefix s1 v1 True
        return ([v1'] ++ v2 , True)
 
     _ -> return (v1 ++ v2, False)

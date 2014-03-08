@@ -648,13 +648,13 @@ witerate  w= do
               ,JScript     $ timeoutscript t
               ,JScriptFile jqueryScript [installAutoEval]]
 
-     (ftag "div" <<< insertForm w) <! [("id",name)]
+     (ftag "div" <<<   w) <! [("id",name)]  
 
 
     Just sind -> View $ do
          let t= mfToken st
-         let index= read sind
-         put st{mfPIndex= index}
+--         let index= read sind
+--         put st{mfPIndex= index}
          modify $ \s -> s{mfRequirements=[]}
 
          FormElm _ mr <- runView  w
@@ -665,7 +665,7 @@ witerate  w= do
                                 (("Cache-Control", "no-cache, no-store"):mfHttpHeaders st)
                                 (mfCookies st) (fromString js)
          modify $ \st -> st{mfAutorefresh=True,inSync=True}
-         return $ FormElm [] mr
+         return $ FormElm [] mr  
 
    delSessionData $ IteratedId name
    return ret
@@ -698,17 +698,16 @@ autoEvalLink = "\nfunction autoEvalLink(id,ind){\n\
 
 autoEvalForm = "\nfunction autoEvalForm(id) {\n\
     \var id1= $('#'+id);\n\
-    \var idform= $('#'+id+' form[class!=\"_noAutoRefresh\"]');\n\
-    \idform.submit(function (event) {\n\
+    \var buttons= $('#'+id+' input[type=\"submit\"][class!=\"_noAutoRefresh\"]').click(function(event) {\n\
         \if (hadtimeout == true) return true;\n\
         \event.preventDefault();\n\
-        \var $form = $(this);\n\
+        \var $form = $(this).closest('form');\n\
         \var url = $form.attr('action');\n\
         \var pdata = $form.serialize();\n\
         \$.ajax({\n\
             \type: 'POST',\n\
             \url: url,\n\
-            \data: 'auto'+id+'=true&'+pdata,\n\
+            \data: 'auto'+id+'=true&'+this.name+'='+this.value+'&'+pdata,\n\
             \success: function (resp) {\n\
                 \eval(resp);\n\
             \},\n\
@@ -720,6 +719,31 @@ autoEvalForm = "\nfunction autoEvalForm(id) {\n\
        \});\n\
       \return false;\n\
      \}\n"
+
+--autoEvalForm = "\nfunction autoEvalForm(id) {\n\
+--    \var id1= $('#'+id);\n\
+--    \var idform= $('#'+id+' form[class!=\"_noAutoRefresh\"]');\n\
+--    \idform.submit(function (event) {\n\
+--        \if (hadtimeout == true) return true;\n\
+--        \event.preventDefault();\n\
+--        \var $form = $(this);\n\
+--        \var url = $form.attr('action');\n\
+--        \var pdata = $form.serialize();\n\
+--        \$.ajax({\n\
+--            \type: 'POST',\n\
+--            \url: url,\n\
+--            \data: 'auto'+id+'=true&'+pdata,\n\
+--            \success: function (resp) {\n\
+--                \eval(resp);\n\
+--            \},\n\
+--            \error: function (xhr, status, error) {\n\
+--                \var msg = $('<div>' + xhr + '</div>');\n\
+--                \id1.html(msg);\n\
+--            \}\n\
+--        \});\n\
+--       \});\n\
+--      \return false;\n\
+--     \}\n"
 
 setId= "function setId(id,v){document.getElementById(id).innerHTML= v;};\n"
 
@@ -747,50 +771,7 @@ dField w= View $ do
 
 noid= "noid"
 
---edTemplateList
---  :: (MonadIO m, Functor m, Typeable b, FormInput view) =>
---     UserStr -> String -> (a ->View view m  b) -> [a] -> View view m b
---edTemplateList user  name w xs= View $ do
---    id <- genNewId
---    let ws= Prelude.map w xs
---    FormElm vx mx <- runView $
---          edTemplate user name ( Prelude.head ws) <|>
---          firstOf [template name w | w <- Prelude.tail ws]
---
---    let render = mconcat vx
---    st <- get
---    let t= mfkillTime st
---    let env =  mfEnv st
---    let insertResults= "insert('" ++ id ++ "',"++ show (toString $ toByteString render) ++");"
---    IteratedId name <- getSessionData `onNothing` return (IteratedId noid)
---    let r =  lookup ("auto"++name) env           -- !> ("TIMEOUT="++ show t)
---    if r == Nothing || (name == noid && newAsk st== True)
---     then do
---         requires[JScript autoEvalLink
---                 ,JScript $ timeoutscript t
---                 ,JScript jsInsertList
---                 ,JScriptFile jqueryScript [insertResults]]
---         return $ FormElm[(ftag "span" render) `attrs` [("id",id)]] mx  !> "NOPARAM edTemplateList"
---     else do
---       modify $ \st -> st{mfRequirements= [],mfAutorefresh=True,inSync=True}
---       requires[JScript insertResults]
---             !> "VALIDATED edTemplateList"
---       return $ FormElm mempty mx
---
 
--- | load a template with the name equal to the second parameter in the texts folder. If no template
--- exist, it uses the widget rendering. If the first parameter match the name of the logged user,
--- the template will be editable at runtime. edTemplate will present an edition bar on the top of
--- the template. The changes in the template will be effective inmediately for all the users.
---
--- The return value is the one returned by the internal widget each time it is executed.
---
--- edTemplate can be used to enrich the content and layout of a widget, for example, by adding
--- extra links, text and formatting. Widgets with form fields work well with an 'edTemplate' mask
--- as long as the tags created by the widget are not deleted, but the validation messages will not appear
---
--- To add dynamic elements to the template for data presentation and//or input field validation
--- messages, combine it with 'witerate' and 'dField'
 edTemplate
   :: (MonadIO m, FormInput v, Typeable a) =>
       UserStr -> Key -> View v m a -> View v m a
@@ -832,76 +813,6 @@ template k w= View $ do
     FormElm text mx <- runView  w
     let content= unsafePerformIO $ readtField  (mconcat text) k
     return $ FormElm [content] mx
-
---edTemplateList
---  :: (Typeable a,FormInput view) =>
---     UserStr -> String  -> [View view Identity a] -> View view IO a
---edTemplateList user templ  ws=  do
---  let  id = templ
---  let wrapid=  "wrapper-" ++ id
---  text <- liftIO $ readtField  (ftag "div" mempty `attrs` [("id",wrapid)])  wrapid
---  let   vwrtext= toString $ toByteString (text `asTypeOf` witness ws)
---
-----  wrapperEd wrapid vwrtext **>
---  (ftag "div" <<< elems id wrapid vwrtext) <! [("id",wrapid)]
---  where
---  witness :: [View view Identity a] -> view
---  witness = undefined
---
---  elems id wrapid vwrtext= View $ do
---    let holder=  ftag "span" (fromStr "holder") `attrs` [("_holder",id)]
---
---    FormElm fedit _ <- runView $ tFieldEd user templ holder
---    frest  <- liftIO $ readtField holder  templ
---
---    forms <-  mapM (runView . changeMonad) ws
---    let vs   = map (\(FormElm v _) ->  mconcat v) forms
---    requires [JScriptFile jqueryScript
---              [
-----               replacewrap
-----              ,"replacewrap('"++ wrapid ++ "','" ++ vwrtext ++ "')",
---              jsInsertList
---              ,"$(document).ready(function() {\
---               \insert('" ++ id ++ "',"++ show (map ( toString . toByteString) vs) ++");\n\
---               \});"]]
---
---    let res = filter isJust $ map (\(FormElm _ r) -> r) forms
---        res1= if null res then Nothing else head res
---
---    return $ FormElm  (mconcat fedit: take (length vs -1) (repeat frest)) res1
---
-jsInsertList =
-      "\nfunction insert(id,vs){\n\
-      \$('[_holder=\"'+id+'\"]').each(function(n,it) {\n\
-      \  $(it).html(vs[n]);\n\
-      \})};\n"
-
---  wrapperEd :: (FormInput view) => String -> view -> View view IO ()
---  wrapperEd  wrapid  wrtext = do -- autoRefresh . pageFlow "wrap" $ do
---        vwrtext <- liftIO $ readtField  (ftag "div" mempty `attrs` [("id",wrapid)])  wrapid
---        let wrtext= toString $ toByteString (vwrtext `asTypeOf` witness)
---        nwrtext<- getString  (Just wrtext)
---                          <! [("id", wrapid++"-ed")]
---                   <** submitButton "OK"
---
---        liftIO $ writetField wrapid (fromStr nwrtext `asTypeOf` witness ws) !> nwrtext
-
-
---  replacewrap = "\nfunction replacewrap(id,wrapcode){\n\
---          \   var selector= '#'+id;\n\
---          \   var children = $(selector).children();\n\
---          \   var nchildren;\n\
---          \   $(selector).replaceWith(wrapcode);\n\
---          \   $(selector).html(children);\n\
---          \   if(wrapcode.search('table') != -1)\n\
---          \        $(children[1].children).wrap('<tr><td></td></tr>')\n\
---          \};\n"
-
---          \   if(wrapcode.search('xx') != -1){\n\
---          \        children.each(function(n,it){\n\
---          \                      $(it).wrap('<li></li>')});\n\
-
---          \        })\n\
 
 
 
@@ -1047,8 +958,8 @@ update method w= View $ do
                           
          (liftIO . sendFlush t $ HttpData (ctype ++ {-("Cache-Control", "no-cache, no-store"): -}
                                 mfHttpHeaders st) (mfCookies st ++ c) s)
-         put st{mfAutorefresh=True{-,inSync=True-}}
-         return $ FormElm [] mr
+         put st{mfAutorefresh=True}
+         return $ FormElm [] mr 
 
   where
   -- | adapted from http://www.codeproject.com/Articles/341151/Simple-AJAX-POST-Form-and-AJAX-Fetch-Link-to-Modal
@@ -1072,6 +983,7 @@ update method w= View $ do
     \            else if (method == 'append') id1.append(dat);\n\
     \            else id1.prepend(dat);\n\
     \            ajaxGetLink(id);\n\
+    \            ajaxPostForm(id);\n\
     \       },\n\
     \       error: function (xhr, status, error) {\n\
     \           var msg = $('<div>' + xhr + '</div>');\n\
@@ -1084,18 +996,39 @@ update method w= View $ do
   \}\n"
 
   ajaxPostForm = "\nfunction ajaxPostForm(id) {\n\
-    \var id1= $('#'+id);\n\
+    \var buttons= $('#'+id+' input[type=\"submit\"]')\n\
     \var idform= $('#'+id+' form[class!=\"_noAutoRefresh\"]');\n\
-    \idform.submit(function (event) {\n\
-        \if (hadtimeout == true) return true;\n\
-        \event.preventDefault();\n\
-        \var $form = $(this);\n\
-        \var url = $form.attr('action');\n\
-        \var pdata = $form.serialize();\n\
+    \buttons.click(function(event) {\n\
+    \  if ($(this).attr('class') != '_noAutoRefresh'){\n\
+    \    event.preventDefault();\n\
+    \    if (hadtimeout == true) return true;\n\
+    \    var $form = $(this).closest('form');\n\
+    \    var url = $form.attr('action');\n\
+    \    pdata = 'auto'+id+'=true&'+this.name+'='+this.value+'&'+$form.serialize();\n\
+    \    postForm(id,url,pdata);\
+    \    return false;\n\
+    \    }else {\n\
+    \      noajax= true;\n\
+    \      return true;\n\
+    \    }\n\
+    \ })\n\
+    \\n\
+    \var noajax;\n\
+    \idform.submit(function(event) {\n\
+    \ if(noajax) {noajax=false; return true;}\n\
+    \   event.preventDefault();\n\
+    \   var $form = $(this);\n\
+    \   var url = $form.attr('action');\n\
+    \   var pdata = 'auto'+id+'=true&' + $form.serialize();\n\
+    \   postForm(id,url,pdata);\n\
+    \   return false;})\n\
+    \}\n\
+    \function postForm(id,url,pdata){\n\
+        \var id1= $('#'+id);\n\
         \$.ajax({\n\
             \type: 'POST',\n\
             \url: url,\n\
-            \data: 'auto'+id+'=true&'+pdata,\n\
+            \data: pdata,\n\
             \success: function (resp) {\n\
     \            var ind= resp.indexOf(' ');\n\
     \            var dat = resp.substr(ind);\n\
@@ -1103,6 +1036,7 @@ update method w= View $ do
     \            if(method== 'html')id1.html(dat);\n\
     \            else if (method == 'append') id1.append(dat);\n\
     \            else id1.prepend(dat);\n\
+    \            ajaxGetLink(id);\n\
     \            ajaxPostForm(id);\n\
             \},\n\
             \error: function (xhr, status, error) {\n\
@@ -1110,9 +1044,40 @@ update method w= View $ do
                 \id1.html(msg);\n\
             \}\n\
         \});\n\
-       \});\n\
-      \return false;\n\
-     \}\n"
+       \};"
+
+
+
+--  ajaxPostForm = "\nfunction ajaxPostForm(id) {\n\
+--    \var id1= $('#'+id);\n\
+--    \var idform= $('#'+id+' form[class!=\"_noAutoRefresh\"]');\n\
+--    \idform.submit(function (event) {\n\
+--        \if (hadtimeout == true) return true;\n\
+--        \event.preventDefault();\n\
+--        \var $form = $(this);\n\
+--        \var url = $form.attr('action');\n\
+--        \var pdata = 'auto'+id+'=true&'+$form.serialize();\n\
+--        \$.ajax({\n\
+--            \type: 'POST',\n\
+--            \url: url,\n\
+--            \data: pdata,\n\
+--            \success: function (resp) {\n\
+--    \            var ind= resp.indexOf(' ');\n\
+--    \            var dat = resp.substr(ind);\n\
+--    \            var method= resp.substr(0,ind);\n\
+--    \            if(method== 'html')id1.html(dat);\n\
+--    \            else if (method == 'append') id1.append(dat);\n\
+--    \            else id1.prepend(dat);\n\
+--    \            ajaxPostForm(id);\n\
+--            \},\n\
+--            \error: function (xhr, status, error) {\n\
+--                \var msg = $('<div>' + xhr + '</div>');\n\
+--                \id1.html(msg);\n\
+--            \}\n\
+--        \});\n\
+--       \});\n\
+--      \return false;\n\
+--     \}\n"
 
 timeoutscript t=
      "\nvar hadtimeout=false;\n\
@@ -1250,57 +1215,6 @@ push method' wait w= push' . map toLower $ show method'
     \ ajaxPush1();\n\
   \}"
 
---    let r= lookup ("auto"++id) $ mfEnv st           -- !> ("TIMEOUT="++ show t)
---    case r of
---      Nothing -> do
---         requires [
---                  JScript $ ajaxPush method,
---                  JScriptFile jqueryScript [installscript]]
---         (ftag "div" <<< insertForm w) <! [("id",id)]  
---
---      Just sind -> View $ do
---         let t= mfToken st
---         FormElm form mr <- runView $ insertForm w
---         st <- get
---         let HttpData ctype c s= toHttpData $ fromString method <> " " <> toByteString (mconcat form)
---         liftIO . sendFlush t $ HttpData (ctype ++ ("Cache-Control", "no-cache, no-store"):mfHttpHeaders st) (mfCookies st ++ c) s
---         put st{mfAutorefresh=True,inSync=True}
---         return $ FormElm [] mr
---
--- ajaxPush method =" function ajaxPush(id,verb,waititime){\n\
---    \var cnt=0; \n\
---    \var id1= $('#'+id);\n\
---    \var idstatus= $('#'+id+'status');\n\
---    \var ida= $('#'+id+' a');\n\
---    \var actionurl = './';\n\
---    \var dialogOpts = {\n\
---    \       cache: false,\n\
---    \       type: 'GET',\n\
---    \       url: actionurl+'?bustcache='+ new Date().getTime()+'&auto'+id+'=true',\n\
---    \       data: '',\n\
---    \       success: function (resp) {\n\
---    \         idstatus.html('')\n\
---    \         cnt=0;\n\
---    \         id1."++method++"(resp);\n\
---    \         ajaxPush1();\n\
---    \       },\n\
---    \       error: function (xhr, status, error) {\n\
---    \            cnt= cnt + 1;\n\
---    \            if  (false) \n\
---    \               idstatus.html('no more retries');\n\
---    \            else {\n\
---    \               idstatus.html('waiting');\n\
---    \               setTimeout(function() { idstatus.html('retrying');ajaxPush1(); }, waititime);\n\
---    \            }\n\
---    \       }\n\
---    \   };\n\
---    \function ajaxPush1(){\n\
---    \   $.ajax(dialogOpts);\n\
---    \   return false;\n\
---    \ }\n\
---    \ ajaxPush1();\n\
---  \}"
---
 
 
 
