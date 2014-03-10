@@ -3,11 +3,13 @@ module TestREST where
 import Data.Monoid
 import Data.String
 
+
+
 -- to execute it alone, uncomment this
 -- #define ALONE
 #ifdef ALONE
 import MFlow.Wai.Blaze.Html.All
-main= runNavigation "" $ transientNav testREST
+main= runNavigation "" $  transientNav testREST
 #else
 import MFlow.Wai.Blaze.Html.All hiding(retry, page)
 import Menu
@@ -29,13 +31,13 @@ testREST= do
                  ++> wlink "a" << b << "letters " <++ i << " or "
                  <|> wlink "1" << b << "numbers"
 
-  case option of
+  case option !> "case" of
     "1" -> do
           page $ wlink "2" << contentFor "1" 
           page $ wlink "3" << contentFor "2"
           page $ wlink "4" << contentFor "3"
           page $ wlink ()  << "menu"
-
+     
     "a" -> do
           page $ wlink "b" << contentFor "a"
           page $ wlink "c" << contentFor "b"

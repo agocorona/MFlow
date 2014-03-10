@@ -1144,13 +1144,13 @@ ask w =  do
 --            let index = mfPIndex st'
 --                nindex= if index== 0 then 1 else index - 1
 --            put st'{mfPIndex= nindex}                     -- !> "BACKTRACK"
-            fail ""                                       -- !> "FAIL**********"
+            fail ""                                        -- !> "FAIL**********"
           else if mfAutorefresh st' then do
                      resetState st st'
                      FlowM $ lift  nextMessage
                      ask w                                -- !> "EN AUTOREFRESH"
           else do
-             reqs <-  FlowM $ lift installAllRequirements     -- !> "REPEAT"
+             reqs <-  FlowM $ lift installAllRequirements    --  !> "REPEAT"
              let header= mfHeader st'
                  t= mfToken st'
              cont <- case (needForm1 st') of
@@ -1165,8 +1165,8 @@ ask w =  do
 
              resetState st st'
              let path= mfPath st
-             FlowM $ lift  nextMessage       -- !> "NEXTMESSAGE"
-             st <-get
+             FlowM $ lift  nextMessage       --  !> "NEXTMESSAGE"
+             st <- get
              let path' = mfPath st
                  env' = mfEnv st
              if isJust(lookup "ajax" env') then ask w
@@ -1208,7 +1208,7 @@ nextMessage = do
          inPageFlow= case (comparep,mfPageIndex st) of
                     (n, Just n') -> if n < n' then Nothing   else Just n'
                     _ -> Nothing
-         comparep= comparePaths (mfPIndex st) 1 (tail path) (tail npath)
+         comparep= comparePaths (mfPIndex st) 1  path  npath
      put st{ mfPath= npath
 --           , mfPIndex=   min (mfPIndex st)  comparep 
 
@@ -1399,12 +1399,13 @@ wlink x v= View $ do
              case  index < Data.List.length lpath && name== lpath !! index   of
              True -> do
                   modify $ \s -> s{inSync= True
-                                 ,linkMatched= True, mfPIndex= index+1 }
+                                 ,linkMatched= True
+                                 ,mfPIndex= index+1 }
 
-                  return $ Just x                             -- !> (name ++ "<-" ++show index++ " " ++ show (mfPIndex st) ++ "lpath=" ++show lpath)
-             False ->  return Nothing                         -- !> ( "NOT MATCHED "++name++"<-" ++show index++ " LP= "++show  lpath)
+                  return $ Just x                            --  !> (name ++ "<-" ++show index++ " " ++ show (mfPIndex st) ++ "lpath=" ++show lpath)
+             False ->  return Nothing                         --  !> ( "NOT MATCHED "++name++"<-" ++show index++ " LP= "++show  lpath)
 
-      return $ FormElm [toSend] r
+      length path `seq` return $ FormElm [toSend] r
 
 -- Creates an absolute link. While a `wlink` path depend on the page where it is located and
 -- ever points to the code of the page that had it inserted, an absLink point to the first page
@@ -1428,6 +1429,8 @@ wlink x v= View $ do
 -- >     p << "third statement" ++> (absLink "here" << p << "will present the first statement alone")
 -- >     p << "fourth statement" ++> wlink () << p << "will not reach here"
 absLink x = wcached  (show x) 0 . wlink x
+
+
 
 -- | When some user interface return some response to the server, but it is not produced by
 -- a form or a link, but for example by an script, @returning@  convert this code into a

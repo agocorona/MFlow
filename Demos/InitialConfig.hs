@@ -2,6 +2,10 @@
 
 
 module InitialConfig (initialConfig) where
+import Data.Typeable
+import Data.String(fromString)
+
+
 -- #define ALONE -- to execute it alone, uncomment this
 #ifdef ALONE
 import MFlow.Wai.Blaze.Html.All as MF
@@ -10,9 +14,6 @@ main= runNavigation "" initialConfig
 import MFlow.Wai.Blaze.Html.All as MF hiding(retry, page)
 import Menu
 #endif
-import Data.Typeable
-import Data.String(fromString)
-
 
 data Skin= Normal |  Blue | Red deriving (Read,Show,Typeable, Bounded, Enum)
 

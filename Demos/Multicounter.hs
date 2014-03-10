@@ -22,12 +22,13 @@ multicounter=
      <|> wlink () << p << "exit"
 
  where
- explain= p << "This example emulates the"
-          <> a ! href (attr "http://www.seaside.st/about/examples/multicounter")
+ explain= do
+       p << "This example emulates the"
+       a ! href (attr "http://www.seaside.st/about/examples/multicounter")
                 << " seaside example"
-          <> p << "It uses various copies of the " <> a ! href (attr "/noscript/counter") << "counter widget "
-          <> text "instantiated in the same page. This is an example of how it is possible to "
-          <> text "compose widgets with independent behaviours"
-
+       p << "It uses various copies of the " <> a ! href (attr "/noscript/counter") << "counter widget "
+       text "instantiated in the same page. This is an example of how it is possible to "
+       text "compose widgets with independent behaviours"
+ 
 
 

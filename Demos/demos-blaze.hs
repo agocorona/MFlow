@@ -70,8 +70,8 @@ main= do
    setFilesPath "Demos/"
    addMessageFlows[
        ("apirest", wstateless restService),
-       ("apikv", wstateless keyValueService),
-       ("apiparser",wstateless  parserService)]
+       ("apikv"  , wstateless keyValueService),
+       ("apiparser", wstateless  parserService)]
    runNavigation "" $ do
        setHttpHeader "Cache-Control" "public,max-age=300"
        setHeader $ stdheader 

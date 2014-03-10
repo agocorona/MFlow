@@ -17,7 +17,8 @@ import Menu
 
 
 wlistEd= do
-   r <-  page   $   addLink
+   r <-  page   $ pageFlow "listed" $
+              addLink
               ++> br
               ++> (wEditList El.div getString1   ["hi", "how are you"] "wEditListAdd")
               <++ br

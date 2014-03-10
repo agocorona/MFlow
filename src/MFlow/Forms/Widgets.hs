@@ -107,8 +107,7 @@ maybeLogout= do
 
 
 data Medit view m a = Medit (M.Map B.ByteString [(String,View view m a)])
-instance (Typeable view, Typeable a)
-         =>Typeable (Medit view m a) where
+instance (Typeable view, Typeable a) => Typeable (Medit view m a) where
   typeOf= \v -> mkTyConApp (mkTyCon3 "MFlow" "MFlow.Forms.Widgets" "Medit" )
                 [typeOf (tview v)
                 ,typeOf (ta v)]
@@ -126,7 +125,7 @@ instance (Typeable view, Typeable a)
 --
 -- normally to be used with autoRefresh and pageFlow when used with other widgets.
 wlogin :: (MonadIO m,Functor m,FormInput v) => View v m ()
-wlogin= insertForm $ do
+wlogin= do
    username <- getCurrentUser
    if username /= anonymous  
          then return username 
@@ -296,7 +295,7 @@ wEditList holderview w xs addId = do
 
     ws' <- getEdited sel
 
-    r <-  (holderview  <<< (manyOf $ ws' ++ map changeMonad ws)) <! [("id",id1)]
+    r <-  (holderview  <<< (allOf $ ws' ++ map changeMonad ws)) <! [("id",id1)]
     delEdited sel ws'
     return r
 
@@ -344,10 +343,10 @@ wautocomplete mv autocomplete  = do
              ,JScriptFile jqueryUI []]
 
 
-    getString mv <!  [("type", "text")
-                     ,("id", text1)
-                     ,("oninput",ajaxc $ "$('#"++text1++"').attr('value')" )
-                     ,("autocomplete", "off")]
+    getString mv <! [("type", "text")
+                    ,("id", text1)
+                    ,("oninput", ajaxc $ "$('#"++text1++"').attr('value')" )
+                    ,("autocomplete", "off")]
 
 
     where
@@ -396,7 +395,7 @@ wautocompleteEdit phold autocomplete  elem values= do
     ws' <- getEdited sel
 
     r<- (ftag "div" mempty  `attrs` [("id",  id1)]
-      ++> manyOf (ws' ++ (map (changeMonad . elem . Just) values)))
+      ++> allOf (ws' ++ (map (changeMonad . elem . Just) values)))
       <++ ftag "input" mempty
              `attrs` [("type", "text")
                      ,("id", textx)
@@ -841,7 +840,7 @@ datePicker conf jd= do
 -- The first parameter is the configuration. To make it modal,  use \"({modal: true})\" see  "http://jqueryui.com/dialog/" for
 -- the available configurations.
 --
--- As in the case of 'autoRefresh' the enclosed widget will be wrapped within a form tag if the user do not encloses it using wform.f
+-- The enclosed widget will be wrapped within a form tag if the user do not encloses it using wform.f
 wdialog :: (Monad m, FormInput v) => String -> String -> View v m a -> View v m a
 wdialog conf title w= do
     id <- genNewId
@@ -939,17 +938,17 @@ update method w= View $ do
                ++ "ajaxGetLink('"++id++"');"
                ++ "ajaxPostForm('"++id++"');"
                ++ "})\n"
-    FormElm form mr <-  runView $ insertForm w
+    FormElm form mr <- runView $ insertForm w
     st <- get
     let insync =  inSync st
     let r= lookup ("auto"++id) $ mfEnv st        
-    if r == Nothing || insync  == False
+    if r == Nothing || insync == False
       then do
          requires [JScript $ timeoutscript t
                   ,JScript ajaxGetLink
                   ,JScript ajaxPostForm
-                  ,JScriptFile jqueryScript [installscript]]
-         return $ FormElm[ftag "div" (mconcat form) `attrs` [("id",id)]] mr
+                  ,JScriptFile jqueryScript [installscript]] 
+         return $ FormElm[ftag "div" (mconcat form) `attrs` [("id",id)]] mr 
 
       else do
          let t= mfToken st
@@ -958,7 +957,7 @@ update method w= View $ do
                           
          (liftIO . sendFlush t $ HttpData (ctype ++ {-("Cache-Control", "no-cache, no-store"): -}
                                 mfHttpHeaders st) (mfCookies st ++ c) s)
-         put st{mfAutorefresh=True}
+         put st{mfAutorefresh=True,inSync=True}
          return $ FormElm [] mr 
 
   where

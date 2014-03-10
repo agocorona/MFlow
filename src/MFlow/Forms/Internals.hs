@@ -59,8 +59,8 @@ import Control.Exception as CE
 import Control.Concurrent 
 import Control.Monad.Loc
 
-import Debug.Trace
-(!>) = flip trace 
+--import Debug.Trace
+--(!>) = flip trace 
 
 
 data FailBack a = BackPoint a | NoBack a | GoBack   deriving (Show,Typeable)
@@ -820,6 +820,7 @@ cachedWidget key t mf =  View .  StateT $ \s ->  do
                    ,mfPageIndex= mfPageIndex s2
                    ,mfSeqCache= mfSeqCache s + mfSeqCache s2 - sec}
         return $ (mfSeqCache s'') `seq` form `seq`  ((FormElm form mx2), s'')
+
         -- !> ("enter: "++show (mfSeqCache s) ++" exit: "++ show ( mfSeqCache s2))
         where
         proc mf s= runStateT (runView mf) s >>= \(r,_) -> mfSeqCache s `seq` return (r,mfSeqCache s )
@@ -873,43 +874,42 @@ runFlow  f t=
   loop (startState t) f   t 
   where
   loop  s f t = do
-    (mt,s) <- runFlowOnce2 s f t
+    (mt,s) <- runFlowOnce2 s f  
     let t'= fromFailBack mt
     let t''= t'{tpath=[twfname t']}
     liftIO $ do
        flushRec t'' 
        sendToMF t'' t''    -- !> "SEND"
-    loop  s f t''          -- !> "LOOPAGAIN"
+    loop  s{mfPIndex=0,mfPath=[],mfEnv=[]} f t''{tpath=[]}           -- !> "LOOPAGAIN"
 
 
 
-runFlowOnce :: (MonadIO m, FormInput view,  Monad m)
+runFlowOnce :: (MonadIO m, FormInput view)
         => FlowM view m () -> Token -> m ()
 runFlowOnce f t= runFlowOnce1 f t  >> return ()
 
-runFlowOnce1 f t  = runFlowOnce2 (startState t) f t
+runFlowOnce1 f t  = runFlowOnce2 (startState t)  f
 
 startState t= mFlowState0{mfToken=t
                    ,mfPath= tpath t
-                   ,mfEnv= tenv t }  
+                   ,mfEnv= tenv t}  
 
-runFlowOnce2 s f t =
+runFlowOnce2 s f  =
   runStateT (runSup . runFlowM $ do
         backInit
-        f
+        f  
         getToken) s
         
 
   where
   backInit= do
-     s <- get                       -- !> "BackInit"
+     s <- get                     --   !> "BackInit"
      case mfTrace s of
        [] -> do
          modify $ \s -> s{{-mfEnv=[],-} newAsk= True}
          breturn ()
-       tr -> do
-
-         error $ disp tr
+         
+       tr ->  error $ disp tr
      where
      disp tr= "TRACE (error in the last line):\n\n" ++(concat $ intersperse "\n" tr)
   -- to restart the flow in case of going back before the first page of the flow
@@ -925,9 +925,9 @@ runFlowOnceReturn  s f t =
 -- the string identifier.
 -- unlike the normal flows, that run within infinite loops, runFlowIn executes once.
 -- In subsequent executions, the flow will get the intermediate responses from te log
--- and will return the result
--- without asking again. This is useful for asking/storing/retrieving user defined configurations by
--- means of web formularies.
+-- and will return the result without asking again.
+-- This is useful for asking once, storing in the log and subsequently retrieving user
+-- defined configurations by means of persistent flows with web formularies.
 runFlowIn
   :: (MonadIO m,
       FormInput view)
@@ -946,69 +946,6 @@ runFlowIn wf f= FlowM . Sup $ do
   where
   runFlow1 st f t= runStateT (runSup . runFlowM $ f) st
 
---exec1bnc :: String ->  Workflow IO a ->   IO  a
---exec1bnc wf f= liftIO $ do
--- ei <- getState  wf f ()
--- case ei of
---  Left err -> CE.throw err
---  Right (name, _, stat) -> do
---     let vers = reverse $ dropWhile isback $ reverse $ S.versions stat !> (unpack $ runW $ showp (S.versions stat))
---         stat'= stat{S.versions= vers, S.state= length vers} !> (unpack $ runW $ showp vers)
---     atomically $ writeDBRef (S.self stat) stat'
---     writeResource stat'
---     runWF1 name f  stat' False
---    `CE.catch`
---      (\(e :: CE.SomeException) -> liftIO $ do
-----             let name=  keyWF wf ()
---             clearRunningFlag name  --`debug` ("exception"++ show e)
---             CE.throw e )
---    `finally`
---      (liftIO . atomically .
---           when(S.recover stat) $ do
---              let ref= S.self stat
---              s <- readDBRef ref `onNothing` error ("step: not found: "++ S.wfName stat)
---              writeDBRef ref s{S.recover= False,S.versions= reverse $ S.versions s})
---
--- where
---
---
---isback x= serializedEqual x (pack "G ")
---
---
---dropBacks  _ []= []
---dropBacks nbacks (x:xs)=
---  case isback x of
---    True  -> dropBacks (nbacks+1) xs
---    False -> if nbacks== 0 then x:dropBacks 0 xs
---                           else dropBacks 0 xs
---switchWF
---  :: (MonadIO m,
---      FormInput view)
---  => String
---  -> FlowM  view  (Workflow IO)  b
---  -> FlowM view m b
---switchWF wf f= FlowM . Sup $ do
---      st <- get     
---      let t = mfToken st
---      (r,st') <- liftIO $ WF.exec1 wf $ runFlow1 st f t
---      put st{mfPath= mfPath st'}
---      return r
-
---switchWF wf f= do
---  liftIO $ addMessageFlows [(wf,runFlow f)]
---  transfer wf
---
---  where
---  runFlow1 st f t= runStateT (runSup . runFlowM $ f) st
-
--- | transfer control to another flow. (experimental)
---transfer :: MonadIO m => String -> FlowM v m ()
---transfer flowname = do
---         t <- gets mfToken
---         let t'= t{twfname= flowname}
---         liftIO  $ do
---             (r,_) <- msgScheduler t'
---             sendFlush t r
 
 -- | to unlift a FlowM computation. useful for executing the configuration generated by runFLowIn
 -- outside of the web flow (FlowM) monad
@@ -1049,10 +986,11 @@ step f= do
         return r
 
 -- | to execute transient flows as if they were persistent
--- it can be used instead of step, but it does not log the response. it ever executes the computation
+-- it can be used instead of step, but it does  log nothing.
+-- Thus, it is faster and convenient when no session state must be stored beyond the lifespan of
+-- the server process.
 --
 -- > transient $ runFlow f === runFlow $ transientNav f
-
 transientNav
   :: (Serialize a,
       Typeable view,
@@ -1060,14 +998,12 @@ transientNav
       Typeable a) =>
       FlowM view IO a
       -> FlowM view (Workflow IO) a
-transientNav= MFlow.Forms.Internals.step
-
---transientNav f= do
---   s <- get
---   flowM $ Sup $ do
---        (r,s') <-  lift . unsafeIOtoWF $ runStateT (runSup $ runFlowM f) s
---        put s'
---        return r
+transientNav f= do
+   s <- get
+   flowM $ Sup $ do
+        (r,s') <-  lift . unsafeIOtoWF $ runStateT (runSup $ runFlowM f) s
+        put s'
+        return r
 
 --stepWFRef
 --  :: (Serialize a,
@@ -1382,9 +1318,9 @@ insertForm w=View $ do
 controlForms :: (FormInput v, MonadState (MFlowState v) m)
     => MFlowState v -> MFlowState v -> [v] -> [v] -> m ([v],Bool)
 controlForms s1 s2 v1 v2= case (needForm s1, needForm s2) of
-    (HasForm,HasElems) -> do
-       v2' <- formPrefix s2 v2 True
-       return (v1 ++ [v2'], True)
+--    (HasForm,HasElems) -> do
+--       v2' <- formPrefix s2 v2 True
+--       return (v1 ++ [v2'], True)
     (HasElems, HasForm) -> do
        v1' <- formPrefix s1 v1 True
        return ([v1'] ++ v2 , True)
@@ -1392,9 +1328,9 @@ controlForms s1 s2 v1 v2= case (needForm s1, needForm s2) of
     _ -> return (v1 ++ v2, False)
 
 currentPath insInBackTracking index lpath verb =
-    (if null lpath then verb
+    (if null lpath then '/':verb
      else case insInBackTracking of
-        True   -> concat $ take index  ['/':v | v <- lpath]  -- !> ("index= " ++ show index)
+        True   -> concat $ take index  ['/':v | v <- lpath]   -- !> ("index= " ++ show index)
         False  -> concat ['/':v| v <- lpath])
 
 -- | Generate a new string. Useful for creating tag identifiers and other attributes.

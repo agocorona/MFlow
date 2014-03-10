@@ -16,7 +16,8 @@ import Menu
 attr= fromString
 
 grid = do
-  r <- page  $   addLink
+  r <- page  $ pageFlow "grid"
+             $ addLink
            ++> wEditList table  row ["",""] "wEditListAdd"
            <** submitButton "submit"
            

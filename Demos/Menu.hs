@@ -86,7 +86,7 @@ mainMenu= pageFlow "" $
           absLink BasicWidgets << b  "Basic Widgets"
           ul <<<        
            (hr
-           ++> (li <<< (absLink CountI << b  "Increase an Int")  <! noAutoRefresh
+           ++>(li <<< (absLink CountI << b  "Increase an Int")  <! noAutoRefresh
                        <++ b " A loop that increases the Int value of a text box"
                                    
            <|> li <<< (absLink CountS  << b  "Increase a String") <! noAutoRefresh
@@ -95,9 +95,9 @@ mainMenu= pageFlow "" $
            <|> li <<< (absLink Select  << b  "Select options") <! noAutoRefresh
                        <++ b " A combo box"
                                    
-           <|> li <<< (absLink CheckBoxes   << b  "Checkboxes") <! noAutoRefresh
+           <|> li <<< (absLink CheckBoxes << b  "Checkboxes") <! noAutoRefresh
            
-           <|> li <<< (absLink Radio        << b  "Radio buttons") <! noAutoRefresh
+           <|> li <<< (absLink Radio      << b  "Radio buttons") <! noAutoRefresh
            <++ hr)))
 
     <|> (autoRefresh $ li <<<   do
@@ -345,7 +345,7 @@ widgetAndSource (Just(Filename filename)) w = do
                   h1 $ "Source code:"
                   source
                   hr
-                  disquscript
+--                  disquscript
 
       where
       host = "mflowdemo.herokuapp.com/"

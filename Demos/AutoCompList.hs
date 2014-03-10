@@ -11,7 +11,8 @@ import Menu
 
 
 autocompList= do
-   r <- page  $   p <<  "Autocomplete with a list of selected entries"
+   r <- page  $ pageFlow "autoc" $
+            p <<  "Autocomplete with a list of selected entries"
             ++> p <<  "enter  and press enter"
             ++> p <<  "when submit is pressed, the entries are returned"
             ++> wautocompleteList "red,green,blue" filter1 ["red"]

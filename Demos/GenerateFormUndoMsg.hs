@@ -11,7 +11,7 @@
 -- |
 --
 -----------------------------------------------------------------------------
-{-# LANGUAGE DeriveDataTypeable, OverloadedStrings, ExistentialQuantification #-}
+{-# LANGUAGE DeriveDataTypeable, OverloadedStrings,  ScopedTypeVariables, ExistentialQuantification #-}
 module GenerateFormUndoMsg (
 genFormUndoMsg
 ) where
@@ -45,6 +45,8 @@ genFormUndoMsg= do
     initFormTemplate title
 
     desc <-  createForm 0 title
+
+    when (null $ filter (== ShowResults) desc) $ setSessionData (desc ++ [ShowResults])
 
     hpage $ do
            wraw $ b "This is the form created. Test it"
@@ -84,19 +86,35 @@ genElem (WCheckBoxes xs) =
     Result <$> getCheckBoxes(mconcat[setCheckBox False x <++ (fromStr x) | x <- xs])
 
 genElem ShowResults = Result <$> do
+-- w@FormElem f mr <- View $ runView $ do
       xs <- getSessionData `onNothing` return []
+--  if null xs then  do
+--      wdialog "{modal: true}" "Warning" $ wraw "you must insert at least another widget"
+--      return ("failure" ::String)
+--
+--  else if not . null $ filter (== ShowResults) xs then do
+--      wdialog "{modal: true}" "Warning" $ wraw "you already inserted this widget"
+--      return "failure"
+--
+--  else  do
       pageFlow "" (allOf (map genElem (xs \\ [ShowResults]))) <|> return []
     `wcallback` (\r ->  pageFlow "button" $ do
       submitButton "submit" <|> return ""
       wraw $ h2 "Result:"
       dField(wraw $ b << show r)
-      return ())
+      return "")
+ case mr of
+  Result ("failure" :: String) -> w >> stop
+  _ ->
 
 genElem (Form temp desc)= Result <$> generateForm temp desc
 
 generateForm title xs=
    input ! At.type_ "hidden" ! name "p0" ! value "()"
-   ++> ( witerate . pageFlow "" . allOf $ map genElem xs)
+
+   ++> (div ! At.id "p7"
+   <<< input ! type_ "hidden" ! name "p0" ! value"()"
+   ++> (template title $ witerate . pageFlow "" . allOf $ map genElem xs))
 
 
 createForm n title= do
@@ -114,9 +132,10 @@ createForm n title= do
              Just <$> getSessionData `onNothing` return []
        <|> do
              wdesc <- chooseWidget <++ hr
-             setSessionData $ mappend desc [wdesc]
+
              content <- liftIO $ readtField  mempty (title ++ show n)
              fieldview <- generateView  wdesc seq
+             setSessionData $ mappend desc [wdesc]
              liftIO . writetField (title ++ show (n+1)) $ content <> br <> fieldview
              return Nothing
            )
@@ -135,10 +154,13 @@ generateView desc n= View $ do
     s <- get
     let n'= if n== 0 then 1 else n
     put s{mfSequence= n'}
-    FormElm render _ <- runView $ genElem desc
+    FormElm render mr <- runView $ genElem desc
     n'' <- gets mfSequence
     setSessionData $ Seq n''
-    return $ FormElm [] $ Just ( br <> br <> mconcat render :: Html)
+    return $ FormElm [] $ case mr of
+      Just (Result x) -> do
+
+      _ -> Just ( br <> br <> mconcat render :: Html)
 
 
 nrlink x v= wlink x v <! noAutoRefresh

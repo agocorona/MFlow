@@ -83,7 +83,11 @@ searchCart = do
           Right (Just type1) -> atomic $ Q.select namep $ typep `containsElem` type1
           Right Nothing      -> return []
 
-        if Prelude.null prods then buyProduct else do
+        if Prelude.null prods
+         then do
+             page $ b << "no match " ++> wlink () << b << "search again"
+             buyProduct
+         else do
             let search= case r of
                             Left str ->              "for search of the term " ++ str
                             Right (Just type1) ->    "of the type "++ type1
