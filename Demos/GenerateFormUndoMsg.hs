@@ -46,13 +46,12 @@ genFormUndoMsg= do
 
     desc <-  createForm 0 title
 
-    when (null $ filter (== ShowResults) desc) $ setSessionData (desc ++ [ShowResults])
 
-    hpage $ do
-           wraw $ b "This is the form created. Test it"
-           wraw $ hr
-           generateForm title desc
-           stop
+    hpage $  b "This is the form created. Test it"
+           ++> hr
+           ++> generateForm title  desc
+           **> wlink () "home/reset"
+
 
 
     return()
@@ -86,37 +85,26 @@ genElem (WCheckBoxes xs) =
     Result <$> getCheckBoxes(mconcat[setCheckBox False x <++ (fromStr x) | x <- xs])
 
 genElem ShowResults = Result <$> do
--- w@FormElem f mr <- View $ runView $ do
       xs <- getSessionData `onNothing` return []
---  if null xs then  do
---      wdialog "{modal: true}" "Warning" $ wraw "you must insert at least another widget"
---      return ("failure" ::String)
---
---  else if not . null $ filter (== ShowResults) xs then do
---      wdialog "{modal: true}" "Warning" $ wraw "you already inserted this widget"
---      return "failure"
---
---  else  do
       pageFlow "" (allOf (map genElem (xs \\ [ShowResults]))) <|> return []
     `wcallback` (\r ->  pageFlow "button" $ do
       submitButton "submit" <|> return ""
       wraw $ h2 "Result:"
       dField(wraw $ b << show r)
-      return "")
- case mr of
-  Result ("failure" :: String) -> w >> stop
-  _ ->
+      return ())
+
 
 genElem (Form temp desc)= Result <$> generateForm temp desc
 
 generateForm title xs=
    input ! At.type_ "hidden" ! name "p0" ! value "()"
 
-   ++> (div ! At.id "p7"
+   ++> (div ! At.id "p0"
    <<< input ! type_ "hidden" ! name "p0" ! value"()"
-   ++> (template title $ witerate . pageFlow "" . allOf $ map genElem xs))
+   ++> ( template title . pageFlow "" . witerate . pageFlow "" . allOf $ map genElem xs))
 
 
+-- n carries out the version number
 createForm n title= do
  desc    <- getSessionData `onNothing` return []
  Seq seq <- getSessionData `onNothing` return (Seq 0)
@@ -128,21 +116,37 @@ createForm n title= do
                 <++ br <> "(when finished)"
              content <- liftIO $ readtField  (mempty :: Html) (title ++ show n)
              liftIO . writetField title $ content
-             liftIO $ forM_ [1 .. n] $ \n -> writetField (title ++ show n)  ("" :: Html)
-             Just <$> getSessionData `onNothing` return []
+             liftIO $ forM_ [1 .. n] $ \n -> writetField (title ++ show n)  ("" :: Html) -- delete
+             desc' <- getSessionData `onNothing` return []
+             desc <- addResults title desc'
+             return $ Just desc
        <|> do
              wdesc <- chooseWidget <++ hr
 
-             content <- liftIO $ readtField  mempty (title ++ show n)
-             fieldview <- generateView  wdesc seq
+             addElem (title ++ show n) (title ++ show (n+1))  wdesc
              setSessionData $ mappend desc [wdesc]
-             liftIO . writetField (title ++ show (n+1)) $ content <> br <> fieldview
              return Nothing
            )
-     <** divbody <<<  {- wform -} (edTemplate "edituser" (title ++ show n) (return ()) )
+     <** divbody <<< (edTemplate "edituser" (title ++ show n) (return ()) )
  case r of
    Just desc -> return desc
    Nothing -> createForm (n+1) title
+
+-- add a "show results" element to the form if it is not already there
+addResults title desc = do
+    if (null $ filter (== ShowResults) desc)
+         then do
+           addElem title title ShowResults
+           return $ desc ++ [ShowResults]
+         else  return desc
+
+-- add a form elem to the page being edited
+addElem title title2 wdesc = do
+     Seq seq <- getSessionData `onNothing` return (Seq 0)
+     content <- liftIO $ readtField  mempty title
+     fieldview <- generateView  wdesc seq
+     liftIO . writetField title2  $ content <> br <> fieldview
+
 
 divbody= div ! At.style "float:right;width:65%"
 divmenu= div ! At.style "background-color:#EEEEEE;float:left;margin-left:10px;margin-right:10px;overflow:auto;"
@@ -157,10 +161,11 @@ generateView desc n= View $ do
     FormElm render mr <- runView $ genElem desc
     n'' <- gets mfSequence
     setSessionData $ Seq n''
-    return $ FormElm [] $ case mr of
-      Just (Result x) -> do
-
-      _ -> Just ( br <> br <> mconcat render :: Html)
+    return $ FormElm [] $ Just ( br <> br <> mconcat render :: Html)
+--    return $ FormElm [] $ case mr of
+--      Just (Result x) -> do
+--
+--      _ -> Just ( br <> br <> mconcat render :: Html)
 
 
 nrlink x v= wlink x v <! noAutoRefresh

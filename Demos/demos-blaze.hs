@@ -48,6 +48,7 @@ import SearchCart
 import InitialConfig
 import GenerateForm
 import GenerateFormUndo
+import GenerateFormUndoMsg
 import WebService
 import Data.TCache.DefaultPersistence
 
@@ -117,5 +118,6 @@ main= do
              SearchCart    -> searchCart                `showSource` "SearchCart.hs"
              GenerateForm  -> step genForm
              GenerateFormUndo -> step genFormUndo
+             GenerateFormUndoMsg -> transientNav genFormUndoMsg
 
 

@@ -69,7 +69,7 @@ data Options= Wiki | CountI | CountS | Radio
             | DatabaseSamples |PushSamples | ErrorTraces | Flows
             | BasicWidgets | MonadicWidgets | DynamicWidgets | LoginLogout
             | Templates | RuntimeTemplates | LoginWidget
-            | ComplexThings | GenerateForm | GenerateFormUndo
+            | ComplexThings | GenerateForm | GenerateFormUndo | GenerateFormUndoMsg
             deriving (Bounded, Enum,Read, Show,Typeable)
 
 
@@ -268,7 +268,12 @@ mainMenu= pageFlow "" $
                  <|> (li <<< (absLink GenerateFormUndo << b "form generator with undo") <! noAutoRefresh
                              <++ b " The same above application with undo edits thanks to the backtracking mechanism of MFlow"
 
-                             <>  hr)))
+                             <>  hr)
+                 <|> (li <<< (absLink GenerateFormUndoMsg << b "form generator with no page refreshes") <! noAutoRefresh
+                             <++ b " The same above application with no page refresh for menu options. The form page show\
+                                   \ validation errors and results via Ajax using witerate/dField"
+
+                             <>  hr) ))
 
    <++ li << (a ! href "/noscript/wiki/webservices" $ b "Web Services"))
                     
@@ -345,7 +350,7 @@ widgetAndSource (Just(Filename filename)) w = do
                   h1 $ "Source code:"
                   source
                   hr
---                  disquscript
+                  disquscript
 
       where
       host = "mflowdemo.herokuapp.com/"
