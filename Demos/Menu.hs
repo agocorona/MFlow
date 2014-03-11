@@ -266,9 +266,8 @@ mainMenu= pageFlow "" $
                  ++> (li <<< (absLink GenerateForm << b  "A form generator and editor")   <! noAutoRefresh
                              <++ b " Add widgets and edit the layout. Execute the generated form and see the results")
                  <|> (li <<< (absLink GenerateFormUndo << b "form generator with undo") <! noAutoRefresh
-                             <++ b " The same above application with undo edits thanks to the backtracking mechanism of MFlow"
+                             <++ b " The same above application with undo edits thanks to the backtracking mechanism of MFlow")
 
-                             <>  hr)
                  <|> (li <<< (absLink GenerateFormUndoMsg << b "form generator with no page refreshes") <! noAutoRefresh
                              <++ b " The same above application with no page refresh for menu options. The form page show\
                                    \ validation errors and results via Ajax using witerate/dField"

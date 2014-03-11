@@ -87,11 +87,12 @@ genElem (WCheckBoxes xs) =
 genElem ShowResults = Result <$> do
       xs <- getSessionData `onNothing` return []
       pageFlow "" (allOf (map genElem (xs \\ [ShowResults]))) <|> return []
-    `wcallback` (\r ->  pageFlow "button" $ do
-      submitButton "submit" <|> return ""
-      wraw $ h2 "Result:"
-      dField(wraw $ b << show r)
-      return ())
+    `wcallback` (\r ->  pageFlow "button" $
+      submitButton "submit"
+      **> h2 "Result:"
+      ++> dField(wraw $ b << show r)
+      **> return ())
+
 
 
 genElem (Form temp desc)= Result <$> generateForm temp desc
