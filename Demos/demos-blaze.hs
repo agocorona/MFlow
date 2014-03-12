@@ -61,7 +61,6 @@ instance Serializable Int where
 
 
 main= do
---   index idnumber                      -- for the Database example
    index tfieldKey
    setAdminUser adminname  adminname
    userRegister edadmin edadmin

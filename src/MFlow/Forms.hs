@@ -1658,12 +1658,10 @@ instance FormInput  ByteString  where
 
 ------ page Flows ----
 
--- | prepares the state for a page flow.
--- It add a prefix to every form element or link identifier for the formlets and also
+-- | Prepares the state for a page flow. It add a prefix to every form element or link identifier for the formlets and also
 -- keep the state of the links clicked and form imput entered within the widget.
--- If the computation within the widget has branches  @if@ @case@ etc, each branch must have its pageFlow with a distinct identifier
---
--- See "http://haskell-web.blogspot.com.es/2013/06/the-promising-land-of-monadic-formlets.html"
+-- If the computation within the widget has branches  @if@ @case@ etc, each branch must have its pageFlow with a distinct identifier.
+-- See <http://haskell-web.blogspot.com.es/2013/06/the-promising-land-of-monadic-formlets.html>
 pageFlow
   :: (Monad m, Functor m, FormInput view) =>
      String -> View view m a -> View view m a

@@ -745,9 +745,8 @@ normalize f=  View .  StateT $ \s ->do
 
 -- | Minimal interface for defining the basic form and link elements. The core of MFlow is agnostic
 -- about the rendering package used. Every formatting (either HTML or not) used with MFlow must have an
--- instance of this class
---
--- See "MFlow.Forms.Blaze.Html for the instance for blaze-html. "MFlow.Forms.XHtml" for the instance
+-- instance of this class.
+-- See "MFlow.Forms.Blaze.Html for the instance for blaze-html" "MFlow.Forms.XHtml" for the instance
 -- for @Text.XHtml@ and MFlow.Forms.HSP for the instance for Haskell Server Pages.
 class (Monoid view,Typeable view)   => FormInput view where
     toByteString :: view -> B.ByteString

@@ -479,18 +479,16 @@ readtField text k= atomically $ do
     Just (TField k v) -> if v /= mempty then return $ fromStrNoEncode $ toString v else return text
     Nothing -> return text
 
--- |
--- cretates a rich text editor aroun a text field or a text area widget
+-- | Creates a rich text editor aroun a text field or a text area widget.
+--   This code:
 --
--- This code:
---
--- page $   p "Insert the text"
--- >  ++> htmlEdit ["bold","italic"] ""  -- rich text editor with bold and italic buttons
+-- > page $ p "Insert the text"
+-- >    ++> htmlEdit ["bold","italic"] ""
 -- >           (getMultilineText "" <! [("rows","3"),("cols","80")]) <++ br
--- >  <** submitButton "enter"
+-- >    <** submitButton "enter"
 --
--- Creates a rich text area with bold and italic buttons. The buttons are the ones alled
--- in the nicEdit editor.
+--   Creates a rich text area with bold and italic buttons. The buttons are the ones alled
+--   in the nicEdit editor.
 htmlEdit :: (Monad m, FormInput v) =>  [String] -> UserStr -> View v m a -> View v m a
 htmlEdit buttons jsuser w = do
   id <- genNewId
@@ -696,14 +694,36 @@ autoEvalLink = "\nfunction autoEvalLink(id,ind){\n\
   \}\n"
 
 autoEvalForm = "\nfunction autoEvalForm(id) {\n\
-    \var id1= $('#'+id);\n\
-    \var buttons= $('#'+id+' input[type=\"submit\"][class!=\"_noAutoRefresh\"]').click(function(event) {\n\
-        \if (hadtimeout == true) return true;\n\
-        \event.preventDefault();\n\
-        \var $form = $(this).closest('form');\n\
-        \var url = $form.attr('action');\n\
-        \var pdata = $form.serialize();\n\
-        \$.ajax({\n\
+    \var buttons= $('#'+id+' input[type=\"submit\"]')\n\
+    \var idform= $('#'+id+' form[class!=\"_noAutoRefresh\"]');\n\
+    \buttons.click(function(event) {\n\
+    \  if ($(this).attr('class') != '_noAutoRefresh'){\n\
+    \    event.preventDefault();\n\
+    \    if (hadtimeout == true) return true;\n\
+    \    var $form = $(this).closest('form');\n\
+    \    var url = $form.attr('action');\n\
+    \    pdata = 'auto'+id+'=true&'+this.name+'='+this.value+'&'+$form.serialize();\n\
+    \    postForm(id,url,pdata);\
+    \    return false;\n\
+    \    }else {\n\
+    \      noajax= true;\n\
+    \      return true;\n\
+    \    }\n\
+    \ })\n\
+    \\n\
+    \var noajax;\n\
+    \idform.submit(function(event) {\n\
+    \ if(noajax) {noajax=false; return true;}\n\
+    \   event.preventDefault();\n\
+    \   var $form = $(this);\n\
+    \   var url = $form.attr('action');\n\
+    \   var pdata = 'auto'+id+'=true&' + $form.serialize();\n\
+    \   postForm(id,url,pdata);\n\
+    \   return false;})\n\
+    \}\n\
+    \function postForm(id,url,pdata){\n\
+        \var id1= $('#'+id);\n\
+         \$.ajax({\n\
             \type: 'POST',\n\
             \url: url,\n\
             \data: 'auto'+id+'=true&'+this.name+'='+this.value+'&'+pdata,\n\
@@ -715,9 +735,31 @@ autoEvalForm = "\nfunction autoEvalForm(id) {\n\
                 \id1.html(msg);\n\
             \}\n\
         \});\n\
-       \});\n\
-      \return false;\n\
-     \}\n"
+       \}"
+
+--autoEvalForm = "\nfunction autoEvalForm(id) {\n\
+--    \var id1= $('#'+id);\n\
+--    \var buttons= $('#'+id+' input[type=\"submit\"][class!=\"_noAutoRefresh\"]').click(function(event) {\n\
+--        \if (hadtimeout == true) return true;\n\
+--        \event.preventDefault();\n\
+--        \var $form = $(this).closest('form');\n\
+--        \var url = $form.attr('action');\n\
+--        \var pdata = $form.serialize();\n\
+--        \$.ajax({\n\
+--            \type: 'POST',\n\
+--            \url: url,\n\
+--            \data: 'auto'+id+'=true&'+this.name+'='+this.value+'&'+pdata,\n\
+--            \success: function (resp) {\n\
+--                \eval(resp);\n\
+--            \},\n\
+--            \error: function (xhr, status, error) {\n\
+--                \var msg = $('<div>' + xhr + '</div>');\n\
+--                \id1.html(msg);\n\
+--            \}\n\
+--        \});\n\
+--       \});\n\
+--      \return false;\n\
+--     \}\n"
 
 --autoEvalForm = "\nfunction autoEvalForm(id) {\n\
 --    \var id1= $('#'+id);\n\
@@ -746,7 +788,7 @@ autoEvalForm = "\nfunction autoEvalForm(id) {\n\
 
 setId= "function setId(id,v){document.getElementById(id).innerHTML= v;};\n"
 
--- Present a widget via AJAX if it is within a 'witerate' context. In the first iteration it present the
+-- | Present a widget via AJAX if it is within a 'witerate' context. In the first iteration it present the
 -- widget surrounded by a placeholder. subsequent iterations will send just the javascript code
 -- necessary for the refreshing of the placeholder.
 dField
@@ -837,7 +879,7 @@ datePicker conf jd= do
     return (read day,read month, read $ tail r2)
 
 -- | present a jQuery dialog with a widget. When a button is pressed it return the result.
--- The first parameter is the configuration. To make it modal,  use \"({modal: true})\" see  "http://jqueryui.com/dialog/" for
+-- The first parameter is the configuration. To make it modal,  use \"({modal: true})\" see  <http://jqueryui.com/dialog/> for
 -- the available configurations.
 --
 -- The enclosed widget will be wrapped within a form tag if the user do not encloses it using wform.f

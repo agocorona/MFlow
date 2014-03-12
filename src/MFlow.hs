@@ -512,11 +512,11 @@ userRegister u p= liftIO $ do
 
 
 
-data Config = Config{cadmin :: UserStr    -- ^ Administrator name
-                    ,cjqueryScript        -- ^ URL of jquery
-                    ,cjqueryCSS           -- ^ URL of jqueryCSS
-                    ,cjqueryUI            -- ^ URL of jqueryUI
-                    ,cnicEditUrl :: String -- ^ URL of the nicEdit  editor
+data Config = Config{cadmin :: UserStr           -- ^ Administrator name
+                    ,cjqueryScript :: String     -- ^ URL of jquery
+                    ,cjqueryCSS    :: String     -- ^ URL of jqueryCSS
+                    ,cjqueryUI     :: String     -- ^ URL of jqueryUI
+                    ,cnicEditUrl    :: String    -- ^ URL of the nicEdit  editor
                     }
                     deriving (Read, Show, Typeable)
 
