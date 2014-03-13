@@ -879,7 +879,10 @@ runFlow  f t=
     liftIO $ do
        flushRec t'' 
        sendToMF t'' t''    -- !> "SEND"
-    loop  s{mfPIndex=0,mfPath=[],mfEnv=[]} f t''{tpath=[]}           -- !> "LOOPAGAIN"
+    let s'= case mfSequence s of
+             -1 -> s --in recovery
+             _  -> s{mfPIndex=0,mfPath=[],mfEnv=[]}
+    loop   s' f t''{tpath=[]}           -- !> "LOOPAGAIN"
 
 
 

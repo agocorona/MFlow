@@ -66,7 +66,7 @@ main= do
    userRegister edadmin edadmin
    userRegister "edituser" "edituser"
    syncWrite  $ Asyncronous 120 defaultCheck  1000
-   db <- initAcid -- for the AcidState example
+   db <- initAcid                             -- for the AcidState example
    setFilesPath "Demos/"
    addMessageFlows[
        ("apirest", wstateless restService),
