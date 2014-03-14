@@ -1097,13 +1097,16 @@ getRestParam= do
   
   if linkMatched st
    then return Nothing          
-   else case fmap  head $ stripPrefix (mfPagePath st) lpath  of
-     Just name -> do
+   else case  stripPrefix (mfPagePath st) lpath  of
+     Nothing -> return Nothing
+     Just [] -> return Nothing
+     Just xs -> do
+          let name = head xs
           modify $ \s -> s{inSync= True
                          ,linkMatched= True
                          ,mfPagePath= mfPagePath s++[name] } 
           fmap valToMaybe $ readParam name
-     Nothing ->  return Nothing
+
 
 -- | return the value of a post or get param in the form ?param=value&param2=value2...
 getKeyValueParam par= do
