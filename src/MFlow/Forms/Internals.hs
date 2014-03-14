@@ -49,6 +49,7 @@ import System.IO.Unsafe
 import Control.Concurrent.MVar
 import qualified Data.Text as T
 import Data.Char
+import Data.List(stripPrefix)
 import Control.Concurrent.STM
 --import Data.String
 --
@@ -84,8 +85,8 @@ noFailBack= "N"
 newtype Sup m a = Sup { runSup :: m (FailBack a ) }
 
 class MonadState s m => Supervise s m where
-   supBack     :: s -> m ()
-   supBack = const $ return ()
+   supBack     :: s -> m ()           -- called before backtracing. state passed is the previous
+   supBack = const $ return ()        -- By default the state passed is the last one
    
    supervise ::    m (FailBack a) -> m (FailBack a)
    supervise= id
@@ -99,13 +100,13 @@ instance (Supervise s m)=> Monad (Sup  m) where
      where
      loop = do
         s <- get
-        v <-  supervise $ runSup x                         -- !> "loop"
+        v <- supervise $ runSup x                         -- !> "loop"
         case v of
-            NoBack y  -> supervise $ runSup (f y)         -- !> "runback"
+            NoBack y -> supervise $ runSup (f y)          -- !> "runback"
             BackPoint y  -> do
                  z <- supervise $ runSup (f y)            -- !> "BACK"
                  case z of
-                  GoBack  -> supBack s >> loop            --   !> "BACKTRACKING"
+                  GoBack  -> supBack s >> loop            -- !> "BACKTRACKING"
                   other   -> return other
             GoBack  ->  return  $ GoBack
 
@@ -206,13 +207,14 @@ newtype View v m a = View { runView :: WState v m (FormElm v a)}
 
 
 instance  Monad m => Supervise (MFlowState v) (WState v m) where
-   supBack st= do
+   supBack st= do     -- the previous state is recovered, with the exception of these fields:
       MFlowState{..} <- get
       put st{ mfEnv= mfEnv,mfToken=mfToken
-            , mfPath=mfPath -- ,mfPIndex= mfPIndex
+            , mfPath=mfPath 
             , mfData=mfData
             , mfTrace= mfTrace
-            , inSync=False,newAsk=False}
+            , inSync=False
+            , newAsk=False}
 
 
 
@@ -540,9 +542,10 @@ data MFlowState view= MFlowState{
 
    -- Link management
    mfPath           :: [String],
+   mfPagePath       :: [String],
    mfPrefix         :: String,
-   mfPIndex         :: Int,
-   mfPageIndex      :: Maybe Int,
+--   mfPIndex         :: Int,
+   mfPageFlow       :: Bool,
    linkMatched      :: Bool,
 
 
@@ -557,7 +560,7 @@ type Void = Char
 mFlowState0 :: (FormInput view) => MFlowState view
 mFlowState0 = MFlowState 0 False  True  True  "en"
                 [] NoElems  (error "token of mFlowState0 used")
-                0 0 [] [] stdHeader False [] M.empty  Nothing 0 False    []   ""   1 Nothing False  False [] False
+                0 0 [] [] stdHeader False [] M.empty  Nothing 0 False    [] []  "" False False  False [] False
 
 
 -- | Set user-defined data in the context of the session.
@@ -814,9 +817,10 @@ cachedWidget key t mf =  View .  StateT $ \s ->  do
         let s''=  s{inSync = inSync s2
                    ,mfRequirements=mfRequirements s2
                    ,mfPath= mfPath s2
+                   ,mfPagePath= mfPagePath s2
+                   
                    ,needForm= needForm s2
-                   ,mfPIndex= mfPIndex s2
-                   ,mfPageIndex= mfPageIndex s2
+                   ,mfPageFlow= mfPageFlow s2
                    ,mfSeqCache= mfSeqCache s + mfSeqCache s2 - sec}
         return $ (mfSeqCache s'') `seq` form `seq`  ((FormElm form mx2), s'')
 
@@ -881,7 +885,7 @@ runFlow  f t=
        sendToMF t'' t''    -- !> "SEND"
     let s'= case mfSequence s of
              -1 -> s --in recovery
-             _  -> s{mfPIndex=0,mfPath=[],mfEnv=[]}
+             _  -> s{mfPath=[twfname t],mfPagePath=[twfname t],mfEnv=[]}
     loop   s' f t''{tpath=[]}           -- !> "LOOPAGAIN"
 
 
@@ -894,7 +898,8 @@ runFlowOnce1 f t  = runFlowOnce2 (startState t)  f
 
 startState t= mFlowState0{mfToken=t
                    ,mfPath= tpath t
-                   ,mfEnv= tenv t}  
+                   ,mfEnv= tenv t
+                   ,mfPagePath=[twfname t]}  
 
 runFlowOnce2 s f  =
   runStateT (runSup . runFlowM $ do
@@ -908,7 +913,7 @@ runFlowOnce2 s f  =
      s <- get                     --   !> "BackInit"
      case mfTrace s of
        [] -> do
-         modify $ \s -> s{{-mfEnv=[],-} newAsk= True}
+         modify $ \s -> s{ newAsk= True}
          breturn ()
          
        tr ->  error $ disp tr
@@ -1088,19 +1093,17 @@ getParam1 par req =   case lookup  par req of
 getRestParam :: (Read a, Typeable a,Monad m,Functor m,  MonadState (MFlowState v) m, FormInput v) => m (Maybe a)
 getRestParam= do
   st <- get
-  let lpath = mfPath st
-      index' = mfPIndex st -- + if Just (mfPIndex st)== mfPageIndex st then 1 else 0
-      index = if index'== 0 then 1 else index'
-      name =  lpath !! index
+  let lpath  = mfPath st
+  
   if linkMatched st
    then return Nothing          
-   else case index < length lpath  of
-     True -> do
+   else case fmap  head $ stripPrefix (mfPagePath st) lpath  of
+     Just name -> do
           modify $ \s -> s{inSync= True
                          ,linkMatched= True
-                         ,mfPIndex= index+1 } 
+                         ,mfPagePath= mfPagePath s++[name] } 
           fmap valToMaybe $ readParam name
-     False ->  return Nothing
+     Nothing ->  return Nothing
 
 -- | return the value of a post or get param in the form ?param=value&param2=value2...
 getKeyValueParam par= do
@@ -1292,9 +1295,8 @@ ajaxScript=
         ""
 
 formPrefix   st form anchored= do
-     let index= mfPIndex st
-         verb= twfname $ mfToken st
-         path  = currentPath False index (mfPath st) verb
+     let verb = twfname $ mfToken st
+         path  = currentPath st 
      (anchor,anchorf)
            <- case anchored of
                True  -> do
@@ -1329,11 +1331,7 @@ controlForms s1 s2 v1 v2= case (needForm s1, needForm s2) of
 
     _ -> return (v1 ++ v2, False)
 
-currentPath insInBackTracking index lpath verb =
-    (if null lpath then '/':verb
-     else case insInBackTracking of
-        True   -> concat $ take index  ['/':v | v <- lpath]   -- !> ("index= " ++ show index)
-        False  -> concat ['/':v| v <- lpath])
+currentPath  st=  concat ['/':v| v <- mfPagePath st]
 
 -- | Generate a new string. Useful for creating tag identifiers and other attributes.
 --

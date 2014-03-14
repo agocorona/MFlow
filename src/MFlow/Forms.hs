@@ -1120,6 +1120,17 @@ ask w =  do
   -- END AJAX
 
    _ ->   do
+
+--  mfPagePath : contains the REST path of the page.
+--  it is set for each page
+--  if it does not exist, backtrack (to fill the field)
+    let pagepath = mfPagePath st1
+    if null pagepath then fail ""
+--  if exist and it is not prefix of the current path being navigated to, backtrack
+      else if not $  pagepath `isPrefixOf` mfPath st1 then fail ""
+       else do
+--  wlinks set it for the next page
+   
      let st= st1{needForm= NoElems, inSync= False, mfRequirements= [], linkMatched= False} 
      put st
 
@@ -1136,15 +1147,9 @@ ask w =  do
 
        Nothing ->
          if  not (inSync st')  && not (newAsk st')
---                                                        !> ("pageIndex="++ show (mfPageIndex st'))
 --                                                        !> ("insync="++show (inSync st'))
 --                                                        !> ("newask="++show (newAsk st'))
---                                                        !> ("mfPIndex="++ show( mfPIndex st'))
-          then do
---            let index = mfPIndex st'
---                nindex= if index== 0 then 1 else index - 1
---            put st'{mfPIndex= nindex}                     -- !> "BACKTRACK"
-            fail ""                                        -- !> "FAIL**********"
+          then fail ""                                        -- !> "FAIL**********"
           else if mfAutorefresh st' then do
                      resetState st st'
                      FlowM $ lift  nextMessage
@@ -1164,22 +1169,15 @@ ask w =  do
 
 
              resetState st st'
-             let path= mfPath st
              FlowM $ lift  nextMessage       --  !> "NEXTMESSAGE"
-             st <- get
-             let path' = mfPath st
-                 env' = mfEnv st
-             if isJust(lookup "ajax" env') then ask w
-              else if not $ path `isPrefixOf` path'
-               then fail ""
-               else ask w
+             ask w
     where
     resetState st st'=
              put st{mfCookies=[]
                  --  ,mfHttpHeaders=[]
                    ,newAsk= False
                    ,mfToken= mfToken st'
-                   ,mfPageIndex= mfPageIndex st'
+                   ,mfPageFlow= mfPageFlow st'
                    ,mfAjax= mfAjax st'
                    ,mfSeqCache= mfSeqCache st'
                    ,mfData= mfData st' } 
@@ -1205,15 +1203,12 @@ nextMessage = do
          env=   updateParams inPageFlow (mfEnv st) req  -- !> ("PAGEFLOW="++ show inPageFlow)
          npath= pwfPath msg
          path=  mfPath st
-         inPageFlow= case (comparep,mfPageIndex st) of
-                    (n, Just n') -> if n < n' then Nothing   else Just n'
-                    _ -> Nothing
-         comparep= comparePaths (mfPIndex st) 1  path  npath
-     put st{ mfPath= npath
---           , mfPIndex=   min (mfPIndex st)  comparep 
+         inPageFlow= mfPagePath st `isPrefixOf` npath
 
-           , mfPageIndex= inPageFlow -- !> ("pageflow="++ (show $ mfPageIndex st)
-                                                      --   ++  " "++show inPageFlow)
+     put st{ mfPath= npath
+
+
+           , mfPageFlow= inPageFlow 
 
            , mfEnv= env }                       
 
@@ -1225,9 +1220,9 @@ nextMessage = do
      comparePaths  o n (v:path) (v': npath) | v== v' = comparePaths o (n+1)path npath
                                         | otherwise= n
 
-     updateParams :: Maybe Int -> Params -> Params -> Params
-     updateParams Nothing _ req= req
-     updateParams (Just _) env req=
+     updateParams :: Bool -> Params -> Params -> Params
+     updateParams False _ req= req
+     updateParams True env req=
         let params= takeWhile isparam env
             fs= fst $ head req
             parms= (case findIndex (\p -> fst p == fs)  params of
@@ -1382,30 +1377,28 @@ wlink x v= View $ do
           name = mfPrefix st ++ (map toLower $ if typeOf x== typeOf(undefined :: String)
                                    then unsafeCoerce x
                                    else show x)
-          index' =   mfPIndex st
-                  + if linkMatched st then -1 else 0
+ 
 
-
-          index = if index'== 0 then 1 else index'
           lpath = mfPath st
+          newPath= mfPagePath st ++[name]
 
-          path= currentPath True index lpath verb ++ ('/':name)
-                                                                -- !> (show $ mfPath st)
-          toSend = flink path v
+
+          
 
 
       r <- if linkMatched st then return Nothing -- only a link match per page or monadic sentence in page
            else
-             case  index < Data.List.length lpath && name== lpath !! index   of
+             case  newPath `isPrefixOf` lpath   of
              True -> do
                   modify $ \s -> s{inSync= True
                                  ,linkMatched= True
-                                 ,mfPIndex= index+1 }
+                                 ,mfPagePath= newPath}
 
-                  return $ Just x                            --  !> (name ++ "<-" ++show index++ " " ++ show (mfPIndex st) ++ "lpath=" ++show lpath)
-             False ->  return Nothing                         --  !> ( "NOT MATCHED "++name++"<-" ++show index++ " LP= "++show  lpath)
+                  return $ Just x                            --  !> (name ++ "<-" ++ "lpath=" ++show lpath)
+             False ->  return Nothing                         --  !> ( "NOT MATCHED "++name++"<-" " LP= "++show  lpath)
 
-      length path `seq` return $ FormElm [toSend] r
+      let path= currentPath st ++ ('/':name) 
+      return $ FormElm [flink path v] r
 
 -- Creates an absolute link. While a `wlink` path depend on the page where it is located and
 -- ever points to the code of the page that had it inserted, an absLink point to the first page
@@ -1428,8 +1421,8 @@ wlink x v= View $ do
 -- >     p << "second statement" ++> wlink () << p << "click here"
 -- >     p << "third statement" ++> (absLink "here" << p << "will present the first statement alone")
 -- >     p << "fourth statement" ++> wlink () << p << "will not reach here"
-absLink x = wcached  (show x) 0 . wlink x
-
+--absLink x = wcached  (show x) 0 . wlink x
+absLink = wlink
 
 
 -- | When some user interface return some response to the server, but it is not produced by
@@ -1668,18 +1661,17 @@ pageFlow
 pageFlow str widget=do
      s <- get
 
-     if isNothing $ mfPageIndex s
+     if   mfPageFlow s == False
        then do
        put s{mfPrefix= str ++ mfPrefix s
             ,mfSequence=0 
-            ,mfPageIndex= Just $ mfPIndex s
+            ,mfPageFlow= True
              }                              -- !> ("PARENT pageflow. prefix="++ str)
 
        r<- widget <** (modify (\s' -> s'{mfSequence= mfSequence s
                                    ,mfPrefix= mfPrefix s
---                                   ,mfPageIndex=Nothing
                                    }))
-       modify (\s -> s{mfPageIndex=Nothing} )
+       modify (\s -> s{mfPageFlow=False} )
        return r                                                                                 -- !> ("END PARENT pageflow. prefix="++ str))
 
 

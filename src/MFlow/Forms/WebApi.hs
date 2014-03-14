@@ -53,7 +53,9 @@ restp =  View $ do
 -- therefore a monadic sequence in the View monad will not continue
 rest v= do
    r <- restp
-   if r==v then return v else modify (\s -> s{mfPIndex= mfPIndex s-1}) >> stop
+   if r==v then return v
+    else
+     modify (\s -> s{mfPagePath= reverse . tail . reverse $ mfPagePath s}) >> stop
 
 -- | get a parameter from a GET or POST key-value input.
 wparam par= View $ do

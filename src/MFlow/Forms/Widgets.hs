@@ -629,11 +629,10 @@ witerate  w= do
    name  <- genNewId
    setSessionData $ IteratedId name
    st <- get
-   let index= mfPIndex st
    let t= mfkillTime st
    let installAutoEval=
         "$(document).ready(function(){\n\
-           \autoEvalLink('"++name++"','"++ show index ++"');\
+           \autoEvalLink('"++name++"',0);\
            \autoEvalForm('"++name++"');\
            \})\n"
    let r = lookup ("auto"++name) $ mfEnv st
@@ -650,8 +649,6 @@ witerate  w= do
 
     Just sind -> View $ do
          let t= mfToken st
---         let index= read sind
---         put st{mfPIndex= index}
          modify $ \s -> s{mfRequirements=[]}
 
          FormElm _ mr <- runView  w

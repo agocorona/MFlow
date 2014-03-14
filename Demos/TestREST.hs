@@ -1,12 +1,12 @@
 {-# OPTIONS  -XCPP #-}
-module TestREST where
+module TestREST(testREST) where
 import Data.Monoid
 import Data.String
 
 
 
 -- to execute it alone, uncomment this
--- #define ALONE
+#define ALONE
 #ifdef ALONE
 import MFlow.Wai.Blaze.Html.All
 main= runNavigation "" $  transientNav testREST
@@ -31,7 +31,7 @@ testREST= do
                  ++> wlink "a" << b << "letters " <++ i << " or "
                  <|> wlink "1" << b << "numbers"
 
-  case option !> "case" of
+  case option  of
     "1" -> do
           page $ wlink "2" << contentFor "1" 
           page $ wlink "3" << contentFor "2"

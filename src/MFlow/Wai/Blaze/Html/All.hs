@@ -71,7 +71,7 @@ getPort= do
 -- | run a persistent flow. It uses `getPort` to get the port
 -- The first parameter is the first element in the URL path.
 -- It also set the home page
-runNavigation :: String -> FlowM Html (Workflow IO) () -> IO ()
+runNavigation :: String -> FlowM Html (Workflow IO) () -> IO () 
 runNavigation n f= do
     unless (null n) $ setNoScript n
     addMessageFlows[(n, runFlow f)]
