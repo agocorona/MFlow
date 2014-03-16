@@ -6,7 +6,7 @@ import Data.String
 
 
 -- to execute it alone, uncomment this
-#define ALONE
+-- #define ALONE
 #ifdef ALONE
 import MFlow.Wai.Blaze.Html.All
 main= runNavigation "" $  transientNav testREST

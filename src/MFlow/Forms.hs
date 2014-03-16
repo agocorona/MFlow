@@ -1142,7 +1142,9 @@ ask w =  do
       else
       case mx  of
        Just x -> do
-         put st'{newAsk= True, mfEnv=[]}
+         put st'{newAsk= True, mfEnv=[]
+                ,mfPagePath=  mfPagePath st' ++ mfPendingPath st'
+                ,mfPendingPath= []}
          breturn x                                        -- !> "BRETURN"
 
        Nothing ->
@@ -1370,35 +1372,29 @@ wlabel str w = do
 -- It points to the page that created it. 
 wlink :: (Typeable a, Show a, MonadIO m,  FormInput view)
          => a -> view -> View  view m a
-wlink x v= View $ do
+wlink x v=    View $ do
       verb <- getWFName
       st   <- get
-      let
-          name = mfPrefix st ++ (map toLower $ if typeOf x== typeOf(undefined :: String)
+
+      let name = mfPrefix st ++ (map toLower $ if typeOf x== typeOf(undefined :: String)
                                    then unsafeCoerce x
                                    else show x)
- 
-
           lpath = mfPath st
-          newPath= mfPagePath st ++[name]
+          newPath= mfPagePath st ++ [name]
 
-
-          
-
-
-      r <- if linkMatched st then return Nothing -- only a link match per page or monadic sentence in page
-           else
+      r <- if  linkMatched st  then return Nothing -- only a link match per page or monadic sentence in page
+          else
              case  newPath `isPrefixOf` lpath   of
              True -> do
                   modify $ \s -> s{inSync= True
                                  ,linkMatched= True
-                                 ,mfPagePath= newPath}
+                                 ,mfPendingPath= mfPendingPath st ++ [name] }
 
-                  return $ Just x                            --  !> (name ++ "<-" ++ "lpath=" ++show lpath)
-             False ->  return Nothing                         --  !> ( "NOT MATCHED "++name++"<-" " LP= "++show  lpath)
+                  return $ Just x                            -- !> (name ++ "<-" ++ "lpath=" ++show lpath)
+             False ->  return Nothing                         --  !> ( "NOT MATCHED "++name++" LP= "++show  lpath)
 
-      let path= currentPath st ++ ('/':name) 
-      return $ FormElm [flink path v] r
+      let path= currentPath st ++ ('/':name)
+      return $ FormElm [flink path v ] r
 
 -- Creates an absolute link. While a `wlink` path depend on the page where it is located and
 -- ever points to the code of the page that had it inserted, an absLink point to the first page
@@ -1421,8 +1417,30 @@ wlink x v= View $ do
 -- >     p << "second statement" ++> wlink () << p << "click here"
 -- >     p << "third statement" ++> (absLink "here" << p << "will present the first statement alone")
 -- >     p << "fourth statement" ++> wlink () << p << "will not reach here"
---absLink x = wcached  (show x) 0 . wlink x
-absLink = wlink
+--absLink x  = wcached  (show x) 0 . wlink x
+absLink x v=    View $ do
+      verb <- getWFName
+      st   <- get
+
+      let name = mfPrefix st ++ (map toLower $ if typeOf x== typeOf(undefined :: String)
+                                   then unsafeCoerce x
+                                   else show x)
+
+          lpath = mfPath st
+          newPath= mfPagePath st ++ [name]
+      r <- if  linkMatched st  then return Nothing -- only a link match per page or monadic sentence in page
+           else
+             case  newPath `isPrefixOf` lpath   of
+             True -> do
+                  modify $ \s -> s{inSync= True
+                                 ,linkMatched= True
+                                 ,mfPendingPath= mfPendingPath st ++ [name] }
+
+                  return $ Just x                            --  !> (name ++ "<- abs" ++ "lpath=" ++show lpath)
+             False ->  return Nothing                         --  !> ( "NOT MATCHED "++name++" LP= "++show  lpath)
+
+      path <- liftIO $ cachedByKey (show x) 0 . return $ currentPath st ++ ('/':name)
+      return $ FormElm [flink path v ] r
 
 
 -- | When some user interface return some response to the server, but it is not produced by

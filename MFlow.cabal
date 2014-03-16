@@ -89,6 +89,8 @@ extra-source-files: src/MFlow/Hack.hs
                     src/MFlow/Hack/Response.hs
                     src/MFlow/Hack/XHtml.hs
                     src/MFlow/Hack/XHtml/All.hs src/MFlow/Forms/HSP.hs
+                    src/MFlow/Forms/XHtml.hs
+                    src/MFlow/Wai/XHtml/All.hs
 
 source-repository head
     type: git
@@ -96,7 +98,7 @@ source-repository head
 
 library
     build-depends: Workflow -any, transformers -any, mtl -any,
-                   extensible-exceptions -any, xhtml -any, base >4.0 && <5,
+                   extensible-exceptions -any,  base >4.0 && <5,
                    bytestring -any, containers -any, RefSerialize -any, TCache -any,
                    stm >2, old-time -any, vector -any, directory -any,
                    utf8-string -any, wai >=2.0.0, case-insensitive -any,
@@ -104,8 +106,8 @@ library
                    warp-tls -any, random -any, blaze-html -any, blaze-markup -any,
                    monadloc -any, clientsession ==0.9.0.3
     exposed-modules: MFlow MFlow.Wai.Blaze.Html.All MFlow.Forms
-                     MFlow.Forms.Admin MFlow.Cookies MFlow.Wai MFlow.Wai.XHtml.All
-                     MFlow.Forms.XHtml MFlow.Forms.Blaze.Html MFlow.Forms.Test
+                     MFlow.Forms.Admin MFlow.Cookies MFlow.Wai
+                     MFlow.Forms.Blaze.Html MFlow.Forms.Test
                      MFlow.Forms.Widgets MFlow.Forms.Internals MFlow.Forms.WebApi
     exposed: True
     buildable: True
@@ -113,25 +115,25 @@ library
     other-modules:  MFlow.Wai.Response
 
 
-executable demos-blaze
-    build-depends: MFlow -any, RefSerialize -any, TCache -any,
-                   tcache-AWS -any, directory -any, Workflow -any, base -any,
-                   blaze-html -any, bytestring -any, containers -any, mtl -any,
-                   old-time -any, stm -any, text -any, transformers -any, vector -any,
-                   hamlet -any, monadloc -any, aws -any, network -any, hscolour -any,
-                   persistent-template -any, persistent-sqlite -any, persistent -any,
-                   conduit -any, http-conduit -any, monad-logger -any, safecopy -any,
-                   acid-state -any
-    main-is: demos-blaze.hs
-    buildable: True
-    hs-source-dirs: Demos
-    other-modules:  TestREST ShopCart AjaxSample TraceSample IncreaseString IncreaseInt
-                    AutoCompList ListEdit AutoComplete Menu RuntimeTemplates
-                    LoginSample CheckBoxes Multicounter MFlowPersistent
-                    Combination Options ContentManagement Database
-                    PreventGoingBack Counter MCounter  PushDecrease
-                    Dialog PushSample Grid Radio Actions
-                    SumView AcidState SearchCart
-                    InitialConfig GenerateForm GenerateFormUndo GenerateFormUndoMsg WebService
-    ghc-options: -O -iDemos -threaded -rtsopts
+--executable demos-blaze
+--    build-depends: MFlow -any, RefSerialize -any, TCache -any,
+--                   tcache-AWS -any, directory -any, Workflow -any, base -any,
+--                   blaze-html -any, bytestring -any, containers -any, mtl -any,
+--                   old-time -any, stm -any, text -any, transformers -any, vector -any,
+--                   hamlet -any, monadloc -any, aws -any, network -any, hscolour -any,
+--                   persistent-template -any, persistent-sqlite -any, persistent -any,
+--                   conduit -any, http-conduit -any, monad-logger -any, safecopy -any,
+--                   acid-state -any
+--    main-is: demos-blaze.hs
+--    buildable: True
+--    hs-source-dirs: Demos
+--    other-modules:  TestREST ShopCart AjaxSample TraceSample IncreaseString IncreaseInt
+--                    AutoCompList ListEdit AutoComplete Menu RuntimeTemplates
+--                    LoginSample CheckBoxes Multicounter MFlowPersistent
+--                    Combination Options ContentManagement Database
+--                    PreventGoingBack Counter MCounter  PushDecrease
+--                    Dialog PushSample Grid Radio Actions
+--                    SumView AcidState SearchCart
+--                    InitialConfig GenerateForm GenerateFormUndo GenerateFormUndoMsg WebService
+--    ghc-options: -O -iDemos -threaded -rtsopts
 

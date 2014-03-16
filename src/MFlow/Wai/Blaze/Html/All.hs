@@ -31,7 +31,6 @@ import MFlow
 import MFlow.Wai
 import MFlow.Forms
 import MFlow.Forms.Widgets
-import MFlow.Forms.XHtml
 import MFlow.Forms.Admin
 import MFlow.Forms.Blaze.Html
 import Text.Blaze.Html5 hiding (map)

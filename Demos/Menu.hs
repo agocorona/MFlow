@@ -83,21 +83,21 @@ mainMenu= pageFlow "" $
    <|> li << (b "About this menu" <> article cascade <> article menuarticle)
    ++> hr
    ++> ((autoRefresh $ li <<< do
-          absLink BasicWidgets << b  "Basic Widgets"
+          absLink BasicWidgets << b "Basic Widgets"
           ul <<<        
            (hr
-           ++>(li <<< (absLink CountI << b  "Increase an Int")  <! noAutoRefresh
+           ++>(li <<< (absLink CountI << b "Increase an Int")  <! noAutoRefresh
                        <++ b " A loop that increases the Int value of a text box"
                                    
-           <|> li <<< (absLink CountS  << b  "Increase a String") <! noAutoRefresh
+           <|> li <<< (absLink CountS << b "Increase a String") <! noAutoRefresh
                        <++ b " A loop that concatenate text in a text box"
                                    
-           <|> li <<< (absLink Select  << b  "Select options") <! noAutoRefresh
+           <|> li <<< (absLink Select << b "Select options") <! noAutoRefresh
                        <++ b " A combo box"
                                    
-           <|> li <<< (absLink CheckBoxes << b  "Checkboxes") <! noAutoRefresh
+           <|> li <<< (absLink CheckBoxes << b "Checkboxes") <! noAutoRefresh
            
-           <|> li <<< (absLink Radio      << b  "Radio buttons") <! noAutoRefresh
+           <|> li <<< (absLink Radio << b "Radio buttons") <! noAutoRefresh
            <++ hr)))
 
     <|> (autoRefresh $ li <<<   do

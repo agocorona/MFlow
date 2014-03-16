@@ -50,6 +50,7 @@ import Control.Concurrent.MVar
 import qualified Data.Text as T
 import Data.Char
 import Data.List(stripPrefix)
+import Data.Maybe(isJust)
 import Control.Concurrent.STM
 --import Data.String
 --
@@ -60,8 +61,8 @@ import Control.Exception as CE
 import Control.Concurrent 
 import Control.Monad.Loc
 
---import Debug.Trace
---(!>) = flip trace 
+import Debug.Trace
+(!>) = flip trace 
 
 
 data FailBack a = BackPoint a | NoBack a | GoBack   deriving (Show,Typeable)
@@ -326,14 +327,21 @@ instance (FormInput view,Functor m, Monad m) => Alternative (View view m) where
 instance  (FormInput view, Monad m) => Monad (View view m) where
     View x >>= f = View $ do
                    FormElm form1 mk <- x
+                   
                    case mk of
                      Just k  -> do
-                        st <- get
-                        put st{linkMatched = False} 
+                        st'' <- get
+                        let previousPath= mfPagePath st''
+                        let st = st''{ linkMatched = False
+                                     , mfPagePath= mfPagePath st'' ++ mfPendingPath st''}
+                        put st
+
+                        
                         FormElm form2 mk <- runView $ f k
                         st' <- get
                         (mix, hasform) <- controlForms st st' form1 form2
-                        when hasform $ put st'{needForm= HasForm}
+                        if hasform then put st'{needForm= HasForm,mfPagePath= previousPath}
+                                   else put st'{mfPagePath= previousPath}
                         return $ FormElm mix mk
 
                      Nothing -> 
@@ -345,6 +353,7 @@ instance  (FormInput view, Monad m) => Monad (View view m) where
 --    fail msg= View . return $ FormElm [inRed msg] Nothing
 
 
+  
 
 instance (FormInput v,Monad m, Functor m, Monoid a) => Monoid (View v m a) where
   mappend x y = mappend <$> x <*> y  -- beware that both operands must validate to generate a sum
@@ -547,6 +556,7 @@ data MFlowState view= MFlowState{
 --   mfPIndex         :: Int,
    mfPageFlow       :: Bool,
    linkMatched      :: Bool,
+   mfPendingPath      :: [String],
 
 
    mfAutorefresh   :: Bool,
@@ -560,7 +570,7 @@ type Void = Char
 mFlowState0 :: (FormInput view) => MFlowState view
 mFlowState0 = MFlowState 0 False  True  True  "en"
                 [] NoElems  (error "token of mFlowState0 used")
-                0 0 [] [] stdHeader False [] M.empty  Nothing 0 False    [] []  "" False False  False [] False
+                0 0 [] [] stdHeader False [] M.empty  Nothing 0 False    [] []  "" False False [] False [] False
 
 
 -- | Set user-defined data in the context of the session.
@@ -818,7 +828,7 @@ cachedWidget key t mf =  View .  StateT $ \s ->  do
                    ,mfRequirements=mfRequirements s2
                    ,mfPath= mfPath s2
                    ,mfPagePath= mfPagePath s2
-                   
+                   ,mfPendingPath=mfPendingPath s2  
                    ,needForm= needForm s2
                    ,mfPageFlow= mfPageFlow s2
                    ,mfSeqCache= mfSeqCache s + mfSeqCache s2 - sec}
@@ -1095,7 +1105,7 @@ getRestParam= do
   st <- get
   let lpath  = mfPath st
   
-  if linkMatched st
+  if  linkMatched st
    then return Nothing          
    else case  stripPrefix (mfPagePath st) lpath  of
      Nothing -> return Nothing
@@ -1104,7 +1114,7 @@ getRestParam= do
           let name = head xs
           modify $ \s -> s{inSync= True
                          ,linkMatched= True
-                         ,mfPagePath= mfPagePath s++[name] } 
+                         ,mfPendingPath= mfPendingPath s++[name] } 
           fmap valToMaybe $ readParam name
 
 

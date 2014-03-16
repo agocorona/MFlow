@@ -4,9 +4,9 @@
             #-}
 module MFlow.Forms.Admin(adminLoop, wait, addAdminWF) where
 import MFlow.Forms
-import MFlow.Forms.XHtml
 import MFlow
-import Text.XHtml.Strict hiding (widget)
+import MFlow.Forms.Blaze.Html
+import Text.Blaze.Html5 hiding (map)
 import Control.Applicative
 import Control.Workflow
 import Control.Monad.Trans
@@ -102,13 +102,13 @@ addAdminWF= addMessageFlows[("adminserv",transient $ runFlow adminMFlow)]
 adminMFlow ::  FlowM   Html IO ()
 adminMFlow= do
    let admin = getAdminName
-   u <- getUser (Just admin) $ p << bold << "Please login as Administrator" ++> userLogin
-   op <- ask  $  p <<< wlink "sync"  (bold << "sync")
-             <|> p <<< wlink "flush" (bold << "flush")
-             <|> p <<< wlink "errors"(bold << "errors")
-             <|> p <<< wlink "users" (bold << "users")
-             <|> p <<< wlink "end"   (bold << "end")
-             <|> wlink "abort" (bold << "abort")
+   u <- getUser (Just admin) $ p << b << "Please login as Administrator" ++> userLogin
+   op <- ask  $  p <<< wlink "sync"  (b << "sync")
+             <|> p <<< wlink "flush" (b << "flush")
+             <|> p <<< wlink "errors"(b << "errors")
+             <|> p <<< wlink "users" (b << "users")
+             <|> p <<< wlink "end"   (b << "end")
+             <|> wlink "abort" (b << "abort")
 
    case op of
     "users" -> users
@@ -125,13 +125,13 @@ adminMFlow= do
 errors= do
   size <- liftIO $ hFileSize hlog
   if size == 0
-   then ask $ wlink () (bold << "no error log")
+   then ask $ wlink () (b << "no error log")
    else do
        liftIO $ hSeek hlog AbsoluteSeek 0
        log   <- liftIO $ hGetNonBlocking hlog  (fromIntegral size)
 
        let ls :: [[String ]]= runR  readp $ pack "[" `append` (B.tail log) `append` pack "]"
-       let rows= [wlink (head e) (bold << head e) `waction` optionsUser  : map (\x ->noWidget <++ fromStr x) (Prelude.tail e) | e <- ls]
+       let rows= [wlink (Prelude.head e) (b << Prelude.head e) `waction` optionsUser  : map (\x ->noWidget <++ fromStr x) (Prelude.tail e) | e <- ls]
        showFormList rows 0 10
   breturn()
 
@@ -144,7 +144,7 @@ errors= do
 users= do
   users <- liftIO $ atomically $ return . map  fst =<< indexOf userName
 
-  showFormList   [[wlink u (bold << u) `waction` optionsUser   ] | u<- users] 0 10
+  showFormList   [[wlink u (b << u) `waction` optionsUser   ] | u<- users] 0 10
 
 showFormList
   :: [[View Html IO ()]]
@@ -158,7 +158,7 @@ showFormList ls n l= do
 
   cols e= firstOf[td <<< c | c <- e]
   span1 n l = take l . drop n
-  updown n l= wlink ( n +l) (bold << "up ") <|> wlink ( n -l) (bold << "down ") <++ br
+  updown n l= wlink ( n +l) (b << "up ") <|> wlink ( n -l) (b << "down ") <++ br
 
 optionsUser  us = do
     wfs <- liftIO $ return . M.keys =<< getMessageFlows
@@ -166,7 +166,7 @@ optionsUser  us = do
               in  liftIO $ mapM  (\wf -> getWFHistory wf (Token wf us u u u u u)) wfs
     let wfss= filter (isJust . snd) $ zip wfs stats
     if null wfss
-     then ask $ bold << " not logs for this user" ++> wlink () (bold << "Press here")
+     then ask $ b << " not logs for this user" ++> wlink () (b << "Press here")
      else do
       wf <-  ask $ firstOf [ wlink wf (p << wf) | (wf,_) <-  wfss]
       ask $ p << unpack (showHistory . fromJust . fromJust $ lookup wf  wfss) ++>  wlink () (p << "press to menu")
