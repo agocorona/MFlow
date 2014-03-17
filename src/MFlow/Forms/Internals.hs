@@ -61,8 +61,8 @@ import Control.Exception as CE
 import Control.Concurrent 
 import Control.Monad.Loc
 
---import Debug.Trace
---(!>) = flip trace 
+import Debug.Trace
+(!>) = flip trace 
 
 
 data FailBack a = BackPoint a | NoBack a | GoBack   deriving (Show,Typeable)
@@ -373,7 +373,8 @@ wcallback (View x) f = View $ do
    FormElm form1 mk <- x
    case mk of
      Just k  -> do
-       modify $ \st -> st{linkMatched= False, needForm=NoElems} 
+       modify $ \st -> st{linkMatched= False, needForm=NoElems
+                         , mfPagePath= mfPagePath st ++ mfPendingPath st} 
        runView (f k)
      Nothing -> return $ FormElm form1 Nothing
 
@@ -1093,29 +1094,29 @@ fromValidated (NotValidated s err)= error $ "fromValidated: NotValidated "++ s
 
 getParam1 :: (Monad m, MonadState (MFlowState v) m, Typeable a, Read a, FormInput v)
           => String -> Params ->  m (ParamResult v a)
-getParam1 par req =   case lookup  par req of
+getParam1 par req = case lookup par req of
     Just x -> readParam x  
     Nothing  -> return  NoParam
 
 -- Read a segment in the REST path. if it does not match with the type requested
 -- or if there is no remaining segment, it returns Nothing
-getRestParam :: (Read a, Typeable a,Monad m,Functor m,  MonadState (MFlowState v) m, FormInput v) => m (Maybe a)
+getRestParam :: (Read a, Typeable a, Monad m, Functor m, MonadState (MFlowState v) m, FormInput v)
+             => m (Maybe a)
 getRestParam= do
-  st <- get
-  let lpath  = mfPath st
-  
+  st <- get 
+  let lpath = mfPath st
   if  linkMatched st
    then return Nothing          
    else case  stripPrefix (mfPagePath st) lpath  of
-     Nothing -> return Nothing
-     Just [] -> return Nothing   
+     Nothing -> return Nothing   !> "Nothing"
+     Just [] -> return Nothing   !> "just []"
      Just xs -> do
           let name = head xs
-          r <-  fmap valToMaybe $ readParam name
+          r <-  fmap valToMaybe $ readParam name 
           when (isJust r) $ modify $ \s -> s{inSync= True
                                             ,linkMatched= True
                                             ,mfPendingPath= mfPendingPath s++[name]}
-          return r 
+          return r !> name
              
 
 

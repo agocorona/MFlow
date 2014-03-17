@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------------
 --
--- A haskell formlet is the combination of a parameter parser plus a writer to generate HTTP
+-- A haskell formlet is the combination of a parameter parser to read input plus a writer to generate HTTP
 -- output
 --
 -- I use this similarity to create parsec-like combinators that use the formlet monad in MFlow
