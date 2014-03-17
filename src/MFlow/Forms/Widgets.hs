@@ -140,7 +140,7 @@ wlogin= do
             Nothing  -> login name >> (return name)
        
    `wcallback` (\name -> ftag "b" (fromStr $ "logged as " ++ name++ " ")
-                     ++> submitButton "logout") -- wlink ("logout" :: String) (ftag "b" $ fromStr " logout")) 
+                     ++> pageFlow "logout" (submitButton "logout")) -- wlink ("logout" :: String) (ftag "b" $ fromStr " logout")) 
    `wcallback`  const (logout >> wlogin)
    
 focus = [("onload","this.focus()")]

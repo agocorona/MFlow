@@ -34,7 +34,7 @@ main=do
 
 
 -- page with header
-hpage w = page $ tField  "genFormUndoMsgHeader.html" **> w
+hpage w = page $ tFieldEd "editor"  "genFormUndoMsgHeader.html"  "HEADER EMPTY!" **> w
 
 
 

@@ -843,7 +843,7 @@ returnIfForward x = do
      if back then noWidget else return x
 
 -- | forces backtracking if the widget validates, because a previous page handle this widget response
--- . This is useful for recurrent cached widgets that are present in multiple pages. For example
+-- . This is useful for recurrent cached widgets or `absLink`s that are present in multiple pages. For example
 -- in the case of menus or common options. The active elements of this widget must be cached with no timeout.
 retry :: Monad m => View v m a -> View v m ()
 retry w = View $ do
@@ -1105,7 +1105,9 @@ askt v w =  ask w
 ask :: (FormInput view) =>
        View view IO a -> FlowM view IO a
 ask w =  do
- st1 <- get
+ st1 <- get >>= \s -> return s{mfSequence=
+                                   let seq= mfSequence s in
+                                   if seq ==inRecovery then 0 else seq} 
  if not . null $ mfTrace st1 then fail "" else do
   -- AJAX
   let env= mfEnv st1

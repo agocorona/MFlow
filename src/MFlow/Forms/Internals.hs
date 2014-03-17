@@ -292,10 +292,10 @@ instance (FormInput v,Serialize a)
       True  -> showp(x, mfEnv s)
    readp= choice[nodebug, debug]
     where
-    nodebug= readp  >>= \x -> return  (x, mFlowState0{mfSequence= -1})
+    nodebug= readp  >>= \x -> return  (x, mFlowState0{mfSequence= inRecovery})
     debug=  do
      (x,env) <- readp
-     return  (x,mFlowState0{mfEnv= env,mfSequence= -1})
+     return  (x,mFlowState0{mfEnv= env,mfSequence= inRecovery})
     
 
 instance Functor (FormElm view ) where
@@ -326,26 +326,23 @@ instance (FormInput view,Functor m, Monad m) => Alternative (View view m) where
 
 instance  (FormInput view, Monad m) => Monad (View view m) where
     View x >>= f = View $ do
-                   FormElm form1 mk <- x
-                   
-                   case mk of
-                     Just k  -> do
-                        st'' <- get
-                        let previousPath= mfPagePath st''
-                        let st = st''{ linkMatched = False
-                                     , mfPagePath= mfPagePath st'' ++ mfPendingPath st''}
-                        put st
+           FormElm form1 mk <- x   
+           case mk of
+             Just k  -> do
+                st'' <- get
+                let previousPath= mfPagePath st''
+                let st = st''{ linkMatched = False
+                             , mfPagePath= mfPagePath st'' ++ mfPendingPath st''}
+                put st      
+                FormElm form2 mk <- runView $ f k
+                st' <- get
+                (mix, hasform) <- controlForms st st' form1 form2
+                if hasform then put st'{needForm= HasForm,mfPagePath= previousPath}
+                           else put st'{mfPagePath= previousPath}
 
-                        
-                        FormElm form2 mk <- runView $ f k
-                        st' <- get
-                        (mix, hasform) <- controlForms st st' form1 form2
-                        if hasform then put st'{needForm= HasForm,mfPagePath= previousPath}
-                                   else put st'{mfPagePath= previousPath}
-                        return $ FormElm mix mk
-
-                     Nothing -> 
-                        return $ FormElm form1 Nothing
+                return $ FormElm mix mk
+             Nothing -> 
+                return $ FormElm form1 Nothing
                         
 
 
@@ -893,12 +890,12 @@ runFlow  f t=
     liftIO $ do
        flushRec t'' 
        sendToMF t'' t''    -- !> "SEND"
-    let s'= case mfSequence s of
-             -1 -> s --in recovery
-             _  -> s{mfPath=[twfname t],mfPagePath=[twfname t],mfEnv=[]}
+    let s'= case mfSequence s  of
+             -1  -> s
+             _   -> s{mfPath=[twfname t],mfPagePath=[twfname t],mfEnv=[]} 
     loop   s' f t''{tpath=[]}           -- !> "LOOPAGAIN"
 
-
+inRecovery= -1
 
 runFlowOnce :: (MonadIO m, FormInput view)
         => FlowM view m () -> Token -> m ()
@@ -907,9 +904,10 @@ runFlowOnce f t= runFlowOnce1 f t  >> return ()
 runFlowOnce1 f t  = runFlowOnce2 (startState t)  f
 
 startState t= mFlowState0{mfToken=t
+                   ,mfSequence= inRecovery
                    ,mfPath= tpath t
                    ,mfEnv= tenv t
-                   ,mfPagePath=[twfname t]}  
+                   ,mfPagePath=[]}  
 
 runFlowOnce2 s f  =
   runStateT (runSup . runFlowM $ do
@@ -923,7 +921,8 @@ runFlowOnce2 s f  =
      s <- get                     --   !> "BackInit"
      case mfTrace s of
        [] -> do
-         modify $ \s -> s{ newAsk= True}
+         let t = mfToken s
+         modify $ \s -> s{ newAsk= True,mfPagePath=[twfname t]}
          breturn ()
          
        tr ->  error $ disp tr
@@ -999,7 +998,7 @@ step f= do
         (r,s') <- lift . WF.step $ runStateT (runSup $ runFlowM f) s
 
         -- when recovery of a workflow, the MFlow state is not considered
-        when( mfSequence s' /= -1) $ put s'  -- !> (show $ mfSequence s') -- else put  s{newAsk=True}
+        when( mfSequence s' /= inRecovery) $ put s'  -- !> (show $ mfSequence s') -- else put  s{newAsk=True}
         return r
 
 -- | to execute transient flows as if they were persistent
@@ -1109,13 +1108,15 @@ getRestParam= do
    then return Nothing          
    else case  stripPrefix (mfPagePath st) lpath  of
      Nothing -> return Nothing
-     Just [] -> return Nothing
+     Just [] -> return Nothing   
      Just xs -> do
           let name = head xs
-          modify $ \s -> s{inSync= True
-                         ,linkMatched= True
-                         ,mfPendingPath= mfPendingPath s++[name] } 
-          fmap valToMaybe $ readParam name
+          r <-  fmap valToMaybe $ readParam name
+          when (isJust r) $ modify $ \s -> s{inSync= True
+                                            ,linkMatched= True
+                                            ,mfPendingPath= mfPendingPath s++[name]}
+          return r 
+             
 
 
 -- | return the value of a post or get param in the form ?param=value&param2=value2...

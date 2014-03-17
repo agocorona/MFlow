@@ -412,16 +412,17 @@ colourPrefs= unsafePerformIO readColourPrefs
 
 wiki =  page $ do
     pagname <- getRestParam `onNothing` return "index"
-    (docTypeHtml $ El.head $ El.title << pagname)
+    (docTypeHtml $ El.head $ El.title << pagname) 
         ++> (El.body
-        <<<   ( h1 ! At.style "text-align:center" <<<  tFieldEd "editor" (wikip ++pagname ++ "title.html") (fromString pagname))
-        **>   tFieldEd "editor" (wikip ++ pagname ++ "body.html") "Enter the body"
+        <<< ( h1 ! At.style "text-align:center" <<<  tFieldEd "editor" (wikip ++pagname ++ "title.html") (fromString pagname))
+        **> tFieldEd "editor" (wikip ++ pagname ++ "body.html") "Enter the body"
         <++ do
            hr
            disquscript
 
         )
-
+  !> "wiki"
+  
 wikip="wiki/"
 
 disquscript= [shamlet|
