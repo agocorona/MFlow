@@ -61,8 +61,8 @@ import Control.Exception as CE
 import Control.Concurrent 
 import Control.Monad.Loc
 
-import Debug.Trace
-(!>) = flip trace 
+--import Debug.Trace
+--(!>) = flip trace 
 
 
 data FailBack a = BackPoint a | NoBack a | GoBack   deriving (Show,Typeable)
@@ -330,15 +330,16 @@ instance  (FormInput view, Monad m) => Monad (View view m) where
            case mk of
              Just k  -> do
                 st'' <- get
-                let previousPath= mfPagePath st''
+--                let previousPath= mfPagePath st''
                 let st = st''{ linkMatched = False
-                             , mfPagePath= mfPagePath st'' ++ mfPendingPath st''}
+                             , mfPagePath= mfPagePath st'' ++ mfPendingPath st''
+                             , mfPendingPath = []}
                 put st      
                 FormElm form2 mk <- runView $ f k
                 st' <- get
                 (mix, hasform) <- controlForms st st' form1 form2
-                if hasform then put st'{needForm= HasForm,mfPagePath= previousPath}
-                           else put st'{mfPagePath= previousPath}
+                when hasform $ put st'{needForm= HasForm}--,mfPagePath= previousPath}
+--                           else put st'{mfPagePath= previousPath}
 
                 return $ FormElm mix mk
              Nothing -> 
@@ -374,7 +375,8 @@ wcallback (View x) f = View $ do
    case mk of
      Just k  -> do
        modify $ \st -> st{linkMatched= False, needForm=NoElems
-                         , mfPagePath= mfPagePath st ++ mfPendingPath st} 
+                         , mfPagePath= mfPagePath st ++ mfPendingPath st
+                         , mfPendingPath=[]} 
        runView (f k)
      Nothing -> return $ FormElm form1 Nothing
 
@@ -1108,15 +1110,15 @@ getRestParam= do
   if  linkMatched st
    then return Nothing          
    else case  stripPrefix (mfPagePath st) lpath  of
-     Nothing -> return Nothing   !> "Nothing"
-     Just [] -> return Nothing   !> "just []"
+     Nothing -> return Nothing
+     Just [] -> return Nothing   
      Just xs -> do
           let name = head xs
           r <-  fmap valToMaybe $ readParam name 
           when (isJust r) $ modify $ \s -> s{inSync= True
                                             ,linkMatched= True
                                             ,mfPendingPath= mfPendingPath s++[name]}
-          return r !> name
+          return r 
              
 
 

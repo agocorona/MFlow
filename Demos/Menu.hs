@@ -29,9 +29,8 @@ import Text.Hamlet
 import System.IO.Unsafe
 
 
-import Debug.Trace
-
-(!>) = flip trace
+--import Debug.Trace
+--(!>) = flip trace
 
 newtype Filename= Filename String deriving Typeable
 
@@ -421,7 +420,7 @@ wiki =  page $ do
            disquscript
 
         )
-  !> "wiki"
+
   
 wikip="wiki/"
 

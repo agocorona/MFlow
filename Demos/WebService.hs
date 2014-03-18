@@ -6,16 +6,14 @@ import MFlow.Forms.WebApi
 
 import Debug.Trace
 
-(!>)= flip trace
-
 
 
 -- mainRest= runNavigation "apirest" . step $ ask $
 restService :: View Html IO ()
 restService= do
-     op    <- getRestParam  !> "OP"
-     term1 <- getRestParam  !> "term1"
-     term2 <- getRestParam  !> "term2"
+     op    <- getRestParam
+     term1 <- getRestParam
+     term2 <- getRestParam
      case (op, term1,term2) of
        (Just  "sum", Just x, Just y) ->  wrender (x + y :: Int) **> stop
        (Just "prod", Just x, Just y) ->  wrender (x * y) **> stop

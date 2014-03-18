@@ -27,23 +27,30 @@ import Menu
 
 
 testREST= do
-  option <- page $   h2 << "Choose between:"
-                 ++> wlink "a" << b << "letters " <++ i << " or "
-                 <|> wlink "1" << b << "numbers"
+  option <- page options
 
   case option  of
     "1" -> do
           page $ wlink "2" << contentFor "1" 
           page $ wlink "3" << contentFor "2"
           page $ wlink "4" << contentFor "3"
-          page $ wlink ()  << "menu"
+          page $ optionsorexit
+          return () 
      
     "a" -> do
           page $ wlink "b" << contentFor "a"
           page $ wlink "c" << contentFor "b"
           page $ wlink "d" << contentFor "c"
-          page $ wlink ()  << "menu"
+          page $ optionsorexit
+          return ()
 
+options= h2 << "Choose between:"
+         ++> absLink "a" << b << "letters " <++ i << " or "
+         <|> absLink "1" << b << "numbers"
+
+optionsorexit= options <|> wlink "home" << " or go to home"
+          -- if home is pressed, will return(). Otherwise, it will backtrack to one of the
+          -- two options since they are abslinks.
 
 contentFor x= do
         p << "page for"
