@@ -527,12 +527,12 @@ data Config0 = Config{cadmin :: UserStr           -- ^ Administrator name
                      }
                     deriving (Read, Show, Typeable)
 
-defConfig0= Config "admin" "//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"
-                           "//code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css"
-                           "//code.jquery.com/ui/1.10.3/jquery-ui.js"
-                           "//js.nicedit.com/nicEdit-latest.js"
-
-writeDefConfig0= writeFile "sal" $ show defConfig0
+--defConfig0= Config "admin" "//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"
+--                           "//code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css"
+--                           "//code.jquery.com/ui/1.10.3/jquery-ui.js"
+--                           "//js.nicedit.com/nicEdit-latest.js"
+--
+--writeDefConfig0= writeFile "sal" $ show defConfig0
 
 change :: Config0 -> Config
 change Config{..} = Config1 $ M.fromList
