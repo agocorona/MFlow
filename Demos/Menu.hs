@@ -75,7 +75,7 @@ data Options= Wiki | CountI | CountS | Radio
 
 
 mainMenu :: View Html IO Options
-mainMenu= pageFlow "" $
+mainMenu=  pageFlow "" $
   ul<<<(li << a ! href "/" << b "HOME"
    ++> tFieldEd "editor" "othermenu"  "Other menu options"
    **> (li <<<  (absLink Wiki << b "Wiki") )
@@ -105,25 +105,25 @@ mainMenu= pageFlow "" $
           ul <<<
            (hr
            ++>(li <<< (absLink Ajax         << b  "AJAX example")  <! noAutoRefresh
-                 <++ b " A onclick event in a text box invokes a server procedure that \
+                 <++  " A onclick event in a text box invokes a server procedure that \
                           \increment the integer value"
                  <> article ajaxl
 
            <|> li <<< (absLink Autocomp     << b  "autocomplete")  <! noAutoRefresh
-                 <++ b " Example of autocomplete, a widget which takes the suggested values from a \
+                 <++  " Example of autocomplete, a widget which takes the suggested values from a \
                  \ server procedure"  
 
            <|> li <<< (absLink AutocompList << b  "autocomplete List")   <! noAutoRefresh
-                 <++ b " Example of a widget that generates a set of return values, suggested by a \
+                 <++  " Example of a widget that generates a set of return values, suggested by a \
                  \ autocomplete input box"
                  <> article editList
 
            <|> li <<< (absLink ListEdit     << b  "list edition")    <! noAutoRefresh
-                 <++ b " Example of a widget that edit, update and delete a list of user-defined \
+                 <++  " Example of a widget that edit, update and delete a list of user-defined \
                  \ widgets"
 
            <|> li <<< (absLink Grid         << b  "grid")    <! noAutoRefresh
-                 <++ b " Example of the same widget In this case, containing a row of two fields,\
+                 <++  " Example of the same widget In this case, containing a row of two fields,\
                  \ aranged in a table"
                  <> article gridl
            <> hr)))
@@ -137,24 +137,24 @@ mainMenu= pageFlow "" $
                 <++ " executed when a widget is validated"
 
             <|> li <<< (absLink FViewMonad   << b  "in page flow: sum of three numbers") <! noAutoRefresh
-                 <++ b " Page flows are monadic widgets that modifies themselves in the page"
+                 <++ " Page flows are monadic widgets that modifies themselves in the page"
                  <> article pageflow
 
             <|> li <<< (absLink Counter      << b  "Counter")  <! noAutoRefresh
-                 <++ b " A page flow which increases a counter by using a callback"
+                 <++ " A page flow which increases a counter by using a callback"
                  <> article callbacks
 
             <|> li <<< (absLink Multicounter << b  "Multicounter")  <! noAutoRefresh
-                 <++ b " Page flow with many independent counters with autoRefresh, so they modify themselves in-place"
+                 <++ " Page flow with many independent counters with autoRefresh, so they modify themselves in-place"
                  <> article  callbacks
 
             <|> li <<< (absLink Combination  << b  "Combination of three dynamic widgets") <! noAutoRefresh
-                 <++ b " Combination of autoRefreshe'd widgets in the same page, with\
+                 <++ " Combination of autoRefreshe'd widgets in the same page, with\
                           \ different behaviours"
                  <> article combinationl
 
             <|> li <<< (absLink WDialog      << b  "Modal dialog")   <! noAutoRefresh
-                 <++ b " A modal Dialog box with a form within a page flow"
+                 <++ " A modal Dialog box with a form within a page flow"
             <> hr)))
 
    <|> (autoRefresh $ li <<< do
@@ -163,23 +163,23 @@ mainMenu= pageFlow "" $
           ul <<<
            (hr
            ++>(li <<< (absLink SearchCart <<  b  "Shopping with data tier, queries and full text search") <! noAutoRefresh
-                <++ b " The shopping example completed with a dynamic catalog stored using TCache"
+                <++  " The shopping example completed with a dynamic catalog stored using TCache"
                 <> article searchcart
 
            <|> li <<< (absLink MFlowPersist <<  b "Persistent")  <! noAutoRefresh
                      <++ do -- blaze-html monad
-                        b " illustrates the use of MFlow with "
+                        " illustrates the use of MFlow with "
                         a  "Persistent" ! href yesodweb
                         " (In this example sqlite backend is used) "
                         article persistentarticle
 
            <|> li <<< (absLink Database << b  "Database") <! noAutoRefresh
-                     <++ b " Create, Store and retrieve lines of text from Amazon SimpleDB \
+                     <++ " Create, Store and retrieve lines of text from Amazon SimpleDB \
                             \ storage "
                      <> article amazonarticle
            <|> li <<< (absLink AcidState << b  "Acid State") <! noAutoRefresh
                      <++ do  -- blaze-html monad
-                        b " Create, Store and retrieve lines of text from "
+                        " Create, Store and retrieve lines of text from "
                         a ! href "http://hackage.haskell.org/package/acid-state" $ "Acid State"
                         hr)))
 
@@ -189,12 +189,12 @@ mainMenu= pageFlow "" $
           ul <<<
            (hr
            ++>(li <<< (absLink Push << b  "Push example") <! noAutoRefresh
-                     <++ b " A push widget in append mode receives input from \
+                     <++ " A push widget in append mode receives input from \
                              \a text box with autorefresh"
                      <> article pushl
                      
            <|>   li <<< (absLink PushDec << b  "A push counter") <! noAutoRefresh
-                     <++ b " Show a countdown. Then goes to the main menu"
+                     <++ " Show a countdown. Then goes to the main menu"
                      <> article pushdec
                      <> hr)))
 
@@ -203,7 +203,7 @@ mainMenu= pageFlow "" $
           ul <<<
             (hr
             ++>(li <<< (absLink Trace << b  " Execution traces for errors") <! noAutoRefresh
-                 <++ b " produces an error and show the complete execution trace"
+                 <++ " produces an error and show the complete execution trace"
                  <> article errorTrace
                  <> hr)))
                  
@@ -212,31 +212,31 @@ mainMenu= pageFlow "" $
           ul <<< 
            (hr
            ++>(li <<< (absLink RESTNav  << b  " REST navigation") <! noAutoRefresh
-                <++ b " Navigates trough  menus and a sucession of GET pages"
+                <++ " Navigates trough  menus and a sucession of GET pages"
                 <> article navigation
 
 
            <|> li <<< (absLink ShopCart <<  b  "Stateful persistent flow: shopping") <! noAutoRefresh
-                <++ b " Add articles to a persistent shopping cart stored in the session log."
+                <++ " Add articles to a persistent shopping cart stored in the session log."
                 <> i " getSessionData is read in the View monad to get the most recent shopping cart\
                             \even when the back button has been pressed"
                 <> article stateful
 
            <|> li <<< (absLink SearchCart <<  b  "Shopping with data tier, queries and full text search") <! noAutoRefresh
-                <++ b " The shopping example completed with a dynamic catalog stored using TCache"
+                <++ " The shopping example completed with a dynamic catalog stored using TCache"
                 <> article searchcart
 
            <|> li <<< (absLink MCounter << b  "Persistent stateful flow: Counter") <! noAutoRefresh
-                <++ b " a persistent counter. It uses the same mechanism than shopping, but it is\
+                <++ " a persistent counter. It uses the same mechanism than shopping, but it is\
                       \a more simple example"
 
            <|> li <<< (absLink PreventBack  << b "Prevent going back after a transaction") <! noAutoRefresh
-                 <++ b " Control backtracking to avoid navigating back to undo something that can not be undone\
+                 <++ " Control backtracking to avoid navigating back to undo something that can not be undone\
                           \. For example, a payment"
                  <> article preventbackl
 
            <|> li <<< (absLink InitialConfig  $ b "Initial Configuration in session parameters") <! noAutoRefresh
-                 <++ b " the user is asked for some questions initially that never will be asked again \
+                 <++ " the user is asked for some questions initially that never will be asked again \
                        \ unless he likes to change them (all in session parameters)"
 
                  <> hr)))
@@ -248,27 +248,27 @@ mainMenu= pageFlow "" $
           ul <<<
            (hr
            ++>(li <<< (absLink RuntimeTemplates << b "Runtime templates") <! noAutoRefresh
-                  <++ b " Example of form templates and result templates modified at runtime"
+                  <++ " Example of form templates and result templates modified at runtime"
            <|> li <<< (absLink TextEdit << b "Content Management") <! noAutoRefresh
-                  <++ b " Example of content management primitives defined in MFlow.Forms.Widgets"
+                  <++ " Example of content management primitives defined in MFlow.Forms.Widgets"
                   <> hr)))
 
    <|> (autoRefresh $ li <<< do
           absLink LoginLogout << b "Login/logout"
           ul <<< (hr ++> (li <<< (absLink Login << b  "login/logout")   <! noAutoRefresh
-                             <++ b " Example of using the login and/or logout"
+                             <++ " Example of using the login and/or logout"
                              <>  hr)))
 
    <|> (autoRefresh $ li <<< do 
           absLink ComplexThings << b "Really complex things" <++ " Reference impementations for GUI-like apps"
           ul <<< (hr
                  ++> (li <<< (absLink GenerateForm << b  "A form generator and editor")   <! noAutoRefresh
-                             <++ b " Add widgets and edit the layout. Execute the generated form and see the results")
+                             <++ " Add widgets and edit the layout. Execute the generated form and see the results")
                  <|> (li <<< (absLink GenerateFormUndo << b "Form generator with undo") <! noAutoRefresh
-                             <++ b " The same above application with undo edits thanks to the backtracking mechanism of MFlow")
+                             <++ " The same above application with undo edits thanks to the backtracking mechanism of MFlow")
 
                  <|> (li <<< (absLink GenerateFormUndoMsg << b "Form generator with no page refreshes") <! noAutoRefresh
-                             <++ b " The same above application with no page refresh for menu options. The form page show\
+                             <++ " The same above application with no page refresh for menu options. The form page show\
                                    \ validation errors and results via Ajax using witerate/dField"
 
                              <>  hr) ))

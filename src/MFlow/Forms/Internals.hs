@@ -315,12 +315,21 @@ instance (Functor m, Monad m) => Applicative (View view m) where
 instance (FormInput view,Functor m, Monad m) => Alternative (View view m) where
   empty= View $ return $ FormElm [] Nothing
   View f <|> View g= View $ do
+                   path <- gets mfPagePath
                    FormElm form1 k <- f
                    s1 <- get
+                   let path1 = mfPagePath s1
+                   put s1{mfPagePath=path}
                    FormElm form2 x <- g
                    s2 <- get
                    (mix,hasform) <- controlForms s1 s2 form1 form2
-                   when hasform $ put s2{needForm= HasForm}
+                   let path2 = mfPagePath s2
+                   let path3 = case (k,x) of
+                         (Just _,_) -> path1
+                         (_,Just _) -> path2
+                         _          -> path
+                   if hasform then put s2{needForm= HasForm,mfPagePath= path3}
+                              else put s2{mfPagePath=path3}
                    return $ FormElm mix (k <|> x)
 
 
@@ -330,16 +339,12 @@ instance  (FormInput view, Monad m) => Monad (View view m) where
            case mk of
              Just k  -> do
                 st'' <- get
---                let previousPath= mfPagePath st''
-                let st = st''{ linkMatched = False
-                             , mfPagePath= mfPagePath st'' ++ mfPendingPath st''
-                             , mfPendingPath = []}
+                let st = st''{ linkMatched = False  }
                 put st      
                 FormElm form2 mk <- runView $ f k
                 st' <- get
                 (mix, hasform) <- controlForms st st' form1 form2
-                when hasform $ put st'{needForm= HasForm}--,mfPagePath= previousPath}
---                           else put st'{mfPagePath= previousPath}
+                when hasform $ put st'{needForm= HasForm}
 
                 return $ FormElm mix mk
              Nothing -> 
@@ -374,9 +379,8 @@ wcallback (View x) f = View $ do
    FormElm form1 mk <- x
    case mk of
      Just k  -> do
-       modify $ \st -> st{linkMatched= False, needForm=NoElems
-                         , mfPagePath= mfPagePath st ++ mfPendingPath st
-                         , mfPendingPath=[]} 
+       modify $ \st -> st{linkMatched= False, needForm=NoElems}
+                       
        runView (f k)
      Nothing -> return $ FormElm form1 Nothing
 
@@ -556,7 +560,7 @@ data MFlowState view= MFlowState{
 --   mfPIndex         :: Int,
    mfPageFlow       :: Bool,
    linkMatched      :: Bool,
-   mfPendingPath      :: [String],
+--   mfPendingPath      :: [String],
 
 
    mfAutorefresh   :: Bool,
@@ -570,7 +574,7 @@ type Void = Char
 mFlowState0 :: (FormInput view) => MFlowState view
 mFlowState0 = MFlowState 0 False  True  True  "en"
                 [] NoElems  (error "token of mFlowState0 used")
-                0 0 [] [] stdHeader False [] M.empty  Nothing 0 False    [] []  "" False False [] False [] False
+                0 0 [] [] stdHeader False [] M.empty  Nothing 0 False    [] []  "" False False  False [] False
 
 
 -- | Set user-defined data in the context of the session.
@@ -828,7 +832,7 @@ cachedWidget key t mf =  View .  StateT $ \s ->  do
                    ,mfRequirements=mfRequirements s2
                    ,mfPath= mfPath s2
                    ,mfPagePath= mfPagePath s2
-                   ,mfPendingPath=mfPendingPath s2  
+--                   ,mfPendingPath=mfPendingPath s2  
                    ,needForm= needForm s2
                    ,mfPageFlow= mfPageFlow s2
                    ,mfSeqCache= mfSeqCache s + mfSeqCache s2 - sec}
@@ -881,8 +885,8 @@ The flow is executed in a loop. When the flow is finished, it is started again
    adminLoop
 @
 -}
-runFlow :: (FormInput view, MonadIO m)
-        => FlowM view m () -> Token -> m () 
+--runFlow :: (FormInput view, MonadIO m)
+--        => FlowM view m () -> Token -> m () 
 runFlow  f t=
   loop (startState t) f   t 
   where
@@ -892,16 +896,16 @@ runFlow  f t=
     let t''= t'{tpath=[twfname t']}
     liftIO $ do
        flushRec t'' 
-       sendToMF t'' t''    -- !> "SEND"
+       sendToMF t'' t''
     let s'= case mfSequence s  of
-             -1  -> s
-             _   -> s{mfPath=[twfname t],mfPagePath=[twfname t],mfEnv=[]} 
-    loop   s' f t''{tpath=[]}           -- !> "LOOPAGAIN"
+             -1  -> s                     -- !> "end of recovery loop"
+             _   -> s{mfPath=[twfname t],mfPagePath=[],mfEnv=[]} 
+    loop   s' f t''{tpath=[]}             -- !> "LOOPAGAIN"
 
 inRecovery= -1
 
-runFlowOnce :: (MonadIO m, FormInput view)
-        => FlowM view m () -> Token -> m ()
+--runFlowOnce :: (MonadIO m, FormInput view)
+--        => FlowM view m () -> Token -> m ()
 runFlowOnce f t= runFlowOnce1 f t  >> return ()
 
 runFlowOnce1 f t  = runFlowOnce2 (startState t)  f
@@ -925,7 +929,9 @@ runFlowOnce2 s f  =
      case mfTrace s of
        [] -> do
          let t = mfToken s
-         modify $ \s -> s{ newAsk= True,mfPagePath=[twfname t]}
+         back <- goingBack
+         recover <- lift $ isInRecover
+         when (back && not recover) . modify $ \s -> s{ newAsk= True,mfPagePath=[twfname t]}
          breturn ()
          
        tr ->  error $ disp tr
@@ -1001,9 +1007,9 @@ step f= do
         (r,s') <- lift . WF.step $ runStateT (runSup $ runFlowM f) s
 
         -- when recovery of a workflow, the MFlow state is not considered
-        when( mfSequence s' /= inRecovery) $ put s'  -- !> (show $ mfSequence s') -- else put  s{newAsk=True}
+        when( mfSequence s' /= inRecovery) $ put s' -- !> (show $ mfSequence s') -- else put  s{newAsk=True}
         return r
-
+ 
 -- | to execute transient flows as if they were persistent
 -- it can be used instead of step, but it does  log nothing.
 -- Thus, it is faster and convenient when no session state must be stored beyond the lifespan of
@@ -1117,7 +1123,7 @@ getRestParam= do
           r <-  fmap valToMaybe $ readParam name 
           when (isJust r) $ modify $ \s -> s{inSync= True
                                             ,linkMatched= True
-                                            ,mfPendingPath= mfPendingPath s++[name]}
+                                            ,mfPagePath= mfPagePath s++[name]}
           return r 
              
 
@@ -1348,7 +1354,7 @@ controlForms s1 s2 v1 v2= case (needForm s1, needForm s2) of
 
     _ -> return (v1 ++ v2, False)
 
-currentPath  st=  concat ['/':v| v <- mfPagePath st]
+currentPath  st=  concat ['/':v| v <- mfPagePath st ]
 
 -- | Generate a new string. Useful for creating tag identifiers and other attributes.
 --

@@ -25,8 +25,8 @@ import Text.Blaze.Html5.Attributes as At hiding (step,span,form)
 import Data.List(nub)
 import Control.Monad
 import Data.List((\\))
-import Debug.Trace
-(!>)= flip trace
+--import Debug.Trace
+--(!>)= flip trace
 
 main=do
  userRegister "edituser" "edituser"
@@ -76,7 +76,7 @@ instance Show Result where
 
 genElem  Intv   =  Result <$> dField (getInt Nothing)
 genElem  Stringv=  Result <$> dField (getString Nothing)
-genElem TextArea=  Result <$> dField (getMultilineText  "")
+genElem TextArea=  Result <$> getMultilineText  ""
 genElem (OptionBox xs) =
     Result <$> getSelect (setSelectedOption ""(p   "select a option") <|>
                firstOf[setOption op  (fromStr  op) | op <- xs])
@@ -119,18 +119,17 @@ createForm n title= do
              liftIO . writetField title $ content
              liftIO $ forM_ [1 .. n] $ \n -> writetField (title ++ show n)  ("" :: Html) -- delete
              desc' <- getSessionData `onNothing` return []
-             desc <- addResults title desc'
+             desc  <- addResults title desc'
              return $ Just desc
        <|> do
              wdesc <- chooseWidget <++ hr
-
              addElem (title ++ show n) (title ++ show (n+1))  wdesc
              setSessionData $ mappend desc [wdesc]
              return Nothing
            )
      <** divbody <<< (edTemplate "edituser" (title ++ show n) (return ()) )
  case r of
-   Just desc -> return desc
+   Just desc -> breturn desc
    Nothing -> createForm (n+1) title
 
 -- add a "show results" element to the form if it is not already there
@@ -163,18 +162,14 @@ generateView desc n= View $ do
     n'' <- gets mfSequence
     setSessionData $ Seq n''
     return $ FormElm [] $ Just ( br <> br <> mconcat render :: Html)
---    return $ FormElm [] $ case mr of
---      Just (Result x) -> do
---
---      _ -> Just ( br <> br <> mconcat render :: Html)
 
 
 nrlink x v= wlink x v <! noAutoRefresh
 
-chooseWidget= autoRefresh $
-       (p $ a ! At.class_ "_noAutoRefresh" ! At.href "/" $ "home/reset"  )
-
-       ++>(p <<< do
+chooseWidget=  pageFlow "" $ autoRefresh $
+       (p $ a ! At.class_ "_noAutoRefresh" ! At.href "/" $ "home/reset")
+       ++> (p <<< absLink ("" ::String) "reset" <! noAutoRefresh)
+       **>(p <<< do
               wlink ("text":: String)  "text field"
               ul <<<(li <<< nrlink Intv "returning Int"
                  <|> li <<< nrlink Stringv  "returning string"))
@@ -194,8 +189,8 @@ chooseWidget= autoRefresh $
 
 
 
-getOptions pf = autoRefresh  $ do
-
+getOptions pf =  autoRefresh  $
+     do
         (op,_) <- (,)<$> getString Nothing <! [("size","8"),("placeholder","option")]
                      <*> submitButton "add"
                      <** submitButton "clear" `waction` const (delSessionData (undefined :: WType))
@@ -225,4 +220,4 @@ getOptions pf = autoRefresh  $ do
               delSessionData (undefined :: WType)
               return elem
 
---delParam par=  modify  $ \s -> s{mfEnv=filter ( (par /=) . fst) $ mfEnv s}
+

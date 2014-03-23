@@ -16,10 +16,9 @@ import Menu
 text= fromString
 attr= fromString
 
-multicounter=
- page  $ explain
+multicounter= page .  pageFlow "m" $ explain
      ++> firstOf [autoRefresh $ pageFlow (show i) (counterWidget 0) <++ hr | i <- [1..4]]
-     <|> wlink () << p << "exit"
+     **> wlink () << p << "exit"
 
  where
  explain= do

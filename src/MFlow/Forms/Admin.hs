@@ -96,7 +96,7 @@ wait f= do
 -- create an admin user with `setAdminUser`.
 --
 -- The administration page is reached with the path \"adminserv\"
-addAdminWF= addMessageFlows[("adminserv",transient $ runFlow adminMFlow)]
+addAdminWF= addMessageFlows[("adminserv", runFlow $ transientNav adminMFlow)]
 
 
 adminMFlow ::  FlowM   Html IO ()

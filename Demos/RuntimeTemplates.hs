@@ -81,7 +81,7 @@ process= do
                   **> wlink "scroll" << p << "click here to present the results as a on-demand-filled scroll list"
 
               setSessionData $ NextReg 0
-              page $ appendUpdate (do
+              page $ pageFlow "upd" $ appendUpdate (do
                           NextReg ind <- getSessionData `onNothing` return (NextReg 0)
                           getData ind     len allnames <++ br
                           getData (ind+1) len allnames <++ br

@@ -125,13 +125,16 @@ instance (Typeable view, Typeable a) => Typeable (Medit view m a) where
 --
 -- normally to be used with autoRefresh and pageFlow when used with other widgets.
 wlogin :: (MonadIO m,Functor m,FormInput v) => View v m ()
-wlogin= do
+wlogin=  do
    username <- getCurrentUser
    if username /= anonymous  
          then return username 
          else do
-          name <- getString Nothing <! hint "login name" <! size 9 <++ ftag "br" mempty
-          pass <- getPassword <! hint "password" <! size 9
+          name <- getString Nothing <! hint "login name"
+                                    <! size 9
+                  <++ ftag "br" mempty
+          pass <- getPassword <! hint "password"
+                              <! size 9
                      <++ ftag "br" mempty
                      <** submitButton "login" 
           val  <- userValidate (name,pass)  
@@ -656,7 +659,7 @@ witerate  w= do
          reqs <- return . map ( \(Requirement r) -> unsafeCoerce r) =<< gets mfRequirements
          let js = jsRequirements reqs
          liftIO . sendFlush t $ HttpData
-                                (("Cache-Control", "no-cache, no-store"):mfHttpHeaders st)
+                                (mfHttpHeaders st) 
                                 (mfCookies st) (fromString js)
          modify $ \st -> st{mfAutorefresh=True,inSync=True}
          return $ FormElm [] mr  
@@ -980,7 +983,8 @@ update method w= View $ do
     FormElm form mr <- runView $ insertForm w
     st <- get
     let insync =  inSync st
-    let r= lookup ("auto"++id) $ mfEnv st        
+    let env= mfEnv st
+    let r= lookup ("auto"++id) env      
     if r == Nothing || insync == False
       then do
          requires [JScript $ timeoutscript t
@@ -1015,7 +1019,7 @@ update method w= View $ do
     \       data: pdata,\n\
     \       success: function (resp) {\n\
     \            var ind= resp.indexOf(' ');\n\
-    \            var dat = resp.substr(ind);\n\
+    \            var dat= resp.substr(ind);\n\
     \            var method= resp.substr(0,ind);\n\
     \            if(method== 'html')id1.html(dat);\n\
     \            else if (method == 'append') id1.append(dat);\n\
@@ -1204,7 +1208,7 @@ push method' wait w= push' . map toLower $ show method'
 
     when new  $ do
         killWF procname token{twfname= procname}
-        let proc= transient . runFlow . ask $ w'
+        let proc=runFlow . transientNav . ask $ w'
         requires [ServerProc (procname, proc),
                   JScript $ ajaxPush procname,
                   JScriptFile jqueryScript [installscript]]

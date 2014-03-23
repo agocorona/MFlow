@@ -1129,7 +1129,7 @@ ask w =  do
     let pagepath = mfPagePath st1
     if null pagepath then fail ""
 --  if exist and it is not prefix of the current path being navigated to, backtrack
-      else if not $  pagepath `isPrefixOf` mfPath st1 then fail ""
+      else if not $  pagepath `isPrefixOf` mfPath st1 then fail ""   -- !> ("pagepath fail with "++ show (mfPath st1))
        else do
 --  wlinks set it for the next page
    
@@ -1144,16 +1144,15 @@ ask w =  do
       else
       case mx  of
        Just x -> do
-         put st'{newAsk= True, mfEnv=[]
-                ,mfPagePath=  mfPagePath st' ++ mfPendingPath st'
-                ,mfPendingPath= []}
-         breturn x                                        -- !> "BRETURN"
+         put st'{newAsk= True , mfEnv=[]
+                ,mfPagePath=  mfPagePath st'}
+         breturn x                                -- !> ("BRETURN "++ show (mfPagePath st') )
 
        Nothing ->
          if  not (inSync st')  && not (newAsk st')
 --                                                        !> ("insync="++show (inSync st'))
 --                                                        !> ("newask="++show (newAsk st'))
-          then fail ""                                        -- !> "FAIL**********"
+          then fail ""                                 -- !> "FAIL**********"
           else if mfAutorefresh st' then do
                      resetState st st'
                      FlowM $ lift  nextMessage
@@ -1249,7 +1248,7 @@ isparam _= False
 wstateless
   :: (Typeable view,  FormInput view) =>
      View view IO () -> Flow
-wstateless w = transient . runFlow . ask $ w **> stop -- loop
+wstateless w =  runFlow . transientNav . ask $ w **> (stop `asTypeOf` w) -- loop
 --  where
 --  loop= do
 --      ask w
@@ -1382,7 +1381,7 @@ wlink x v=    View $ do
                                    then unsafeCoerce x
                                    else show x)
           lpath = mfPath st
-          newPath= mfPagePath st ++ [name]
+          newPath= mfPagePath st  ++ [name]
 
       r <- if  linkMatched st  then return Nothing -- only a link match per page or monadic sentence in page
           else
@@ -1390,10 +1389,10 @@ wlink x v=    View $ do
              True -> do
                   modify $ \s -> s{inSync= True
                                  ,linkMatched= True
-                                 ,mfPendingPath= mfPendingPath st ++ [name] }
+                                 ,mfPagePath= mfPagePath st ++ [name] }
 
-                  return $ Just x                            -- !> (name ++ "<-" ++ "lpath=" ++show lpath)
-             False ->  return Nothing                         --  !> ( "NOT MATCHED "++name++" LP= "++show  lpath)
+                  return $ Just x                          --  !> (name ++ "<-" ++ "lpath=" ++show (mfPagePath st))
+             False ->  return Nothing                      --  !> ( "NOT MATCHED "++name++" LP= "++show (mfPagePath st))
 
       let path= currentPath st ++ ('/':name)
       return $ FormElm [flink path v ] r
@@ -1436,13 +1435,15 @@ absLink x v=    View $ do
              True -> do
                   modify $ \s -> s{inSync= True
                                  ,linkMatched= True
-                                 ,mfPendingPath= mfPendingPath st ++ [name] }
+                                 ,mfPagePath= mfPagePath st ++ [name] }
 
-                  return $ Just x                            --  !> (name ++ "<- abs" ++ "lpath=" ++show lpath)
+                  return $ Just x                             --  !> (name ++ "<- abs" ++ "lpath=" ++show lpath)
              False ->  return Nothing                         --  !> ( "NOT MATCHED "++name++" LP= "++show  lpath)
 
       path <- liftIO $ cachedByKey (show x) 0 . return $ currentPath st ++ ('/':name)
-      return $ FormElm [flink path v ] r
+
+      return $ FormElm [flink path v ] r  -- !> name
+
 
 
 -- | When some user interface return some response to the server, but it is not produced by
@@ -1482,13 +1483,14 @@ returning expr=View $ do
 --      return $ FormElm [mconcat vs] res1
 
 -- | Concat a list of widgets of the same type, return a the first validated result
-firstOf :: (Monoid view, Monad m, Functor m)=> [View view m a]  -> View view m a
-firstOf xs= View $ do
-      forms <- mapM runView  xs
-      let vs  = concatMap (\(FormElm v _) ->  [mconcat v]) forms
-          res = filter isJust $ map (\(FormElm _ r) -> r) forms
-          res1= if null res then Nothing else head res
-      return $ FormElm  vs res1
+firstOf :: (FormInput view, Monad m, Functor m)=> [View view m a]  -> View view m a
+firstOf xs= foldl'  (<|>) noWidget xs
+--  View $ do
+--      forms <- mapM runView  xs
+--      let vs  = concatMap (\(FormElm v _) ->  [mconcat v]) forms
+--          res = filter isJust $ map (\(FormElm _ r) -> r) forms
+--          res1= if null res then Nothing else head res
+--      return $ FormElm  vs res1
 
 -- | from a list of widgets, it return the validated ones.
 manyOf :: (FormInput view, MonadIO m, Functor m)=> [View view m a]  -> View view m [a]
@@ -1517,7 +1519,7 @@ allOf xs= manyOf xs `validate` \rs ->
 -- | Intersperse a widget in a list of widgets. the results is a 2-tuple of both types.
 --
 -- it has a infix priority @infixr 5@
-(|*>) :: (MonadIO m, Functor m,Monoid view)
+(|*>) :: (MonadIO m, Functor m, FormInput view)
             => View view m r
            -> [View view m r']
            -> View view m (Maybe r,Maybe r')
@@ -1538,7 +1540,7 @@ infixr 5 |*>, .|*>.
 -- and at the bottom of a page.
 
 -- It has a low infix priority: @infixr 1@
-(|+|) :: (Functor m, Monoid view, MonadIO m)
+(|+|) :: (Functor m, FormInput view, MonadIO m)
       => View view m r
       -> View view m r'
       -> View view m (Maybe r, Maybe r')

@@ -48,7 +48,7 @@ options= h2 << "Choose between:"
          ++> absLink "a" << b << "letters " <++ i << " or "
          <|> absLink "1" << b << "numbers"
 
-optionsorexit= options <|> wlink "home" << " or go to home"
+optionsorexit= options <|> wlink "home" << p << " or go to home"
           -- if home is pressed, will return(). Otherwise, it will backtrack to one of the
           -- two options since they are abslinks.
 
