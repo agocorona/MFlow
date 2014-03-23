@@ -77,10 +77,10 @@ import Control.Exception
 --jqueryUI1= "//code.jquery.com/ui/1.9.1/jquery-ui.js"
 --jqueryUI= "//code.jquery.com/ui/1.10.3/jquery-ui.js"
 
-jqueryScript= cjqueryScript config
-jqueryCSS= cjqueryCSS config
-jqueryUI= cjqueryUI config
-nicEditUrl= cnicEditUrl config
+jqueryScript= getConfig "cjqueryScript"
+jqueryCSS= getConfig "cjqueryCSS"
+jqueryUI= getConfig "cjqueryUI"
+nicEditUrl= getConfig "cnicEditUrl"
 ------- User Management ------
 
 -- | Present a user form if not logged in. Otherwise, the user name and a logout link is presented.

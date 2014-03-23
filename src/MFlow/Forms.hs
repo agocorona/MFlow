@@ -1484,7 +1484,7 @@ returning expr=View $ do
 
 -- | Concat a list of widgets of the same type, return a the first validated result
 firstOf :: (FormInput view, Monad m, Functor m)=> [View view m a]  -> View view m a
-firstOf xs= foldl'  (<|>) noWidget xs
+firstOf xs= foldl' (<|>) noWidget xs
 --  View $ do
 --      forms <- mapM runView  xs
 --      let vs  = concatMap (\(FormElm v _) ->  [mconcat v]) forms

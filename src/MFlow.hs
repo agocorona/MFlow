@@ -54,7 +54,7 @@ Fragment based streaming: 'sendFragment'  are  provided only at this level.
               ,RecordWildCards
               ,OverloadedStrings
               ,ScopedTypeVariables
-              ,TemplateHaskell
+
                #-}  
 module MFlow (
 Flow, Params, HttpData(..),Processable(..)
@@ -72,7 +72,7 @@ btag, bhtml, bbody,Attribs, addAttrs
 , userRegister, setAdminUser, getAdminName, Auth(..),getAuthMethod, setAuthMethod
 -- * static files
 -- * config
-,Config(..), config
+,Config(..), config, getConfig, setConfig
 ,setFilesPath
 -- * internal use
 ,addTokenToList,deleteTokenInList, msgScheduler,serveFile,newFlow
@@ -111,7 +111,7 @@ import qualified Control.Exception as CE
 import Data.RefSerialize hiding (empty)
 import qualified Data.Text as T
 import System.Posix.Internals
-
+import Control.Exception
 import Debug.Trace
 (!>)  =   flip trace
 
@@ -510,35 +510,75 @@ userRegister u p= liftIO $ do
    reg u p
 
 
+newtype Config= Config1 (M.Map String String) deriving (Read,Show,Typeable)
 
+defConfig= Config1 $ M.fromList
+            [("cadmin","admin")
+            ,("cjqueryScript","//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js")
+            ,("cjqueryCSS","//code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css")
+            ,("cjqueryUI","//code.jquery.com/ui/1.10.3/jquery-ui.js")
+            ,("cnicEditUrl","//js.nicedit.com/nicEdit-latest.js")]
 
-data Config = Config{cadmin :: UserStr           -- ^ Administrator name
-                    ,cjqueryScript :: String     -- ^ URL of jquery
-                    ,cjqueryCSS    :: String     -- ^ URL of jqueryCSS
-                    ,cjqueryUI     :: String     -- ^ URL of jqueryUI
-                    ,cnicEditUrl    :: String    -- ^ URL of the nicEdit  editor
-                    }
+data Config0 = Config{cadmin :: UserStr           -- ^ Administrator name
+                     ,cjqueryScript :: String     -- ^ URL of jquery
+                     ,cjqueryCSS    :: String     -- ^ URL of jqueryCSS
+                     ,cjqueryUI     :: String     -- ^ URL of jqueryUI
+                     ,cnicEditUrl    :: String    -- ^ URL of the nicEdit  editor
+                     }
                     deriving (Read, Show, Typeable)
 
-defConfig= Config "admin" "//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"
-                          "//code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css"
-                          "//code.jquery.com/ui/1.10.3/jquery-ui.js"
-                          "//js.nicedit.com/nicEdit-latest.js"
+defConfig0= Config "admin" "//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"
+                           "//code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css"
+                           "//code.jquery.com/ui/1.10.3/jquery-ui.js"
+                           "//js.nicedit.com/nicEdit-latest.js"
 
-config= unsafePerformIO $! atomically $! readConfig
+writeDefConfig0= writeFile "sal" $ show defConfig0
+
+change :: Config0 -> Config
+change Config{..} = Config1 $ M.fromList
+            [("cadmin",cadmin )
+            ,("cjqueryScript", cjqueryScript)
+            ,("cjqueryCSS",cjqueryCSS)
+            ,("cjqueryUI",cjqueryUI)
+            ,("cnicEditUrl",cnicEditUrl)]
+
+config :: M.Map String String
+config= unsafePerformIO $! do
+  Config1 c <- atomically $! readConfig
+  return c
 
 readConfig=  readDBRef rconf `onNothing` return defConfig
 
-
+readOld :: ByteString -> Config
+readOld s= (change . read . B.unpack $ s)
 
 keyConfig= "mflow.config"
 instance Indexable Config where key _= keyConfig
+
+rconf :: DBRef Config
 rconf= getDBRef keyConfig
 
 instance  Serializable Config where
-  serialize=  B.pack . show
-  deserialize=   read . B.unpack
-  setPersist =   \_ -> Just filePersist
+  serialize = B.pack . show
+  deserialize s = unsafePerformIO $ do
+                     let r = read $! B.unpack s
+                     print r
+                     return r
+                   `CE.catch` \(e :: SomeException) ->  return (readOld s)
+  setPersist = \_ -> Just filePersist
+
+-- | read a config variable from the config
+getConfig s= case M.lookup s config of
+     Nothing -> ""
+     Just s  -> s
+
+-- | set an user-defined config variable
+setConfig k v=   atomically $ do
+   Config1 conf <- readConfig
+   writeDBRef rconf $ Config1 $ M.insert k v conf
+
+
+-- user ---
 
 type UserStr= String
 type PasswdStr= String
@@ -550,13 +590,14 @@ type PasswdStr= String
 setAdminUser :: MonadIO m => UserStr -> PasswdStr -> m ()
 setAdminUser user password= liftIO $  do
   userRegister user password
-  atomically $ do
-   conf <- readConfig
-   writeDBRef rconf $ conf{cadmin= user}
+  setConfig "cadmin" user
+--  atomically $ do
+--   Config1 conf <- readConfig
+--   writeDBRef rconf $ Config1 $ M.insert "cadmin" user conf
 
 
 
-getAdminName=  cadmin config
+getAdminName= getConfig "cadmin" 
 
 
 --------------- ERROR RESPONSES --------
