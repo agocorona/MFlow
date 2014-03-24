@@ -161,13 +161,13 @@ generateView desc n= View $ do
     FormElm render mr <- runView $ genElem desc
     n'' <- gets mfSequence
     setSessionData $ Seq n''
-    return $ FormElm [] $ Just ( br <> br <> mconcat render :: Html)
+    return $ FormElm mempty $ Just ( br <> br <>  render :: Html)
 
 
 nrlink x v= wlink x v <! noAutoRefresh
 
 chooseWidget=  pageFlow "" $ autoRefresh $
-       (p $ a ! At.class_ "_noAutoRefresh" ! At.href "/" $ "home/reset")
+       (p $ a ! At.class_ "_noAutoRefresh" ! At.href "/" $ "home")
        ++> (p <<< absLink ("" ::String) "reset" <! noAutoRefresh)
        **>(p <<< do
               wlink ("text":: String)  "text field"

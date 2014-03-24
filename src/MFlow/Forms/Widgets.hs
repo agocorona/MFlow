@@ -202,8 +202,8 @@ modifyWidget selector modifier  w = View $ do
      let cw = wcached key 0  w
      addEdited selector (key,cw)
      FormElm form _ <-  runView cw
-     let elem=  toByteString  $ mconcat form
-     return . FormElm [] . Just $   selector <> "." <> modifier <>"('" <> elem <> "');"
+     let elem=  toByteString   form
+     return . FormElm mempty . Just $   selector <> "." <> modifier <>"('" <> elem <> "');"
      where
      typ :: View v Identity a -> a
      typ = undefined
@@ -662,7 +662,7 @@ witerate  w= do
                                 (mfHttpHeaders st) 
                                 (mfCookies st) (fromString js)
          modify $ \st -> st{mfAutorefresh=True,inSync=True}
-         return $ FormElm [] mr  
+         return $ FormElm mempty mr  
 
    delSessionData $ IteratedId name
    return ret
@@ -797,7 +797,7 @@ dField
 dField w= View $ do
     id <- genNewId
     FormElm vs mx <- runView w
-    let render = mconcat vs
+    let render =  vs
     st <- get
     let env =  mfEnv st
 
@@ -805,7 +805,7 @@ dField w= View $ do
     let r =  lookup ("auto"++name) env
     if r == Nothing || (name == noid && newAsk st== True)  then do
        requires [JScriptFile jqueryScript ["$(document).ready(function() {setId('"++id++"','" ++ toString (toByteString $ render)++"')});\n"]]
-       return $ FormElm[(ftag "span" render) `attrs` [("id",id)]] mx
+       return $ FormElm((ftag "span" render) `attrs` [("id",id)]) mx
      else do
        requires [JScript $  "setId('"++id++"','" ++ toString (toByteString $ render)++"');\n"]
        return $ FormElm mempty mx
@@ -831,10 +831,10 @@ edTemplate muser k w=  View $ do
             ,ServerProc  ("_texts",  transient getTexts)]
 
    FormElm text mx <- runView w
-   content <- liftIO $ readtField (mconcat text) k
+   content <- liftIO $ readtField text k
 
-   return $ FormElm [ftag "div" mempty `attrs` [("id",ipanel)]
-                    ,ftag "span" content `attrs` [("id", name)]]
+   return $ FormElm (ftag "div" mempty `attrs` [("id",ipanel)] <>
+                     ftag "span" content `attrs` [("id", name)])
                      mx
    where
    getTexts :: (Token -> IO ())
@@ -850,10 +850,13 @@ edTemplate muser k w=  View $ do
    viewFormat= undefined -- is a type function
 
 -- | Does the same than template but without the edition facility
+template
+  :: (MonadIO m, FormInput v, Typeable a) =>
+      Key -> View v m a -> View v m a
 template k w= View $ do
     FormElm text mx <- runView  w
-    let content= unsafePerformIO $ readtField  (mconcat text) k
-    return $ FormElm [content] mx
+    let content= unsafePerformIO $ readtField   text k
+    return $ FormElm content mx
 
 
 
@@ -991,17 +994,17 @@ update method w= View $ do
                   ,JScript ajaxGetLink
                   ,JScript ajaxPostForm
                   ,JScriptFile jqueryScript [installscript]] 
-         return $ FormElm[ftag "div" (mconcat form) `attrs` [("id",id)]] mr 
+         return $ FormElm (ftag "div" form `attrs` [("id",id)]) mr 
 
       else do
          let t= mfToken st
 
-         let HttpData ctype c s= toHttpData $ method <> " " <> toByteString (mconcat form)
+         let HttpData ctype c s= toHttpData $ method <> " " <> toByteString  form
                           
          (liftIO . sendFlush t $ HttpData (ctype ++ {-("Cache-Control", "no-cache, no-store"): -}
                                 mfHttpHeaders st) (mfCookies st ++ c) s)
          put st{mfAutorefresh=True,inSync=True}
-         return $ FormElm [] mr 
+         return $ FormElm mempty mr 
 
   where
   -- | adapted from http://www.codeproject.com/Articles/341151/Simple-AJAX-POST-Form-and-AJAX-Fetch-Link-to-Modal

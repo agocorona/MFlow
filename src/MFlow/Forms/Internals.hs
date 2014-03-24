@@ -160,11 +160,11 @@ instance (Supervise s m,MonadState s m) => MonadState s (Sup m) where
 type WState view m = StateT (MFlowState view) m
 type FlowMM view m=  Sup (WState view m)
 
-data FormElm view a = FormElm [view] (Maybe a) deriving Typeable
+data FormElm view a = FormElm view (Maybe a) deriving Typeable
 
-instance Serialize a => Serialize (FormElm view a) where
+instance (Monoid view,Serialize a) => Serialize (FormElm view a) where
    showp (FormElm _ x)= showp x
-   readp= readp >>= \x -> return $ FormElm  [] x
+   readp= readp >>= \x -> return $ FormElm  mempty x
 
 -- | @View v m a@ is a widget (formlet)  with formatting `v`  running the monad `m` (usually `IO`) and which return a value of type `a`
 --
@@ -277,7 +277,7 @@ instance  FormInput v => MonadLoc (View v IO)  where
              case CE.fromException e :: Maybe AsyncException of
                 Just e -> CE.throw e            -- !> ("TROWN ASYNC=" ++ show e)
                 Nothing ->
-                  return (FormElm [] Nothing, s{mfTrace= [show e]}) -- !> loc
+                  return (FormElm mempty Nothing, s{mfTrace= [show e]}) -- !> loc
 
 
 
@@ -305,15 +305,15 @@ instance  (Monad m,Functor m) => Functor (View view m) where
   fmap f x= View $   fmap (fmap f) $ runView x
 
   
-instance (Functor m, Monad m) => Applicative (View view m) where
-  pure a  = View $  return (FormElm [] $ Just a)
+instance (Monoid view,Functor m, Monad m) => Applicative (View view m) where
+  pure a  = View  .  return . FormElm mempty $ Just a
   View f <*> View g= View $
                    f >>= \(FormElm form1 k) ->
                    g >>= \(FormElm form2 x) ->
-                   return $ FormElm (form1 ++ form2) (k <*> x) 
+                   return $ FormElm (form1 `mappend` form2) (k <*> x) 
 
 instance (FormInput view,Functor m, Monad m) => Alternative (View view m) where
-  empty= View $ return $ FormElm [] Nothing
+  empty= View $ return $ FormElm mempty Nothing
   View f <|> View g= View $ do
                    path <- gets mfPagePath
                    FormElm form1 k <- f
@@ -352,7 +352,7 @@ instance  (FormInput view, Monad m) => Monad (View view m) where
                         
 
 
-    return = View .  return . FormElm  [] . Just
+    return = View .  return . FormElm  mempty . Just
 --    fail msg= View . return $ FormElm [inRed msg] Nothing
 
 
@@ -395,15 +395,15 @@ clear = wcallback (return()) (const $ return())
 
 
 
-instance MonadTrans (View view) where
-  lift f = View $  (lift  f) >>= \x ->  return $ FormElm [] $ Just x
+instance Monoid view => MonadTrans (View view) where
+  lift f = View $  (lift  f) >>= \x ->  return $ FormElm mempty $ Just x
 
 instance MonadTrans (FlowM view) where
   lift f = FlowM $ lift (lift  f) -- >>= \x ->  return x
 
 instance  (FormInput view, Monad m)=> MonadState (MFlowState view) (View view m) where
-  get = View $  get >>= \x ->  return $ FormElm [] $ Just x
-  put st = View $  put st >>= \x ->  return $ FormElm [] $ Just x
+  get = View $  get >>= \x ->  return $ FormElm mempty $ Just x
+  put st = View $  put st >>= \x ->  return $ FormElm mempty $ Just x
 
 --instance  (Monad m)=> MonadState (MFlowState view) (FlowM view m) where
 --  get = FlowM $  get >>= \x ->  return $ FormElm [] $ Just x
@@ -756,7 +756,7 @@ type OnClick= Maybe String
 normalize :: (Monad m, FormInput v) => View v m a -> View B.ByteString m a
 normalize f=  View .  StateT $ \s ->do
        (FormElm fs mx, s') <-  runStateT  ( runView f) $ unsafeCoerce s
-       return  (FormElm (map toByteString fs ) mx,unsafeCoerce s')
+       return  (FormElm (toByteString fs ) mx,unsafeCoerce s')
 
 
 
@@ -1326,7 +1326,7 @@ formPrefix   st form anchored= do
                         anchor <- genNewId
                         return ('#':anchor, (ftag "a") mempty  `attrs` [("name",anchor)])
                False -> return (mempty,mempty)
-     return $ formAction (path ++ anchor ) $  mconcat ( anchorf:form)  -- !> anchor
+     return $ formAction (path ++ anchor ) $  anchorf <> form  -- !> anchor
 
 -- | insert a form tag if the widget has form input fields. If not, it does nothing
 insertForm w=View $ do
@@ -1337,22 +1337,22 @@ insertForm w=View $ do
                        frm <- formPrefix  st forms False
                        put st{needForm= HasForm}
                        return   frm
-              _    ->  return $ mconcat  forms
+              _    ->  return forms
     
-    return $ FormElm [cont] mx
+    return $ FormElm cont mx
 
 -- isert a form tag if necessary when two pieces of HTML have to mix as a result of >>= >> <|>  or <+> operators
 controlForms :: (FormInput v, MonadState (MFlowState v) m)
-    => MFlowState v -> MFlowState v -> [v] -> [v] -> m ([v],Bool)
+    => MFlowState v -> MFlowState v -> v -> v -> m (v,Bool)
 controlForms s1 s2 v1 v2= case (needForm s1, needForm s2) of
 --    (HasForm,HasElems) -> do
 --       v2' <- formPrefix s2 v2 True
 --       return (v1 ++ [v2'], True)
     (HasElems, HasForm) -> do
        v1' <- formPrefix s1 v1 True
-       return ([v1'] ++ v2 , True)
+       return (v1' <> v2 , True)
 
-    _ -> return (v1 ++ v2, False)
+    _ -> return (v1 <> v2, False)
 
 currentPath  st=  concat ['/':v| v <- mfPagePath st ]
 

@@ -144,7 +144,7 @@ ask :: (Generate a, MonadIO m,  Functor m, FormInput v,Typeable v) => View v m a
 ask w = do
     FormElm forms mx <- FlowM . lift $ runView  w
     r <- liftIO generate
-    let n= B.length . toByteString $ mconcat forms
+    let n= B.length $ toByteString  forms
     breturn $ n `seq` mx `seq` r
 --    let u= undefined
 --    liftIO $ runStateT (runView mf) s
@@ -168,7 +168,7 @@ askt :: (MonadIO m, FormInput v) => (Int -> a) -> View v m a -> FlowM v m a
 askt v w =  do
     FormElm forms mx <- FlowM . lift $ runView  w
     n <- getTestNumber
-    let l= B.length . toByteString $ mconcat forms
+    let l= B.length $ toByteString  forms
     breturn $ l `seq` mx `seq` v n
 
 --mvtestopts :: MVar (M.Map String (Int,Dynamic))

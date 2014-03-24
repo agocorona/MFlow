@@ -38,14 +38,14 @@ import MFlow.Forms.Internals
 import MFlow.Forms(stop,(++>))
 import Control.Monad.State
 import Data.Typeable
-
+import Data.Monoid
 -- | Get the next segment of the REST path. if there is no one or if the data does not match
 -- with the type expected, then ir return invalid.
 --  Therefore a monadic sequence in the View monad will not continue
 restp :: (Monad m,Functor m, FormInput v,Typeable a,Read a) => View v m a
 restp =  View $ do
    mr <- getRestParam
-   return $ FormElm [] mr
+   return $ FormElm mempty mr
 
 
 
@@ -60,7 +60,7 @@ rest v= do
 -- | get a parameter from a GET or POST key-value input.
 wparam par= View $ do
    mr <- getKeyValueParam par
-   return $ FormElm [] mr
+   return $ FormElm mempty mr
 
 -- | append to the output the result of an expression
 dispv :: (Monad m, FormInput v) => View v m v -> View  v m ()
@@ -68,7 +68,7 @@ dispv w= View $ do
    FormElm f mx <- runView w
    case mx of
      Nothing -> return $ FormElm f Nothing
-     justx@(Just x) -> return $ FormElm (f++[x]) $ return ()
+     justx@(Just x) -> return $ FormElm (f <> x) $ return ()
 
 
 -- | append to the output the result of an expression
@@ -77,7 +77,7 @@ disp w= View $ do
    FormElm f mx <- runView w
    case mx of
      Nothing -> return $ FormElm f Nothing
-     justx@(Just x) -> return $ FormElm (f++[fromStr $ show x]) $ return ()
+     justx@(Just x) -> return $ FormElm (f <>fromStr (show x)) $ return ()
 
 -- | error message when a applicative expression do not match
 infixl 3 <?>

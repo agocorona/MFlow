@@ -341,7 +341,7 @@ validate  formt val= View $ do
       modify (\s -> s{inSync= True})
       case me of
          Just str ->
-           return $ FormElm ( form ++ [inred  str]) Nothing
+           return $ FormElm ( form <> inred  str) Nothing
          Nothing  -> return $ FormElm form mx
     _ -> return $ FormElm form mx
 
@@ -373,17 +373,17 @@ waction f ac = do
               r <- runSup $ runFlowM  x
               case r of
                 NoBack x ->
-                     return (FormElm [] $ Just x)
+                     return (FormElm mempty $ Just x)
                 BackPoint x->
-                     return (FormElm [] $ Just x)
+                     return (FormElm mempty $ Just x)
                 GoBack-> do
                      modify $ \s ->s{notSyncInAction= True}
-                     return (FormElm [] Nothing)
+                     return (FormElm mempty Nothing)
 
 -- | change the rendering and the return value of a page. This is superseeded by page flows.
 wmodify :: (Monad m, FormInput v)
         => View v m a
-        -> ([v] -> Maybe a -> WState v m ([v], Maybe b))
+        -> (v -> Maybe a -> WState v m (v, Maybe b))
         -> View v m b
 wmodify formt act = View $ do
    FormElm f mx <- runView  formt
@@ -428,8 +428,8 @@ setRadioActive  v n = View $ do
   mn <- getParam1 n env
   let str = if typeOf v == typeOf(undefined :: String)
                    then unsafeCoerce v else show v
-  return $ FormElm [finput n "radio" str
-          ( isValidated mn  && v== fromValidated mn) (Just  "this.form.submit()")]
+  return $ FormElm (finput n "radio" str
+          ( isValidated mn  && v== fromValidated mn) (Just  "this.form.submit()"))
           (fmap Radio $ valToMaybe mn)
 
 
@@ -445,8 +445,8 @@ setRadio v n= View $ do
   mn <- getParam1 n env
   let str = if typeOf v == typeOf(undefined :: String)
                    then unsafeCoerce v else show v
-  return $ FormElm [finput n "radio" str
-          ( isValidated mn  && v== fromValidated mn) Nothing]
+  return $ FormElm (finput n "radio" str
+          ( isValidated mn  && v== fromValidated mn) Nothing)
           (fmap Radio $ valToMaybe mn)
 
 -- | encloses a set of Radio boxes. Return the option selected
@@ -484,8 +484,8 @@ setCheckBox checked v= View $ do
         True  -> Just $ CheckBoxes  strs  -- !> show strs
         False -> Nothing
   return $ FormElm
-      ( [ finput n "checkbox" v
-        ( checked || (isJust mn  && v== fromJust mn)) Nothing])
+      ( finput n "checkbox" v
+        ( checked || (isJust mn  && v== fromJust mn)) Nothing)
       ret
 
 -- | Read the checkboxes dinamically created by JavaScript within the view parameter
@@ -503,7 +503,7 @@ genCheckBoxes v= View $ do
   let ret= case val of
         True ->  Just $ CheckBoxes  strs
         False -> Nothing
-  return $ FormElm [ftag "span" v `attrs`[("id",n)]] ret
+  return $ FormElm (ftag "span" v `attrs`[("id",n)]) ret
 
 whidden :: (Monad m, FormInput v,Read a, Show a, Typeable a) => a -> View v m a
 whidden x= View $ do
@@ -513,20 +513,20 @@ whidden x= View $ do
               Just x' -> x'
               Nothing -> show x
   r <- getParam1 n env
-  return $ FormElm [finput n "hidden" showx False Nothing] $ valToMaybe r
+  return . FormElm (finput n "hidden" showx False Nothing) $ valToMaybe r
 
 getCheckBoxes :: (FormInput view, Monad m)=> View view m  CheckBoxes -> View view m [String]
 getCheckBoxes boxes =  View $ do
     n  <- genNewId
     st <- get
     let env =  mfEnv st
-    let form= [finput n "hidden" "" False Nothing]
+    let form= finput n "hidden" "" False Nothing
     mr  <- getParam1 n env
 
     let env = mfEnv st
     modify $ \st -> st{needForm= HasElems}
     FormElm form2 mr2 <- runView boxes
-    return $ FormElm (form ++ form2) $
+    return $ FormElm (form <> form2) $
         case (mr `asTypeOf` Validated ("" :: String),mr2) of
           (NoParam,_) ->  Nothing
           (Validated _,Nothing) -> Just []
@@ -568,9 +568,9 @@ getParam look type1 mvalue = View $ do
     put st{needForm= HasElems}
     r <- getParam1 tolook env
     case r of
-       Validated x        -> return $ FormElm [finput tolook type1 (nvalue $ Just x) False Nothing] $ Just x
-       NotValidated s err -> return $ FormElm ([finput tolook type1 s False Nothing]++[err]) $ Nothing
-       NoParam            -> return $ FormElm [finput tolook type1 (nvalue mvalue) False Nothing] $ Nothing
+       Validated x        -> return $ FormElm (finput tolook type1 (nvalue $ Just x) False Nothing) $ Just x
+       NotValidated s err -> return $ FormElm (finput tolook type1 s False Nothing <> err) $ Nothing
+       NoParam            -> return $ FormElm (finput tolook type1 (nvalue mvalue) False Nothing) $ Nothing
 
 
 
@@ -591,9 +591,9 @@ getMultilineText nvalue = View $ do
     env <- gets mfEnv
     r <- getParam1 tolook env
     case r of
-       Validated x        -> return $ FormElm [ftextarea tolook  x] $ Just x
-       NotValidated s err -> return $ FormElm [ftextarea tolook  (T.pack s)]  Nothing
-       NoParam            -> return $ FormElm [ftextarea tolook  nvalue]  Nothing
+       Validated x        -> return $ FormElm (ftextarea tolook  x) $ Just x
+       NotValidated s err -> return $ FormElm (ftextarea tolook  (T.pack s))  Nothing
+       NoParam            -> return $ FormElm (ftextarea tolook  nvalue)  Nothing
 
 
 --instance  (MonadIO m, Functor m, FormInput view) => FormLet Bool m view where
@@ -615,17 +615,7 @@ getBool mv truestr falsestr= do
                   <|> setOption falsestr(fromStr falsestr) <! if not mv then [("selected","true")] else []
    if  r == truestr  then return True else return False
 
---View $ do
---    tolook <- genNewId
---    st <- get
---    let env = mfEnv st
---    put st{needForm= True}
---    r <- getParam1 tolook env
---    let flag = isValidated r && fromstr (fromValidated r)
---    let form = [fselect tolook (foption1 truestr flag `mappend` foption1 falsestr (not flag))]
---    return . FormElm form . fmap fromstr $ valToMaybe r
---    where
---    fromstr x = if x == truestr then True else False
+
 
 -- | Display a dropdown box with the options in the first parameter is optionally selected
 -- . It returns the selected option.
@@ -641,7 +631,7 @@ getSelect opts = View $ do
     setSessionData $ fmap MFOption $ valToMaybe r
     FormElm form mr <- (runView opts)
 
-    return $ FormElm [fselect tolook $ mconcat form] $ valToMaybe r
+    return $ FormElm (fselect tolook  form)  $ valToMaybe r
 
 
 newtype MFOption a= MFOption a deriving Typeable
@@ -684,7 +674,7 @@ setOption1 nam  val check= View $ do
                    then unsafeCoerce nam
                    else show nam
 
-    return . FormElm [foption n val check]  . Just $ MFOption nam
+    return . FormElm (foption n val check)  . Just $ MFOption nam
 
 fileUpload :: (FormInput view,
       Monad  m) =>
@@ -719,7 +709,7 @@ fileUpload= getParam Nothing "file" Nothing
          -> View view m a
 (<<<) v form= View $ do
   FormElm f mx <- runView form 
-  return $ FormElm [v $ mconcat f] mx
+  return $ FormElm (v  f) mx
 
 
 infixr 5 <<<
@@ -734,13 +724,13 @@ infixr 5 <<<
 -- @ getString "hi" <++ H1 << "hi there"@
 --
 -- It has a infix prority: @infixr 6@ higuer that '<<<' and most other operators
-(<++) :: (Monad m)
+(<++) :: (Monad m, Monoid v)
       => View v m a
       -> v
       -> View v m a
 (<++) form v= View $ do
   FormElm f mx <-  runView  form
-  return $ FormElm ( f ++ [ v]) mx
+  return $ FormElm ( f <> v) mx
 
 infixr 6  ++> , .++>.
 infixr 6 <++ , .<++.
@@ -751,8 +741,10 @@ infixr 6 <++ , .<++.
 -- It has a infix prority: @infixr 6@ higuer that '<<<' and most other operators
 (++>) :: (Monad m,  Monoid view)
        => view -> View view m a -> View view m a
-html ++> digest =  (html `mappend`) <<< digest
-
+html ++> w =  --  (html <>) <<< digest
+ View $ do
+  FormElm f mx <- runView w 
+  return $ FormElm (html  <>  f) mx
 
 
 
@@ -762,7 +754,7 @@ html ++> digest =  (html `mappend`) <<< digest
 infixl 8 <!
 widget <! attribs= View $ do
       FormElm fs  mx <- runView widget
-      return $ FormElm  (head fs `attrs` attribs:tail fs) mx
+      return $ FormElm  (fs `attrs` attribs) mx -- (head fs `attrs` attribs:tail fs) mx
 --      case fs of
 --        [hfs] -> return $ FormElm  [hfs `attrs` attribs] mx
 --        _ -> error $ "operator <! : malformed widget: "++ concatMap (unpack. toByteString) fs
@@ -781,11 +773,11 @@ widget <! attribs= View $ do
 userFormLine :: (FormInput view, Functor m, Monad m)
             => View view m (Maybe (UserStr,PasswdStr), Maybe PasswdStr)
 userFormLine=
-       ((,)  <$> getString (Just "enter user")                  <! [("size","5")]
+        ((,) <$> getString (Just "enter user")                  <! [("size","5")]
              <*> getPassword                                    <! [("size","5")]
          <** submitButton "login")
          <+> (fromStr "  password again" ++> getPassword      <! [("size","5")]
-         <*  submitButton "register")
+         <** submitButton "register")
 
 -- | Example of user\/password form (no validation) to be used with 'userWidget'
 userLogin :: (FormInput view, Functor m, Monad m)
@@ -805,7 +797,7 @@ userLogin=
 noWidget ::  (FormInput view,
      Monad m) =>
      View view m a
-noWidget= View . return $ FormElm  [] Nothing
+noWidget= View . return $ FormElm mempty Nothing
 
 -- | a sinonym of noWidget that can be used in a monadic expression in the View monad does not continue
 stop :: (FormInput view,
@@ -821,11 +813,11 @@ wrender x = (fromStr $ show x) ++> return x
 
 -- | Render raw view formatting. It is useful for displaying information.
 wraw :: Monad m => view -> View view m ()
-wraw x= View . return . FormElm [x] $ Just ()
+wraw x= View . return . FormElm x $ Just ()
 
 -- To display some rendering and return  a no valid value
 notValid :: Monad m => view -> View view m a
-notValid x= View . return $ FormElm [x] Nothing
+notValid x= View . return $ FormElm x Nothing
 
 -- | Wether the user is logged or is anonymous
 isLogged :: MonadState (MFlowState v) m => m Bool
@@ -1165,7 +1157,7 @@ ask w =  do
                       True ->  do
                                frm <- formPrefix  st' forms False 
                                return . header $  reqs <> frm
-                      _    ->  return . header $  reqs <> mconcat  forms
+                      _    ->  return . header $  reqs <> forms
 
              let HttpData ctype c s= toHttpData cont
              liftIO . sendFlush t $ HttpData (ctype ++ mfHttpHeaders st') (mfCookies st' ++ c) s
@@ -1284,13 +1276,14 @@ wform x = View $ do
      st <- get
      form1 <- formPrefix st form True
      put st{needForm=HasForm}
-     return $ FormElm [form1] mr
+     return $ FormElm form1 mr
 
 
 
 
 resetButton :: (FormInput view, Monad m) => String -> View view m ()
-resetButton label= View $ return $ FormElm [finput  "reset" "reset" label False Nothing]   $ Just ()
+resetButton label= View $ return $ FormElm (finput  "reset" "reset" label False Nothing)
+                        $ Just ()
 
 submitButton :: (FormInput view, Monad m) => String -> View view m String
 submitButton label= getParam Nothing "submit" $ Just label
@@ -1333,28 +1326,28 @@ installServerControl id f= do
 --
 -- The @ajaxSend@ invocation must be inside a ajax procedure or else a /No ajax session set/ error will be produced
 ajaxSend
-  :: (Read a,MonadIO m) => View v m ByteString -> View v m a
+  :: (Read a,Monoid v, MonadIO m) => View v m ByteString -> View v m a
 ajaxSend cmd=  View $ do
    AjaxSessionId id <- getSessionData `onNothing` error "no AjaxSessionId set"
    env <- getEnv
    t <- getToken
    case (lookup "ajax" $ env, lookup "val" env) of
-       (Nothing,_) -> return $ FormElm [] Nothing
+       (Nothing,_) -> return $ FormElm mempty Nothing
        (Just id, Just _) -> do
            FormElm __ (Just  str) <- runView  cmd
            liftIO $ sendFlush t  $ HttpData [("Content-Type", "text/plain")][] $ str <>  readEvalLoop t id "''"
            nextMessage
            env <- getEnv
            case (lookup "ajax" $ env,lookup "val" env) of
-               (Nothing,_) -> return $ FormElm [] Nothing
+               (Nothing,_) -> return $ FormElm mempty Nothing
                (Just id, Just v2) -> do
-                    return $ FormElm []  . Just  $ read v2
+                    return $ FormElm mempty  . Just  $ read v2
    where
    readEvalLoop t id v = "doServer('"<> fromString (twfname t)<>"','"<> fromString id<>"',"<>v<>");" :: ByteString
 
 -- | Like @ajaxSend@ but the result is ignored
 ajaxSend_
-  :: MonadIO m => View v m ByteString -> View v m ()
+  :: (MonadIO m, Monoid v) => View v m ByteString -> View v m ()
 ajaxSend_ = ajaxSend
 
 wlabel
@@ -1363,9 +1356,6 @@ wlabel str w = do
    id <- genNewId
    ftag "label" str `attrs` [("for",id)] ++> w <! [("id",id)]
 
-
-     
-    
 
 -- | Creates a link to a the next step within the flow.
 -- A link can be composed with other widget elements.
@@ -1395,7 +1385,7 @@ wlink x v=    View $ do
              False ->  return Nothing                      --  !> ( "NOT MATCHED "++name++" LP= "++show (mfPagePath st))
 
       let path= currentPath st ++ ('/':name)
-      return $ FormElm [flink path v ] r
+      return $ FormElm (flink path v) r
 
 -- Creates an absolute link. While a `wlink` path depend on the page where it is located and
 -- ever points to the code of the page that had it inserted, an absLink point to the first page
@@ -1442,7 +1432,7 @@ absLink x v=    View $ do
 
       path <- liftIO $ cachedByKey (show x) 0 . return $ currentPath st ++ ('/':name)
 
-      return $ FormElm [flink path v ] r  -- !> name
+      return $ FormElm (flink path v) r  -- !> name
 
 
 
@@ -1468,7 +1458,7 @@ returning expr=View $ do
             in (verb ++ "?" ++  name ++ "=" ++ showx)
           toSend= expr string
       r <- getParam1 name env
-      return $ FormElm [toSend] $ valToMaybe r
+      return $ FormElm toSend $ valToMaybe r
 
 
 
@@ -1496,7 +1486,7 @@ firstOf xs= foldl' (<|>) noWidget xs
 manyOf :: (FormInput view, MonadIO m, Functor m)=> [View view m a]  -> View view m [a]
 manyOf xs= whidden () *> (View $ do
       forms <- mapM runView  xs
-      let vs  = concatMap (\(FormElm v _) ->  [mconcat v]) forms
+      let vs  = mconcat $ map (\(FormElm v _) ->   v) forms
           res1= catMaybes $ map (\(FormElm _ r) -> r) forms
       return . FormElm vs $ Just res1)
 
@@ -1506,11 +1496,11 @@ allOf xs= manyOf xs `validate` \rs ->
          then return Nothing
          else return $ Just mempty
 
-(>:>) :: Monad m => View v m a -> View v m [a]  -> View v m [a]
+(>:>) :: (Monad m, Monoid v) => View v m a -> View v m [a]  -> View v m [a]
 (>:>) w ws = View $ do
     FormElm fs mxs <- runView $  ws
     FormElm f1 mx  <- runView w
-    return $ FormElm (f1++ fs)
+    return $ FormElm (f1 <> fs)
          $ case( mx,mxs) of
              (Just x, Just xs) -> Just $ x:xs
              (Nothing, mxs)    -> mxs
@@ -1524,10 +1514,12 @@ allOf xs= manyOf xs `validate` \rs ->
            -> [View view m r']
            -> View view m (Maybe r,Maybe r')
 (|*>) x xs= View $ do
-  FormElm fxs rxs <-  runView $ firstOf  xs
-  FormElm fx rx   <- runView $  x
-
-  return $ FormElm (fx ++ intersperse (mconcat fx) fxs ++ fx)
+  fs <-  mapM runView  xs
+  FormElm fx rx   <- runView  x
+  let (fxs, rxss) = unzip $ map (\(FormElm v r) -> (v,r)) fs
+      rs= filter isJust rxss
+      rxs= if null rs then Nothing else  head rs 
+  return $ FormElm (fx <> mconcat (intersperse  fx fxs) <> fx)
          $ case (rx,rxs) of
             (Nothing, Nothing) -> Nothing
             other -> Just other
