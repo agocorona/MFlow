@@ -1520,7 +1520,7 @@ allOf xs= manyOf xs `validate` \rs ->
 --
 -- it has a infix priority @infixr 5@
 (|*>) :: (MonadIO m, Functor m, FormInput view)
-            => View view m r
+           => View view m r
            -> [View view m r']
            -> View view m (Maybe r,Maybe r')
 (|*>) x xs= View $ do

@@ -560,10 +560,7 @@ rconf= getDBRef keyConfig
 
 instance  Serializable Config where
   serialize = B.pack . show
-  deserialize s = unsafePerformIO $ do
-                     let r = read $! B.unpack s
-                     print r
-                     return r
+  deserialize s = unsafePerformIO $  (return $! read $! B.unpack s)
                    `CE.catch` \(e :: SomeException) ->  return (readOld s)
   setPersist = \_ -> Just filePersist
 

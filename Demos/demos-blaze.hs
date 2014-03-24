@@ -62,7 +62,7 @@ instance Serializable Int where
 
 main= do
    index tfieldKey
-   setAdminUser "pepe" "pepe"
+   setAdminUser adminname  adminname
    userRegister edadmin edadmin
    userRegister "edituser" "edituser"
    syncWrite  $ Asyncronous 120 defaultCheck  1000
@@ -83,40 +83,40 @@ main= do
                             <<< tFieldEd edadmin "intro" "enter intro text")
 
        case r of
-             Wiki      ->    delSessionData (Filename "") >> step  wiki                 
-             CountI    ->     step  (clickn 0)           `showSource`  "IncreaseInt.hs"
-             CountS    ->     step  (clicks "1")         `showSource`  "IncreaseString.hs"
-             Action    ->     step  actions              `showSource`  "Actions.hs"
-             Ajax      ->     step  ajaxsample           `showSource`  "AjaxSample.hs"
-             Select    ->     step  options              `showSource`  "Options.hs"
-             CheckBoxes ->    step  checkBoxes           `showSource`  "CheckBoxes.hs"
-             TextEdit  ->     step  textEdit             `showSource`  "ContentManagement.hs"
-             Grid      ->     step  grid                 `showSource`  "Grid.hs"
-             Autocomp  ->     step  autocomplete1        `showSource`  "AutoComplete.hs"
-             AutocompList ->  step  autocompList         `showSource`  "AutoCompList.hs"
-             ListEdit  ->     step  wlistEd              `showSource`  "ListEdit.hs"
-             Radio     ->     step  radio                `showSource`  "Radio.hs"
-             Login     ->     step  loginSample          `showSource`  "LoginSample.hs"
-             PreventBack ->   step  preventBack          `showSource`  "PreventGoingBack.hs"
-             Multicounter->   step  multicounter         `showSource`  "Multicounter.hs"
-             FViewMonad  ->   step  sumInView            `showSource`  "SumView.hs"
-             Counter     ->   step  counter              `showSource`  "Counter.hs"
-             Combination ->   step  combination          `showSource`  "Combination.hs"
-             WDialog     ->   step  wdialog1             `showSource`  "Dialog.hs"
-             Push        ->   step  pushSample           `showSource`  "PushSample.hs"
-             PushDec     ->   step  pushDecrease         `showSource`  "PushDecrease.hs"
-             Trace       ->   step  traceSample          `showSource`  "TraceSample.hs"
-             RESTNav     ->   step  testREST             `showSource`  "TestREST.hs"
-             Database    ->   step  database              `showSource`  "Database.hs"
+             Wiki      ->    delSessionData (Filename "") >> transientNav  wiki                 
+             CountI    ->     transientNav  (clickn 0)           `showSource`  "IncreaseInt.hs"
+             CountS    ->     transientNav  (clicks "1")         `showSource`  "IncreaseString.hs"
+             Action    ->     transientNav  actions              `showSource`  "Actions.hs"
+             Ajax      ->     transientNav  ajaxsample           `showSource`  "AjaxSample.hs"
+             Select    ->     transientNav  options              `showSource`  "Options.hs"
+             CheckBoxes ->    transientNav  checkBoxes           `showSource`  "CheckBoxes.hs"
+             TextEdit  ->     transientNav  textEdit             `showSource`  "ContentManagement.hs"
+             Grid      ->     transientNav  grid                 `showSource`  "Grid.hs"
+             Autocomp  ->     transientNav  autocomplete1        `showSource`  "AutoComplete.hs"
+             AutocompList ->  transientNav  autocompList         `showSource`  "AutoCompList.hs"
+             ListEdit  ->     transientNav  wlistEd              `showSource`  "ListEdit.hs"
+             Radio     ->     transientNav  radio                `showSource`  "Radio.hs"
+             Login     ->     transientNav  loginSample          `showSource`  "LoginSample.hs"
+             PreventBack ->   transientNav  preventBack          `showSource`  "PreventGoingBack.hs"
+             Multicounter->   transientNav  multicounter         `showSource`  "Multicounter.hs"
+             FViewMonad  ->   transientNav  sumInView            `showSource`  "SumView.hs"
+             Counter     ->   transientNav  counter              `showSource`  "Counter.hs"
+             Combination ->   transientNav  combination          `showSource`  "Combination.hs"
+             WDialog     ->   transientNav  wdialog1             `showSource`  "Dialog.hs"
+             Push        ->   transientNav  pushSample           `showSource`  "PushSample.hs"
+             PushDec     ->   transientNav  pushDecrease         `showSource`  "PushDecrease.hs"
+             Trace       ->   transientNav  traceSample          `showSource`  "TraceSample.hs"
+             RESTNav     ->   transientNav  testREST             `showSource`  "TestREST.hs"
+             Database    ->   transientNav  database              `showSource`  "Database.hs"
              ShopCart    ->   shopCart                   `showSource` "ShopCart.hs"
              MCounter    ->   mcounter                   `showSource` "MCounter.hs"
-             MFlowPersist ->  step mFlowPersistent       `showSource` "MFlowPersistent.hs"
-             RuntimeTemplates -> step runtimeTemplates   `showSource` "RuntimeTemplates.hs"
-             AcidState        -> step (acidState db)     `showSource` "AcidState.hs"
+             MFlowPersist ->  transientNav mFlowPersistent       `showSource` "MFlowPersistent.hs"
+             RuntimeTemplates -> transientNav runtimeTemplates   `showSource` "RuntimeTemplates.hs"
+             AcidState        -> transientNav (acidState db)     `showSource` "AcidState.hs"
              InitialConfig -> initialConfig              `showSource` "InitialConfig.hs"
              SearchCart    -> searchCart                `showSource` "SearchCart.hs"
-             GenerateForm  -> step genForm
-             GenerateFormUndo -> step genFormUndo
-             GenerateFormUndoMsg -> step genFormUndoMsg
+             GenerateForm  -> transientNav genForm
+             GenerateFormUndo -> transientNav genFormUndo
+             GenerateFormUndoMsg -> transientNav genFormUndoMsg
 
 

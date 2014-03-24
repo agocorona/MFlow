@@ -10,14 +10,14 @@ import MFlow.Wai.Blaze.Html.All hiding(page)
 import Menu
 #endif
 
--- |+| add a widget before and after another and return both results.
+
 -- in this case, a link wraps a form field
 
 clickn :: Int -> FlowM Html IO ()
 clickn n= do
    r <- page  $ p << b <<  "increase an Int"
             ++> wlink "menu"  << p <<  "menu"      
-            |+| getInt (Just n)  <* submitButton "submit"
+            <+> getInt (Just n)  <* submitButton "submit"
 
    case r of
     (Just _,_) -> return ()  --  page  $ wlink () << p << "thanks"
