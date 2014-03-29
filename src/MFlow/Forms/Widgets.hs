@@ -65,7 +65,7 @@ import Control.Monad.Identity
 import Control.Workflow(killWF)
 import Unsafe.Coerce
 import Control.Exception
-
+import MFlow.Forms.Cache
 
 
 --jqueryScript= "//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"
@@ -630,7 +630,7 @@ witerate
       View v m a -> View v m a
 witerate  w= do
    name  <- genNewId
-   setSessionData $ IteratedId name
+   setSessionData $ IteratedId name 
    st <- get
    let t= mfkillTime st
    let installAutoEval=
@@ -652,16 +652,17 @@ witerate  w= do
 
     Just sind -> View $ do
          let t= mfToken st
-         modify $ \s -> s{mfRequirements=[]}
-
+         modify $ \s -> s{mfRequirements=[],mfHttpHeaders=[]}
+         resetCachePolicy 
          FormElm _ mr <- runView  w
-
+         setCachePolicy 
          reqs <- return . map ( \(Requirement r) -> unsafeCoerce r) =<< gets mfRequirements
          let js = jsRequirements reqs
+         st' <- get
          liftIO . sendFlush t $ HttpData
-                                (mfHttpHeaders st) 
-                                (mfCookies st) (fromString js)
-         modify $ \st -> st{mfAutorefresh=True,inSync=True}
+                                (mfHttpHeaders st') 
+                                (mfCookies st') (fromString js)
+         put st'{mfAutorefresh=True,inSync=True}
          return $ FormElm mempty mr  
 
    delSessionData $ IteratedId name
@@ -682,6 +683,8 @@ autoEvalLink = "\nfunction autoEvalLink(id,ind){\n\
     \       data: pdata,\n\
     \       success: function (resp) {\n\
     \           eval(resp);\n\
+    \           autoEvalLink(id,ind);\n\
+    \           autoEvalForm(id);\n\
     \       },\n\
     \       error: function (xhr, status, error) {\n\
     \           var msg = $('<div>' + xhr + '</div>');\n\
@@ -729,6 +732,8 @@ autoEvalForm = "\nfunction autoEvalForm(id) {\n\
             \data: 'auto'+id+'=true&'+this.name+'='+this.value+'&'+pdata,\n\
             \success: function (resp) {\n\
                 \eval(resp);\n\
+                \autoEvalLink(id,ind);\n\
+                \autoEvalForm(id);\n\
             \},\n\
             \error: function (xhr, status, error) {\n\
                 \var msg = $('<div>' + xhr + '</div>');\n\

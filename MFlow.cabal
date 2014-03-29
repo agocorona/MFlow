@@ -100,7 +100,7 @@ library
     build-depends: Workflow -any, transformers -any, mtl -any,
                    extensible-exceptions -any,  base >4.0 && <5,
                    bytestring -any, containers -any, RefSerialize -any, TCache -any,
-                   stm >2, old-time -any, vector -any, directory -any,
+                   stm >2, time, old-time -any, vector -any, directory -any,
                    utf8-string -any, wai >=2.0.0, case-insensitive -any,
                    http-types -any, conduit -any, text -any, parsec -any, warp -any,
                    warp-tls -any, random -any, blaze-html -any, blaze-markup -any,
@@ -108,7 +108,8 @@ library
     exposed-modules: MFlow MFlow.Wai.Blaze.Html.All MFlow.Forms
                      MFlow.Forms.Admin MFlow.Cookies MFlow.Wai
                      MFlow.Forms.Blaze.Html MFlow.Forms.Test
-                     MFlow.Forms.Widgets MFlow.Forms.Internals MFlow.Forms.WebApi
+                     MFlow.Forms.Widgets MFlow.Forms.Internals
+                     MFlow.Forms.WebApi MFlow.Forms.Cache
     exposed: True
     buildable: True
     hs-source-dirs: src .

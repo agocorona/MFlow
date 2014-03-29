@@ -386,12 +386,6 @@ wcallback (View x) f = View $ do
 
 
 
-clear :: (FormInput v,Monad m) => View v m ()
-clear = wcallback (return()) (const $ return()) 
-
-
-
-
 
 
 
@@ -419,6 +413,97 @@ changeMonad :: (Monad m, Executable m1)
 changeMonad w= View . StateT $ \s ->
     let (r,s')= execute $ runStateT  ( runView w)    s
     in mfSequence s' `seq` return (r,s')
+
+
+
+----- some combinators ----
+
+-- | Join two widgets in the same page
+-- the resulting widget, when `ask`ed with it, return a 2 tuple of their validation results
+-- if both return Noting, the widget return @Nothing@ (invalid).
+--
+-- it has a low infix priority: @infixr 2@
+--
+--  > r <- ask  widget1 <+>  widget2
+--  > case r of (Just x, Nothing) -> ..
+(<+>) , mix ::  (Monad m, FormInput view)
+      => View view m a
+      -> View view m b
+      -> View view m (Maybe a, Maybe b)
+mix digest1 digest2= View $ do
+  FormElm f1 mx' <- runView  digest1
+  s1 <- get
+  FormElm f2 my' <- runView  digest2
+  s2 <- get
+  (mix, hasform) <- controlForms s1 s2 f1 f2
+  when hasform $ put s2{needForm= HasForm}
+  return $ FormElm mix
+         $ case (mx',my') of
+              (Nothing, Nothing) -> Nothing
+              other              -> Just other
+
+infixr 2 <+>
+
+(<+>)  = mix
+
+
+
+-- | The first elem result (even if it is not validated) is discarded, and the secod is returned
+-- . This contrast with the applicative operator '*>' which fails the whole validation if
+-- the validation of the first elem fails.
+--
+-- The first element is displayed however, as happens in the case of '*>' .
+--
+-- Here @w\'s@ are widgets and @r\'s@ are returned values
+--
+--   @(w1 <* w2)@  will return @Just r1@ only if w1 and w2 are validated
+--
+--   @(w1 <** w2)@ will return @Just r1@ even if w2 is not validated
+--
+--  it has a low infix priority: @infixr 1@
+
+(**>) :: (Functor m, Monad m, FormInput view)
+      => View view m a -> View view m b -> View view m b
+--(**>) form1 form2 = valid form1 *> form2
+(**>) f g = View $ do
+   FormElm form1 k <- runView $ valid f
+   s1 <- get
+   FormElm form2 x <- runView g
+   s2 <- get
+   (mix,hasform) <- controlForms s1 s2 form1 form2
+   when hasform $ put s2{needForm= HasForm}
+   return $ FormElm mix (k *> x)
+
+
+
+valid form= View $ do
+   FormElm form mx <- runView form
+   return $ FormElm form $ Just undefined
+
+infixr 1  **>  ,  <** 
+
+-- | The second elem result (even if it is not validated) is discarded, and the first is returned
+-- . This contrast with the applicative operator '*>' which fails the whole validation if
+-- the validation of the second elem fails.
+-- The second element is displayed however, as in the case of '<*'.
+-- see the `<**` examples
+--
+--  it has a low infix priority: @infixr 1@
+(<**) :: (Functor m, Monad m, FormInput view) =>
+     View view m a -> View view m b -> View view m a
+-- (<**) form1 form2 =  form1 <* valid form2
+(<**) f g = View $ do
+   FormElm form1 k <- runView f
+   s1 <- get
+   FormElm form2 x <- runView $ valid g
+   s2 <- get
+   (mix,hasform) <- controlForms s1 s2 form1 form2
+   when hasform $ put s2{needForm= HasForm}
+   return $ FormElm mix (k <* x)
+
+
+
+-------- Flow control
 
 -- | True if the flow is going back (as a result of the back button pressed in the web browser).
 --  Usually this check is nos necessary unless conditional code make it necessary
@@ -608,6 +693,13 @@ getSessionData =  resp where
  typeResp :: m (Maybe x) -> x
  typeResp= undefined
 
+-- | getSessionData specialized for the View monad. if Nothing, the monadic computation
+-- does not continue.
+getSData :: (Monad m,Typeable a,Monoid v) => View v m a
+getSData= View $ do
+    r <- getSessionData
+    return $ FormElm mempty r
+
 -- | Return the session identifier
 getSessionId :: MonadState (MFlowState v) m => m String
 getSessionId= gets mfToken >>= return . key
@@ -715,7 +807,7 @@ setHttpHeader :: MonadState (MFlowState view) m
           -> SB.ByteString  -- ^ value
           -> m ()
 setHttpHeader n v =
-    modify $ \st -> st{mfHttpHeaders = nubBy (\ x y -> fst x == fst y) $ (n,v):mfHttpHeaders st }
+    modify $ \st -> st{mfHttpHeaders = nubBy (\ x y -> fst x == fst y) $ (n,v):mfHttpHeaders st}
 
 
 -- | Set
@@ -1386,4 +1478,6 @@ getNextId=  do
     True  -> do
       let n = mfSeqCache st
       return $  'c' : (show n)
+
+
 

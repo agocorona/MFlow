@@ -11,6 +11,10 @@ import Control.Exception(SomeException)
 import Control.Monad (when)
 
 -- #define ALONE -- to execute it alone, uncomment this
+
+-- Note:  there are static links in templates in the main menu. unless they
+-- are updated using  witerate/dField, the main menu of this example will not
+-- work when the app run alone since the expected paths are different.
 #ifdef ALONE
 import MFlow.Wai.Blaze.Html.All  hiding(name,select,base)
 main= runNavigation "" $ transientNav runtimeTemplates
@@ -37,15 +41,15 @@ runtimeTemplates= do
      -- runConfiguration is usedd to create some example registers
      liftIO $ runConfiguration "createDataforTemplates" $ do
              ever $ index name  -- index the name field, so I can query  for it later
-                         -- better, should put this sentence in main
+                                -- better, should put this sentence in main
 
-             -- create ['a'..'z'] entries. Only the first time, since step
+             -- create ['a'..'z'] entries. Only the first time
              -- runConfiguration prevent the execution of this again
              once $ atomically $ mapM_ (newDBRef . MyData . return) ['a'..'z']
      process
 
 process= do                     
-     r <- page $ edTemplate "edituser" "menuallnames"
+     r <- page  $  edTemplate "edituser" "menuallnames" 
                 $ wlink NewName   << p << "enter a new name"
               <|> wlink ListNames << p << "List names"
               <|> wlink Exit << p << "Exit to the home page"
@@ -76,12 +80,12 @@ process= do
                   **> wlink "templ" << p << "click here to show the result within a runtime template"
 
               setSessionData $ NextReg 0
-              page $  edTemplate "edituser" "listallnames"
-                    $  iterateResults allnames len
-                  **> wlink "scroll" << p << "click here to present the results as a on-demand-filled scroll list"
+              page $ edTemplate "edituser" "listallnames"
+                   $ iterateResults allnames len
+                 **> wlink "scroll" << p << "click here to present the results as a on-demand-filled scroll list"
 
               setSessionData $ NextReg 0
-              page $ pageFlow "upd" $ appendUpdate (do
+              page $ pageFlow "upd" $ appendUpdate ( do
                           NextReg ind <- getSessionData `onNothing` return (NextReg 0)
                           getData ind     len allnames <++ br
                           getData (ind+1) len allnames <++ br
@@ -101,17 +105,19 @@ process= do
      countRegisters= (getAllNames >>= return . Prelude.length)
 
 
-     iterateResults allnames len = pageFlow "iter" $ witerate $ do
-              NextReg ind <- getSessionData `onNothing` return (NextReg 0)
-              dField (getData  ind    len allnames) <++ br
-              dField (getData (ind+1) len allnames) <++ br
-              dField (getData (ind+2) len allnames) <++ br
-              dField (getData (ind+3) len allnames) <++ br
-              setSessionData . NextReg $ next ind len
-              r <- wlink True  << b << "next" <++ fromStr " "
-                   <|>
-                   wlink False << b << "prev"
-              when (r== False) $ setSessionData . NextReg $  prev ind len
+     iterateResults allnames len = pageFlow "iter" . witerate $ do
+          private
+          maxAge 300
+          NextReg ind <- getSessionData `onNothing` return (NextReg 0)
+          dField (getData  ind    len allnames) <++ br
+          dField (getData (ind+1) len allnames) <++ br
+          dField (getData (ind+2) len allnames) <++ br
+          dField (getData (ind+3) len allnames) <++ br
+          setSessionData . NextReg $ next ind len
+          r <- dField(wlink (next ind len)  << b << "next" <++ fromStr " ")
+               <|>
+               dField(wlink (prev ind len) << b << "prev")
+          setSessionData . NextReg $ r
 
      getData i len all=  wraw . fromStr $ if i >= len || i < 0 then "" else all !! i
      next i len = case i > len  of  True -> 0 ; _ -> i + 4

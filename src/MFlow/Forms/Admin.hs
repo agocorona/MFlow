@@ -21,7 +21,7 @@ import Data.RefSerialize hiding ((<|>))
 import Data.Typeable
 import Data.Monoid
 import Data.Maybe
-import Data.Map as M (keys)
+import Data.Map as M (keys, toList)
 import System.Exit
 import Control.Exception as E
 import Control.Concurrent
@@ -70,8 +70,10 @@ adminLoop1= do
 -- | execute the process and wait for its finalization.
 --  then it synchronizes the cache
 wait f= do
+    putChar '\n'
     putStrLn "Using configuration: "
-    print config
+    mapM_ putStrLn [k ++"= "++ show v | (k,v) <- M.toList config]
+    putChar '\n'
     mv <- newEmptyMVar
     forkIO (f1 >> putMVar mv True)
     putStrLn "wait: ready"

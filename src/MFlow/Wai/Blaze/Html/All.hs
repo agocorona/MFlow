@@ -24,6 +24,7 @@ module MFlow.Wai.Blaze.Html.All (
 ,module Text.Blaze.Html5.Attributes
 ,module Control.Monad.IO.Class
 ,module MFlow.Forms.WebApi
+,module MFlow.Forms.Cache
 ,runNavigation
 ,runSecureNavigation
 ) where
@@ -35,6 +36,7 @@ import MFlow.Forms.Widgets
 import MFlow.Forms.Admin
 import MFlow.Forms.Blaze.Html
 import MFlow.Forms.WebApi
+import MFlow.Forms.Cache
 import Text.Blaze.Html5 hiding (map)
 import Text.Blaze.Html5.Attributes  hiding (label,span,style,cite,title,summary,step,form)
 import Network.Wai

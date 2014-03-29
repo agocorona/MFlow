@@ -73,7 +73,6 @@ wlogin1 =  do
          then return username
          else do
           name <- getString Nothing <! hint "username" <++ br
-          clear
           pass <- getPassword <! hint "password" <** submitButton "login" <++ br
           val  <- userValidate (name,pass)
           case val of

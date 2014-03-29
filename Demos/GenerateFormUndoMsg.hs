@@ -168,11 +168,11 @@ nrlink x v= wlink x v <! noAutoRefresh
 
 chooseWidget=  pageFlow "" $ autoRefresh $
        (p $ a ! At.class_ "_noAutoRefresh" ! At.href "/" $ "home")
-       ++> (p <<< absLink ("" ::String) "reset" <! noAutoRefresh)
-       **>(p <<< do
+       ++>(p <<< absLink ("" ::String) "reset" <! noAutoRefresh)
+       **> p <<< do
               wlink ("text":: String)  "text field"
               ul <<<(li <<< nrlink Intv "returning Int"
-                 <|> li <<< nrlink Stringv  "returning string"))
+                 <|> li <<< nrlink Stringv  "returning string")
 
        <|> p <<< do nrlink TextArea "text area"
 

@@ -222,10 +222,9 @@ getString,getInt,getInteger, getTextBox
 ,getMultilineText,getBool,getSelect, setOption,setSelectedOption, getPassword,
 getRadio, setRadio, setRadioActive, wlabel, getCheckBoxes, genCheckBoxes, setCheckBox,
 submitButton,resetButton, whidden, wlink, absLink, getKeyValueParam,
-getRestParam, returning, wform, firstOf, manyOf, allOf, wraw, wrender, notValid,
-fileUpload
+getRestParam, returning, wform, firstOf, manyOf, allOf, wraw, wrender, notValid
 -- * FormLet modifiers
-,validate, noWidget, stop, waction, wcallback, clear, wmodify,
+,validate, noWidget, stop, waction, wcallback, wmodify,
 
 -- * Caching widgets
 cachedWidget, wcached, wfreeze,
@@ -233,19 +232,19 @@ cachedWidget, wcached, wfreeze,
 -- * Widget combinators
 (<+>),(|*>),(|+|), (**>),(<**),(<|>),(<*),(<$>),(<*>),(>:>)
 
--- * Normalized (convert to ByteString) widget combinators
--- | These dot operators are indentical to the non dot operators, with the addition of the conversion of the arguments to lazy byteStrings
---
--- The purpose is to combine heterogeneous formats into byteString-formatted widgets that
--- can be cached with `cachedWidget`
-,(.<+>.), (.|*>.), (.|+|.), (.**>.),(.<**.), (.<|>.),
+---- * Normalized (convert to ByteString) widget combinators
+---- | These dot operators are indentical to the non dot operators, with the addition of the conversion of the arguments to lazy byteStrings
+----
+---- The purpose is to combine heterogeneous formats into byteString-formatted widgets that
+---- can be cached with `cachedWidget`
+--,(.<+>.), (.|*>.), (.|+|.), (.**>.),(.<**.), (.<|>.),
 
 -- * Formatting combinators
-(<<<),(++>),(<++),(<!),
+,(<<<),(++>),(<++),(<!)
 
--- * Normalized (convert to ByteString) formatting combinators
--- | Some combinators that convert the formatting of their arguments to lazy byteString
-(.<<.),(.<++.),(.++>.)
+---- * Normalized (convert to ByteString) formatting combinators
+---- | Some combinators that convert the formatting of their arguments to lazy byteString
+----(.<<.),(.<++.),(.++>.)
 
 -- * ByteString tags
 ,btag,bhtml,bbody
@@ -266,6 +265,7 @@ cachedWidget, wcached, wfreeze,
 ,getHeader
 ,setSessionData
 ,getSessionData
+,getSData
 ,delSessionData
 ,setTimeouts
 
@@ -294,7 +294,7 @@ cachedWidget, wcached, wfreeze,
 )
 where
 
-import Data.RefSerialize hiding ((<|>))
+import Data.RefSerialize hiding ((<|>),empty)
 import Data.TCache
 import Data.TCache.Memoization
 import MFlow
@@ -323,7 +323,7 @@ import qualified Data.Map as M
 import System.IO.Unsafe
 import Data.Char(isNumber,toLower)
 import Network.HTTP.Types.Header
-
+import MFlow.Forms.Cache
 
 -- | Validates a form or widget result against a validating procedure
 --
@@ -676,10 +676,10 @@ setOption1 nam  val check= View $ do
 
     return . FormElm (foption n val check)  . Just $ MFOption nam
 
-fileUpload :: (FormInput view,
-      Monad  m) =>
-      View view m T.Text
-fileUpload= getParam Nothing "file" Nothing
+--fileUpload :: (FormInput view,
+--      Monad  m) =>
+--      View view m T.Text
+--fileUpload= getParam Nothing "file" Nothing
 
 
 -- | Enclose Widgets within some formating.
@@ -732,8 +732,8 @@ infixr 5 <<<
   FormElm f mx <-  runView  form
   return $ FormElm ( f <> v) mx
 
-infixr 6  ++> , .++>.
-infixr 6 <++ , .<++.
+infixr 6  ++> 
+infixr 6 <++ 
 -- | Prepend formatting code to a widget
 --
 -- @bold << "enter name" ++> getString Nothing @
@@ -795,15 +795,15 @@ userLogin=
 --
 -- It returns a non valid value.
 noWidget ::  (FormInput view,
-     Monad m) =>
+     Monad m, Functor m) =>
      View view m a
-noWidget= View . return $ FormElm mempty Nothing
+noWidget= Control.Applicative.empty
 
 -- | a sinonym of noWidget that can be used in a monadic expression in the View monad does not continue
 stop :: (FormInput view,
-     Monad m) =>
+     Monad m, Functor m) =>
      View view m a
-stop= noWidget
+stop= Control.Applicative.empty
 
 -- | Render a Show-able  value and return it
 wrender
@@ -829,7 +829,7 @@ isLogged= do
 --
 -- If the process is backtraking, it does not validate,
 -- in order to continue the backtracking
-returnIfForward :: (Monad m, FormInput view) => b -> View view m b
+returnIfForward :: (Monad m, FormInput view,Functor m) => b -> View view m b
 returnIfForward x = do
      back <- goingBack
      if back then noWidget else return x
@@ -981,89 +981,7 @@ userValidate (u,p) = liftIO $  do
    Auth _ val <- getAuthMethod
    val u p >>= return .  fmap  fromStr
 
--- | Join two widgets in the same page
--- the resulting widget, when `ask`ed with it, return a 2 tuple of their validation results
--- if both return Noting, the widget return @Nothing@ (invalid).
---
--- it has a low infix priority: @infixr 2@
---
---  > r <- ask  widget1 <+>  widget2
---  > case r of (Just x, Nothing) -> ..
-(<+>) , mix ::  (Monad m, FormInput view)
-      => View view m a
-      -> View view m b
-      -> View view m (Maybe a, Maybe b)
-mix digest1 digest2= View $ do
-  FormElm f1 mx' <- runView  digest1
-  s1 <- get
-  FormElm f2 my' <- runView  digest2
-  s2 <- get
-  (mix, hasform) <- controlForms s1 s2 f1 f2
-  when hasform $ put s2{needForm= HasForm}
-  return $ FormElm mix
-         $ case (mx',my') of
-              (Nothing, Nothing) -> Nothing
-              other              -> Just other
 
-infixr 2 <+>, .<+>.
-
-(<+>)  = mix
-
-
-
--- | The first elem result (even if it is not validated) is discarded, and the secod is returned
--- . This contrast with the applicative operator '*>' which fails the whole validation if
--- the validation of the first elem fails.
---
--- The first element is displayed however, as happens in the case of '*>' .
---
--- Here @w\'s@ are widgets and @r\'s@ are returned values
---
---   @(w1 <* w2)@  will return @Just r1@ only if w1 and w2 are validated
---
---   @(w1 <** w2)@ will return @Just r1@ even if w2 is not validated
---
---  it has a low infix priority: @infixr 1@
-
-(**>) :: (Functor m, Monad m, FormInput view)
-      => View view m a -> View view m b -> View view m b
---(**>) form1 form2 = valid form1 *> form2
-(**>) f g = View $ do
-   FormElm form1 k <- runView $ valid f
-   s1 <- get
-   FormElm form2 x <- runView g
-   s2 <- get
-   (mix,hasform) <- controlForms s1 s2 form1 form2
-   when hasform $ put s2{needForm= HasForm}
-   return $ FormElm mix (k *> x)
-
-
-infixr 1  **> , .**>. ,  <** , .<**.
-
--- | The second elem result (even if it is not validated) is discarded, and the first is returned
--- . This contrast with the applicative operator '*>' which fails the whole validation if
--- the validation of the second elem fails.
--- The second element is displayed however, as in the case of '<*'.
--- see the `<**` examples
---
---  it has a low infix priority: @infixr 1@
-(<**) :: (Functor m, Monad m, FormInput view) =>
-     View view m a -> View view m b -> View view m a
--- (<**) form1 form2 =  form1 <* valid form2
-(<**) f g = View $ do
-   FormElm form1 k <- runView f
-   s1 <- get
-   FormElm form2 x <- runView $ valid g
-   s2 <- get
-   (mix,hasform) <- controlForms s1 s2 form1 form2
-   when hasform $ put s2{needForm= HasForm}
-   return $ FormElm mix (k <* x)
-
-
-
-valid form= View $ do
-   FormElm form mx <- runView form
-   return $ FormElm form $ Just undefined
 
 -- | for compatibility with the same procedure in 'MFLow.Forms.Test.askt'.
 -- This is the non testing version
@@ -1097,9 +1015,11 @@ askt v w =  ask w
 ask :: (FormInput view) =>
        View view IO a -> FlowM view IO a
 ask w =  do
+ resetCachePolicy
  st1 <- get >>= \s -> return s{mfSequence=
                                    let seq= mfSequence s in
-                                   if seq ==inRecovery then 0 else seq} 
+                                   if seq ==inRecovery then 0 else seq
+                              ,mfHttpHeaders =[] } 
  if not . null $ mfTrace st1 then fail "" else do
   -- AJAX
   let env= mfEnv st1
@@ -1127,9 +1047,8 @@ ask w =  do
    
      let st= st1{needForm= NoElems, inSync= False, mfRequirements= [], linkMatched= False} 
      put st
-
      FormElm forms mx <- FlowM . lift  $ runView  w
-
+     setCachePolicy
      st' <- get
      if notSyncInAction st' then put st'{notSyncInAction=False}>> ask w
 
@@ -1151,6 +1070,7 @@ ask w =  do
                      ask w                                -- !> "EN AUTOREFRESH"
           else do
              reqs <-  FlowM $ lift installAllRequirements    --  !> "REPEAT"
+             
              let header= mfHeader st'
                  t= mfToken st'
              cont <- case (needForm1 st') of
@@ -1526,7 +1446,7 @@ allOf xs= manyOf xs `validate` \rs ->
 
 
 
-infixr 5 |*>, .|*>.
+infixr 5 |*>
 
 -- | Put a widget before and after other. Useful for navigation links in a page that appears at toAdd
 -- and at the bottom of a page.
@@ -1538,7 +1458,7 @@ infixr 5 |*>, .|*>.
       -> View view m (Maybe r, Maybe r')
 (|+|) w w'=  w |*> [w']
 
-infixr 1 |+|, .|+|.
+infixr 1 |+|
 
 
 -- | Flatten a binary tree of tuples of Maybe results produced by the \<+> operator
@@ -1588,55 +1508,55 @@ instance Flatten (Tuple6 a b c d e f) (Maybe a, Maybe b,Maybe c,Maybe d,Maybe e,
   doflat (Just(mx,mc))= let(ma,mb,md,me,mf)= doflat mx in (ma,mb,md,me,mf,mc)
   doflat Nothing= (Nothing,Nothing,Nothing,Nothing,Nothing,Nothing)
 
-infixr 7 .<<.
--- | > (.<<.) w x = w $ toByteString x
-(.<<.) :: (FormInput view) => (ByteString -> ByteString) -> view -> ByteString
-(.<<.) w x = w ( toByteString x)
-
--- | > (.<+>.) x y = normalize x <+> normalize y
-(.<+>.)
-  :: (Monad m, FormInput v, FormInput v1) =>
-     View v m a -> View v1 m b -> View ByteString m (Maybe a, Maybe b)
-(.<+>.) x y = normalize x <+> normalize y
-
--- | > (.|*>.) x y = normalize x |*> map normalize y
-(.|*>.)
-  :: (Functor m, MonadIO m, FormInput v, FormInput v1) =>
-     View v m r
-     -> [View v1 m r'] -> View ByteString m (Maybe r, Maybe r')
-(.|*>.) x y = normalize x |*> map normalize y
-
--- | > (.|+|.) x y = normalize x |+| normalize y
-(.|+|.)
-  :: (Functor m, MonadIO m, FormInput v, FormInput v1) =>
-     View v m r -> View v1 m r' -> View ByteString m (Maybe r, Maybe r')
-(.|+|.) x y = normalize x |+| normalize y
-
--- | > (.**>.) x y = normalize x **> normalize y
-(.**>.)
-  :: (Monad m, Functor m, FormInput v, FormInput v1) =>
-     View v m a -> View v1 m b -> View ByteString m b
-(.**>.) x y = normalize x **> normalize y
-
--- | > (.<**.) x y = normalize x <** normalize y
-(.<**.)
-  :: (Monad m, Functor m, FormInput v, FormInput v1) =>
-     View v m a -> View v1 m b -> View ByteString m a
-(.<**.) x y = normalize x <** normalize y
-
--- | > (.<|>.) x y= normalize x <|> normalize y
-(.<|>.)
-  :: (Monad m, Functor m, FormInput v, FormInput v1) =>
-     View v m a -> View v1 m a -> View ByteString m a
-(.<|>.) x y= normalize x <|> normalize y
-
--- | > (.<++.) x v= normalize x <++ toByteString v
-(.<++.) :: (Monad m, FormInput v, FormInput v') => View v m a -> v' -> View ByteString m a
-(.<++.) x v= normalize x <++ toByteString v
-
--- | > (.++>.) v x= toByteString v ++> normalize x
-(.++>.) :: (Monad m, FormInput v, FormInput v') => v -> View v' m a -> View ByteString m a
-(.++>.) v x= toByteString v ++> normalize x
+--infixr 7 .<<.
+---- | > (.<<.) w x = w $ toByteString x
+--(.<<.) :: (FormInput view) => (ByteString -> ByteString) -> view -> ByteString
+--(.<<.) w x = w ( toByteString x)
+--
+---- | > (.<+>.) x y = normalize x <+> normalize y
+--(.<+>.)
+--  :: (Monad m, FormInput v, FormInput v1) =>
+--     View v m a -> View v1 m b -> View ByteString m (Maybe a, Maybe b)
+--(.<+>.) x y = normalize x <+> normalize y
+--
+---- | > (.|*>.) x y = normalize x |*> map normalize y
+--(.|*>.)
+--  :: (Functor m, MonadIO m, FormInput v, FormInput v1) =>
+--     View v m r
+--     -> [View v1 m r'] -> View ByteString m (Maybe r, Maybe r')
+--(.|*>.) x y = normalize x |*> map normalize y
+--
+---- | > (.|+|.) x y = normalize x |+| normalize y
+--(.|+|.)
+--  :: (Functor m, MonadIO m, FormInput v, FormInput v1) =>
+--     View v m r -> View v1 m r' -> View ByteString m (Maybe r, Maybe r')
+--(.|+|.) x y = normalize x |+| normalize y
+--
+---- | > (.**>.) x y = normalize x **> normalize y
+--(.**>.)
+--  :: (Monad m, Functor m, FormInput v, FormInput v1) =>
+--     View v m a -> View v1 m b -> View ByteString m b
+--(.**>.) x y = normalize x **> normalize y
+--
+---- | > (.<**.) x y = normalize x <** normalize y
+--(.<**.)
+--  :: (Monad m, Functor m, FormInput v, FormInput v1) =>
+--     View v m a -> View v1 m b -> View ByteString m a
+--(.<**.) x y = normalize x <** normalize y
+--
+---- | > (.<|>.) x y= normalize x <|> normalize y
+--(.<|>.)
+--  :: (Monad m, Functor m, FormInput v, FormInput v1) =>
+--     View v m a -> View v1 m a -> View ByteString m a
+--(.<|>.) x y= normalize x <|> normalize y
+--
+---- | > (.<++.) x v= normalize x <++ toByteString v
+--(.<++.) :: (Monad m, FormInput v, FormInput v') => View v m a -> v' -> View ByteString m a
+--(.<++.) x v= normalize x <++ toByteString v
+--
+---- | > (.++>.) v x= toByteString v ++> normalize x
+--(.++>.) :: (Monad m, FormInput v, FormInput v') => v -> View v' m a -> View ByteString m a
+--(.++>.) v x= toByteString v ++> normalize x
 
 
 instance FormInput  ByteString  where

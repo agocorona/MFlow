@@ -39,6 +39,8 @@ edadmin= "editor"
 
 -- present the widget w decorated with the main menu on the left and the source code at the bottom
 ask w= MF.ask $ do
+    public
+    maxAge 300
     filename <- getSessionData
     tFieldEd edadmin "head" "set Header"
        **> (El.div ! At.style "float:right" <<<   wlogin )
@@ -349,6 +351,7 @@ widgetAndSource (Just(Filename filename)) w = do
                   source
                   hr
                   disquscript
+                     
 
       where
       host = "mflowdemo.herokuapp.com/"
