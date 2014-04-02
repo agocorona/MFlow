@@ -1,4 +1,4 @@
------------------------------------------------------------------------------
+----------------------------------------------------------------------------
 --
 -- Module      :  MFlow.Wai.Blaze.Html.All
 -- Copyright   :
@@ -40,7 +40,7 @@ import MFlow.Forms.Cache
 import Text.Blaze.Html5 hiding (map)
 import Text.Blaze.Html5.Attributes  hiding (label,span,style,cite,title,summary,step,form)
 import Network.Wai
-import Network.Wai.Handler.Warp(run,defaultSettings,Settings,settingsPort)
+import Network.Wai.Handler.Warp(run,defaultSettings,Settings,setPort)
 import Data.TCache
 import Text.Blaze.Internal(text)
 
@@ -83,7 +83,7 @@ runNavigation n f= do
     --runSettings defaultSettings{settingsTimeout = 20, settingsPort= porti} waiMessageFlow
 
 -- | Exactly the same as runNavigation, but with TLS added.
--- | Expects certificate.pem and key.pem in project directory.
+-- Expects certificate.pem and key.pem in project directory.
 
 runSecureNavigation = runSecureNavigation' TLS.defaultTlsSettings defaultSettings
 
@@ -92,4 +92,5 @@ runSecureNavigation' t s n f = do
     unless (null n) $ setNoScript n
     addMessageFlows[(n, runFlow f)]
     porti <- getPort
-    wait $ TLS.runTLS t s{settingsPort = porti} waiMessageFlow
+    let s' = setPort porti s
+    wait $ TLS.runTLS t s' waiMessageFlow
