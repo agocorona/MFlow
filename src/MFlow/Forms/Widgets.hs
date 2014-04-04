@@ -106,8 +106,8 @@ maybeLogout= do
       else noWidget
 
 
-data Medit view m a = Medit (M.Map B.ByteString [(String,View view m a)])
-instance (Typeable view, Typeable a) => Typeable (Medit view m a) where
+data Medit view m a = Medit (M.Map B.ByteString [(String,View view m a)]) deriving(Typeable)
+{-instance (Typeable view, Typeable a) => Typeable (Medit view m a) where
   typeOf= \v -> mkTyConApp (mkTyCon3 "MFlow" "MFlow.Forms.Widgets" "Medit" )
                 [typeOf (tview v)
                 ,typeOf (ta v)]
@@ -118,7 +118,7 @@ instance (Typeable view, Typeable a) => Typeable (Medit view m a) where
       tm= undefined
       ta :: Medit v m a -> a
       ta= undefined
-
+-}
 -- | If not logged, it present a page flow which askm  for the user name, then the password if not logged
 --
 -- If logged, it present the user name and a link to logout
@@ -156,7 +156,7 @@ getEdited1 id= do
 
 -- | Return the list of edited widgets (added by the active widgets) for a given identifier
 getEdited
-  :: (Typeable v, Typeable a, MonadState (MFlowState view) m) =>
+  :: (Typeable v, Typeable a, Typeable m1, MonadState (MFlowState view) m) =>
      B.ByteString -> m [View v m1 a]
 getEdited id= do
   r <- getEdited1 id
@@ -165,7 +165,7 @@ getEdited id= do
 
 -- | Deletes the list of edited widgets for a certain identifier and with the type of the witness widget parameter
 delEdited
-  :: (Typeable v, Typeable a, MonadIO m,
+  :: (Typeable v, Typeable a, MonadIO m, Typeable m1,
       MonadState (MFlowState view) m)
      => B.ByteString           -- ^ identifier
      -> [View v m1 a] -> m ()  -- ^ withess
@@ -193,7 +193,7 @@ addEdited id w= do
     setEdited id (w:ws)
 
 
-modifyWidget :: (MonadIO m,Executable m,Typeable a,FormInput v)
+modifyWidget :: (MonadIO m,Executable m,Typeable a,FormInput v, Typeable Identity, Typeable m)
            => B.ByteString -> B.ByteString -> View v Identity a -> View v m B.ByteString
 modifyWidget selector modifier  w = View $ do
      ws <- getEdited selector
@@ -232,7 +232,7 @@ modifyWidget selector modifier  w = View $ do
 -- >    return  r
 
 prependWidget
-  :: (Typeable a, MonadIO m, Executable m, FormInput v)
+  :: (Typeable a, MonadIO m, Executable m, FormInput v, Typeable Identity, Typeable m)
   => B.ByteString           -- ^ jquery selector
   -> View v Identity a      -- ^ widget to prepend
   -> View v m B.ByteString  -- ^ string returned with the jquery string to be executed in the browser
@@ -240,13 +240,13 @@ prependWidget sel w= modifyWidget sel "prepend" w
 
 -- | Like 'prependWidget' but append the widget instead of prepend.
 appendWidget
-  :: (Typeable a, MonadIO m, Executable m, FormInput v) =>
+  :: (Typeable a, MonadIO m, Executable m, FormInput v, Typeable Identity, Typeable m) =>
      B.ByteString -> View v Identity a -> View v m B.ByteString
 appendWidget sel w= modifyWidget sel "append" w
 
 -- | L  ike 'prependWidget' but set the entire content of the selector instead of prepending an element
 setWidget
-  :: (Typeable a, MonadIO m, Executable m, FormInput v) =>
+  :: (Typeable a, MonadIO m, Executable m, FormInput v, Typeable Identity, Typeable m) =>
      B.ByteString -> View v Identity a -> View v m B.ByteString
 setWidget sel w= modifyWidget sel "html" w
 
@@ -279,7 +279,7 @@ setWidget sel w= modifyWidget sel "html" w
 
 wEditList :: (Typeable a,Read a
              ,FormInput view
-             ,Functor m,MonadIO m, Executable m)
+             ,Functor m,MonadIO m, Executable m, Typeable m, Typeable Identity)
           => (view ->view)     -- ^ The holder tag
           -> (Maybe String -> View view Identity a) -- ^ the contained widget, initialized  by a string
           -> [String]          -- ^ The initial list of values.
@@ -373,7 +373,7 @@ wautocomplete mv autocomplete  = do
 -- >               ++> whidden( fromJust x)
 wautocompleteEdit
     :: (Typeable a, MonadIO m,Functor m, Executable m
-     , FormInput v)
+     , FormInput v, Typeable m, Typeable Identity)
     => String                                 -- ^ the initial text of the box
     -> (String -> IO [String])                -- ^ the autocompletion procedure: receives a prefix, return a list of options.
     -> (Maybe String  -> View v Identity a)   -- ^ the widget to add, initialized with the string entered in the box
@@ -426,7 +426,7 @@ wautocompleteEdit phold autocomplete  elem values= do
 -- | A specialization of 'wutocompleteEdit' which make appear each chosen option with
 -- a checkbox that deletes the element when uncheched. The result, when submitted, is the list of selected elements.
 wautocompleteList
-  :: (Functor m, MonadIO m, Executable m, FormInput v) =>
+  :: (Functor m, MonadIO m, Executable m, FormInput v, Typeable m, Typeable Identity) =>
      String -> (String -> IO [String]) -> [String] -> View v m [String]
 wautocompleteList phold serverproc values=
  wautocompleteEdit phold serverproc  wrender1 values
