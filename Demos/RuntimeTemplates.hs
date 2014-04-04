@@ -17,11 +17,14 @@ import Control.Monad (when)
 -- work when the app run alone since the expected paths are different.
 #ifdef ALONE
 import MFlow.Wai.Blaze.Html.All  hiding(name,select,base)
+import Debug.Trace
+(!>) = flip trace
 main= runNavigation "" $ transientNav runtimeTemplates
 #else
 import MFlow.Wai.Blaze.Html.All hiding(name,select,base, page)
 import Menu
 #endif
+
 
 
 data  MyData= MyData{name :: String} deriving (Typeable,Read, Show)  
@@ -48,19 +51,21 @@ runtimeTemplates= do
              once $ atomically $ mapM_ (newDBRef . MyData . return) ['a'..'z']
      process
 
-process= do                     
-     r <- page  $  edTemplate "edituser" "menuallnames" 
+process= do
+     setSessionData $ NextReg 0
+     liftIO $ print "here"
+     r <- page  -- $  edTemplate "edituser" "menuallnames" 
                 $ wlink NewName   << p << "enter a new name"
               <|> wlink ListNames << p << "List names"
-              <|> wlink Exit << p << "Exit to the home page"
+              <|> wlink Exit      << p << "Exit to the home page"
 
      case r of
          Exit -> return()
          NewName -> do
               page  $ edTemplate "edituser" "enterallnames"
-                     $ pageFlow "enter" $ witerate (
+                    $ pageFlow "enter" $ witerate (
                             do  name <- dField (getString Nothing `validate` jsval)
-                                      <** submitButton "ok" <++ br
+                                        <** submitButton "ok" <++ br
                                 -- store the register in the cache
                                 -- Later will be written by the default persistence automatically
                                 liftIO . atomically . newDBRef $ MyData name   
@@ -75,9 +80,8 @@ process= do
 
               let len= Prelude.length allnames
 
-              setSessionData $ NextReg 0
-              page $  iterateResults allnames len
-                  **> wlink "templ" << p << "click here to show the result within a runtime template"
+              page $ iterateResults allnames len
+                 **> wlink "templ" << p << "click here to show the result within a runtime template"
 
               setSessionData $ NextReg 0
               page $ edTemplate "edituser" "listallnames"
@@ -96,8 +100,7 @@ process= do
 
                   **> wlink () << p << "click here to go to the menu"
 
-     if r == Exit then return()  else process
-
+     if r == Exit then return() else process
 
      where
      getAllNames= liftIO . atomically $ select name $ name .>.  ""
@@ -105,19 +108,19 @@ process= do
      countRegisters= (getAllNames >>= return . Prelude.length)
 
 
-     iterateResults allnames len = pageFlow "iter" . witerate $ do
-          private
-          maxAge 300
+     iterateResults allnames len =  do
+          noCache -- maxAge 300
           NextReg ind <- getSessionData `onNothing` return (NextReg 0)
-          dField (getData  ind    len allnames) <++ br
-          dField (getData (ind+1) len allnames) <++ br
-          dField (getData (ind+2) len allnames) <++ br
-          dField (getData (ind+3) len allnames) <++ br
+          liftIO $ print ind
+          (getData  ind    len allnames) <++ br
+          (getData (ind+1) len allnames) <++ br
+          (getData (ind+2) len allnames) <++ br
+          (getData (ind+3) len allnames) <++ br
           setSessionData . NextReg $ next ind len
-          r <- dField(wlink (next ind len)  << b << "next" <++ fromStr " ")
+          (wlink (next ind len) << b << "next") <++ fromStr " "
                <|>
                dField(wlink (prev ind len) << b << "prev")
-          setSessionData . NextReg $ r
+
 
      getData i len all=  wraw . fromStr $ if i >= len || i < 0 then "" else all !! i
      next i len = case i > len  of  True -> 0 ; _ -> i + 4

@@ -330,7 +330,7 @@ instance (FormInput view,Functor m, Monad m) => Alternative (View view m) where
                          _          -> path
                    if hasform then put s2{needForm= HasForm,mfPagePath= path3}
                               else put s2{mfPagePath=path3}
-                   return $ FormElm mix (k <|> x)
+                   return $ FormElm mix (k <|> x) 
 
 
 instance  (FormInput view, Monad m) => Monad (View view m) where

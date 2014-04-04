@@ -69,25 +69,25 @@ data Options= Wiki | CountI | CountS | Radio
             | Database |  MFlowPersist   | AcidState
             | DatabaseSamples |PushSamples | ErrorTraces | Flows
             | BasicWidgets | MonadicWidgets | DynamicWidgets | LoginLogout
-            | Templates | RuntimeTemplates | LoginWidget
+            | Templates | RuntimeTemplates | LoginWidget | CacheDataSet
             | ComplexThings | GenerateForm | GenerateFormUndo | GenerateFormUndoMsg
             deriving (Bounded, Enum,Read, Show,Typeable)
 
 
-
+auto w= autoRefresh $ maxAge 300 >> w 
 
 mainMenu :: View Html IO Options
-mainMenu=  pageFlow "" $
+mainMenu=  -- pageFlow "" $
   ul<<<(li << a ! href "/" << b "HOME"
    ++> tFieldEd "editor" "othermenu"  "Other menu options"
    **> (li <<<  (absLink Wiki << b "Wiki") )
    <|> li << (b "About this menu" <> article cascade <> article menuarticle)
    ++> hr
-   ++> ((autoRefresh $ li <<< do
+   ++> ((auto $ li <<< do
           absLink BasicWidgets << b "Basic Widgets"
           ul <<<        
            (hr
-           ++>(li <<< (absLink CountI << b "Increase an Int")  <! noAutoRefresh
+           ++>(li <<< (absLink CountI << b "Increase an Int") --  <! noAutoRefresh
                        <++ b " A loop that increases the Int value of a text box"
                                    
            <|> li <<< (absLink CountS << b "Increase a String") <! noAutoRefresh
@@ -101,7 +101,7 @@ mainMenu=  pageFlow "" $
            <|> li <<< (absLink Radio << b "Radio buttons") <! noAutoRefresh
            <++ hr)))
 
-    <|> (autoRefresh $ li <<<   do
+    <|> (auto $ li <<<   do
           absLink DynamicWidgets << b "Dynamic Widgets"
              <++ " Widgets with Ajax and containers of other widgets"
           ul <<<
@@ -130,7 +130,7 @@ mainMenu=  pageFlow "" $
                  <> article gridl
            <> hr)))
 
-    <|> (autoRefresh $ li <<<   do
+    <|> (auto $ li <<<   do
           absLink MonadicWidgets << b  "Monadic widgets, actions and callbacks"
              <++ " autoRefresh, page flows, dialogs etc"
           ul <<<                   
@@ -159,7 +159,7 @@ mainMenu=  pageFlow "" $
                  <++ " A modal Dialog box with a form within a page flow"
             <> hr)))
 
-   <|> (autoRefresh $ li <<< do
+   <|> (auto $ li <<< do
           absLink DatabaseSamples << b  "Database examples"
              <++ " with different backends"
           ul <<<
@@ -185,7 +185,7 @@ mainMenu=  pageFlow "" $
                         a ! href "http://hackage.haskell.org/package/acid-state" $ "Acid State"
                         hr)))
 
-   <|> (autoRefresh $ li <<<   do
+   <|> (auto $ li <<<   do
           absLink PushSamples << b  "Push Samples"
              <++ " using long polling"
           ul <<<
@@ -200,7 +200,7 @@ mainMenu=  pageFlow "" $
                      <> article pushdec
                      <> hr)))
 
-   <|> (autoRefresh $ li <<<   do
+   <|> (auto $ li <<<   do
           absLink ErrorTraces << b  "Error Traces"
           ul <<<
             (hr
@@ -209,7 +209,7 @@ mainMenu=  pageFlow "" $
                  <> article errorTrace
                  <> hr)))
                  
-   <|> (autoRefresh $ li <<<   do
+   <|> (auto $ li <<<   do
           absLink Flows << b  "Different kinds of flows"
           ul <<< 
            (hr
@@ -244,7 +244,7 @@ mainMenu=  pageFlow "" $
                  <> hr)))
 
   
-   <|> (autoRefresh $ li <<< do
+   <|> (auto $ li <<< do
           absLink Templates << b "Runtime templates"
              <++ " Templates and content management modifiable at runtime"
           ul <<<
@@ -255,13 +255,15 @@ mainMenu=  pageFlow "" $
                   <++ " Example of content management primitives defined in MFlow.Forms.Widgets"
                   <> hr)))
 
-   <|> (autoRefresh $ li <<< do
+   <|> (auto $ li <<< do
           absLink LoginLogout << b "Login/logout"
-          ul <<< (hr ++> (li <<< (absLink Login << b  "login/logout")   <! noAutoRefresh
+          ul <<< (hr ++> (li <<< (absLink Login << b  "login/logout")  <! noAutoRefresh
                              <++ " Example of using the login and/or logout"
                              <>  hr)))
 
-   <|> (autoRefresh $ li <<< do 
+   <|> (li <<< (absLink CacheDataSet << b "HTTP caching")
+           <++ " Using caching directives to cache a dataset in the browser and navigate it")
+   <|> (auto $ li <<< do 
           absLink ComplexThings << b "Really complex things" <++ " Reference impementations for GUI-like apps"
           ul <<< (hr
                  ++> (li <<< (absLink GenerateForm << b  "A form generator and editor")   <! noAutoRefresh

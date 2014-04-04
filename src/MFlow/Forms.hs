@@ -916,6 +916,7 @@ login'
       MonadState (MFlowState view) m) =>
      String -> (String -> String -> a -> Maybe a1 -> m ()) -> m ()
 login' uname setCookieFunc = do
+    private
     back <- goingBack
     if back then return () else do
      st <- get
@@ -942,6 +943,7 @@ logout'
       MonadState (MFlowState view) m) =>
      (String -> [Char] -> a -> Maybe a1 -> m ()) -> m ()
 logout' setCookieFunc = do
+    public
     back <- goingBack
     if back then return () else do
      st <- get
@@ -1019,7 +1021,7 @@ ask w =  do
  st1 <- get >>= \s -> return s{mfSequence=
                                    let seq= mfSequence s in
                                    if seq ==inRecovery then 0 else seq
-                              ,mfHttpHeaders =[] } 
+                              ,mfHttpHeaders =[],mfAutorefresh= False } 
  if not . null $ mfTrace st1 then fail "" else do
   -- AJAX
   let env= mfEnv st1
@@ -1037,13 +1039,12 @@ ask w =  do
 
 --  mfPagePath : contains the REST path of the page.
 --  it is set for each page
---  if it does not exist, backtrack (to fill the field)
+--  if it does not exist then it comes from a state recovery, backtrack (to fill-in the field)
     let pagepath = mfPagePath st1
     if null pagepath then fail ""
 --  if exist and it is not prefix of the current path being navigated to, backtrack
       else if not $  pagepath `isPrefixOf` mfPath st1 then fail ""   -- !> ("pagepath fail with "++ show (mfPath st1))
        else do
---  wlinks set it for the next page
    
      let st= st1{needForm= NoElems, inSync= False, mfRequirements= [], linkMatched= False} 
      put st
@@ -1055,21 +1056,22 @@ ask w =  do
       else
       case mx  of
        Just x -> do
-         put st'{newAsk= True , mfEnv=[]
-                ,mfPagePath=  mfPagePath st'}
-         breturn x                                -- !> ("BRETURN "++ show (mfPagePath st') )
+         put st'{newAsk= True , mfEnv=[]}
+----                ,mfPagePath=  mfPagePath st'}
+         breturn x                                   -- !> ("BRETURN "++ show (mfPagePath st') )
 
        Nothing ->
          if  not (inSync st')  && not (newAsk st')
---                                                        !> ("insync="++show (inSync st'))
---                                                        !> ("newask="++show (newAsk st'))
-          then fail ""                                 -- !> "FAIL**********"
+                                                     --   !> ("insync="++show (inSync st'))
+                                                     --   !> ("newask="++show (newAsk st'))
+          then fail ""                               --   !> "FAIL**********"
           else if mfAutorefresh st' then do
-                     resetState st st'
+                     resetState st st'               --   !> ("EN AUTOREFRESH" ++ show [ mfPagePath st,mfPath st,mfPagePath st'])
+--                     modify $ \st -> st{mfPagePath=mfPagePath st'} !> "REPEAT"
                      FlowM $ lift  nextMessage
-                     ask w                                -- !> "EN AUTOREFRESH"
+                     ask w                                 
           else do
-             reqs <-  FlowM $ lift installAllRequirements    --  !> "REPEAT"
+             reqs <-  FlowM $ lift installAllRequirements      -- !> "REPEAT"
              
              let header= mfHeader st'
                  t= mfToken st'
@@ -1084,7 +1086,7 @@ ask w =  do
 
 
              resetState st st'
-             FlowM $ lift  nextMessage       --  !> "NEXTMESSAGE"
+             FlowM $ lift  nextMessage         -- !> "NEXTMESSAGE"
              ask w
     where
     resetState st st'=
@@ -1299,12 +1301,15 @@ wlink x v=    View $ do
              True -> do
                   modify $ \s -> s{inSync= True
                                  ,linkMatched= True
-                                 ,mfPagePath= mfPagePath st ++ [name] }
+                                 ,mfPagePath= newPath }
 
-                  return $ Just x                          --  !> (name ++ "<-" ++ "lpath=" ++show (mfPagePath st))
-             False ->  return Nothing                      --  !> ( "NOT MATCHED "++name++" LP= "++show (mfPagePath st))
+                  return $ Just x
+--                         !> (name ++ "<-" ++ "link path=" ++show newPath)
+             False ->  return Nothing
+--                         !> ( "NOT MATCHED "++name++" link path= "++show newPath
+--                             ++ "path="++  show lpath)
 
-      let path= currentPath st ++ ('/':name)
+      let path= concat ['/':v| v <- newPath ]
       return $ FormElm (flink path v) r
 
 -- Creates an absolute link. While a `wlink` path depend on the page where it is located and
@@ -1345,7 +1350,7 @@ absLink x v=    View $ do
              True -> do
                   modify $ \s -> s{inSync= True
                                  ,linkMatched= True
-                                 ,mfPagePath= mfPagePath st ++ [name] }
+                                 ,mfPagePath= newPath }
 
                   return $ Just x                             --  !> (name ++ "<- abs" ++ "lpath=" ++show lpath)
              False ->  return Nothing                         --  !> ( "NOT MATCHED "++name++" LP= "++show  lpath)

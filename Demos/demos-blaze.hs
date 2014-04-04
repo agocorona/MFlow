@@ -50,6 +50,7 @@ import GenerateForm
 import GenerateFormUndo
 import GenerateFormUndoMsg
 import WebService
+import CachingDataset
 import Data.TCache.DefaultPersistence
 
 
@@ -107,16 +108,17 @@ main= do
              PushDec     ->   transientNav  pushDecrease         `showSource`  "PushDecrease.hs"
              Trace       ->   transientNav  traceSample          `showSource`  "TraceSample.hs"
              RESTNav     ->   transientNav  testREST             `showSource`  "TestREST.hs"
-             Database    ->   transientNav  database              `showSource`  "Database.hs"
-             ShopCart    ->   shopCart                   `showSource` "ShopCart.hs"
-             MCounter    ->   mcounter                   `showSource` "MCounter.hs"
+             Database    ->   transientNav  database             `showSource`  "Database.hs"
+             ShopCart    ->   shopCart                           `showSource` "ShopCart.hs"
+             MCounter    ->   mcounter                           `showSource` "MCounter.hs"
              MFlowPersist ->  transientNav mFlowPersistent       `showSource` "MFlowPersistent.hs"
              RuntimeTemplates -> transientNav runtimeTemplates   `showSource` "RuntimeTemplates.hs"
              AcidState        -> transientNav (acidState db)     `showSource` "AcidState.hs"
-             InitialConfig -> initialConfig              `showSource` "InitialConfig.hs"
-             SearchCart    -> searchCart                `showSource` "SearchCart.hs"
+             InitialConfig -> initialConfig                      `showSource` "InitialConfig.hs"
+             SearchCart    -> searchCart                         `showSource` "SearchCart.hs"
              GenerateForm  -> transientNav genForm
              GenerateFormUndo -> transientNav genFormUndo
              GenerateFormUndoMsg -> transientNav genFormUndoMsg
+             CachingDataset -> transientNav cachingDataset      `showSource` "CachingDataset.hs"
 
 

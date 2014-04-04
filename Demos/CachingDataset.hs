@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveDataTypeable #-}
+module CachingDataset where
 import MFlow.Wai.Blaze.Html.All
 import Data.Typeable
 import Control.Monad
@@ -8,19 +9,20 @@ import Debug.Trace
 
 newtype NextReg = NextReg Int deriving Typeable
 
-main= runNavigation "showResults" $ transientNav $ iterateResults
+main= runNavigation "showResults" $ transientNav $ cachingDataset
 
-iterateResults=
-   ask $ iterateResults   [1..100] 5 
+cachingDataset=
+   page $ iterateResults   [1..100] 5 
 
    where
    iterateResults allnames n = witerate $ do
       let len= length allnames
+      public
       maxAge 200
       time <- liftIO getCurrentTime
       b << "Read from the server at: " ++> dField(wraw . fromStr $ show time) <++ br
       NextReg ind <- getSessionData `onNothing` return (NextReg 0)
-      foldl (**>) noWidget [dField(getData i len) <++ br| i <- [ind..ind+n-1]]
+      foldl (**>) noWidget [dField(getData i len) <++ br | i <- [ind..ind+n-1]]
       r <-     dField (wlink (next ind len) << b << "next" ) <++ fromStr " "
            <|> dField (wlink (prev ind len) << b << "prev")
            <|> restp

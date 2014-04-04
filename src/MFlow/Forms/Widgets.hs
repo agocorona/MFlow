@@ -639,40 +639,45 @@ witerate  w= do
            \autoEvalForm('"++name++"');\
            \})\n"
    let r = lookup ("auto"++name) $ mfEnv st
+
    ret <- case r of
     Nothing -> do
      requires [JScript     autoEvalLink
               ,JScript     autoEvalForm
               ,JScript     setId
               ,JScript     $ timeoutscript t
-              ,JScriptFile jqueryScript [installAutoEval]]
+              ,JScriptFile jqueryScript [installAutoEval]]    -- !> "nothing"
 
-     (ftag "div" <<<   w) <! [("id",name)]  
+     (ftag "div" <<<   w) <! [("id",name)] 
 
 
     Just sind -> View $ do
          let t= mfToken st
-         modify $ \s -> s{mfRequirements=[],mfHttpHeaders=[]}
+         modify $ \s -> s{mfRequirements=[],mfHttpHeaders=[]} -- !> "just"
          resetCachePolicy 
-         FormElm _ mr <- runView  w
+         FormElm _ mr <- runView  $ w `wcallback` (const $ do
+                              modify $ \s -> s{mfPagePath=mfPagePath st,mfSequence= mfSequence st,mfRequirements=[],mfHttpHeaders=[]}
+                              w) 
          setCachePolicy 
          reqs <- return . map ( \(Requirement r) -> unsafeCoerce r) =<< gets mfRequirements
          let js = jsRequirements reqs
-         st' <- get
+
+         st' <- get 
          liftIO . sendFlush t $ HttpData
                                 (mfHttpHeaders st') 
                                 (mfCookies st') (fromString js)
-         put st'{mfAutorefresh=True,inSync=True}
-         return $ FormElm mempty mr  
+         put st'{mfAutorefresh=True, inSync=True} 
+         return $ FormElm mempty Nothing  
 
    delSessionData $ IteratedId name
    return ret
 
---    \       url: actionurl+'?bustcache='+ new Date().getTime()+'&auto'+id+'='+ind,\n\
+
     
 autoEvalLink = "\nfunction autoEvalLink(id,ind){\n\
     \var id1= $('#'+id);\n\
     \var ida= $('#'+id+' a[class!=\"_noAutoRefresh\"]');\n\
+    \ida.off('click');\n\
     \ida.click(function () {\n\
     \ if (hadtimeout == true) return true;\n\
     \ var pdata = $(this).attr('data-value');\n\
@@ -699,6 +704,7 @@ autoEvalLink = "\nfunction autoEvalLink(id,ind){\n\
 autoEvalForm = "\nfunction autoEvalForm(id) {\n\
     \var buttons= $('#'+id+' input[type=\"submit\"]')\n\
     \var idform= $('#'+id+' form[class!=\"_noAutoRefresh\"]');\n\
+    \buttons.off('click');\n\
     \buttons.click(function(event) {\n\
     \  if ($(this).attr('class') != '_noAutoRefresh'){\n\
     \    event.preventDefault();\n\
@@ -742,54 +748,7 @@ autoEvalForm = "\nfunction autoEvalForm(id) {\n\
         \});\n\
        \}"
 
---autoEvalForm = "\nfunction autoEvalForm(id) {\n\
---    \var id1= $('#'+id);\n\
---    \var buttons= $('#'+id+' input[type=\"submit\"][class!=\"_noAutoRefresh\"]').click(function(event) {\n\
---        \if (hadtimeout == true) return true;\n\
---        \event.preventDefault();\n\
---        \var $form = $(this).closest('form');\n\
---        \var url = $form.attr('action');\n\
---        \var pdata = $form.serialize();\n\
---        \$.ajax({\n\
---            \type: 'POST',\n\
---            \url: url,\n\
---            \data: 'auto'+id+'=true&'+this.name+'='+this.value+'&'+pdata,\n\
---            \success: function (resp) {\n\
---                \eval(resp);\n\
---            \},\n\
---            \error: function (xhr, status, error) {\n\
---                \var msg = $('<div>' + xhr + '</div>');\n\
---                \id1.html(msg);\n\
---            \}\n\
---        \});\n\
---       \});\n\
---      \return false;\n\
---     \}\n"
 
---autoEvalForm = "\nfunction autoEvalForm(id) {\n\
---    \var id1= $('#'+id);\n\
---    \var idform= $('#'+id+' form[class!=\"_noAutoRefresh\"]');\n\
---    \idform.submit(function (event) {\n\
---        \if (hadtimeout == true) return true;\n\
---        \event.preventDefault();\n\
---        \var $form = $(this);\n\
---        \var url = $form.attr('action');\n\
---        \var pdata = $form.serialize();\n\
---        \$.ajax({\n\
---            \type: 'POST',\n\
---            \url: url,\n\
---            \data: 'auto'+id+'=true&'+pdata,\n\
---            \success: function (resp) {\n\
---                \eval(resp);\n\
---            \},\n\
---            \error: function (xhr, status, error) {\n\
---                \var msg = $('<div>' + xhr + '</div>');\n\
---                \id1.html(msg);\n\
---            \}\n\
---        \});\n\
---       \});\n\
---      \return false;\n\
---     \}\n"
 
 setId= "function setId(id,v){document.getElementById(id).innerHTML= v;};\n"
 
@@ -801,15 +760,15 @@ dField
      View view m  b -> View view m b
 dField w= View $ do
     id <- genNewId
-    FormElm vs mx <- runView w
-    let render =  vs
+    FormElm render mx <- runView w
     st <- get
     let env =  mfEnv st
 
     IteratedId name <- getSessionData `onNothing` return (IteratedId noid)
     let r =  lookup ("auto"++name) env
-    if r == Nothing || (name == noid && newAsk st== True)  then do
-       requires [JScriptFile jqueryScript ["$(document).ready(function() {setId('"++id++"','" ++ toString (toByteString $ render)++"')});\n"]]
+    if r == Nothing || (name == noid && newAsk st== True)
+     then do
+       requires [JScriptFile jqueryScript ["$(document).ready(function() {setId('"++id++"','" ++ toString (toByteString render)++"')});\n"]]
        return $ FormElm((ftag "span" render) `attrs` [("id",id)]) mx
      else do
        requires [JScript $  "setId('"++id++"','" ++ toString (toByteString $ render)++"');\n"]
@@ -993,7 +952,7 @@ update method w= View $ do
     let insync =  inSync st
     let env= mfEnv st
     let r= lookup ("auto"++id) env      
-    if r == Nothing || insync == False
+    if r == Nothing  || isJust mr  -- || insync == False !> (show r ++ show insync)
       then do
          requires [JScript $ timeoutscript t
                   ,JScript ajaxGetLink
@@ -1002,14 +961,15 @@ update method w= View $ do
          return $ FormElm (ftag "div" form `attrs` [("id",id)]) mr 
 
       else do
-         let t= mfToken st
+         let t= mfToken st            -- !> "JUST"
 
          let HttpData ctype c s= toHttpData $ method <> " " <> toByteString  form
                           
-         (liftIO . sendFlush t $ HttpData (ctype ++ {-("Cache-Control", "no-cache, no-store"): -}
+         (liftIO . sendFlush t $ HttpData (ctype ++
                                 mfHttpHeaders st) (mfCookies st ++ c) s)
-         put st{mfAutorefresh=True,inSync=True}
-         return $ FormElm mempty mr 
+         put st{mfAutorefresh=True,newAsk=True}
+            
+         return $ FormElm mempty Nothing 
 
   where
   -- | adapted from http://www.codeproject.com/Articles/341151/Simple-AJAX-POST-Form-and-AJAX-Fetch-Link-to-Modal
@@ -1017,6 +977,7 @@ update method w= View $ do
   ajaxGetLink = "\nfunction ajaxGetLink(id){\n\
     \var id1= $('#'+id);\n\
     \var ida= $('#'+id+' a[class!=\"_noAutoRefresh\"]');\n\
+    \ida.off('click');\n\
     \ida.click(function () {\n\
     \if (hadtimeout == true) return true;\n\
     \var pdata = $(this).attr('data-value');\n\
@@ -1031,7 +992,8 @@ update method w= View $ do
     \            var method= resp.substr(0,ind);\n\
     \            if(method== 'html')id1.html(dat);\n\
     \            else if (method == 'append') id1.append(dat);\n\
-    \            else id1.prepend(dat);\n\
+    \            else if (method == 'prepend') id1.prepend(dat);\n\
+    \            else $(':root').html(resp);\n\
     \            ajaxGetLink(id);\n\
     \            ajaxPostForm(id);\n\
     \       },\n\
@@ -1048,6 +1010,7 @@ update method w= View $ do
   ajaxPostForm = "\nfunction ajaxPostForm(id) {\n\
     \var buttons= $('#'+id+' input[type=\"submit\"]')\n\
     \var idform= $('#'+id+' form[class!=\"_noAutoRefresh\"]');\n\
+    \buttons.off('click');\n\
     \buttons.click(function(event) {\n\
     \  if ($(this).attr('class') != '_noAutoRefresh'){\n\
     \    event.preventDefault();\n\
@@ -1085,7 +1048,8 @@ update method w= View $ do
     \            var method= resp.substr(0,ind);\n\
     \            if(method== 'html')id1.html(dat);\n\
     \            else if (method == 'append') id1.append(dat);\n\
-    \            else id1.prepend(dat);\n\
+    \            else if (method == 'prepend') id1.prepend(dat);\n\
+    \            else $(':root').html(resp);\n\
     \            ajaxGetLink(id);\n\
     \            ajaxPostForm(id);\n\
             \},\n\
@@ -1098,36 +1062,6 @@ update method w= View $ do
 
 
 
---  ajaxPostForm = "\nfunction ajaxPostForm(id) {\n\
---    \var id1= $('#'+id);\n\
---    \var idform= $('#'+id+' form[class!=\"_noAutoRefresh\"]');\n\
---    \idform.submit(function (event) {\n\
---        \if (hadtimeout == true) return true;\n\
---        \event.preventDefault();\n\
---        \var $form = $(this);\n\
---        \var url = $form.attr('action');\n\
---        \var pdata = 'auto'+id+'=true&'+$form.serialize();\n\
---        \$.ajax({\n\
---            \type: 'POST',\n\
---            \url: url,\n\
---            \data: pdata,\n\
---            \success: function (resp) {\n\
---    \            var ind= resp.indexOf(' ');\n\
---    \            var dat = resp.substr(ind);\n\
---    \            var method= resp.substr(0,ind);\n\
---    \            if(method== 'html')id1.html(dat);\n\
---    \            else if (method == 'append') id1.append(dat);\n\
---    \            else id1.prepend(dat);\n\
---    \            ajaxPostForm(id);\n\
---            \},\n\
---            \error: function (xhr, status, error) {\n\
---                \var msg = $('<div>' + xhr + '</div>');\n\
---                \id1.html(msg);\n\
---            \}\n\
---        \});\n\
---       \});\n\
---      \return false;\n\
---     \}\n"
 
 timeoutscript t=
      "\nvar hadtimeout=false;\n\
