@@ -21,7 +21,6 @@
              -XFlexibleContexts
              -XOverlappingInstances
              -XRecordWildCards
-             -XTemplateHaskell
 #-}
 
 module MFlow.Forms.Internals where
@@ -284,19 +283,6 @@ instance  FormInput v => MonadLoc (View v IO)  where
 
 
 
-
-instance (FormInput v,Serialize a)
-   => Serialize (a,MFlowState v) where
-   showp (x,s)= case mfDebug s of
-      False -> showp x
-      True  -> showp(x, mfEnv s)
-   readp= choice[nodebug, debug]
-    where
-    nodebug= readp  >>= \x -> return  (x, mFlowState0{mfSequence= inRecovery})
-    debug=  do
-     (x,env) <- readp
-     return  (x,mFlowState0{mfEnv= env,mfSequence= inRecovery})
-    
 
 instance Functor (FormElm view ) where
   fmap f (FormElm form x)= FormElm form (fmap f x)
@@ -1082,6 +1068,21 @@ clearEnv= do
   put st{ mfEnv= []}
 
 
+
+instance (FormInput v,Serialize a)
+   => Serialize (a,MFlowState v) where
+   showp (x,s)= case mfDebug s of
+      False -> showp x
+      True  -> showp(x, mfEnv s)
+   readp= choice[nodebug, debug]
+    where
+    nodebug= readp  >>= \x -> return  (x, mFlowState0{mfSequence= inRecovery})
+    debug=  do
+     (x,env) <- readp
+     return  (x,mFlowState0{mfEnv= env,mfSequence= inRecovery})
+
+
+
 -- | stores the result of the flow in a  persistent log. When restarted, it get the result
 -- from the log and it does not execute it again. When no results are in the log, the computation
 -- is executed. It is equivalent to 'Control.Workflow.step' but in the FlowM monad.
@@ -1210,13 +1211,15 @@ getRestParam= do
    else case  stripPrefix (mfPagePath st) lpath  of
      Nothing -> return Nothing
      Just [] -> return Nothing   
-     Just xs -> do
-          let name = head xs
-          r <-  fmap valToMaybe $ readParam name 
-          when (isJust r) $ modify $ \s -> s{inSync= True
-                                            ,linkMatched= True
-                                            ,mfPagePath= mfPagePath s++[name]}
-          return r 
+     Just xs ->
+        case stripPrefix  (mfPrefix st) (head xs)  of
+             Nothing -> return Nothing
+             Just name -> do
+              r <-  fmap valToMaybe $ readParam name 
+              when (isJust r) $ modify $ \s -> s{inSync= True
+                                                ,linkMatched= True
+                                                ,mfPagePath= mfPagePath s++[name]}
+              return r 
              
 
 
@@ -1275,7 +1278,7 @@ instance Show Requirement where
 installAllRequirements :: ( Monad m, FormInput view) =>  WState view m view
 installAllRequirements= do
  rs <- gets mfRequirements
- installAllRequirements1 mempty rs 
+ installAllRequirements1 mempty rs
  where
 
  installAllRequirements1 v []= return v
@@ -1352,7 +1355,7 @@ instance Requirements WebRequirement where
 
 installWebRequirements ::  (Monad m,FormInput view) =>[WebRequirement] -> m view
 installWebRequirements rs= do
-  let s =  jsRequirements $ sort rs
+  let s =  jsRequirements $ sort rs  
 
   return $ ftag "script" (fromStrNoEncode  s)
 

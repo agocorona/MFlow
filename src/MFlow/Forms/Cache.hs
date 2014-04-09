@@ -26,7 +26,8 @@ data CacheElem = Private | Public | NoCache | NoStore
                | Expires ByteString | MaxAge Int
                | SMaxAge Int | NoTransform
                | NoCache' ByteString
-               | MustRevalidate | ProxyRevalidate | ETag ByteString | Vary ByteString
+               | MustRevalidate | ProxyRevalidate
+               | ETag ByteString | Vary ByteString
                deriving(Typeable, Show,Eq,Ord)
 
 -- | to delete all previous directives
@@ -147,22 +148,20 @@ set r = do
 
 
 
-compile rs = comp' $ Data.List.sort rs
+compile rs = comp $ Data.List.sort rs
    where
-   comp' []= []
-   comp' [x]= [x]
-   comp' z@(x:y:xs) | x==y= x:comp' xs
-                    | otherwise= comp z
    comp []= []
+   comp [x]= [x]
+   comp z@(x:(xs@(y:_))) | x==y= comp xs -- drop repetitions
    comp (Private:Public: xs) = Private:comp xs
    comp (NoCache:NoStore:xs)= NoCache: comp xs
    comp (NoStore: Expires _: xs)= NoStore:comp xs
-   comp (NoStore:MaxAge _ : xs)= NoStore:MaxAge 0:comp xs
+   comp (NoStore:MaxAge _ : xs)= NoStore:comp (MaxAge 0:xs)
+   comp (NoCache:MaxAge _ : xs)= NoCache:comp (MaxAge 0:xs)
    comp (SMaxAge t:SMaxAge t':xs)= MaxAge (Prelude.min t t'):comp xs
    comp (Expires t:Expires t':xs)= Expires t: comp xs
    comp (Expires t:MaxAge _:xs)= Expires t: comp xs
    comp (MaxAge t:MaxAge t':xs)= MaxAge (Prelude.min t t'):comp xs
-
    comp (x:xs) = x: comp xs
 
 onNothing  mmx mmy= do

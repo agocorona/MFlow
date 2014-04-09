@@ -300,7 +300,7 @@ import Data.TCache.Memoization
 import MFlow
 import MFlow.Forms.Internals
 import MFlow.Cookies
-import Data.ByteString.Lazy as B(ByteString,cons,append,empty,fromChunks)
+import Data.ByteString.Lazy.Char8 as B(ByteString,cons,append,empty,fromChunks,unpack)
 import Data.ByteString.Lazy.UTF8 hiding (length, take)
 import qualified Data.String as S
 import qualified Data.Text as T
@@ -1057,21 +1057,20 @@ ask w =  do
       case mx  of
        Just x -> do
          put st'{newAsk= True , mfEnv=[]}
-----                ,mfPagePath=  mfPagePath st'}
-         breturn x                                   -- !> ("BRETURN "++ show (mfPagePath st') )
+         breturn x                                    -- !> ("BRETURN "++ show (mfPagePath st') )
 
        Nothing ->
          if  not (inSync st')  && not (newAsk st')
-                                                     --   !> ("insync="++show (inSync st'))
-                                                     --   !> ("newask="++show (newAsk st'))
-          then fail ""                               --   !> "FAIL**********"
+                                                       -- !> ("insync="++show (inSync st'))
+                                                       -- !> ("newask="++show (newAsk st'))
+          then fail ""                                 -- !> "FAIL**********"
           else if mfAutorefresh st' then do
-                     resetState st st'               --   !> ("EN AUTOREFRESH" ++ show [ mfPagePath st,mfPath st,mfPagePath st'])
+                     resetState st st'                 -- !> ("EN AUTOREFRESH" ++ show [ mfPagePath st,mfPath st,mfPagePath st'])
 --                     modify $ \st -> st{mfPagePath=mfPagePath st'} !> "REPEAT"
                      FlowM $ lift  nextMessage
                      ask w                                 
           else do
-             reqs <-  FlowM $ lift installAllRequirements      -- !> "REPEAT"
+             reqs <-  FlowM $ lift installAllRequirements     --  !> "REPEAT"
              
              let header= mfHeader st'
                  t= mfToken st'
@@ -1083,7 +1082,7 @@ ask w =  do
 
              let HttpData ctype c s= toHttpData cont
              liftIO . sendFlush t $ HttpData (ctype ++ mfHttpHeaders st') (mfCookies st' ++ c) s
-
+                          
 
              resetState st st'
              FlowM $ lift  nextMessage         -- !> "NEXTMESSAGE"
@@ -1162,28 +1161,9 @@ isparam _= False
 wstateless
   :: (Typeable view,  FormInput view) =>
      View view IO () -> Flow
-wstateless w =  runFlow . transientNav . ask $ w **> (stop `asTypeOf` w) -- loop
---  where
---  loop= do
---      ask w
---      env <- get
---      put $ env{ mfSequence= 0}
---      loop
+wstateless w =  runFlow . transientNav . ask $ w **> (stop `asTypeOf` w) 
 
 
----- This version writes a log with all the values returned by ask
---wstatelessLog
---  :: (Typeable view, ToHttpData view, FormInput view,Serialize a,Typeable a) =>
---     View view IO a -> (Token -> Workflow IO ())
---wstatelessLog w = runFlow loop
---  where
---  loop= do
---      MFlow.Forms.step $ do
---         r <- ask w
---         env <- get
---         put $ env{ mfSequence= 0,prevSeq=[]}
---         return r
---      loop
 
 
 
@@ -1605,7 +1585,7 @@ pageFlow str widget=do
        put s{mfPrefix= str ++ mfPrefix s
             ,mfSequence=0 
             ,mfPageFlow= True
-             }                              -- !> ("PARENT pageflow. prefix="++ str)
+             }                               -- !> ("PARENT pageflow. prefix="++ str)
 
        r<- widget <** (modify (\s' -> s'{mfSequence= mfSequence s
                                    ,mfPrefix= mfPrefix s
@@ -1615,7 +1595,7 @@ pageFlow str widget=do
 
 
        else do
-       put s{mfPrefix= str++ mfPrefix s,mfSequence=0}                                                                       --  !> ("CHILD pageflow. prefix="++ str)
+       put s{mfPrefix= str++ mfPrefix s,mfSequence=0}      -- !> ("PARENT pageflow. prefix="++ str)                                                                 --  !> ("CHILD pageflow. prefix="++ str)
 
        widget <** (modify (\s' -> s'{mfSequence= mfSequence s
                                  ,mfPrefix= mfPrefix s}))

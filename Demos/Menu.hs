@@ -38,9 +38,9 @@ adminname= "admin"
 edadmin= "editor"
 
 -- present the widget w decorated with the main menu on the left and the source code at the bottom
-ask w= MF.ask $ do
-    public
-    maxAge 300
+page w= MF.ask $ do
+    us <- getCurrentUser
+    if us == anonymous then public else private 
     filename <- getSessionData
     tFieldEd edadmin "head" "set Header"
        **> (El.div ! At.style "float:right" <<<   wlogin )
@@ -57,7 +57,7 @@ divmenu= El.div
 --              <<< autoRefresh (pageFlow "login"  wlogin)
 
 
-page= ask
+ask= page
 
 
 data Options= Wiki | CountI | CountS | Radio
@@ -69,7 +69,7 @@ data Options= Wiki | CountI | CountS | Radio
             | Database |  MFlowPersist   | AcidState
             | DatabaseSamples |PushSamples | ErrorTraces | Flows
             | BasicWidgets | MonadicWidgets | DynamicWidgets | LoginLogout
-            | Templates | RuntimeTemplates | LoginWidget | CacheDataSet
+            | Templates | RuntimeTemplates | LoginWidget | CacheDataset
             | ComplexThings | GenerateForm | GenerateFormUndo | GenerateFormUndoMsg
             deriving (Bounded, Enum,Read, Show,Typeable)
 
@@ -77,7 +77,11 @@ data Options= Wiki | CountI | CountS | Radio
 auto w= autoRefresh $ maxAge 300 >> w 
 
 mainMenu :: View Html IO Options
-mainMenu=  -- pageFlow "" $
+mainMenu= pageFlow "" $      -- bad practice: pageflows should have a non null string
+                             -- but that would change the URLs of the options
+                             -- and they are published as such.
+                             -- that would produce collisions in identifiers with other
+                             -- widgets
   ul<<<(li << a ! href "/" << b "HOME"
    ++> tFieldEd "editor" "othermenu"  "Other menu options"
    **> (li <<<  (absLink Wiki << b "Wiki") )
@@ -87,7 +91,7 @@ mainMenu=  -- pageFlow "" $
           absLink BasicWidgets << b "Basic Widgets"
           ul <<<        
            (hr
-           ++>(li <<< (absLink CountI << b "Increase an Int") --  <! noAutoRefresh
+           ++>(li <<< (absLink CountI << b "Increase an Int") <! noAutoRefresh
                        <++ b " A loop that increases the Int value of a text box"
                                    
            <|> li <<< (absLink CountS << b "Increase a String") <! noAutoRefresh
@@ -101,7 +105,7 @@ mainMenu=  -- pageFlow "" $
            <|> li <<< (absLink Radio << b "Radio buttons") <! noAutoRefresh
            <++ hr)))
 
-    <|> (auto $ li <<<   do
+   <|> (auto $ li <<<   do
           absLink DynamicWidgets << b "Dynamic Widgets"
              <++ " Widgets with Ajax and containers of other widgets"
           ul <<<
@@ -130,7 +134,7 @@ mainMenu=  -- pageFlow "" $
                  <> article gridl
            <> hr)))
 
-    <|> (auto $ li <<<   do
+   <|> (auto $ li <<<   do
           absLink MonadicWidgets << b  "Monadic widgets, actions and callbacks"
              <++ " autoRefresh, page flows, dialogs etc"
           ul <<<                   
@@ -261,8 +265,9 @@ mainMenu=  -- pageFlow "" $
                              <++ " Example of using the login and/or logout"
                              <>  hr)))
 
-   <|> (li <<< (absLink CacheDataSet << b "HTTP caching")
-           <++ " Using caching directives to cache a dataset in the browser and navigate it")
+   <|> (li <<< (absLink CacheDataset << b "HTTP caching")
+           <++ " Navigating an infinite dataset in the browser by caching javascript programs\
+               \ using the new composable caching directives")
    <|> (auto $ li <<< do 
           absLink ComplexThings << b "Really complex things" <++ " Reference impementations for GUI-like apps"
           ul <<< (hr

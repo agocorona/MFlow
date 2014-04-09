@@ -14,7 +14,7 @@ import Text.Hamlet
 -- For error traces
 import Control.Monad.Loc
 
-import Menu hiding (page)
+import Menu   hiding (page)
 import TestREST
 import Actions
 import IncreaseInt
@@ -70,6 +70,7 @@ main= do
    db <- initAcid                             -- for the AcidState example
    setFilesPath "Demos/"
    addMessageFlows[
+       -- Web Services --
        ("apirest", wstateless restService),
        ("apikv"  , wstateless keyValueService),
        ("apiparser", wstateless  parserService)]
@@ -77,11 +78,18 @@ main= do
 
        setHeader $ stdheader 
        setTimeouts 400 $ 60 * 60
-       r <- step . page $  tFieldEd edadmin "head" "set Header" <++ hr
+       r <- step . page $ do
+                       us <- getCurrentUser
+                       if us == anonymous then public else private
+                       tFieldEd edadmin "head" "set Header" <++ hr
                        **> (El.div ! At.style "float:right" <<<   wlogin)
                        **> (divmenu  <<< br ++>  mainMenu) 
                        <** (El.div ! At.style "float:right;width:65%;overflow:auto;"
-                            <<< tFieldEd edadmin "intro" "enter intro text")
+                            <<< (tFieldEd edadmin "intro" "enter intro text")
+                            <++ do
+                                hr
+                                disquscript)
+
 
        case r of
              Wiki      ->    delSessionData (Filename "") >> transientNav  wiki                 
@@ -119,6 +127,6 @@ main= do
              GenerateForm  -> transientNav genForm
              GenerateFormUndo -> transientNav genFormUndo
              GenerateFormUndoMsg -> transientNav genFormUndoMsg
-             CachingDataset -> transientNav cachingDataset      `showSource` "CachingDataset.hs"
+             CacheDataset -> transientNav cachingDataset        `showSource` "CachingDataset.hs"
 
 

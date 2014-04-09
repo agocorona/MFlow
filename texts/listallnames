@@ -1,14 +1,2 @@
-Edit this template by logging as edituser/edituser<br>
-Do not delete the placeholders<br>
-you can edit in HTML mode with the button in the right of the bar.<br>
-To reset the template, delete all the content and refresh <br>
-(from time to time heroku will reset the changes)
-<h2> Results  </h2> 
-<div id="p0iter">
-<li><span id="p1iter">z</span></li>
-<li><span id="p2iter"></span></li>
-<li><span id="p3iter"></span></li>
-<li><span id="p4iter"></span></li>
-<a href="/noscript/templates/runtimetemplates/listnames/templ/itertrue"><b>next</b></a> <a href="/noscript/templates/runtimetemplates/listnames/templ/iterfalse"><b>prev</b></a>
-</div>
-<a href="/noscript/templates/runtimetemplates/listnames/templ/scroll"><p>click here to present the results as a on-demand-filled scroll list</p></a> 
+<span style="font-family: 'rebuchet MS', Helvetica, Arial, Verdana, sans-serif;">Edit this template by logging as edituser/edituser</span><br style="font-family: 'rebuchet MS', Helvetica, Arial, Verdana, sans-serif;"><span style="font-family: 'rebuchet MS', Helvetica, Arial, Verdana, sans-serif;">Do not delete the placeholders</span><br style="font-family: 'rebuchet MS', Helvetica, Arial, Verdana, sans-serif;"><span style="font-family: 'rebuchet MS', Helvetica, Arial, Verdana, sans-serif;">you can edit in HTML mode with the button in the right of the bar.</span><br style="font-family: 'rebuchet MS', Helvetica, Arial, Verdana, sans-serif;"><span style="font-family: 'rebuchet MS', Helvetica, Arial, Verdana, sans-serif;">To reset the template, delete all the content and refresh<br><br>To reset the template and get the layout predefined by the widget delete this completely and refresh the page<br>&nbsp;</span><br style="font-family: 'rebuchet MS', Helvetica, Arial, Verdana, sans-serif;"><span style="font-family: 'rebuchet MS', Helvetica, Arial, Verdana, sans-serif;">(from time to time heroku will reset the changes)</span><h2 style="font-family: 'rebuchet MS', Helvetica, Arial, Verdana, sans-serif;">Results</h2>
+<div id="p0iter"> This is the first: <b><span id="p1iter">a</span></b><br>This is the second:<b><span id="p2iter">b</span></b><br>This is the third: <b><span id="p3iter">c</span></b><br>Fourth:<b><span id="p4iter">d</span></b><br><span id="p5iter"><a href="/noscript/templates/runtimetemplates/listnames/itertempl/iter4"><b>next</b></a></span> <span id="p6iter"><a href="/noscript/templates/runtimetemplates/listnames/itertempl/iter-4"><b>prev</b></a></span></div><b><b><a href="/noscript/templates/runtimetemplates/listnames/itertempl/iterscroll"><p>click here to present the results as a on-demand-filled scroll list</p></a></b></b>

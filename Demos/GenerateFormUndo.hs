@@ -131,7 +131,7 @@ generateView desc n= View $ do
 
 chooseWidget=
        (p $ a ! At.href "/" $ "home") ++>
-       (p <<< absLink ("" ::String) "reset") **>
+       (p <<< absLink ("" :: String) "reset") **>
        (p <<< do wlink ("text":: String)  "text field"
                  ul <<<(li <<< wlink Intv "returning Int"
                     <|> li <<< wlink Stringv  "returning string"))

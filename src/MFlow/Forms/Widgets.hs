@@ -106,8 +106,11 @@ maybeLogout= do
       else noWidget
 
 
-data Medit view m a = Medit (M.Map B.ByteString [(String,View view m a)]) deriving(Typeable)
-{-instance (Typeable view, Typeable a) => Typeable (Medit view m a) where
+data Medit view m a = Medit (M.Map B.ByteString [(String,View view m a)])
+-- #ifdef GHC77
+--  deriving Typeable
+-- #else
+instance (Typeable view, Typeable a) => Typeable (Medit view m a) where
   typeOf= \v -> mkTyConApp (mkTyCon3 "MFlow" "MFlow.Forms.Widgets" "Medit" )
                 [typeOf (tview v)
                 ,typeOf (ta v)]
@@ -118,7 +121,8 @@ data Medit view m a = Medit (M.Map B.ByteString [(String,View view m a)]) derivi
       tm= undefined
       ta :: Medit v m a -> a
       ta= undefined
--}
+-- #endif
+
 -- | If not logged, it present a page flow which askm  for the user name, then the password if not logged
 --
 -- If logged, it present the user name and a link to logout
@@ -156,7 +160,7 @@ getEdited1 id= do
 
 -- | Return the list of edited widgets (added by the active widgets) for a given identifier
 getEdited
-  :: (Typeable v, Typeable a, Typeable m1, MonadState (MFlowState view) m) =>
+  :: (Typeable v, Typeable a, MonadState (MFlowState view) m) =>
      B.ByteString -> m [View v m1 a]
 getEdited id= do
   r <- getEdited1 id
@@ -165,7 +169,7 @@ getEdited id= do
 
 -- | Deletes the list of edited widgets for a certain identifier and with the type of the witness widget parameter
 delEdited
-  :: (Typeable v, Typeable a, MonadIO m, Typeable m1,
+  :: (Typeable v, Typeable a, MonadIO m,
       MonadState (MFlowState view) m)
      => B.ByteString           -- ^ identifier
      -> [View v m1 a] -> m ()  -- ^ withess
@@ -193,7 +197,7 @@ addEdited id w= do
     setEdited id (w:ws)
 
 
-modifyWidget :: (MonadIO m,Executable m,Typeable a,FormInput v, Typeable Identity, Typeable m)
+modifyWidget :: (MonadIO m,Executable m,Typeable a,FormInput v)
            => B.ByteString -> B.ByteString -> View v Identity a -> View v m B.ByteString
 modifyWidget selector modifier  w = View $ do
      ws <- getEdited selector
@@ -232,7 +236,7 @@ modifyWidget selector modifier  w = View $ do
 -- >    return  r
 
 prependWidget
-  :: (Typeable a, MonadIO m, Executable m, FormInput v, Typeable Identity, Typeable m)
+  :: (Typeable a, MonadIO m, Executable m, FormInput v)
   => B.ByteString           -- ^ jquery selector
   -> View v Identity a      -- ^ widget to prepend
   -> View v m B.ByteString  -- ^ string returned with the jquery string to be executed in the browser
@@ -240,13 +244,13 @@ prependWidget sel w= modifyWidget sel "prepend" w
 
 -- | Like 'prependWidget' but append the widget instead of prepend.
 appendWidget
-  :: (Typeable a, MonadIO m, Executable m, FormInput v, Typeable Identity, Typeable m) =>
+  :: (Typeable a, MonadIO m, Executable m, FormInput v) =>
      B.ByteString -> View v Identity a -> View v m B.ByteString
 appendWidget sel w= modifyWidget sel "append" w
 
 -- | L  ike 'prependWidget' but set the entire content of the selector instead of prepending an element
 setWidget
-  :: (Typeable a, MonadIO m, Executable m, FormInput v, Typeable Identity, Typeable m) =>
+  :: (Typeable a, MonadIO m, Executable m, FormInput v) =>
      B.ByteString -> View v Identity a -> View v m B.ByteString
 setWidget sel w= modifyWidget sel "html" w
 
@@ -279,7 +283,7 @@ setWidget sel w= modifyWidget sel "html" w
 
 wEditList :: (Typeable a,Read a
              ,FormInput view
-             ,Functor m,MonadIO m, Executable m, Typeable m, Typeable Identity)
+             ,Functor m,MonadIO m, Executable m)
           => (view ->view)     -- ^ The holder tag
           -> (Maybe String -> View view Identity a) -- ^ the contained widget, initialized  by a string
           -> [String]          -- ^ The initial list of values.
@@ -291,8 +295,7 @@ wEditList holderview w xs addId = do
     id1<- genNewId
     let sel= "$('#" <>  fromString id1 <> "')"
     callAjax <- ajax . const $ prependWidget sel wn
-    let installevents= "$(document).ready(function(){\
-              \$('#"++addId++"').click(function(){"++callAjax "''"++"});})"
+    let installevents= "$(document).ready(function(){$('#"++addId++"').click(function(){"++callAjax "''"++"});})"
 
     requires [JScriptFile jqueryScript [installevents] ]
 
@@ -373,7 +376,7 @@ wautocomplete mv autocomplete  = do
 -- >               ++> whidden( fromJust x)
 wautocompleteEdit
     :: (Typeable a, MonadIO m,Functor m, Executable m
-     , FormInput v, Typeable m, Typeable Identity)
+     , FormInput v)
     => String                                 -- ^ the initial text of the box
     -> (String -> IO [String])                -- ^ the autocompletion procedure: receives a prefix, return a list of options.
     -> (Maybe String  -> View v Identity a)   -- ^ the widget to add, initialized with the string entered in the box
@@ -426,7 +429,7 @@ wautocompleteEdit phold autocomplete  elem values= do
 -- | A specialization of 'wutocompleteEdit' which make appear each chosen option with
 -- a checkbox that deletes the element when uncheched. The result, when submitted, is the list of selected elements.
 wautocompleteList
-  :: (Functor m, MonadIO m, Executable m, FormInput v, Typeable m, Typeable Identity) =>
+  :: (Functor m, MonadIO m, Executable m, FormInput v) =>
      String -> (String -> IO [String]) -> [String] -> View v m [String]
 wautocompleteList phold serverproc values=
  wautocompleteEdit phold serverproc  wrender1 values
@@ -542,13 +545,16 @@ tFieldEd  muser k  text= wfreeze k 0 $  do
            flushCached k
            sendFlush token $ HttpData [] [] ""
            return()
-
+   
    requires [JScriptFile nicEditUrl [install]
             ,JScript     ajaxSendText
             ,JScript     installEditField
 --            ,JScriptFile jqueryScript []
             ,ServerProc  ("_texts",  transient getTexts)]
 
+   us <- getCurrentUser
+   when(us== muser) noCache
+   
    (ftag "div" mempty `attrs` [("id",ipanel)]) ++>
     notValid (ftag "span" content `attrs` [("id", name)])
 
@@ -628,8 +634,8 @@ newtype IteratedId= IteratedId  String deriving Typeable
 witerate
   :: (MonadIO m, Functor m, FormInput v) =>
       View v m a -> View v m a
-witerate  w= do
-   name  <- genNewId
+witerate w= do
+   name <- genNewId
    setSessionData $ IteratedId name 
    st <- get
    let t= mfkillTime st
@@ -639,25 +645,28 @@ witerate  w= do
            \autoEvalForm('"++name++"');\
            \})\n"
    let r = lookup ("auto"++name) $ mfEnv st
+       w'= w `wcallback` (const $ do
+                              modify $ \s -> s{mfPagePath=mfPagePath st
+                                             ,mfSequence= mfSequence st
+                                             ,mfRequirements= if r== Nothing then  mfRequirements s else []
+                                             ,mfHttpHeaders=[]}
+                              w) 
 
    ret <- case r of
     Nothing -> do
      requires [JScript     autoEvalLink
               ,JScript     autoEvalForm
-              ,JScript     setId
               ,JScript     $ timeoutscript t
-              ,JScriptFile jqueryScript [installAutoEval]]    -- !> "nothing"
+              ,JScriptFile jqueryScript [installAutoEval]
+              ,JScript     setId]    
 
-     (ftag "div" <<<   w) <! [("id",name)] 
-
+     (ftag "div" <<< w') <! [("id",name)] 
 
     Just sind -> View $ do
          let t= mfToken st
          modify $ \s -> s{mfRequirements=[],mfHttpHeaders=[]} -- !> "just"
          resetCachePolicy 
-         FormElm _ mr <- runView  $ w `wcallback` (const $ do
-                              modify $ \s -> s{mfPagePath=mfPagePath st,mfSequence= mfSequence st,mfRequirements=[],mfHttpHeaders=[]}
-                              w) 
+         FormElm _ mr <- runView w'
          setCachePolicy 
          reqs <- return . map ( \(Requirement r) -> unsafeCoerce r) =<< gets mfRequirements
          let js = jsRequirements reqs
@@ -673,7 +682,7 @@ witerate  w= do
    return ret
 
 
-    
+
 autoEvalLink = "\nfunction autoEvalLink(id,ind){\n\
     \var id1= $('#'+id);\n\
     \var ida= $('#'+id+' a[class!=\"_noAutoRefresh\"]');\n\
@@ -738,7 +747,7 @@ autoEvalForm = "\nfunction autoEvalForm(id) {\n\
             \data: 'auto'+id+'=true&'+this.name+'='+this.value+'&'+pdata,\n\
             \success: function (resp) {\n\
                 \eval(resp);\n\
-                \autoEvalLink(id,ind);\n\
+                \autoEvalLink(id,0);\n\
                 \autoEvalForm(id);\n\
             \},\n\
             \error: function (xhr, status, error) {\n\
@@ -768,7 +777,7 @@ dField w= View $ do
     let r =  lookup ("auto"++name) env
     if r == Nothing || (name == noid && newAsk st== True)
      then do
-       requires [JScriptFile jqueryScript ["$(document).ready(function() {setId('"++id++"','" ++ toString (toByteString render)++"')});\n"]]
+--       requires [JScriptFile jqueryScript ["$(document).ready(function() {setId('"++id++"','" ++ toString (toByteString render)++"')});\n"]]
        return $ FormElm((ftag "span" render) `attrs` [("id",id)]) mx
      else do
        requires [JScript $  "setId('"++id++"','" ++ toString (toByteString $ render)++"');\n"]
@@ -793,7 +802,8 @@ edTemplate muser k w=  View $ do
             ,JScript     installEditField
             ,JScriptFile jqueryScript []
             ,ServerProc  ("_texts",  transient getTexts)]
-
+   us <- getCurrentUser
+   when(us== muser) noCache
    FormElm text mx <- runView w
    content <- liftIO $ readtField text k
 
@@ -952,7 +962,7 @@ update method w= View $ do
     let insync =  inSync st
     let env= mfEnv st
     let r= lookup ("auto"++id) env      
-    if r == Nothing  || isJust mr  -- || insync == False !> (show r ++ show insync)
+    if r == Nothing -- || isJust mr  -- || insync == False !> (show r ++ show insync)
       then do
          requires [JScript $ timeoutscript t
                   ,JScript ajaxGetLink

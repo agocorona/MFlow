@@ -52,9 +52,8 @@ runtimeTemplates= do
      process
 
 process= do
-     setSessionData $ NextReg 0
-     liftIO $ print "here"
-     r <- page  -- $  edTemplate "edituser" "menuallnames" 
+     setSessionData $ NextReg 0  
+     r <- page  $  edTemplate "edituser" "menuallnames" 
                 $ wlink NewName   << p << "enter a new name"
               <|> wlink ListNames << p << "List names"
               <|> wlink Exit      << p << "Exit to the home page"
@@ -63,8 +62,10 @@ process= do
          Exit -> return()
          NewName -> do
               page  $ edTemplate "edituser" "enterallnames"
-                    $ pageFlow "enter" $ witerate (
-                            do  name <- dField (getString Nothing `validate` jsval)
+                    $ pageFlow "enter"
+                    $ witerate (
+                            do  noCache
+                                name <- dField (getString Nothing `validate` jsval)
                                         <** submitButton "ok" <++ br
                                 -- store the register in the cache
                                 -- Later will be written by the default persistence automatically
@@ -80,12 +81,12 @@ process= do
 
               let len= Prelude.length allnames
 
-              page $ iterateResults allnames len
+              page $ pageFlow "iter" $ iterateResults allnames len
                  **> wlink "templ" << p << "click here to show the result within a runtime template"
 
               setSessionData $ NextReg 0
               page $ edTemplate "edituser" "listallnames"
-                   $ iterateResults allnames len
+                   $ pageFlow "iter" $ iterateResults allnames len
                  **> wlink "scroll" << p << "click here to present the results as a on-demand-filled scroll list"
 
               setSessionData $ NextReg 0
@@ -108,18 +109,17 @@ process= do
      countRegisters= (getAllNames >>= return . Prelude.length)
 
 
-     iterateResults allnames len =  do
-          noCache -- maxAge 300
+     iterateResults allnames len = witerate $ do
+          maxAge 300
           NextReg ind <- getSessionData `onNothing` return (NextReg 0)
-          liftIO $ print ind
-          (getData  ind    len allnames) <++ br
-          (getData (ind+1) len allnames) <++ br
-          (getData (ind+2) len allnames) <++ br
-          (getData (ind+3) len allnames) <++ br
-          setSessionData . NextReg $ next ind len
-          (wlink (next ind len) << b << "next") <++ fromStr " "
-               <|>
-               dField(wlink (prev ind len) << b << "prev")
+          dField(getData  ind    len allnames) <++ br
+          dField(getData (ind+1) len allnames) <++ br
+          dField(getData (ind+2) len allnames) <++ br
+          dField(getData (ind+3) len allnames) <++ br
+          r <-    dField (wlink (next ind len) << b << "next" ) <++ fromStr " "
+              <|> dField (wlink (prev ind len) << b << "prev")
+              <|> restp
+          setSessionData $ NextReg r
 
 
      getData i len all=  wraw . fromStr $ if i >= len || i < 0 then "" else all !! i
