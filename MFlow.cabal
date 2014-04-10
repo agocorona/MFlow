@@ -97,14 +97,14 @@ source-repository head
     location: http://github.com/agocorona/MFlow
 
 library
-    build-depends: Workflow -any, transformers -any, mtl -any,
-                   extensible-exceptions -any,  base >4.0 && <5,
-                   bytestring -any, containers -any, RefSerialize -any, TCache -any,
-                   stm >2, time, old-time -any, vector -any, directory -any,
-                   utf8-string -any, wai >=2.0.0, case-insensitive -any,
-                   http-types -any, conduit -any,conduit-extra, text -any, parsec -any, warp -any,
-                   warp-tls -any, random -any, blaze-html -any, blaze-markup -any,
-                   monadloc -any, clientsession ==0.9.0.3
+    build-depends: Workflow , transformers , mtl ,
+                   extensible-exceptions ,  base >4.0 && <5,
+                   bytestring , containers , RefSerialize , TCache ,
+                   stm >2, time, old-time , vector , directory ,
+                   utf8-string , wai >=2.0.0, case-insensitive ,
+                   http-types , conduit ,conduit-extra, text , parsec , warp ,
+                   warp-tls , random , blaze-html , blaze-markup ,
+                   monadloc , clientsession ==0.9.0.3
     exposed-modules: MFlow MFlow.Wai.Blaze.Html.All MFlow.Forms
                      MFlow.Forms.Admin MFlow.Cookies MFlow.Wai
                      MFlow.Forms.Blaze.Html MFlow.Forms.Test
@@ -117,14 +117,14 @@ library
 
 
 executable demos-blaze
-    build-depends: MFlow -any, RefSerialize -any, TCache -any,
-                   tcache-AWS -any, directory -any, Workflow -any, base -any,
-                   blaze-html -any, bytestring -any, containers -any, mtl -any,
-                   old-time -any, stm -any, text -any, transformers -any, vector -any,
-                   hamlet -any, monadloc -any, aws -any, network -any, hscolour -any,
-                   persistent-template -any, persistent-sqlite -any, persistent -any,
-                   conduit -any,  http-conduit -any, monad-logger -any, safecopy -any,
-                   acid-state -any, time
+    build-depends: MFlow , RefSerialize , TCache ,
+                   tcache-AWS , directory , Workflow , base ,
+                   blaze-html , bytestring , containers , mtl ,
+                   old-time , stm , text , transformers , vector ,
+                   hamlet , shakespeare, monadloc , aws , network , hscolour ,
+                   persistent-template , persistent-sqlite , persistent ,
+                   conduit ,  http-conduit , monad-logger , safecopy ,
+                   acid-state , time
     main-is: demos-blaze.hs
     buildable: True
     hs-source-dirs: Demos
