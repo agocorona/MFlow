@@ -102,7 +102,7 @@ library
     build-depends: RefSerialize == 0.3.1.0,
                     TCache == 0.11.0.0,
                     Workflow == 0.8.0.8,
-                    base == 4.6.0.1,
+                    base,
                     blaze-html == 0.6.1.2,
                     blaze-markup == 0.5.1.6,
                     bytestring == 0.10.0.2,
