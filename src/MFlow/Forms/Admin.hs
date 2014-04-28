@@ -165,7 +165,7 @@ showFormList ls n l= do
 optionsUser  us = do
     wfs <- liftIO $ return . M.keys =<< getMessageFlows
     stats <-  let u= undefined
-              in  liftIO $ mapM  (\wf -> getWFHistory wf (Token wf us u u u u u)) wfs
+              in  liftIO $ mapM  (\wf -> getWFHistory wf (Token wf us u u u u u u)) wfs
     let wfss= filter (isJust . snd) $ zip wfs stats
     if null wfss
      then ask $ b << " not logs for this user" ++> wlink () (b << "Press here")

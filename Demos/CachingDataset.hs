@@ -14,7 +14,6 @@ import Menu
 #endif
 newtype NextReg = NextReg Int deriving Typeable
 
-
 cachingDataset= do
    page $ iterateResults [1..] 5  **> wlink () << b << "exit"
    where

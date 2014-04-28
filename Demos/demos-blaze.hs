@@ -51,6 +51,7 @@ import GenerateFormUndo
 import GenerateFormUndoMsg
 import WebService
 import CachingDataset
+import LazyLoad
 import Data.TCache.DefaultPersistence
 
 
@@ -85,11 +86,12 @@ main= do
                        **> (El.div ! At.style "float:right" <<<   wlogin)
                        **> (divmenu  <<< br ++>  mainMenu) 
                        <** (El.div ! At.style "float:right;width:65%;overflow:auto;"
-                            <<< (tFieldEd edadmin "intro" "enter intro text")
+                            <<< (pageFlow "del"  (tFieldEd edadmin "intro" "enter intro text"))
                             <++ do
                                 hr
-                                disquscript)
-
+                                disquscript
+                                )
+ 
 
        case r of
              Wiki      ->    delSessionData (Filename "") >> transientNav  wiki                 
@@ -117,16 +119,16 @@ main= do
              Trace       ->   transientNav  traceSample          `showSource`  "TraceSample.hs"
              RESTNav     ->   transientNav  testREST             `showSource`  "TestREST.hs"
              Database    ->   transientNav  database             `showSource`  "Database.hs"
-             ShopCart    ->   shopCart                           `showSource` "ShopCart.hs"
-             MCounter    ->   mcounter                           `showSource` "MCounter.hs"
-             MFlowPersist ->  transientNav mFlowPersistent       `showSource` "MFlowPersistent.hs"
-             RuntimeTemplates -> transientNav runtimeTemplates   `showSource` "RuntimeTemplates.hs"
-             AcidState        -> transientNav (acidState db)     `showSource` "AcidState.hs"
-             InitialConfig -> initialConfig                      `showSource` "InitialConfig.hs"
-             SearchCart    -> searchCart                         `showSource` "SearchCart.hs"
+             ShopCart    ->   shopCart                           `showSource`  "ShopCart.hs"
+             MCounter    ->   mcounter                           `showSource`  "MCounter.hs"
+             MFlowPersist ->  transientNav mFlowPersistent       `showSource`  "MFlowPersistent.hs"
+             RuntimeTemplates -> transientNav runtimeTemplates   `showSource`  "RuntimeTemplates.hs"
+             AcidState        -> transientNav (acidState db)     `showSource`  "AcidState.hs"
+             InitialConfig -> initialConfig                      `showSource`  "InitialConfig.hs"
+             SearchCart    -> searchCart                         `showSource`  "SearchCart.hs"
              GenerateForm  -> transientNav genForm
              GenerateFormUndo -> transientNav genFormUndo
              GenerateFormUndoMsg -> transientNav genFormUndoMsg
-             CacheDataset -> transientNav cachingDataset        `showSource` "CachingDataset.hs"
-
+             CacheDataset -> transientNav cachingDataset         `showSource` "CachingDataset.hs"
+             LazyLoad     -> transientNav lazyLoad               `showSource` "LazyLoad.hs"
 

@@ -916,7 +916,6 @@ login'
       MonadState (MFlowState view) m) =>
      String -> (String -> String -> a -> Maybe a1 -> m ()) -> m ()
 login' uname setCookieFunc = do
-    private
     back <- goingBack
     if back then return () else do
      st <- get

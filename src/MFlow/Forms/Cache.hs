@@ -32,7 +32,9 @@ data CacheElem = Private | Public | NoCache | NoStore
 
 -- | to delete all previous directives
 resetCachePolicy :: (MonadState (MFlowState v) m, Monad m) => m ()
-resetCachePolicy= setSessionData ([] :: [CacheElem])
+resetCachePolicy= do
+  modify $ \s -> s{mfHttpHeaders=[]}
+  setSessionData ([] :: [CacheElem])
 
 -- | add @no-cache@ to the @Cache-Control@ header directive. It deletes all expires and put max-age=0
 --
@@ -152,16 +154,16 @@ compile rs = comp $ Data.List.sort rs
    where
    comp []= []
    comp [x]= [x]
-   comp z@(x:(xs@(y:_))) | x==y= comp xs -- drop repetitions
-   comp (Private:Public: xs) = Private:comp xs
-   comp (NoCache:NoStore:xs)= NoCache: comp xs
-   comp (NoStore: Expires _: xs)= NoStore:comp xs
-   comp (NoStore:MaxAge _ : xs)= NoStore:comp (MaxAge 0:xs)
-   comp (NoCache:MaxAge _ : xs)= NoCache:comp (MaxAge 0:xs)
-   comp (SMaxAge t:SMaxAge t':xs)= MaxAge (Prelude.min t t'):comp xs
-   comp (Expires t:Expires t':xs)= Expires t: comp xs
-   comp (Expires t:MaxAge _:xs)= Expires t: comp xs
-   comp (MaxAge t:MaxAge t':xs)= MaxAge (Prelude.min t t'):comp xs
+   comp (x:(xs@(x':_))) | x==x'= comp xs             -- !> ("drop repetitions "++ show x)
+   comp (Private:Public: xs) = comp  $ Private:comp xs
+   comp (NoCache:NoStore:xs)= comp $ NoCache: comp xs
+   comp (NoStore: Expires _: xs)= comp $ NoStore: comp xs
+   comp (NoStore:MaxAge _ : xs)= comp $ NoStore: comp xs
+   comp (NoCache:MaxAge _ : xs)= comp $ NoCache: comp xs
+   comp (SMaxAge t:SMaxAge t':xs)= comp $ MaxAge (Prelude.min t t'): comp xs
+   comp (Expires t:Expires t':xs)= comp $ Expires t: comp xs
+   comp (Expires t:MaxAge _:xs)= comp $ Expires t: comp xs
+   comp (MaxAge t:MaxAge t':xs)= comp $ MaxAge (Prelude.min t t'): comp xs
    comp (x:xs) = x: comp xs
 
 onNothing  mmx mmy= do
@@ -175,4 +177,5 @@ onNothing  mmx mmy= do
 setCachePolicy :: (MonadState (MFlowState v) m, Monad m) => m ()
 setCachePolicy= do
    rs <- getSessionData `onNothing` return  []
-   (mapM_ (\(n,v) -> setHttpHeader n v ) .  generate $ compile rs)
+   let hs =generate $ compile rs                     -- !> show rs
+   mapM_ (\(n,v) -> setHttpHeader n v ) hs           -- !> ("headers1="++ show hs)

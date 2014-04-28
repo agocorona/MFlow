@@ -51,7 +51,9 @@ import Data.Char
 import Data.List(stripPrefix)
 import Data.Maybe(isJust)
 import Control.Concurrent.STM
+import Data.TCache.Memoization
 --import Data.String
+
 --
 ---- for traces
 --
@@ -366,8 +368,8 @@ wcallback (View x) f = View $ do
    case mk of
      Just k  -> do
        modify $ \st -> st{linkMatched= False, needForm=NoElems}
-                       
        runView (f k)
+       
      Nothing -> return $ FormElm form1 Nothing
 
 
@@ -963,8 +965,8 @@ The flow is executed in a loop. When the flow is finished, it is started again
    adminLoop
 @
 -}
---runFlow :: (FormInput view, MonadIO m)
---        => FlowM view m () -> Token -> m () 
+runFlow :: (FormInput view, MonadIO m)
+        => FlowM view (Workflow m) () -> Token -> Workflow m () 
 runFlow  f t=
   loop (startState t) f   t 
   where
@@ -982,8 +984,8 @@ runFlow  f t=
 
 inRecovery= -1
 
---runFlowOnce :: (MonadIO m, FormInput view)
---        => FlowM view m () -> Token -> m ()
+runFlowOnce :: (FormInput view, MonadIO m)
+            => FlowM view (Workflow m) () -> Token -> Workflow m ()
 runFlowOnce f t= runFlowOnce1 f t  >> return ()
 
 runFlowOnce1 f t  = runFlowOnce2 (startState t)  f
@@ -1056,9 +1058,14 @@ runFlowConf :: (FormInput view, MonadIO m) => FlowM view m a ->  m a
 runFlowConf  f = do
   q  <- liftIO newEmptyMVar  -- `debug` (i++w++u)
   qr <- liftIO newEmptyMVar
-  let t=  Token "" "" "" [] [] q  qr
+  block <- liftIO $ newMVar True
+  let t=  Token "" "" "" [] [] block q  qr
   evalStateT (runSup . runFlowM $   f )  mFlowState0{mfToken=t} >>= return . fromFailBack   -- >> return ()
 
+
+-- | run a transient Flow from the IO monad.
+--runNav :: String -> FlowM Html IO () -> IO ()
+--runNav ident f= exec1 ident $ runFlowOnce (transientNav f) undefined
 
 
 -- | Clears the environment
@@ -1301,10 +1308,14 @@ installAllRequirements= do
 
 -- Web requirements ---
 loadjsfile filename lcallbacks=
-  "var fileref=document.createElement('script');\
-  \fileref.setAttribute('type','text/javascript');\
-  \fileref.setAttribute('src',\'" ++ filename ++ "\');\
-  \document.getElementsByTagName('head')[0].appendChild(fileref);"
+ let name= addrStr filename in
+  "var fileref = document.getElementById('"++name++"');\
+  \if (fileref === null){\
+      \fileref=document.createElement('script');\
+      \fileref.setAttribute('id','"++name++"');\
+      \fileref.setAttribute('type','text/javascript');\
+      \fileref.setAttribute('src',\'" ++ filename ++ "\');\
+      \document.getElementsByTagName('head')[0].appendChild(fileref);};"
   ++ onload
   where
   onload= case lcallbacks of
@@ -1342,7 +1353,7 @@ data WebRequirement= JScriptFile
 
 instance Eq (String, Flow) where
    (x,_) == (y,_)= x == y
-
+ 
 instance Ord (String, Flow) where
    compare(x,_)  (y,_)= compare x y
 instance Show (String, Flow) where

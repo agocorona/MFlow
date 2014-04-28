@@ -189,8 +189,9 @@ chooseWidget=  pageFlow "" $ autoRefresh $
 
 
 
-getOptions pf =  autoRefresh  $
+getOptions pf =  autoRefresh  . wform $
      do
+        noCache
         (op,_) <- (,)<$> getString Nothing <! [("size","8"),("placeholder","option")]
                      <*> submitButton "add"
                      <** submitButton "clear" `waction` const (delSessionData (undefined :: WType))

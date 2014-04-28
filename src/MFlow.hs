@@ -112,16 +112,16 @@ import Data.RefSerialize hiding (empty)
 import qualified Data.Text as T
 import System.Posix.Internals
 import Control.Exception
-import Debug.Trace
-(!>)  =   flip trace
+--import Debug.Trace
+--(!>)  =   flip trace
 
 
 -- | a Token identifies a flow that handle messages. The scheduler compose a Token with every `Processable`
 -- message that arrives and send the mesage to the appropriate flow.
-data Token = Token{twfname,tuser, tind :: String , tpath :: [String], tenv:: Params, tsendq :: MVar Req, trecq :: MVar Resp}  deriving  Typeable
+data Token = Token{twfname,tuser, tind :: String , tpath :: [String], tenv:: Params, tblock:: MVar Bool, tsendq :: MVar Req, trecq :: MVar Resp}  deriving  Typeable
 
 instance Indexable  Token  where
-     key (Token w u i _ _ _ _  )=  i
+     key (Token w u i _ _ _ _ _  )=  i
 --          if u== anonymous then  u ++ i   -- ++ "@" ++ w
 --                          else  u       -- ++ "@" ++ w
 
@@ -130,8 +130,8 @@ instance Show Token where
 
 instance Read Token where
      readsPrec _ ('T':'o':'k':'e': 'n':' ':str1)
-       | anonymous `isPrefixOf` str1= [(Token  w anonymous i [] [] (newVar 0) (newVar 0), tail str2)]
-       | otherwise                 = [(Token  w ui "0" [] []  (newVar 0) (newVar 0), tail str2)]
+       | anonymous `isPrefixOf` str1= [(Token  w anonymous i [] [] (newVar True) (newVar 0) (newVar 0), tail str2)]
+       | otherwise                 = [(Token  w ui "0" [] [] (newVar True)  (newVar 0) (newVar 0), tail str2)]
 
         where
 
@@ -166,7 +166,8 @@ getToken msg=  do
               Nothing  -> do
                  q  <- newEmptyMVar  -- `debug` (i++w++u)
                  qr <- newEmptyMVar
-                 let token= Token w u i ppath penv q qr
+                 pblock <- newMVar True
+                 let token= Token w u i  ppath penv pblock q qr
                  addTokenToList token
                  return token
 
@@ -243,33 +244,32 @@ instance  (Monad m, Show a) => Traceable (Workflow m a) where
 -}
 -- | send a complete response 
 --send ::   Token  -> HttpData -> IO()
-send  t@(Token _ _ _ _ _ _ qresp) msg=   do
-      ( putMVar qresp  . Resp $  msg )  -- !> ("<<<<< send "++ thread t) 
+send  t@(Token _ _ _ _ _ _ _ qresp) msg=   do
+      ( putMVar qresp  . Resp $  msg )   -- !> ("<<<<< send "++ show t) 
 
-sendFlush t msg= flushRec t >> send t msg     -- !> "sendFlush "
+sendFlush t msg=  flushRec t >>  send t msg      -- !> "sendFlush "
 
 -- | send a response fragment. Useful for streaming. the last packet must be sent trough 'send'
 sendFragment ::  Token  -> HttpData -> IO()
-sendFragment (Token _ _ _ _ _ _ qresp) msg=   putMVar qresp  . Fragm $  msg
+sendFragment (Token _ _ _ _ _ _ _ qresp) msg=   putMVar qresp  . Fragm $  msg
 
 {-# DEPRECATED sendEndFragment "use \"send\" to end a fragmented response instead" #-}
 sendEndFragment :: Token -> HttpData -> IO()
-sendEndFragment (Token _ _ _ _ _ _ qresp) msg=  putMVar qresp  $ EndFragm   msg
+sendEndFragment (Token _ _ _ _ _ _ _ qresp) msg=  putMVar qresp  $ EndFragm   msg
 
 --emptyReceive (Token  queue _  _)= emptyQueue queue
 receive ::  Typeable a => Token -> IO a
 receive t= receiveReq t >>= return  . fromReq
 
-flushResponse t@(Token _ _ _ _ _ _ qresp)= do
-   empty <-  isEmptyMVar  qresp
-   when (not empty) $ takeMVar qresp >> return ()
+flushResponse t@(Token _ _ _ _ _ _ _ qresp)= tryTakeMVar qresp
 
-flushRec t@(Token _ _ _ _ _ queue _)= do
-   empty <-  isEmptyMVar  queue
-   when (not empty) $ takeMVar queue >> return ()    -- !> "flushRec"
+
+flushRec t@(Token _ _ _ _ _ _ queue _)= tryTakeMVar  queue   -- !> "flushRec"
 
 receiveReq ::  Token -> IO Req
-receiveReq t@(Token _ _ _ _ _ queue  _)=   readMVar queue   -- !> (">>>>>> receiveReq "++ thread t)
+receiveReq t@(Token _ _ _ _ _ _ queue  _)= do
+ r <-   readMVar queue      -- !> (">>>>>> receiveReq ")
+ return r                   -- !> "receiveReq >>>>"
 
 fromReq :: Typeable a => Req -> a
 fromReq  (Req x) = x' where
@@ -301,7 +301,7 @@ delMsgHistory t = do
 stateless ::  (Params -> IO HttpData) -> Flow
 stateless f = transient proc
   where
-  proc t@(Token _ _ _ _ _ queue qresp) = loop t queue qresp
+  proc t@(Token _ _ _ _ _ _ queue qresp) = loop t queue qresp
   loop t queue qresp=do
     req <- takeMVar queue                       -- !> (">>>>>> stateless " ++ thread t)
     resp <- f (getParams req)
@@ -334,13 +334,13 @@ getMessageFlows = readMVar _messageFlows
 delMessageFlow wfname= modifyMVar_ _messageFlows (\ms -> return $ M.delete wfname ms)
 
 
-sendToMF Token{..} msg= putMVar tsendq $ Req msg
+sendToMF Token{..} msg= putMVar tsendq (Req msg)  -- !> "sendToMF"
 
 --recFromMF :: (Typeable a,  Typeable c, Processable a) => Token -> a -> IO c
-recFromMF Token{..}  = do  
-    m <-  takeMVar trecq                  -- !> ("<<<<<< recFromMF"++ thread t)
+recFromMF t@Token{..}  = do  
+    m <-  takeMVar trecq                          -- !> "recFromMF <<<<<< "
     case m  of
-        Resp r  ->  return  r              -- !> ("recibido  recFromMF"++ thread t)
+        Resp r  ->  return  r                      -- !> "<<<<<<   recFromMF"
         Fragm r -> do
                    result <- getStream   r
                    return  result
@@ -374,12 +374,19 @@ msgScheduler
   => a  -> IO (HttpData, ThreadId)
 msgScheduler x  = do
   token <- getToken x
+  th <- myThreadId
   let wfname = takeWhile (/='/') $ pwfname x
-  sendToMF token x                                 
-  th <- startMessageFlow wfname token     
-  r  <- recFromMF token                            --  !> let HttpData _ _ r1=r in unpack r1 
-  return (r,th)
+  criticalSection (tblock token) $ do
+     sendToMF token x                             -- !> show th                             
+     th <- startMessageFlow wfname token     
+     r  <- recFromMF token                          
+     return (r,th)                                --  !> let HttpData _ _ r1=r in B.unpack r1 
   where
+  criticalSection mv f= bracket
+      (takeMVar mv)
+      (putMVar mv)
+      $ const $ f
+      
   --start the flow if not started yet
   startMessageFlow wfname token = 
    forkIO $ do
@@ -512,12 +519,12 @@ userRegister u p= liftIO $ do
 
 newtype Config= Config1 (M.Map String String) deriving (Read,Show,Typeable)
 
-defConfig= Config1 $ M.fromList
-            [("cadmin","admin")
-            ,("cjqueryScript","//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js")
-            ,("cjqueryCSS","//code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css")
-            ,("cjqueryUI","//code.jquery.com/ui/1.10.3/jquery-ui.js")
-            ,("cnicEditUrl","//js.nicedit.com/nicEdit-latest.js")]
+--defConfig= Config1 $ M.fromList
+--            [("cadmin","admin")
+--            ,("cjqueryScript","//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js")
+--            ,("cjqueryCSS","//code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css")
+--            ,("cjqueryUI","//code.jquery.com/ui/1.10.3/jquery-ui.js")
+--            ,("cnicEditUrl","//js.nicedit.com/nicEdit-latest.js")]
 
 data Config0 = Config{cadmin :: UserStr           -- ^ Administrator name
                      ,cjqueryScript :: String     -- ^ URL of jquery
@@ -547,7 +554,7 @@ config= unsafePerformIO $! do
   Config1 c <- atomically $! readConfig
   return c
 
-readConfig=  readDBRef rconf `onNothing` return defConfig
+readConfig=  readDBRef rconf `onNothing`  return (Config1 $ M.fromList []) -- defConfig
 
 readOld :: ByteString -> Config
 readOld s= (change . read . B.unpack $ s)
@@ -564,9 +571,10 @@ instance  Serializable Config where
                    `CE.catch` \(e :: SomeException) ->  return (readOld s)
   setPersist = \_ -> Just filePersist
 
--- | read a config variable from the config
-getConfig s= case M.lookup s config of
-     Nothing -> ""
+-- | read a config variable from the config file \"mflow.config\". if it is not set, uses the second parameter and
+-- add it to the configuration list, so next time the administrator can change it in the configuration file
+getConfig k v= case M.lookup k config of
+     Nothing -> unsafePerformIO $ setConfig k v >> return v
      Just s  -> s
 
 -- | set an user-defined config variable
@@ -594,7 +602,7 @@ setAdminUser user password= liftIO $  do
 
 
 
-getAdminName= getConfig "cadmin" 
+getAdminName= getConfig "cadmin"  "admin"
 
 
 --------------- ERROR RESPONSES --------

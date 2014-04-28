@@ -5,17 +5,17 @@ widgets for templating, content management and multilanguage. And some primitive
 to create other active widgets.
 -}
 
-{-# LANGUAGE UndecidableInstances,ExistentialQuantification
+{-# LANGUAGE  UndecidableInstances,ExistentialQuantification
             , FlexibleInstances, OverlappingInstances, FlexibleContexts
             , OverloadedStrings, DeriveDataTypeable , ScopedTypeVariables
-            , TemplateHaskell #-}
+             #-}
 
 
 
 
 module MFlow.Forms.Widgets (
 -- * Ajax refreshing of widgets
-autoRefresh, noAutoRefresh, appendUpdate, prependUpdate, push, UpdateMethod(..)
+autoRefresh, noAutoRefresh, appendUpdate, prependUpdate, push, UpdateMethod(..), lazy
 
 -- * JQueryUi widgets
 ,datePicker, getSpinner, wautocomplete, wdialog,
@@ -46,6 +46,7 @@ import MFlow.Forms
 import MFlow.Forms.Internals
 import Data.Monoid
 import Data.ByteString.Lazy.UTF8 as B hiding (length,span)
+import Data.ByteString.Lazy.Char8 (unpack)
 import Control.Monad.Trans
 import Data.Typeable
 import Data.List
@@ -68,6 +69,7 @@ import Control.Exception
 import MFlow.Forms.Cache
 
 
+
 --jqueryScript= "//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"
 --jqueryScript1="//code.jquery.com/jquery-1.9.1.js"
 --
@@ -77,10 +79,10 @@ import MFlow.Forms.Cache
 --jqueryUI1= "//code.jquery.com/ui/1.9.1/jquery-ui.js"
 --jqueryUI= "//code.jquery.com/ui/1.10.3/jquery-ui.js"
 
-jqueryScript= getConfig "cjqueryScript"
-jqueryCSS= getConfig "cjqueryCSS"
-jqueryUI= getConfig "cjqueryUI"
-nicEditUrl= getConfig "cnicEditUrl"
+jqueryScript= getConfig "cjqueryScript" "//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"
+jqueryCSS=    getConfig "cjqueryCSS"    "//code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css"
+jqueryUI=     getConfig "cjqueryUI"     "//code.jquery.com/ui/1.10.3/jquery-ui.js"
+nicEditUrl=   getConfig "cnicEditUrl"   "//js.nicedit.com/nicEdit-latest.js"
 ------- User Management ------
 
 -- | Present a user form if not logged in. Otherwise, the user name and a logout link is presented.
@@ -107,8 +109,8 @@ maybeLogout= do
 
 
 data Medit view m a = Medit (M.Map B.ByteString [(String,View view m a)])
--- #ifdef GHC77
---  deriving Typeable
+-- #if MIN_VERSION_ghc(7, 7, 0)
+--    deriving Typeable
 -- #else
 instance (Typeable view, Typeable a) => Typeable (Medit view m a) where
   typeOf= \v -> mkTyConApp (mkTyCon3 "MFlow" "MFlow.Forms.Widgets" "Medit" )
@@ -132,7 +134,9 @@ wlogin :: (MonadIO m,Functor m,FormInput v) => View v m ()
 wlogin=  do
    username <- getCurrentUser
    if username /= anonymous  
-         then return username 
+         then do
+           private; noCache;noStore
+           return username 
          else do
           name <- getString Nothing <! hint "login name"
                                     <! size 9
@@ -305,29 +309,6 @@ wEditList holderview w xs addId = do
     delEdited sel ws'
     return r
 
---wpush
---  :: (Typeable a,
---      FormInput v) =>
---     (v -> v)
---     -> String
---     -> String
---     -> String
---     -> (String -> View v IO a)
---     -> View v IO a
---wpush  holder modifier addId expr w = do
---    id1 <- genNewId
---    let sel= "$('#" <>  fromString id1 <> "')"
---    callAjax <- ajax $ \s ->  appendWidget sel ( changeMonad $ w s)
---    let installevents= "$(document).ready(function(){\
---              \$('#"++addId++"').click(function(){"++callAjax expr ++ "});})"
---
---    requires [JScriptFile jqueryScript [installevents] ]
---
---    ws <- getEdited sel
---
---    r <-  holder  <<< firstOf ws  <! [("id",id1)]
---    delEdited sel ws
---    return r
 
 
 
@@ -413,15 +394,15 @@ wautocompleteEdit phold autocomplete  elem values= do
     where
     events textx ajaxc=
          "$(document).ready(function(){   \
-         \  $('#"++textx++"').keydown(function(){ \
-         \   if(event.keyCode == 13){  \
-             \   var v= $('#"++textx++"').val(); \
-             \   if(event.preventDefault) event.preventDefault();\
-             \   else if(event.returnValue) event.returnValue = false;" ++
+           \$('#"++textx++"').keydown(function(){ \
+            \if(event.keyCode == 13){  \
+                \var v= $('#"++textx++"').val(); \
+                \if(event.preventDefault) event.preventDefault();\
+                \else if(event.returnValue) event.returnValue = false;" ++
                  ajaxc "'f'+v"++";"++
              "   $('#"++textx++"').val('');\
-         \  }\
-         \ });\
+           \}\
+          \});\
          \});"
 
     jaddtoautocomp textx us= "$('#"<>fromString textx<>"').autocomplete({ source: " <> fromString( show us) <> "  });"
@@ -468,12 +449,6 @@ instance Serializable TField where
     setPersist =   \_ -> Just filePersist
 
 
---applyDeserializers [] k str = x where
---     x= error $ "can not deserialize "++ B.unpack str++" to type: "++ show (typeOf x)
---
---applyDeserializers (d:ds) k str=  unsafePerformIO $
---      (return $! d k str) `catch` (\(_ :: SomeException)-> return (applyDeserializers ds k str))
-
 
 writetField k s= atomically $ writeDBRef (getDBRef k) $ TField k $ toByteString s
 
@@ -500,11 +475,11 @@ htmlEdit buttons jsuser w = do
   id <- genNewId
 
   let installHtmlField=
-          "\nfunction installHtmlField(muser,cookieuser,name,buttons){\n\
-            \if(muser== '' || document.cookie.search(cookieuser+'='+muser) != -1)\n\
-                 \ bkLib.onDomLoaded(function() {\n\
-                 \   var myNicEditor = new nicEditor({buttonList : buttons});\n\
-                 \   myNicEditor.panelInstance(name);\n\
+          "\nfunction installHtmlField(muser,cookieuser,name,buttons){\
+            \if(muser== '' || document.cookie.search(cookieuser+'='+muser) != -1)\
+                  \bkLib.onDomLoaded(function() {\
+                    \var myNicEditor = new nicEditor({buttonList : buttons});\
+                    \myNicEditor.panelInstance(name);\
                  \})};\n"
       install= "installHtmlField('"++jsuser++"','"++cookieuser++"','"++id++"',"++show buttons++");\n"
 
@@ -561,32 +536,32 @@ tFieldEd  muser k  text= wfreeze k 0 $  do
 
 
 installEditField=
-          "\nfunction installEditField(muser,cookieuser,name,ipanel){\n\
-            \if(muser== '' || document.cookie.search(cookieuser+'='+muser) != -1)\n\
-                 \ bkLib.onDomLoaded(function() {\n\
-                 \   var myNicEditor = new nicEditor({fullPanel : true, onSave : function(content, id, instance) {\
-                 \        ajaxSendText(id,content);\n\
-                 \        myNicEditor.removeInstance(name);\n\
-                 \        myNicEditor.removePanel(ipanel);\n\
-                 \      }});\n\
-                 \   myNicEditor.addInstance(name);\n\
-                 \   myNicEditor.setPanel(ipanel);\n\
+          "\nfunction installEditField(muser,cookieuser,name,ipanel){\
+            \if(muser== '' || document.cookie.search(cookieuser+'='+muser) != -1)\
+                  \bkLib.onDomLoaded(function() {\
+                    \var myNicEditor = new nicEditor({fullPanel : true, onSave : function(content, id, instance) {\
+                         \ajaxSendText(id,content);\
+                         \myNicEditor.removeInstance(name);\
+                         \myNicEditor.removePanel(ipanel);\
+                       \}});\
+                    \myNicEditor.addInstance(name);\
+                    \myNicEditor.setPanel(ipanel);\
                  \})};\n"
 
-ajaxSendText = "\nfunction ajaxSendText(id,content){\n\
-        \var arr= id.split('-');\n\
-        \var k= arr[1];\n\
-        \$.ajax({\n\
-        \       type: 'POST',\n\
-        \       url: '/_texts',\n\
-        \       data: k + '='+ encodeURIComponent(content),\n\
-        \       success: function (resp) {},\n\
-        \       error: function (xhr, status, error) {\n\
-        \                var msg = $('<div>' + xhr + '</div>');\n\
-        \                id1.html(msg);\n\
-        \       }\n\
-        \   });\n\
-        \return false;\n\
+ajaxSendText = "\nfunction ajaxSendText(id,content){\
+        \var arr= id.split('-');\
+        \var k= arr[1];\
+        \$.ajax({\
+               \type: 'POST',\
+               \url: '/_texts',\
+               \data: k + '='+ encodeURIComponent(content),\
+               \success: function (resp) {},\
+               \error: function (xhr, status, error) {\
+                        \var msg = $('<div>' + xhr + '</div>');\
+                        \id1.html(msg);\
+               \}\
+           \});\
+        \return false;\
         \};\n"
 
 -- | a text field. Read the cached  field value and present it without edition.
@@ -640,7 +615,7 @@ witerate w= do
    st <- get
    let t= mfkillTime st
    let installAutoEval=
-        "$(document).ready(function(){\n\
+        "$(document).ready(function(){\
            \autoEvalLink('"++name++"',0);\
            \autoEvalForm('"++name++"');\
            \})\n"
@@ -683,78 +658,78 @@ witerate w= do
 
 
 
-autoEvalLink = "\nfunction autoEvalLink(id,ind){\n\
-    \var id1= $('#'+id);\n\
-    \var ida= $('#'+id+' a[class!=\"_noAutoRefresh\"]');\n\
-    \ida.off('click');\n\
-    \ida.click(function () {\n\
-    \ if (hadtimeout == true) return true;\n\
-    \ var pdata = $(this).attr('data-value');\n\
-    \ var actionurl = $(this).attr('href');\n\
-    \ var dialogOpts = {\n\
-    \       type: 'GET',\n\
-    \       url: actionurl+'?auto'+id+'='+ind,\n\
-    \       data: pdata,\n\
-    \       success: function (resp) {\n\
-    \           eval(resp);\n\
-    \           autoEvalLink(id,ind);\n\
-    \           autoEvalForm(id);\n\
-    \       },\n\
-    \       error: function (xhr, status, error) {\n\
-    \           var msg = $('<div>' + xhr + '</div>');\n\
-    \           id1.html(msg);\n\
-    \       }\n\
-    \   };\n\
-    \ $.ajax(dialogOpts);\n\
-    \ return false;\n\
-    \});\n\
+autoEvalLink = "\nfunction autoEvalLink(id,ind){\
+    \var id1= $('#'+id);\
+    \var ida= $('#'+id+' a[class!=\"_noAutoRefresh\"]');\
+    \ida.off('click');\
+    \ida.click(function () {\
+     \if (hadtimeout == true) return true;\
+     \var pdata = $(this).attr('data-value');\
+     \var actionurl = $(this).attr('href');\
+     \var dialogOpts = {\
+           \type: 'GET',\
+           \url: actionurl+'?auto'+id+'='+ind,\
+           \data: pdata,\
+           \success: function (resp) {\
+               \eval(resp);\
+               \autoEvalLink(id,ind);\
+               \autoEvalForm(id);\
+           \},\
+           \error: function (xhr, status, error) {\
+               \var msg = $('<div>' + xhr + '</div>');\
+               \id1.html(msg);\
+           \}\
+       \};\
+     \$.ajax(dialogOpts);\
+     \return false;\
+    \});\
   \}\n"
 
-autoEvalForm = "\nfunction autoEvalForm(id) {\n\
-    \var buttons= $('#'+id+' input[type=\"submit\"]')\n\
-    \var idform= $('#'+id+' form[class!=\"_noAutoRefresh\"]');\n\
-    \buttons.off('click');\n\
-    \buttons.click(function(event) {\n\
-    \  if ($(this).attr('class') != '_noAutoRefresh'){\n\
-    \    event.preventDefault();\n\
-    \    if (hadtimeout == true) return true;\n\
-    \    var $form = $(this).closest('form');\n\
-    \    var url = $form.attr('action');\n\
-    \    pdata = 'auto'+id+'=true&'+this.name+'='+this.value+'&'+$form.serialize();\n\
-    \    postForm(id,url,pdata);\
-    \    return false;\n\
-    \    }else {\n\
-    \      noajax= true;\n\
-    \      return true;\n\
-    \    }\n\
-    \ })\n\
+autoEvalForm = "\nfunction autoEvalForm(id) {\
+    \var buttons= $('#'+id+' input[type=\"submit\"]');\
+    \var idform= $('#'+id+' form[class!=\"_noAutoRefresh\"]');\
+    \buttons.off('click');\
+    \buttons.click(function(event) {\
+      \if ($(this).attr('class') != '_noAutoRefresh'){\
+        \event.preventDefault();\
+        \if (hadtimeout == true) return true;\
+        \var $form = $(this).closest('form');\
+        \var url = $form.attr('action');\
+        \pdata = 'auto'+id+'=true&'+this.name+'='+this.value+'&'+$form.serialize();\
+        \postForm(id,url,pdata);\
+        \return false;\
+        \}else {\
+          \noajax= true;\
+          \return true;\
+        \}\
+     \})\
     \\n\
-    \var noajax;\n\
-    \idform.submit(function(event) {\n\
-    \ if(noajax) {noajax=false; return true;}\n\
-    \   event.preventDefault();\n\
-    \   var $form = $(this);\n\
-    \   var url = $form.attr('action');\n\
-    \   var pdata = 'auto'+id+'=true&' + $form.serialize();\n\
-    \   postForm(id,url,pdata);\n\
-    \   return false;})\n\
-    \}\n\
-    \function postForm(id,url,pdata){\n\
-        \var id1= $('#'+id);\n\
-         \$.ajax({\n\
-            \type: 'POST',\n\
-            \url: url,\n\
-            \data: 'auto'+id+'=true&'+this.name+'='+this.value+'&'+pdata,\n\
-            \success: function (resp) {\n\
-                \eval(resp);\n\
-                \autoEvalLink(id,0);\n\
-                \autoEvalForm(id);\n\
-            \},\n\
-            \error: function (xhr, status, error) {\n\
-                \var msg = $('<div>' + xhr + '</div>');\n\
-                \id1.html(msg);\n\
-            \}\n\
-        \});\n\
+    \var noajax;\
+    \idform.submit(function(event) {\
+     \if(noajax) {noajax=false; return true;}\
+       \event.preventDefault();\
+       \var $form = $(this);\
+       \var url = $form.attr('action');\
+       \var pdata = 'auto'+id+'=true&' + $form.serialize();\
+       \postForm(id,url,pdata);\
+       \return false;})\
+    \}\
+    \function postForm(id,url,pdata){\
+        \var id1= $('#'+id);\
+         \$.ajax({\
+            \type: 'POST',\
+            \url: url,\
+            \data: 'auto'+id+'=true&'+this.name+'='+this.value+'&'+pdata,\
+            \success: function (resp) {\
+                \eval(resp);\
+                \autoEvalLink(id,0);\
+                \autoEvalForm(id);\
+            \},\
+            \error: function (xhr, status, error) {\
+                \var msg = $('<div>' + xhr + '</div>');\
+                \id1.html(msg);\
+            \}\
+        \});\
        \}"
 
 
@@ -786,6 +761,12 @@ dField w= View $ do
 noid= "noid"
 
 
+-- | permits the edition of the rendering of a widget at run time. Once saved, the new rendering
+-- becomes the new rendering of the widget for all the users. You must keep the active elements of the
+-- template
+--
+-- the first parameter is the user that has permissions for edition. the second is a key that
+-- identifies the template.
 edTemplate
   :: (MonadIO m, FormInput v, Typeable a) =>
       UserStr -> Key -> View v m a -> View v m a
@@ -794,7 +775,7 @@ edTemplate muser k w=  View $ do
 
    let ipanel= nam++"panel"
        name= nam++"-"++k
-       install= "\ninstallEditField('"++muser++"','"++cookieuser++"','"++name++"','"++ipanel++"');\n"
+       install= "installEditField('"++muser++"','"++cookieuser++"','"++name++"','"++ipanel++"');\n"
 
 
    requires [JScriptFile nicEditUrl [install]
@@ -863,10 +844,10 @@ datePicker conf jd= do
 wdialog :: (Monad m, FormInput v) => String -> String -> View v m a -> View v m a
 wdialog conf title w= do
     id <- genNewId
-    let setit= "$(document).ready(function() {\n\
-                   \$('#"++id++"').dialog "++ conf ++";\n\
-                   \var idform= $('#"++id++" form');\n\
-                   \idform.submit(function(){$(this).dialog(\"close\")})\n\
+    let setit= "$(document).ready(function() {\
+                   \$('#"++id++"').dialog "++ conf ++";\
+                   \var idform= $('#"++id++" form');\
+                   \idform.submit(function(){$(this).dialog(\"close\")})\
                 \});"
 
     modify $ \st -> st{needForm= HasForm}
@@ -946,18 +927,17 @@ update :: (MonadIO m, FormInput v)
   => B.ByteString
   -> View v m a
   -> View v m a
-update method w= View $ do
+update method w= do
     id <- genNewId
     st <- get
 
     let t = mfkillTime st -1
 
         installscript=
-            "$(document).ready(function(){\n"
-               ++ "ajaxGetLink('"++id++"');"
-               ++ "ajaxPostForm('"++id++"');"
-               ++ "})\n"
-    FormElm form mr <- runView $ insertForm w
+            "$(document).ready(function(){\
+                 \ajaxGetLink('"++id++"');\
+                 \ajaxPostForm('"++id++"');\
+                 \});"
     st <- get
     let insync =  inSync st
     let env= mfEnv st
@@ -968,113 +948,117 @@ update method w= View $ do
                   ,JScript ajaxGetLink
                   ,JScript ajaxPostForm
                   ,JScriptFile jqueryScript [installscript]] 
-         return $ FormElm (ftag "div" form `attrs` [("id",id)]) mr 
+         (ftag "div" <<< insertForm w) <! [("id",id)] 
 
-      else do
+      else View $ do
          let t= mfToken st            -- !> "JUST"
-
+         modify $ \s -> s{mfHttpHeaders=[]} -- !> "just"
+         resetCachePolicy
+         FormElm form mr <- runView $ insertForm w
+         setCachePolicy
+         st' <- get
          let HttpData ctype c s= toHttpData $ method <> " " <> toByteString  form
                           
          (liftIO . sendFlush t $ HttpData (ctype ++
-                                mfHttpHeaders st) (mfCookies st ++ c) s)
-         put st{mfAutorefresh=True,newAsk=True}
+                                mfHttpHeaders st') (mfCookies st' ++ c) s)
+         put st'{mfAutorefresh=True,newAsk=True}
             
          return $ FormElm mempty Nothing 
 
   where
   -- | adapted from http://www.codeproject.com/Articles/341151/Simple-AJAX-POST-Form-and-AJAX-Fetch-Link-to-Modal
---    \       url: actionurl+'?bustcache='+ new Date().getTime()+'&auto'+id+'=true',\n\
-  ajaxGetLink = "\nfunction ajaxGetLink(id){\n\
-    \var id1= $('#'+id);\n\
-    \var ida= $('#'+id+' a[class!=\"_noAutoRefresh\"]');\n\
-    \ida.off('click');\n\
-    \ida.click(function () {\n\
-    \if (hadtimeout == true) return true;\n\
-    \var pdata = $(this).attr('data-value');\n\
-    \var actionurl = $(this).attr('href');\n\
-    \var dialogOpts = {\n\
-    \       type: 'GET',\n\
-    \       url: actionurl+'?auto'+id+'=true',\n\
-    \       data: pdata,\n\
-    \       success: function (resp) {\n\
-    \            var ind= resp.indexOf(' ');\n\
-    \            var dat= resp.substr(ind);\n\
-    \            var method= resp.substr(0,ind);\n\
-    \            if(method== 'html')id1.html(dat);\n\
-    \            else if (method == 'append') id1.append(dat);\n\
-    \            else if (method == 'prepend') id1.prepend(dat);\n\
-    \            else $(':root').html(resp);\n\
-    \            ajaxGetLink(id);\n\
-    \            ajaxPostForm(id);\n\
-    \       },\n\
-    \       error: function (xhr, status, error) {\n\
-    \           var msg = $('<div>' + xhr + '</div>');\n\
-    \           id1.html(msg);\n\
-    \       }\n\
-    \   };\n\
-    \$.ajax(dialogOpts);\n\
-    \return false;\n\
-    \});\n\
+--           \url: actionurl+'?bustcache='+ new Date().getTime()+'&auto'+id+'=true',\n\
+  ajaxGetLink = "\nfunction ajaxGetLink(id){\
+    \var id1= $('#'+id);\
+    \var ida= $('#'+id+' a[class!=\"_noAutoRefresh\"]');\
+    \ida.off('click');\
+    \ida.click(function () {\
+    \if (hadtimeout == true) return true;\
+    \var pdata = $(this).attr('data-value');\
+    \var actionurl = $(this).attr('href');\
+    \var dialogOpts = {\
+           \type: 'GET',\
+           \url: actionurl+'?auto'+id+'=true',\
+           \data: pdata,\
+           \success: function (resp) {\
+                \var ind= resp.indexOf(' ');\
+                \var dat= resp.substr(ind);\
+                \var method= resp.substr(0,ind);\
+                \if(method== 'html')id1.html(dat);\
+                \else if (method == 'append') id1.append(dat);\
+                \else if (method == 'prepend') id1.prepend(dat);\
+                \else $(':root').html(resp);\
+                \ajaxGetLink(id);\
+                \ajaxPostForm(id);\
+           \},\
+           \error: function (xhr, status, error) {\
+               \var msg = $('<div>' + xhr + '</div>');\
+               \id1.html(msg);\
+           \}\
+       \};\
+    \$.ajax(dialogOpts);\
+    \return false;\
+    \});\
   \}\n"
 
-  ajaxPostForm = "\nfunction ajaxPostForm(id) {\n\
-    \var buttons= $('#'+id+' input[type=\"submit\"]')\n\
-    \var idform= $('#'+id+' form[class!=\"_noAutoRefresh\"]');\n\
-    \buttons.off('click');\n\
-    \buttons.click(function(event) {\n\
-    \  if ($(this).attr('class') != '_noAutoRefresh'){\n\
-    \    event.preventDefault();\n\
-    \    if (hadtimeout == true) return true;\n\
-    \    var $form = $(this).closest('form');\n\
-    \    var url = $form.attr('action');\n\
-    \    pdata = 'auto'+id+'=true&'+this.name+'='+this.value+'&'+$form.serialize();\n\
-    \    postForm(id,url,pdata);\
-    \    return false;\n\
-    \    }else {\n\
-    \      noajax= true;\n\
-    \      return true;\n\
-    \    }\n\
-    \ })\n\
+  ajaxPostForm = "\nfunction ajaxPostForm(id) {\
+    \var buttons= $('#'+id+' input[type=\"submit\"]');\
+    \var idform= $('#'+id+' form[class!=\"_noAutoRefresh\"]');\
+    \buttons.off('click');\
+    \buttons.click(function(event) {\
+      \if ($(this).attr('class') != '_noAutoRefresh'){\
+        \event.preventDefault();\
+        \if (hadtimeout == true) return true;\
+        \var $form = $(this).closest('form');\
+        \var url = $form.attr('action');\
+        \pdata = 'auto'+id+'=true&'+this.name+'='+this.value+'&'+$form.serialize();\
+        \postForm(id,url,pdata);\
+        \return false;\
+        \}else {\
+          \noajax= true;\
+          \return true;\
+        \}\
+     \})\
     \\n\
-    \var noajax;\n\
-    \idform.submit(function(event) {\n\
-    \ if(noajax) {noajax=false; return true;}\n\
-    \   event.preventDefault();\n\
-    \   var $form = $(this);\n\
-    \   var url = $form.attr('action');\n\
-    \   var pdata = 'auto'+id+'=true&' + $form.serialize();\n\
-    \   postForm(id,url,pdata);\n\
-    \   return false;})\n\
-    \}\n\
-    \function postForm(id,url,pdata){\n\
-        \var id1= $('#'+id);\n\
-        \$.ajax({\n\
-            \type: 'POST',\n\
-            \url: url,\n\
-            \data: pdata,\n\
-            \success: function (resp) {\n\
-    \            var ind= resp.indexOf(' ');\n\
-    \            var dat = resp.substr(ind);\n\
-    \            var method= resp.substr(0,ind);\n\
-    \            if(method== 'html')id1.html(dat);\n\
-    \            else if (method == 'append') id1.append(dat);\n\
-    \            else if (method == 'prepend') id1.prepend(dat);\n\
-    \            else $(':root').html(resp);\n\
-    \            ajaxGetLink(id);\n\
-    \            ajaxPostForm(id);\n\
-            \},\n\
-            \error: function (xhr, status, error) {\n\
-                \var msg = $('<div>' + xhr + '</div>');\n\
-                \id1.html(msg);\n\
-            \}\n\
-        \});\n\
+    \var noajax;\
+    \idform.submit(function(event) {\
+     \if(noajax) {noajax=false; return true;}\
+       \event.preventDefault();\
+       \var $form = $(this);\
+       \var url = $form.attr('action');\
+       \var pdata = 'auto'+id+'=true&' + $form.serialize();\
+       \postForm(id,url,pdata);\
+       \return false;})\
+    \}\
+    \function postForm(id,url,pdata){\
+        \var id1= $('#'+id);\
+        \$.ajax({\
+            \type: 'POST',\
+            \url: url,\
+            \data: pdata,\
+            \success: function (resp) {\
+                \var ind= resp.indexOf(' ');\
+                \var dat = resp.substr(ind);\
+                \var method= resp.substr(0,ind);\
+                \if(method== 'html')id1.html(dat);\
+                \else if (method == 'append') id1.append(dat);\
+                \else if (method == 'prepend') id1.prepend(dat);\
+                \else $(':root').html(resp);\
+                \ajaxGetLink(id);\
+                \ajaxPostForm(id);\
+            \},\
+            \error: function (xhr, status, error) {\
+                \var msg = $('<div>' + xhr + '</div>');\
+                \id1.html(msg);\
+            \}\
+        \});\
        \};"
 
 
 
 
 timeoutscript t=
-     "\nvar hadtimeout=false;\n\
+     "\nvar hadtimeout=false;\
      \if("++show t++" > 0)setTimeout(function() {hadtimeout=true; }, "++show (t*1000)++");\n"
 
 
@@ -1175,38 +1159,38 @@ push method' wait w= push' . map toLower $ show method'
 
 
 
-   ajaxPush procname=" function ajaxPush(id,waititime){\n\
-    \var cnt=0; \n\
-    \var id1= $('#'+id);\n\
-    \var idstatus= $('#'+id+'status');\n\
-    \var ida= $('#'+id+' a');\n\
-    \   var actionurl='/"++procname++"';\n\
-    \   var dialogOpts = {\n\
-    \       cache: false,\n\
-    \       type: 'GET',\n\
-    \       url: actionurl,\n\
-    \       data: '',\n\
-    \       success: function (resp) {\n\
-    \         idstatus.html('')\n\
-    \         cnt=0;\n\
-    \         id1."++method++"(resp);\n\
-    \         ajaxPush1();\n\
-    \       },\n\
-    \       error: function (xhr, status, error) {\n\
-    \            cnt= cnt + 1;\n\
-    \            if  (false) \n\
-    \               idstatus.html('no more retries');\n\
-    \            else {\n\
-    \               idstatus.html('waiting');\n\
-    \               setTimeout(function() { idstatus.html('retrying');ajaxPush1(); }, waititime);\n\
-    \            }\n\
-    \       }\n\
-    \   };\n\
-    \function ajaxPush1(){\n\
-    \   $.ajax(dialogOpts);\n\
-    \   return false;\n\
-    \ }\n\
-    \ ajaxPush1();\n\
+   ajaxPush procname=" function ajaxPush(id,waititime){\
+    \var cnt=0; \
+    \var id1= $('#'+id);\
+    \var idstatus= $('#'+id+'status');\
+    \var ida= $('#'+id+' a');\
+       \var actionurl='/"++procname++"';\
+       \var dialogOpts = {\
+           \cache: false,\
+           \type: 'GET',\
+           \url: actionurl,\
+           \data: '',\
+           \success: function (resp) {\
+             \idstatus.html('')\
+             \cnt=0;\
+             \id1."++method++"(resp);\
+             \ajaxPush1();\
+           \},\
+           \error: function (xhr, status, error) {\
+                \cnt= cnt + 1;\
+                \if  (false) \
+                   \idstatus.html('no more retries');\
+                \else {\
+                   \idstatus.html('waiting');\
+                   \setTimeout(function() { idstatus.html('retrying');ajaxPush1(); }, waititime);\
+                \}\
+           \}\
+       \};\
+    \function ajaxPush1(){\
+       \$.ajax(dialogOpts);\
+       \return false;\
+     \}\
+     \ajaxPush1();\
   \}"
 
 
@@ -1219,9 +1203,9 @@ getSpinner
      String -> Maybe a -> View view m a
 getSpinner conf mv= do
     id <- genNewId
-    let setit=   "$(document).ready(function() {\n\
-                 \var spinner = $( '#"++id++"' ).spinner "++conf++";\n\
-                 \spinner.spinner( \"enable\" );\n\
+    let setit=   "$(document).ready(function() {\
+                 \var spinner = $( '#"++id++"' ).spinner "++conf++";\
+                 \spinner.spinner( \"enable\" );\
                  \});"
     requires
       [CSSFile      jqueryCSS
@@ -1231,5 +1215,105 @@ getSpinner conf mv= do
     getTextBox mv <! [("id",id)]
 
 
+
+-- | takes as argument a widget and delay the load until it is visible. The renderring to
+-- be shown during the load is the specified in the first parameter. The resulting lazy
+-- widget behaves programatically in the same way.
+--
+-- It can lazily load recursively. It means that if the loaded widget has a lazy statement,
+-- it will be honored as well.
+--
+-- Because a widget can contain arbitrary HTML, images or javascript, lazy can be used to lazy
+-- load anything.
+--
+-- To load a image:
+--
+-- lazy temprendering $ wraw ( img ! href imageurl)
+--
+-- or
+--
+-- lazy temprendering $ img ! href imageurl ++> noWidget
+lazy :: (FormInput v,Functor m,MonadIO m) => v -> View v m a -> View v m a
+lazy v w=  do
+    id <- genNewId
+    st <- get
+    let path = currentPath st
+        env = mfEnv st
+        r= lookup ("auto"++id) env   
+        t = mfkillTime st -1
+        installscript =  "$(document).ready(function(){\
+                \function lazyexec(){lazy('"++id++"','"++ path ++"',lazyexec)};\
+                \$(window).one('scroll',lazyexec);\
+                \$(window).trigger('scroll');\
+                 \});"
+
+--        installscript2= "$(window).one('scroll',function(){\
+--                \function lazyexec(){lazy('"++id++"','"++ path ++"',lazyexec)};\
+--                \lazyexec()});"
+
+
+    if r == Nothing  then View $ do
+      requires [JScript lazyScript
+                  ,JScriptFile jqueryScript [installscript,scrollposition]]
+      FormElm rendering mx <- runView w
+      return $ FormElm (ftag "div" v `attrs` [("id",id)]) mx
+         
+      else View $ do
+         modify $ \s -> s{mfHttpHeaders=[], mfRequirements=[]} 
+         resetCachePolicy
+         st' <- get
+         FormElm form mx <- runView w
+         setCachePolicy 
+         let t= mfToken st'
+         reqs <- installAllRequirements
+         let HttpData ctype c s= toHttpData $ toByteString  form
+         liftIO . sendFlush t $ HttpData (ctype ++
+                                mfHttpHeaders st') (mfCookies st' ++ c)
+                              $ toByteString reqs <> s  -- !> (unpack $ toByteString reqs)
+         put st'{mfAutorefresh=True,inSync= True}
+
+         return $ FormElm mempty mx
+
+
+    where
+
+--    waitAndExecute= "function waitAndExecute(sym,f) {\
+--        \if (eval(sym)) {f();}\
+--          \else {setTimeout(function() {waitAndExecute(sym,f)}, 50);}\
+--        \}\n"
+
+    scrollposition= "$.fn.scrollposition= function(){\
+       \var pos= $(this).position();\
+       \if (typeof(pos)==='undefined') {return 1;}\
+       \else{\
+         \return pos.top - $( window ).scrollTop() - $( window ).height();\
+         \}};"
+
+    lazyScript= "function lazy (id,actionurl,f) {\
+     \var now = new Date().getTime(),\
+         \id1= $('#'+id),\
+         \lastCall= 0;\
+     \diff = now - lastCall;\
+     \if (diff < 5000) {\
+        \$(window).one('scroll',f);}\
+     \else {\
+      \lastCall = now;\
+    \if(id1.scrollposition() > 0){\
+    \$(window).one('scroll',f);}\
+    \else{\
+    \var dialogOpts = {\
+           \type: 'GET',\
+           \url: actionurl+'?auto'+id+'=true',\
+           \success: function (resp) {\
+                \id1.html(resp);\
+                \$(window).trigger('scroll');\
+           \},\
+           \error: function (xhr, status, error) {\
+               \var msg = $('<div>' + xhr + '</div>');\
+               \id1.html(msg);\
+           \}\
+       \};\
+    \$.ajax(dialogOpts);\
+    \}}};"
 
 

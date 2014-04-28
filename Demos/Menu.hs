@@ -71,10 +71,11 @@ data Options= Wiki | CountI | CountS | Radio
             | BasicWidgets | MonadicWidgets | DynamicWidgets | LoginLogout
             | Templates | RuntimeTemplates | LoginWidget | CacheDataset
             | ComplexThings | GenerateForm | GenerateFormUndo | GenerateFormUndoMsg
+            | LazyLoad
             deriving (Bounded, Enum,Read, Show,Typeable)
 
 
-auto w= autoRefresh $ maxAge 300 >> w 
+auto w= autoRefresh $ public >> maxAge 300 >> w 
 
 mainMenu :: View Html IO Options
 mainMenu= pageFlow "" $      -- bad practice: pageflows should have a non null string
@@ -268,6 +269,9 @@ mainMenu= pageFlow "" $      -- bad practice: pageflows should have a non null s
    <|> (li <<< (absLink CacheDataset << b "HTTP caching")
            <++ " Navigating an infinite dataset in the browser by caching javascript programs\
                \ using the new composable caching directives")
+
+   <|> li <<< absLink LazyLoad << b "Lazy loading of widgets, html, images etc"
+
    <|> (auto $ li <<< do 
           absLink ComplexThings << b "Really complex things" <++ " Reference impementations for GUI-like apps"
           ul <<< (hr
