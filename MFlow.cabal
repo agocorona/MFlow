@@ -108,7 +108,7 @@ library
                     bytestring,
                     case-insensitive ,
                     clientsession == 0.9.0.3,
-                    conduit == 1.0.9.3,
+                    conduit == 1.0.9.3 ,
                     containers ,
                     directory ,
                     extensible-exceptions ,
