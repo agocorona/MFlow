@@ -8,7 +8,7 @@ to create other active widgets.
 {-# LANGUAGE UndecidableInstances,ExistentialQuantification
             , FlexibleInstances, OverlappingInstances, FlexibleContexts
             , OverloadedStrings, DeriveDataTypeable , ScopedTypeVariables
-            , TemplateHaskell #-}
+            , TemplateHaskell, CPP #-}
 
 
 
@@ -107,9 +107,9 @@ maybeLogout= do
 
 
 data Medit view m a = Medit (M.Map B.ByteString [(String,View view m a)])
--- #ifdef GHC77
---  deriving Typeable
--- #else
+#if defined( __GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 707
+deriving Typeable
+#else
 instance (Typeable view, Typeable a) => Typeable (Medit view m a) where
   typeOf= \v -> mkTyConApp (mkTyCon3 "MFlow" "MFlow.Forms.Widgets" "Medit" )
                 [typeOf (tview v)
@@ -121,7 +121,7 @@ instance (Typeable view, Typeable a) => Typeable (Medit view m a) where
       tm= undefined
       ta :: Medit v m a -> a
       ta= undefined
--- #endif
+#endif
 
 -- | If not logged, it present a page flow which askm  for the user name, then the password if not logged
 --
@@ -160,8 +160,12 @@ getEdited1 id= do
 
 -- | Return the list of edited widgets (added by the active widgets) for a given identifier
 getEdited
-  :: (Typeable v, Typeable a, MonadState (MFlowState view) m) =>
-     B.ByteString -> m [View v m1 a]
+#if defined( __GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 707
+    :: (Typeable v, Typeable a, Typeable m1, MonadState (MFlowState view) m) =>
+#else
+    :: (Typeable v, Typeable a, MonadState (MFlowState view) m) =>
+#endif
+      B.ByteString -> m [View v m1 a]
 getEdited id= do
   r <- getEdited1 id
   let (_,ws)= unzip r
@@ -169,10 +173,14 @@ getEdited id= do
 
 -- | Deletes the list of edited widgets for a certain identifier and with the type of the witness widget parameter
 delEdited
-  :: (Typeable v, Typeable a, MonadIO m,
-      MonadState (MFlowState view) m)
-     => B.ByteString           -- ^ identifier
-     -> [View v m1 a] -> m ()  -- ^ withess
+#if defined( __GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 707
+    :: (Typeable v, Typeable a, MonadIO m, Typeable m1,
+#else
+    :: (Typeable v, Typeable a, MonadIO m,
+#endif
+  MonadState (MFlowState view) m)
+       => B.ByteString           -- ^ identifier
+         -> [View v m1 a] -> m ()  -- ^ withess
 delEdited id witness=do
     Medit stored <-  getSessionData `onNothing` return (Medit (M.empty))
     let (ks, ws)=  unzip $ fromMaybe [] $ M.lookup id stored
@@ -196,9 +204,12 @@ addEdited id w= do
     ws <- getEdited1 id
     setEdited id (w:ws)
 
-
+#if defined( __GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 707
+modifyWidget :: (MonadIO m,Executable m,Typeable a,FormInput v, Typeable Identity, Typeable m)
+#else
 modifyWidget :: (MonadIO m,Executable m,Typeable a,FormInput v)
-           => B.ByteString -> B.ByteString -> View v Identity a -> View v m B.ByteString
+#endif
+  => B.ByteString -> B.ByteString -> View v Identity a -> View v m B.ByteString
 modifyWidget selector modifier  w = View $ do
      ws <- getEdited selector
      let n =  length (ws `asTypeOf` [w])
@@ -236,7 +247,11 @@ modifyWidget selector modifier  w = View $ do
 -- >    return  r
 
 prependWidget
+#if defined( __GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 707 
+ :: (Typeable a, MonadIO m, Executable m, FormInput v, Typeable Identity, Typeable m)
+#else
   :: (Typeable a, MonadIO m, Executable m, FormInput v)
+#endif
   => B.ByteString           -- ^ jquery selector
   -> View v Identity a      -- ^ widget to prepend
   -> View v m B.ByteString  -- ^ string returned with the jquery string to be executed in the browser
@@ -244,13 +259,21 @@ prependWidget sel w= modifyWidget sel "prepend" w
 
 -- | Like 'prependWidget' but append the widget instead of prepend.
 appendWidget
-  :: (Typeable a, MonadIO m, Executable m, FormInput v) =>
-     B.ByteString -> View v Identity a -> View v m B.ByteString
+#if defined( __GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 707
+  :: (Typeable a, MonadIO m, Executable m, FormInput v, Typeable Identity, Typeable m) =>
+#else
+     :: (Typeable a, MonadIO m, Executable m, FormInput v) =>
+#endif
+        B.ByteString -> View v Identity a -> View v m B.ByteString
 appendWidget sel w= modifyWidget sel "append" w
 
 -- | L  ike 'prependWidget' but set the entire content of the selector instead of prepending an element
 setWidget
-  :: (Typeable a, MonadIO m, Executable m, FormInput v) =>
+#if defined( __GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 707
+  :: (Typeable a, MonadIO m, Executable m, FormInput v, Typeable m,  Typeable Identity) =>
+#else
+   :: (Typeable a, MonadIO m, Executable m, FormInput v) =>
+#endif
      B.ByteString -> View v Identity a -> View v m B.ByteString
 setWidget sel w= modifyWidget sel "html" w
 
@@ -283,7 +306,11 @@ setWidget sel w= modifyWidget sel "html" w
 
 wEditList :: (Typeable a,Read a
              ,FormInput view
+#if defined( __GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 707
+             ,Functor m,MonadIO m, Executable m, Typeable m, Typeable Identity)
+#else
              ,Functor m,MonadIO m, Executable m)
+#endif
           => (view ->view)     -- ^ The holder tag
           -> (Maybe String -> View view Identity a) -- ^ the contained widget, initialized  by a string
           -> [String]          -- ^ The initial list of values.
@@ -376,7 +403,11 @@ wautocomplete mv autocomplete  = do
 -- >               ++> whidden( fromJust x)
 wautocompleteEdit
     :: (Typeable a, MonadIO m,Functor m, Executable m
+#if defined( __GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 707
+     , FormInput v, Typeable m, Typeable Identity)
+#else
      , FormInput v)
+#endif
     => String                                 -- ^ the initial text of the box
     -> (String -> IO [String])                -- ^ the autocompletion procedure: receives a prefix, return a list of options.
     -> (Maybe String  -> View v Identity a)   -- ^ the widget to add, initialized with the string entered in the box
@@ -429,7 +460,11 @@ wautocompleteEdit phold autocomplete  elem values= do
 -- | A specialization of 'wutocompleteEdit' which make appear each chosen option with
 -- a checkbox that deletes the element when uncheched. The result, when submitted, is the list of selected elements.
 wautocompleteList
+#if defined( __GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 707
+  :: (Functor m, MonadIO m, Executable m, FormInput v, Typeable m, Typeable Identity) =>
+#else
   :: (Functor m, MonadIO m, Executable m, FormInput v) =>
+#endif
      String -> (String -> IO [String]) -> [String] -> View v m [String]
 wautocompleteList phold serverproc values=
  wautocompleteEdit phold serverproc  wrender1 values
