@@ -115,7 +115,7 @@ library
                     http-types ,
                     monadloc ,
                     mtl ,
-                    old-time ,
+                    old-time,
                     parsec ,
                     random ,
                     stm ,
