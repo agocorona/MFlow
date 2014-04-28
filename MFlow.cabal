@@ -101,8 +101,8 @@ library
                    extensible-exceptions ,  base >4.0 && <5,
                    bytestring , containers , RefSerialize , TCache ,
                    stm >2, time, old-time , vector , directory ,
-                   utf8-string , wai >=2.0.0, case-insensitive ,
-                   http-types , conduit ,conduit-extra, text , parsec , warp ,
+                   utf8-string , wai , case-insensitive ,
+                   http-types , conduit ,conduit-extra, text , parsec , warp == 2.1.1 ,
                    warp-tls , random , blaze-html , blaze-markup ,
                    monadloc , clientsession ==0.9.0.3
     exposed-modules: MFlow MFlow.Wai.Blaze.Html.All MFlow.Forms

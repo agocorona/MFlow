@@ -93,9 +93,6 @@ instance (Bounded a, Enum a) => Generate a where
           typeOfIO = undefined
 
 -- | run a list of flows with a number of simultaneous threads
-
-
-
 runTest :: [(Int, Flow)] -> IO () 
 runTest ps= do
   mapM_ (forkIO . run1) ps
@@ -109,10 +106,9 @@ runTest1 f = do
     name <- generate
     x <- generate
     y <- generate
-    z <- generate 
-    r1<- liftIO newEmptyMVar
-    r2<- liftIO newEmptyMVar 
-    let t = Token x y z [] [] r1 r2
+    z <- generate
+     
+    let t = Token x y z [] [] undefined undefined undefined
     WF.start  name   f t
 
 testNumber= unsafePerformIO $ newIORef 0

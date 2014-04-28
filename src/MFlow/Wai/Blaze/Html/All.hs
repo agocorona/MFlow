@@ -40,7 +40,7 @@ import MFlow.Forms.Cache
 import Text.Blaze.Html5 hiding (map)
 import Text.Blaze.Html5.Attributes  hiding (label,span,style,cite,title,summary,step,form)
 import Network.Wai
-import Network.Wai.Handler.Warp(run,defaultSettings,Settings) -- ,setPort)
+import Network.Wai.Handler.Warp(run,defaultSettings,Settings,setPort)
 import Data.TCache
 import Text.Blaze.Internal(text)
 
