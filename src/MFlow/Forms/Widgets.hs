@@ -7,8 +7,7 @@ to create other active widgets.
 
 {-# LANGUAGE  UndecidableInstances,ExistentialQuantification
             , FlexibleInstances, OverlappingInstances, FlexibleContexts
-            , OverloadedStrings, DeriveDataTypeable , ScopedTypeVariables
-             #-}
+            , OverloadedStrings, DeriveDataTypeable , ScopedTypeVariables  #-}
 
 
 
