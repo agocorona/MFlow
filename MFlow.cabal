@@ -102,7 +102,7 @@ library
                    bytestring , containers , RefSerialize , TCache ,
                    stm >2, time, old-time , vector , directory ,
                    utf8-string , wai , case-insensitive ,
-                   http-types , conduit ,conduit-extra, text , parsec , warp == 2.1.1 ,
+                   http-types , conduit ,conduit-extra, text , parsec , warp,
                    warp-tls , random , blaze-html , blaze-markup ,
                    monadloc , clientsession ==0.9.0.3
     exposed-modules: MFlow MFlow.Wai.Blaze.Html.All MFlow.Forms
