@@ -434,17 +434,7 @@ instance Serializable TField where
     serialize (TField k content)  = content
     deserialKey k content= TField k content -- applyDeserializers [des1,des2] k bs
 
---       where
 
---       des1 _ bs=
---          let s= B.unpack bs -- read . B.unpack
---          in case s of
---               ('T':'F':'i':'e':'l':'d':' ':s)  ->
---                  let
---                      [(k,rest)] =  readsPrec 0 s
---                      [(content,_)] = readsPrec 0 $ tail rest
---                  in TField k (fromString content)
---               _ -> error "not match"
     setPersist =   \_ -> Just filePersist
 
 
