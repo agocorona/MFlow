@@ -104,7 +104,7 @@ library
                    utf8-string , wai , case-insensitive ,
                    http-types , conduit  ,conduit-extra, text , parsec , warp ,
                    warp-tls , random , blaze-html , blaze-markup ,
-                   monadloc , clientsession
+                   monadloc, clientsession
     exposed-modules: MFlow MFlow.Wai.Blaze.Html.All MFlow.Forms
                      MFlow.Forms.Admin MFlow.Cookies MFlow.Wai
                      MFlow.Forms.Blaze.Html MFlow.Forms.Test
