@@ -931,7 +931,7 @@ update method w= do
     let insync =  inSync st
     let env= mfEnv st
     let r= lookup ("auto"++id) env      
-    if r == Nothing -- || isJust mr  -- || insync == False !> (show r ++ show insync)
+    if r == Nothing
       then do
          requires [JScript $ timeoutscript t
                   ,JScript ajaxGetLink

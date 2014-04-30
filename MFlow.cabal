@@ -1,5 +1,5 @@
 name: MFlow
-version: 0.4.4
+version: 0.4.5.1
 cabal-version: >=1.8
 build-type: Simple
 license: BSD3
@@ -43,6 +43,11 @@ description: MFlow is a Web Framework that turns Web programing back into just o
              The interfaces and communications are abstract, but there are bindings for blaze-html, HSP, Text.XHtml and byteString, Hack and WAI but it can be extended to non Web based architectures.
              .
              Bindings for hack, and hsp >= 0.8,  are not compiled by Hackage, and do not appear, but are included in the package files. To use them, add then to the exported modules and execute cabal install
+             .
+             NOTE: compatibility with GHC 7.8: you will have compilation errors related with Typeable.
+             Follow the instruction in the open issues in the git repository.
+             .
+             The version 0.4.5 composable HTTP caching, lazy load, caching datasets in the browser HTTP cache
              .
              The version 0.4.0 add encrypted cookies, secure sessions, add REST web services, fixes UTF8 errors, pageFlow fixes, add onBacktrack, compensate
              .
@@ -136,5 +141,6 @@ executable demos-blaze
                     Dialog PushSample Grid Radio Actions
                     SumView AcidState SearchCart
                     InitialConfig GenerateForm GenerateFormUndo GenerateFormUndoMsg WebService
-    ghc-options: -O -iDemos -threaded -rtsopts
+                    LazyLoad
+    ghc-options: -iDemos -threaded -rtsopts
 
