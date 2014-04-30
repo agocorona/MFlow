@@ -1,5 +1,5 @@
 language: haskell
-before_install: cabal install monadloc-pp
+before_install:  cabal install monadloc-pp
 deploy:
   provider: heroku
   strategy: git
