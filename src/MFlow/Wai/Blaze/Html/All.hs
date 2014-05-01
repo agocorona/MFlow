@@ -92,6 +92,6 @@ runSecureNavigation' t s n f = do
     unless (null n) $ setNoScript n
     addMessageFlows[(n, runFlow f)]
     porti <- getPort
-    let s' = setPort porti s
+--    let s' = setPort porti s
 --    wait $ TLS.runTLS t s' waiMessageFlow
     wait $ TLS.runTLS t s{settingsPort = porti} waiMessageFlow
