@@ -1,1 +1,0 @@
-TField "ListEdit.hstop" "<h1>Edition of a list of widgets</h1><br><font face=\"helvetica\" size=\"2\">Example of a widget that edit, update and delete a list of user-defined widgets. In this case the widget is a text box with a delete checkbox attached&nbsp;</font><br>"

@@ -1,1 +1,0 @@
-TField "Grid.hstop" "<h1>Edition of a list of widgets in a table</h1><div><font size=\"2\" face=\"helvetica\">In this case wEditList is used to edit row elements with two columns: one number input and a text input. See the previous example for a detailed explanation of </font><font size=\"2\" face=\"courier new\">wEditList</font></div>"
