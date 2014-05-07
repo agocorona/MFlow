@@ -1,5 +1,5 @@
 name: MFlow
-version: 0.4.5.1
+version: 0.4.5.3
 cabal-version: >=1.8
 build-type: Simple
 license: BSD3
@@ -107,7 +107,7 @@ library
                    bytestring , containers , RefSerialize , TCache ,
                    stm >2, time, old-time , vector , directory ,
                    utf8-string , wai , case-insensitive ,
-                   http-types , conduit  ,conduit-extra, text , parsec , warp == 2.0.3.4 ,
+                   http-types , conduit  ,conduit-extra, text , parsec , warp ,
                    warp-tls , random , blaze-html , blaze-markup ,
                    monadloc, clientsession
     exposed-modules: MFlow MFlow.Wai.Blaze.Html.All MFlow.Forms
@@ -129,7 +129,7 @@ executable demos-blaze
                    hamlet , shakespeare, monadloc , aws , network , hscolour ,
                    persistent-template , persistent-sqlite , persistent ,
                    conduit ,  http-conduit , monad-logger , safecopy ,
-                   acid-state , time
+                   time
     main-is: demos-blaze.hs
     buildable: True
     hs-source-dirs: Demos
