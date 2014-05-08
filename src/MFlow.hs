@@ -72,7 +72,7 @@ btag, bhtml, bbody,Attribs, addAttrs
 , userRegister, setAdminUser, getAdminName, Auth(..),getAuthMethod, setAuthMethod
 -- * static files
 -- * config
-,Config(..), config, getConfig, setConfig
+,config, getConfig
 ,setFilesPath
 -- * internal use
 ,addTokenToList,deleteTokenInList, msgScheduler,serveFile,newFlow

@@ -1,7 +1,7 @@
 {-# LANGUAGE CPP, DeriveDataTypeable, OverloadedStrings #-}
 module LazyLoad (lazyLoad) where
 import Data.Typeable
-
+import Data.String
 -- #define ALONE -- to execute it alone, uncomment this
 #ifdef ALONE
 import MFlow.Wai.Blaze.Html.All
@@ -29,5 +29,7 @@ lazyPresentR i n
    | i == n= noWidget
    | otherwise= wlink i << p << (show i) <|> lazy spinner (lazyPresentR (i+1) n)
 
-spinner= img ! src "//ganglia.wikimedia.org/latest/img/spinner.gif"
+spinner= img ! src (fromString spinnerurl)
+ where
+ spinnerurl=  getConfig "spinner" "//ganglia.wikimedia.org/latest/img/spinner.gif"
 
