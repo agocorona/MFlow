@@ -12,7 +12,6 @@ notes.lhs
 dist
 .cabal-sandbox
 cabal.sanbox.config
-cabal.config
 
 # emacs stuff
 *~
