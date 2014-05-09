@@ -21,7 +21,7 @@ grid = do
            ++> wEditList table  row ["",""] "wEditListAdd"
            <** submitButton "submit"
            
-  page  $   p << (show r ++ " returned")
+  page  $ p << (show r ++ " returned")
       ++> wlink () (p <<  " back to menu")
       
   where

@@ -1320,10 +1320,7 @@ lazy v w=  do
 
     where
 
---    waitAndExecute= "function waitAndExecute(sym,f) {\
---        \if (eval(sym)) {f();}\
---          \else {setTimeout(function() {waitAndExecute(sym,f)}, 50);}\
---        \}\n"
+
 
     scrollposition= "$.fn.scrollposition= function(){\
        \var pos= $(this).position();\
@@ -1360,3 +1357,7 @@ lazy v w=  do
     \}}};"
 
 
+waitAndExecute= "function waitAndExecute(sym,f) {\
+        \if (eval(sym)) {f();}\
+          \else {setTimeout(function() {waitAndExecute(sym,f)}, 50);}\
+        \}\n"

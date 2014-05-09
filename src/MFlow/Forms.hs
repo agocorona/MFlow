@@ -1094,7 +1094,7 @@ ask w =  do
                    ,mfToken= mfToken st'
                    ,mfPageFlow= mfPageFlow st'
                    ,mfAjax= mfAjax st'
-                   ,mfSeqCache= mfSeqCache st'
+--                   ,mfSeqCache= mfSeqCache st'
                    ,mfData= mfData st' } 
 
 
