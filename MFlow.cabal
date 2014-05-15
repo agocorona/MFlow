@@ -1,5 +1,9 @@
 name: MFlow
+<<<<<<< HEAD
 version: 0.4.5.4
+=======
+version: 0.4.5.3
+>>>>>>> 1d5477000cb832d9bc9a5eb8af3b81298a1bcd5d
 cabal-version: >=1.8
 build-type: Simple
 license: BSD3
