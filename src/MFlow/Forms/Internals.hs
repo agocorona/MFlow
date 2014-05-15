@@ -52,7 +52,6 @@ import Data.List(stripPrefix)
 import Data.Maybe(isJust)
 import Control.Concurrent.STM
 import Data.TCache.Memoization
---import Data.String
 
 --
 ---- for traces
@@ -62,6 +61,7 @@ import Control.Exception as CE
 import Control.Concurrent 
 import Control.Monad.Loc
 
+-- debug
 --import Debug.Trace
 --(!>) = flip trace 
 
@@ -317,7 +317,7 @@ instance (FormInput view,Functor m, Monad m) => Alternative (View view m) where
                          (_,Just _) -> path2
                          _          -> path
                    if hasform then put s2{needForm= HasForm,mfPagePath= path3}
-                              else put s2{mfPagePath=path3}
+                              else put s2{mfPagePath=path3}    
                    return $ FormElm mix (k <|> x) 
 
 
@@ -777,8 +777,20 @@ setCookie n v p me=
                                      SB.fromString p,
                                      fmap (SB.fromString . show) me)):mfCookies st }
 
+setParanoidCookie :: MonadState (MFlowState view) m
+          =>  String  -- ^ name
+          -> String  -- ^ value
+          -> String  -- ^ path
+          -> Maybe Integer  -- ^ Max-Age in seconds. Nothing for a session cookie
+          -> m ()
 setParanoidCookie n v p me = setEncryptedCookie' n v p me paranoidEncryptCookie
 
+setEncryptedCookie :: MonadState (MFlowState view) m
+          =>  String  -- ^ name
+          -> String  -- ^ value
+          -> String  -- ^ path
+          -> Maybe Integer  -- ^ Max-Age in seconds. Nothing for a session cookie
+          -> m ()
 setEncryptedCookie n v p me = setEncryptedCookie' n v p me encryptCookie
 
 setEncryptedCookie' n v p me encFunc=
@@ -912,7 +924,6 @@ cachedWidget key t mf =  View .  StateT $ \s ->  do
                    ,mfRequirements=mfRequirements s2
                    ,mfPath= mfPath s2
                    ,mfPagePath= mfPagePath s2
---                   ,mfPendingPath=mfPendingPath s2  
                    ,needForm= needForm s2
                    ,mfPageFlow= mfPageFlow s2
                    ,mfSeqCache= mfSeqCache s + mfSeqCache s2 - sec}
@@ -1259,6 +1270,7 @@ readParam x1 = r
                    let err= inred . fromStr $ "can't read \"" ++ str ++ "\" as type " ++  show (typeOf x)
                    return $ NotValidated str err
 
+
 ---- Requirements
 
 
@@ -1267,7 +1279,7 @@ readParam x1 = r
 -- procedure to be called with the list of requirements.
 -- Various widgets in the page can require the same element, MFlow will install it once.
 requires rs =do
-    st <- get 
+    st <- get
     let l = mfRequirements st
 --    let rs'= map Requirement rs \\ l
     put st {mfRequirements= l ++ map Requirement rs}
@@ -1277,26 +1289,28 @@ requires rs =do
 data Requirement= forall a.(Show a,Typeable a,Requirements a) => Requirement a deriving Typeable
 
 class Requirements  a where
-   installRequirements :: (Monad m,FormInput view) => [a] ->  m view
+   installRequirements :: (Monad m,FormInput view) => Bool -> [a] ->  m view
 
 instance Show Requirement where
    show (Requirement a)= show a ++ "\n"
 
 installAllRequirements :: ( Monad m, FormInput view) =>  WState view m view
 installAllRequirements= do
- rs <- gets mfRequirements
- installAllRequirements1 mempty rs
+ st <- get
+ let rs = mfRequirements st
+     auto = mfAutorefresh st
+ installAllRequirements1 auto mempty rs
  where
 
- installAllRequirements1 v []= return v
- installAllRequirements1 v rs= do
+ installAllRequirements1 _ v []= return v
+ installAllRequirements1 auto v rs= do
    let typehead= case head rs  of {Requirement r -> typeOf  r}
        (rs',rs'')= partition1 typehead  rs
    v' <- installRequirements2 rs'
-   installAllRequirements1 (v `mappend` v') rs''
+   installAllRequirements1 auto (v `mappend` v') rs''
    where
    installRequirements2 []= return $ fromStrNoEncode ""
-   installRequirements2 (Requirement r:rs)= installRequirements $ r:unmap rs
+   installRequirements2 (Requirement r:rs)= installRequirements auto  $ r:unmap rs
    unmap []=[]
    unmap (Requirement r:rs)= unsafeCoerce r:unmap rs
    partition1 typehead  xs = foldr select  ([],[]) xs
@@ -1364,31 +1378,40 @@ instance Requirements WebRequirement where
 
 
 
-installWebRequirements ::  (Monad m,FormInput view) =>[WebRequirement] -> m view
-installWebRequirements rs= do
-  let s =  jsRequirements $ sort rs  
+installWebRequirements ::  (Monad m,FormInput view) => Bool -> [WebRequirement] -> m view
+installWebRequirements auto rs= do
+  let s =  jsRequirements auto $ sort rs  
 
   return $ ftag "script" (fromStrNoEncode  s)
 
 
-jsRequirements  []= ""
+jsRequirements _  []= ""
+
+jsRequirements False (r@(JScriptFile f c) : r'@(JScriptFile f' c'):rs)
+         | f==f' = jsRequirements False $ JScriptFile f (nub $ c++c'):rs
+         | otherwise= strRequirement r ++ jsRequirements False (r':rs)
+
+jsRequirements True (r@(JScriptFile f c) : r'@(JScriptFile f' c'):rs)
+         | f==f' = concatMap strRequirement(map JScript $ nub (c' ++ c)) ++ jsRequirements True rs
+         | otherwise= strRequirement r ++ jsRequirements True (r':rs)
 
 
-jsRequirements (r@(JScriptFile f c) : r'@(JScriptFile f' c'):rs)
-         | f==f' = jsRequirements $ JScriptFile f (nub $ c++c'):rs
-         | otherwise= strRequirement r ++ jsRequirements (r':rs)
 
-jsRequirements (r:r':rs)
-         | r== r' = jsRequirements $ r:rs
-         | otherwise= strRequirement r ++ jsRequirements (r':rs)
+         
+jsRequirements auto (r:r':rs)
+         | r== r' = jsRequirements  auto $ r:rs
+         | otherwise= strRequirement r ++ jsRequirements auto (r':rs)
 
-jsRequirements (r:rs)= strRequirement r++jsRequirements rs
+jsRequirements auto (r:rs)= strRequirement r++jsRequirements auto rs
   
 strRequirement (CSSFile s')          = loadcssfile s'
 strRequirement (CSS s')              = loadcss s'
 strRequirement (JScriptFile s' call) = loadjsfile s' call
 strRequirement (JScript s')          = loadjs s'
 strRequirement (ServerProc  f)= (unsafePerformIO $! addMessageFlows [f]) `seq` ""
+
+
+
 
 
 --- AJAX ----

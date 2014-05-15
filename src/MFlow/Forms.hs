@@ -1040,9 +1040,9 @@ ask w =  do
 --  it is set for each page
 --  if it does not exist then it comes from a state recovery, backtrack (to fill-in the field)
     let pagepath = mfPagePath st1
-    if null pagepath then fail ""
+    if null pagepath then fail ""                                   -- !> "null pagepath"
 --  if exist and it is not prefix of the current path being navigated to, backtrack
-      else if not $  pagepath `isPrefixOf` mfPath st1 then fail ""   -- !> ("pagepath fail with "++ show (mfPath st1))
+      else if not $  pagepath `isPrefixOf` mfPath st1 then fail ""    -- !> ("pagepath fail with "++ show (mfPath st1))
        else do
    
      let st= st1{needForm= NoElems, inSync= False, mfRequirements= [], linkMatched= False} 
@@ -1055,14 +1055,14 @@ ask w =  do
       else
       case mx  of
        Just x -> do
-         put st'{newAsk= True , mfEnv=[]}
+         put st'{newAsk= True, mfEnv=[]}
          breturn x                                    -- !> ("BRETURN "++ show (mfPagePath st') )
 
        Nothing ->
          if  not (inSync st')  && not (newAsk st')
                                                        -- !> ("insync="++show (inSync st'))
                                                        -- !> ("newask="++show (newAsk st'))
-          then fail ""                                 -- !> "FAIL**********"
+          then fail ""                                  -- !> "FAIL sync"
           else if mfAutorefresh st' then do
                      resetState st st'                 -- !> ("EN AUTOREFRESH" ++ show [ mfPagePath st,mfPath st,mfPagePath st'])
 --                     modify $ \st -> st{mfPagePath=mfPagePath st'} !> "REPEAT"
@@ -1075,7 +1075,7 @@ ask w =  do
                  t= mfToken st'
              cont <- case (needForm1 st') of
                       True ->  do
-                               frm <- formPrefix  st' forms False 
+                               frm <- formPrefix  st' forms False   -- !> ("formPrefix="++ show(mfPagePath st'))
                                return . header $  reqs <> frm
                       _    ->  return . header $  reqs <> forms
 

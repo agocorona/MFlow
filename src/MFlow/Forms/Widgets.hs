@@ -145,7 +145,7 @@ wlogin=  do
            return username 
          else do
           name <- getString Nothing <! hint "login name"
-                                    <! size 9
+                                    <! size (9 :: Int)
                   <++ ftag "br" mempty
           pass <- getPassword <! hint "password"
                               <! size 9
@@ -687,7 +687,7 @@ witerate w= do
          FormElm _ mr <- runView w'
          setCachePolicy 
          reqs <- return . map ( \(Requirement r) -> unsafeCoerce r) =<< gets mfRequirements
-         let js = jsRequirements reqs
+         let js = jsRequirements True reqs
 
          st' <- get 
          liftIO . sendFlush t $ HttpData
@@ -1214,7 +1214,7 @@ push method' wait w= push' . map toLower $ show method'
            \url: actionurl,\
            \data: '',\
            \success: function (resp) {\
-             \idstatus.html('')\
+             \idstatus.html('');\
              \cnt=0;\
              \id1."++method++"(resp);\
              \ajaxPush1();\
@@ -1302,7 +1302,6 @@ lazy v w=  do
       return $ FormElm (ftag "div" v `attrs` [("id",id)]) mx
          
       else View $ do
-         modify $ \s -> s{mfHttpHeaders=[], mfRequirements=[]} 
          resetCachePolicy
          st' <- get
          FormElm form mx <- runView w

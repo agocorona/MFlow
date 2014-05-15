@@ -32,7 +32,7 @@ pushDecrease= do
       |] ++> counter tv <++  b << "seconds"
 
  where
- counter tv = push Html 0 $ do
+ counter tv = pageFlow "push" . push Html 0 $ do
       setTimeouts 2 0     -- kill  the thread after 2 s of incactivity, when count finish
       n <- atomic $ readTVar tv
       if (n== -1)

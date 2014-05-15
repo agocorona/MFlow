@@ -1,5 +1,5 @@
 name: MFlow
-version: 0.4.5.3
+version: 0.4.5.4
 cabal-version: >=1.8
 build-type: Simple
 license: BSD3
@@ -44,14 +44,13 @@ description: MFlow is a Web Framework that turns Web programing back into just o
              .
              Bindings for hack, and hsp >= 0.8,  are not compiled by Hackage, and do not appear, but are included in the package files. To use them, add then to the exported modules and execute cabal install
              .
-             NOTE: compatibility with GHC 7.8: you will have compilation errors related with Typeable.
-             Follow the instruction in the open issues in the git repository.
+             The version 0.4.5.4 add compatibility with ghc 7.8
              .
              The version 0.4.5 composable HTTP caching, lazy load, caching datasets in the browser HTTP cache
              .
              The version 0.4.0 add encrypted cookies, secure sessions, add REST web services, fixes UTF8 errors, pageFlow fixes, add onBacktrack, compensate
              .
-             Thes version 0.3.3 run with wai 2.0
+             The version 0.3.3 run with wai 2.0
              .
              The version 0.3.2 add runtime templates. It also add witerate and dField, two modifiers for single page
              development. dField creates a placeholder for a widget that is updated via implicit AJAX by witerate.

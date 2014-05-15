@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable, OverloadedStrings #-}
+{-# LANGUAGE DeriveDataTypeable, OverloadedStrings, TransformListComp, MonadComprehensions #-}
 import MFlow.Wai.Blaze.Html.All
 import Data.Typeable
 import Control.Monad
@@ -9,11 +9,11 @@ import Control.Workflow (exec1)
 (!>)= flip trace
 
 
-main2= runNavigation "showResults" $ transientNav $ do
+main= runNavigation "showResults" $ transientNav $ do
 --    setHeader $ docTypeHtml . body
-    page $ p << "Lazy present the 10 p
+    page $ p  "Lazy present the 10 p" ++> empty
     r <- page $  lazyPresent  (0 :: Int) 10
-    page $ wlink ("jj"  ::String) << p << show r  !> "KJJKJKJ"
+    page $ wlink ("jj"  ::String) << p << show r
     return ()
 
 
