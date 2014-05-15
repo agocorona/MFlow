@@ -40,7 +40,7 @@ import MFlow.Forms.Cache
 import Text.Blaze.Html5 hiding (map)
 import Text.Blaze.Html5.Attributes  hiding (label,span,style,cite,title,summary,step,form)
 import Network.Wai
-import Network.Wai.Handler.Warp  hiding (getPort) --(run,defaultSettings,Settings ,setPort)
+import Network.Wai.Handler.Warp   --(run,defaultSettings,Settings ,setPort)
 import Data.TCache
 import Text.Blaze.Internal(text)
 
@@ -58,7 +58,7 @@ import Network.Wai.Handler.WarpTLS as TLS
 -- | The port is read from the first exectution parameter.
 -- If no parameter, it is read from the PORT environment variable.
 -- if this does not exist, the port 80 is used.
-getPort= do
+getPortW= do
     args <- getArgs
     port <- case args of
            port:xs -> return port
@@ -71,14 +71,14 @@ getPort= do
     print porti
     return porti
 
--- | run a persistent flow. It uses `getPort` to get the port
+-- | run a persistent flow. It uses `getPortW` to get the port
 -- The first parameter is the first element in the URL path.
 -- It also set the home page
 runNavigation :: String -> FlowM Html (Workflow IO) () -> IO () 
 runNavigation n f= do
     unless (null n) $ setNoScript n
     addMessageFlows[(n, runFlow f)]
-    porti <- getPort
+    porti <- getPortW
     wait $ run porti waiMessageFlow
     --runSettings defaultSettings{settingsTimeout = 20, settingsPort= porti} waiMessageFlow
 
@@ -91,7 +91,7 @@ runSecureNavigation' :: TLSSettings -> Settings -> String -> FlowM Html (Workflo
 runSecureNavigation' t s n f = do
     unless (null n) $ setNoScript n
     addMessageFlows[(n, runFlow f)]
-    porti <- getPort
+    porti <- getPortW
 --    let s' = setPort porti s
 --    wait $ TLS.runTLS t s' waiMessageFlow
     wait $ TLS.runTLS t s{settingsPort = porti} waiMessageFlow
