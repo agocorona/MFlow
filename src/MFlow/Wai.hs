@@ -22,7 +22,7 @@ import Control.Monad(when)
 import qualified Data.ByteString.Lazy.Char8 as B(empty,pack, unpack, length, ByteString,tail)
 import Data.ByteString.Lazy(fromChunks)
 import Data.ByteString.UTF8  hiding (span)
-import qualified Data.ByteString as SB hiding (pack, unpack)
+import qualified Data.ByteString.Char8 as SB -- hiding (pack, unpack)
 import Control.Concurrent(ThreadId(..))
 import System.IO.Unsafe
 import Control.Concurrent.MVar
@@ -40,17 +40,22 @@ import MFlow.Cookies
 import Data.Monoid
 import MFlow.Wai.Response
 import Network.Wai
-import Network.HTTP.Types -- hiding (urlDecode)
+import Network.Wai.Parse
+import qualified  Data.Conduit.Binary as CB
+import Control.Monad.Trans.Resource
+import Network.HTTP.Types 
 import Data.Conduit
 import Data.Conduit.Lazy
 import qualified Data.Conduit.List as CList
 import Data.CaseInsensitive
 import System.Time
+import System.Directory
+import System.IO
 import qualified Data.Text as T
 
 
---import Debug.Trace
---(!>) = flip trace
+import Debug.Trace
+(!>) = flip trace
 
 flow=  "flow"
 
@@ -72,18 +77,6 @@ instance Processable Request  where
      mkParams1 = Prelude.map mkParam1
      mkParam1 ( x,y)= (toString $ original  x, toString y)
 
---   getServer env= serverName env
---   getPath env= pathInfo env
---   getPort env= serverPort env
-
-
-splitPath ""= ("","","")
-splitPath str=
-       let
-            strr= reverse str
-            (ext, rest)= span (/= '.') strr
-            (mod, path)= span(/='/') $ tail rest
-       in   (tail $ reverse path, reverse mod, reverse ext)
 
 
 waiMessageFlow  ::  Application
@@ -105,22 +98,38 @@ waiMessageFlow req1=   do
                                 Just ck -> ck:retcookies1
 -}
 
-     input <- case parseMethod $ requestMethod req1  of
+     (params,files) <- case parseMethod $ requestMethod req1  of
+              Right GET -> do
+                   return (Prelude.map (\(x,y) -> (x,fromMaybe "" y)) $ queryString req1,[])
+
               Right POST -> do
 
-                   inp <- liftIO $ requestBody req1 $$ CList.consume
+                 case getRequestBodyType req1  of
+                     Nothing -> error $ "getRequestBodyType: "
+                     Just rbt ->
+                         runResourceT $ withInternalState $ \state -> liftIO $ do
+                               let backend file info= do
+                                    (key, (fp, h)) <- flip runInternalState state $ allocate (do
+                                        tempDir <- getTemporaryDirectory
+                                        openBinaryTempFile tempDir "upload.tmp") (\(_, h) -> hClose h)
+                                    CB.sinkHandle h
+                                    lift $ release key
+                                    return fp
+                               requestBody req1 $$ sinkRequestBody backend rbt
 
-                   return . parseSimpleQuery $ SB.concat inp
-
-
-
-              Right GET ->
-                   return . Prelude.map (\(x,y) -> (x,fromMaybe "" y)) $ queryString req1
+--                         let fileparams= Prelude.map (\(param,FileInfo filename contentype content)
+--                                              -> (param,   SB.pack content )) files
+--                         let fileparams= Prelude.map (\(param,fileinfo)
+--                                              -> (param,  fileinfo )) files
+--                         return $ fileparams++ params
+     let filesp= Prelude.map (\(param,FileInfo filename contentype tempfile)
+                                              -> (mk param,  fromString $ show(filename,contentype,tempfile) )) files
+--     let filesp= Prelude.map (\(a,b) -> ( mk a, fromString $ show b)) files
 
 
      let req = case retcookies of
-          [] -> req1{requestHeaders= mkParams (input  ++ cookies) ++ requestHeaders req1}  -- !> "REQ"
-          _  -> req1{requestHeaders= mkParams ((flow, flowval): input ++ cookies) ++ requestHeaders req1}  --  !> "REQ"
+          [] -> req1{requestHeaders= filesp ++ mkParams (params  ++ cookies) ++ requestHeaders req1}  
+          _  -> req1{requestHeaders= filesp ++ mkParams ((flow, flowval): params ++ cookies) ++ requestHeaders req1}
 
 
      (resp',th) <- liftIO $ msgScheduler req      -- !> (show $ requestHeaders req)

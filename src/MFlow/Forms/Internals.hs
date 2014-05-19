@@ -459,7 +459,7 @@ infixr 2 <+>
    FormElm form2 x <- runView g
    s2 <- get
    (mix,hasform) <- controlForms s1 s2 form1 form2
-   when hasform $ put s2{needForm= HasForm}
+   when hasform $ put s2{needForm= HasForm} 
    return $ FormElm mix (k *> x)
 
 
@@ -486,7 +486,7 @@ infixr 1  **>  ,  <**
    FormElm form2 x <- runView $ valid g
    s2 <- get
    (mix,hasform) <- controlForms s1 s2 form1 form2
-   when hasform $ put s2{needForm= HasForm}
+   when hasform $ put s2{needForm= HasForm} 
    return $ FormElm mix (k <* x)
 
 
@@ -598,12 +598,14 @@ compensate doit undoit= doit `onBacktrack` ( (lift undoit) >> fail "")
 
 type Lang=  String
 
-needForm1 st=  case needForm st of
-   HasForm -> False
-   HasElems -> True
-   NoElems -> False
+--needForm1 st=  case needForm st of
+--   HasForm -> False
+--   HasElems _ -> True
+--   NoElems -> False
+   
 
-data NeedForm= HasForm | HasElems | NoElems deriving Show
+
+data NeedForm= HasForm | HasElems  | NoElems deriving Show
 
 data MFlowState view= MFlowState{   
    mfSequence       :: Int,
@@ -613,6 +615,7 @@ data MFlowState view= MFlowState{
    mfLang           :: Lang,
    mfEnv            :: Params,
    needForm         :: NeedForm,
+   mfFileUpload    ::  Bool,
    mfToken          :: Token,
    mfkillTime       :: Int,
    mfSessionTime    :: Integer,
@@ -646,8 +649,9 @@ type Void = Char
 
 mFlowState0 :: (FormInput view) => MFlowState view
 mFlowState0 = MFlowState 0 False  True  True  "en"
-                [] NoElems  (error "token of mFlowState0 used")
-                0 0 [] [] stdHeader False [] M.empty  Nothing 0 False    [] []  "" False False  False [] False
+                [] NoElems False (error "token of mFlowState0 used")
+                0 0 [] [] stdHeader False [] M.empty  Nothing 0 False
+                [] []  "" False False  False [] False
 
 
 -- | Set user-defined data in the context of the session.
@@ -873,7 +877,7 @@ class (Monoid view,Typeable view)   => FormInput view where
     foption :: String -> view -> Bool -> view
     foption1 :: String -> Bool -> view
     foption1   val msel= foption val (fromStr val) msel
-    formAction  :: String -> view -> view
+    formAction  :: String -> String -> view -> view
     attrs :: view -> Attribs -> view
 
 
@@ -1446,24 +1450,33 @@ ajaxScript=
         "  };" ++
         ""
 
-formPrefix   st form anchored= do
+formPrefix st form anchored= do
      let verb = twfname $ mfToken st
-         path  = currentPath st 
+         path  = currentPath st
+         hasfile= mfFileUpload st
+         attr= case hasfile of
+             True -> [("enctype","multipart/form-data")]
+             False ->  []
      (anchor,anchorf)
            <- case anchored of
                True  -> do
                         anchor <- genNewId
                         return ('#':anchor, (ftag "a") mempty  `attrs` [("name",anchor)])
                False -> return (mempty,mempty)
-     return $ formAction (path ++ anchor ) $  anchorf <> form  -- !> anchor
+     return $ formAction (path ++ anchor ) "POST"  ( anchorf <> form ) `attrs` attr
+
+
+
+
+     
 
 -- | insert a form tag if the widget has form input fields. If not, it does nothing
 insertForm w=View $ do
     FormElm forms mx <- runView w
     st <- get
-    cont <- case needForm1 st of
-              True ->  do
-                       frm <- formPrefix  st forms False
+    cont <- case needForm st of
+              HasElems  ->  do
+                       frm <- formPrefix st forms False
                        put st{needForm= HasForm}
                        return   frm
               _    ->  return forms

@@ -105,7 +105,7 @@ library
                    extensible-exceptions ,  base >4.0 && <5,
                    bytestring , containers , RefSerialize , TCache ,
                    stm >2, time, old-time , vector , directory ,
-                   utf8-string , wai , case-insensitive ,
+                   utf8-string , wai , wai-extra, resourcet, case-insensitive ,
                    http-types , conduit  ,conduit-extra, text , parsec , warp ,
                    warp-tls , random , blaze-html , blaze-markup ,
                    monadloc, clientsession

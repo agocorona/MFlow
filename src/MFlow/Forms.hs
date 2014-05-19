@@ -221,7 +221,7 @@ ask, page, askt, clearEnv, wstateless, pageFlow,
 getString,getInt,getInteger, getTextBox
 ,getMultilineText,getBool,getSelect, setOption,setSelectedOption, getPassword,
 getRadio, setRadio, setRadioActive, wlabel, getCheckBoxes, genCheckBoxes, setCheckBox,
-submitButton,resetButton, whidden, wlink, absLink, getKeyValueParam,
+submitButton,resetButton, whidden, wlink, absLink, getKeyValueParam, fileUpload,
 getRestParam, returning, wform, firstOf, manyOf, allOf, wraw, wrender, notValid
 -- * FormLet modifiers
 ,validate, noWidget, stop, waction, wcallback, wmodify,
@@ -423,7 +423,7 @@ setRadioActive :: (FormInput view,  MonadIO m,
              a -> String -> View view m  (Radio a)
 setRadioActive  v n = View $ do
   st <- get
-  put st{needForm= HasElems}
+  put st{needForm= HasElems }
   let env =  mfEnv st
   mn <- getParam1 n env
   let str = if typeOf v == typeOf(undefined :: String)
@@ -676,10 +676,18 @@ setOption1 nam  val check= View $ do
 
     return . FormElm (foption n val check)  . Just $ MFOption nam
 
---fileUpload :: (FormInput view,
---      Monad  m) =>
---      View view m T.Text
---fileUpload= getParam Nothing "file" Nothing
+-- | upload a file to a temporary file in the server
+--
+-- The user can move, rename it etc.
+fileUpload :: (FormInput view,
+      Monad  m,Functor m) =>
+      View view m (String -- ^ original file ,
+                  ,String -- ^ file type
+                  ,String -- ^ temporal file uploaded
+                  )
+fileUpload=
+  getParam Nothing "file" Nothing <** modify ( \st ->  st{mfFileUpload = True})
+
 
 
 -- | Enclose Widgets within some formating.
@@ -1073,11 +1081,11 @@ ask w =  do
              
              let header= mfHeader st'
                  t= mfToken st'
-             cont <- case (needForm1 st') of
-                      True ->  do
+             cont <- case (needForm st') of
+                      HasElems  ->  do
                                frm <- formPrefix  st' forms False   -- !> ("formPrefix="++ show(mfPagePath st'))
                                return . header $  reqs <> frm
-                      _    ->  return . header $  reqs <> forms
+                      _     ->  return . header $  reqs <> forms
 
              let HttpData ctype c s= toHttpData cont
              liftIO . sendFlush t $ HttpData (ctype ++ mfHttpHeaders st') (mfCookies st' ++ c) s
@@ -1172,12 +1180,13 @@ wstateless w =  runFlow . transientNav . ask $ w **> (stop `asTypeOf` w)
 -- there are more than one form in the page.
 wform ::  (Monad m, FormInput view)
           => View view m b -> View view m b
-wform x = View $ do
-     FormElm form mr <- (runView $   x )
-     st <- get
-     form1 <- formPrefix st form True
-     put st{needForm=HasForm}
-     return $ FormElm form1 mr
+wform= insertForm         
+--wform x = View $ do
+--     FormElm form mr <- (runView $   x )
+--     st <- get
+--     form1 <- formPrefix st form True
+--     put st{needForm=HasForm}
+--     return $ FormElm form1 mr
 
 
 
@@ -1561,7 +1570,7 @@ instance FormInput  ByteString  where
     attrs = addAttrs
 
 
-    formAction action form = btag "form" [("action", action),("method", "post")]  form
+    formAction action method form = btag "form" [("action", action),("method", method)]  form
     fromStr = fromString
     fromStrNoEncode= fromString
 

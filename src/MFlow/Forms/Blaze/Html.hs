@@ -58,7 +58,7 @@ instance FormInput Html where
       in if msel then tag ! selected (toValue ("" ::String)) else tag
 
 
-    formAction action form = St.form !  acceptCharset "UTF-8" ! At.action  (toValue action) ! method  (toValue ("post" :: String)) $ form
+    formAction action method1 form = St.form !  acceptCharset "UTF-8" ! At.action  (toValue action) ! method  (toValue method1) $ form
 
     fromStr= toMarkup
     fromStrNoEncode  = preEscapedToMarkup
