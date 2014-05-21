@@ -1311,7 +1311,7 @@ lazy v w=  do
          let HttpData ctype c s= toHttpData $ toByteString  form
          liftIO . sendFlush t $ HttpData (ctype ++
                                 mfHttpHeaders st') (mfCookies st' ++ c)
-                              $ toByteString reqs <> s  -- !> (unpack $ toByteString reqs)
+                              $ toByteString reqs <> s
          put st'{mfAutorefresh=True,inSync= True}
 
          return $ FormElm mempty mx

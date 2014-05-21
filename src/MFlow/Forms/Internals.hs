@@ -62,8 +62,8 @@ import Control.Concurrent
 import Control.Monad.Loc
 
 -- debug
---import Debug.Trace
---(!>) = flip trace 
+import Debug.Trace
+(!>) = flip trace 
 
 
 data FailBack a = BackPoint a | NoBack a | GoBack   deriving (Show,Typeable)
@@ -1384,7 +1384,7 @@ instance Requirements WebRequirement where
 
 installWebRequirements ::  (Monad m,FormInput view) => Bool -> [WebRequirement] -> m view
 installWebRequirements auto rs= do
-  let s =  jsRequirements auto $ sort rs  
+  let s =  jsRequirements auto $ sort rs  !> ("RS=" ++ show rs)
 
   return $ ftag "script" (fromStrNoEncode  s)
 

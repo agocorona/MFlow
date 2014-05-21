@@ -1053,7 +1053,8 @@ ask w =  do
       else if not $  pagepath `isPrefixOf` mfPath st1 then fail ""    -- !> ("pagepath fail with "++ show (mfPath st1))
        else do
    
-     let st= st1{needForm= NoElems, inSync= False, mfRequirements= [], linkMatched= False} 
+     let st= st1{needForm= NoElems, inSync= False, linkMatched= False
+                 ,mfRequirements= if newAsk st1 then [] else mfRequirements st1} 
      put st
      FormElm forms mx <- FlowM . lift  $ runView  w
      setCachePolicy
@@ -1090,19 +1091,17 @@ ask w =  do
              let HttpData ctype c s= toHttpData cont
              liftIO . sendFlush t $ HttpData (ctype ++ mfHttpHeaders st') (mfCookies st' ++ c) s
                           
-
              resetState st st'
              FlowM $ lift  nextMessage         -- !> "NEXTMESSAGE"
              ask w
     where
     resetState st st'=
              put st{mfCookies=[]
-                 --  ,mfHttpHeaders=[]
+                   ,mfRequirements= mfRequirements st'
                    ,newAsk= False
                    ,mfToken= mfToken st'
                    ,mfPageFlow= mfPageFlow st'
                    ,mfAjax= mfAjax st'
---                   ,mfSeqCache= mfSeqCache st'
                    ,mfData= mfData st' } 
 
 
