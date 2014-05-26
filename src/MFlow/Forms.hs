@@ -1277,7 +1277,8 @@ wlink x v=    View $ do
       verb <- getWFName
       st   <- get
 
-      let name = mfPrefix st ++ (map toLower $ if typeOf x== typeOf(undefined :: String)
+      let name = --mfPrefix st ++
+                (map toLower $ if typeOf x== typeOf(undefined :: String)
                                    then unsafeCoerce x
                                    else show x)
           lpath = mfPath st
@@ -1326,7 +1327,8 @@ absLink x v=    View $ do
       verb <- getWFName
       st   <- get
 
-      let name = mfPrefix st ++ (map toLower $ if typeOf x== typeOf(undefined :: String)
+      let name = -- mfPrefix st
+                (map toLower $ if typeOf x== typeOf(undefined :: String)
                                    then unsafeCoerce x
                                    else show x)
 
