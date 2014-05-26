@@ -717,7 +717,6 @@ autoEvalLink = "\nfunction autoEvalLink(id,ind){\
            \url: actionurl+'?auto'+id+'='+ind,\
            \data: pdata,\
            \success: function (resp) {\
-               \alert(resp);\
                \eval(resp);\
                \autoEvalLink(id,ind);\
                \autoEvalForm(id);\
@@ -1031,7 +1030,6 @@ update method w= do
            \success: function (resp) {\
                 \var ind= resp.indexOf(' ');\
                 \var dat= resp.substr(ind);\
-                \alert(resp);\
                 \var method= resp.substr(0,ind);\
                 \if(method== 'html')id1.html(dat);\
                 \else if (method == 'append') id1.append(dat);\

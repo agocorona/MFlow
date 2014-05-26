@@ -1235,10 +1235,11 @@ getRestParam= do
    else case  stripPrefix (mfPagePath st) lpath  of
      Nothing -> return Nothing
      Just [] -> return Nothing   
-     Just xs ->
-        case stripPrefix  (mfPrefix st) (head xs)  of
-             Nothing -> return Nothing
-             Just name -> do
+     Just xs -> do
+--        case stripPrefix  (mfPrefix st) (head xs)  of
+--             Nothing -> return Nothing
+--             Just name ->
+              let name= head xs
               r <-  fmap valToMaybe $ readParam name 
               when (isJust r) $ modify $ \s -> s{inSync= True
                                                 ,linkMatched= True
