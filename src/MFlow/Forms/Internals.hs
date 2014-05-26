@@ -62,8 +62,8 @@ import Control.Concurrent
 import Control.Monad.Loc
 
 -- debug
-import Debug.Trace
-(!>) = flip trace 
+--import Debug.Trace
+--(!>) = flip trace 
 
 
 data FailBack a = BackPoint a | NoBack a | GoBack   deriving (Show,Typeable)
@@ -166,6 +166,7 @@ data FormElm view a = FormElm view (Maybe a) deriving Typeable
 instance (Monoid view,Serialize a) => Serialize (FormElm view a) where
    showp (FormElm _ x)= showp x
    readp= readp >>= \x -> return $ FormElm  mempty x
+
 
 -- | @View v m a@ is a widget (formlet)  with formatting `v`  running the monad `m` (usually `IO`) and which return a value of type `a`
 --
@@ -624,6 +625,7 @@ data MFlowState view= MFlowState{
    mfHeader         :: view -> view,
    mfDebug          :: Bool,
    mfRequirements   :: [Requirement],
+   mfInstalledScripts  :: [WebRequirement],
    mfData           :: M.Map TypeRep Void,
    mfAjax           :: Maybe (M.Map String Void),
    mfSeqCache       :: Int,
@@ -650,7 +652,7 @@ type Void = Char
 mFlowState0 :: (FormInput view) => MFlowState view
 mFlowState0 = MFlowState 0 False  True  True  "en"
                 [] NoElems False (error "token of mFlowState0 used")
-                0 0 [] [] stdHeader False [] M.empty  Nothing 0 False
+                0 0 [] [] stdHeader False [] [] M.empty  Nothing 0 False
                 [] []  "" False False  False [] False
 
 
@@ -1282,39 +1284,41 @@ readParam x1 = r
 -- Web page or in the server when a widget specifies this. @requires@ is the
 -- procedure to be called with the list of requirements.
 -- Various widgets in the page can require the same element, MFlow will install it once.
+
+
 requires rs =do
     st <- get
     let l = mfRequirements st
---    let rs'= map Requirement rs \\ l
     put st {mfRequirements= l ++ map Requirement rs}
 
-
+unfold (JScriptFile f ss)= JScript loadScript:map (\s-> JScriptFile f [s]) ss
+unfold x= [x]
 
 data Requirement= forall a.(Show a,Typeable a,Requirements a) => Requirement a deriving Typeable
 
 class Requirements  a where
-   installRequirements :: (Monad m,FormInput view) => Bool -> [a] ->  m view
+   installRequirements :: (MonadState (MFlowState view) m,MonadIO m,FormInput view) => [a] ->  m view
 
 instance Show Requirement where
    show (Requirement a)= show a ++ "\n"
 
-installAllRequirements :: ( Monad m, FormInput view) =>  WState view m view
+installAllRequirements :: ( MonadIO m, FormInput view) =>  WState view m view
 installAllRequirements= do
  st <- get
  let rs = mfRequirements st
-     auto = mfAutorefresh st
- installAllRequirements1 auto mempty rs
+ installAllRequirements1  mempty rs
+
  where
 
- installAllRequirements1 _ v []= return v
- installAllRequirements1 auto v rs= do
+ installAllRequirements1  v []= return v
+ installAllRequirements1  v rs= do
    let typehead= case head rs  of {Requirement r -> typeOf  r}
        (rs',rs'')= partition1 typehead  rs
    v' <- installRequirements2 rs'
-   installAllRequirements1 auto (v `mappend` v') rs''
+   installAllRequirements1  (v `mappend` v') rs''
    where
    installRequirements2 []= return $ fromStrNoEncode ""
-   installRequirements2 (Requirement r:rs)= installRequirements auto  $ r:unmap rs
+   installRequirements2 (Requirement r:rs)= installRequirements   $ r:unmap rs
    unmap []=[]
    unmap (Requirement r:rs)= unsafeCoerce r:unmap rs
    partition1 typehead  xs = foldr select  ([],[]) xs
@@ -1325,23 +1329,38 @@ installAllRequirements= do
                            else (ts, x:fs)
 
 -- Web requirements ---
-loadjsfile filename lcallbacks=
- let name= addrStr filename in
-  "var fileref = document.getElementById('"++name++"');\
+loadjsfile filename=
+ let name= addrStr filename
+ in  "\n"++name++"=loadScript('"++name++"','"++filename++"');\n"
+
+loadScript ="function loadScript(name, filename){\
+  \var fileref = document.getElementById(name);\
   \if (fileref === null){\
       \fileref=document.createElement('script');\
-      \fileref.setAttribute('id','"++name++"');\
+      \fileref.setAttribute('id',name);\
       \fileref.setAttribute('type','text/javascript');\
-      \fileref.setAttribute('src',\'" ++ filename ++ "\');\
-      \document.getElementsByTagName('head')[0].appendChild(fileref);};"
-  ++ onload
-  where
-  onload= case lcallbacks of
-    [] -> ""
-    cs -> "fileref.onload = function() {"++ (concat $ nub cs)++"};"
+      \fileref.setAttribute('src',filename);\
+      \document.getElementsByTagName('head')[0].appendChild(fileref);}\
+      \return fileref};\n\
+  \function addLoadEvent(elem,func) {\
+  \var oldonload = elem.onload;\
+  \if (typeof elem.onload != 'function') {\
+    \elem.onload = func;\
+  \} else {\
+    \elem.onload = function() {\
+      \if (oldonload) {\
+        \oldonload();\
+      \}\
+      \func();\
+    \}\
+  \}\
+ \}"
+   
+loadCallback depend script=
+  let varname= addrStr depend in
+  "\naddLoadEvent("++varname++",function(){"++ script++"});"
 
 
-loadjs content= content
 
 
 loadcssfile filename=
@@ -1382,37 +1401,52 @@ instance Requirements WebRequirement where
 
 
 
-installWebRequirements ::  (Monad m,FormInput view) => Bool -> [WebRequirement] -> m view
-installWebRequirements auto rs= do
-  let s =  jsRequirements auto $ sort rs  !> ("RS=" ++ show rs)
+installWebRequirements
+ ::  (MonadState(MFlowState view) m,MonadIO m,FormInput view) => [WebRequirement] -> m view
+installWebRequirements  rs= do
+  installed <- gets mfInstalledScripts
+  let rs'=  (nub  rs) \\ installed
 
-  return $ ftag "script" (fromStrNoEncode  s)
-
-
-jsRequirements _  []= ""
-
-jsRequirements False (r@(JScriptFile f c) : r'@(JScriptFile f' c'):rs)
-         | f==f' = jsRequirements False $ JScriptFile f (nub $ c++c'):rs
-         | otherwise= strRequirement r ++ jsRequirements False (r':rs)
-
-jsRequirements True (r@(JScriptFile f c) : r'@(JScriptFile f' c'):rs)
-         | f==f' = concatMap strRequirement(map JScript $ nub (c' ++ c)) ++ jsRequirements True rs
-         | otherwise= strRequirement r ++ jsRequirements True (r':rs)
+  strs <- mapM strRequirement rs'             -- !>( "OLD="++show installed) !> ("new="++show rs')
+  case null strs of
+      True  -> return mempty
+      False -> return . ftag "script" . fromStrNoEncode  $ concat strs
 
 
+strRequirement r=do
+   r1 <- strRequirement' r
+   modify $ \st -> st{mfInstalledScripts= mfInstalledScripts st ++ [r]}
+   return r1
+        
+strRequirement' (CSSFile scr)          = return $ loadcssfile scr
+strRequirement' (CSS scr)              = return $ loadcss scr
+strRequirement' (JScriptFile file scripts) = do
+    installed <- gets mfInstalledScripts
+    let hasLoadScript  (JScriptFile _ _)= True
+        hasLoadScript  _= False
+        inst2= dropWhile (not . hasLoadScript) installed
+        hasSameFile  file (JScriptFile fil _)= if file== fil then True  else False
+        hasSameFile _ _= False
+    case (inst2,find (hasSameFile file) inst2) of
+         ([],_) ->
+               -- no script file has been loaded previously
+               return $ loadScript <> loadjsfile file  <>  concatMap(loadCallback file) scripts
+         (_,Just _) -> do
+               -- This script file has been already loaded or demanded for load
+               autorefresh <- gets mfAutorefresh
+               case autorefresh of
+                        -- demanded for load, not loaded
+                        False -> return $ concatMap(loadCallback file) scripts
+                        -- already loaded
+                        True  -> return $ concat scripts
+               -- other script file has been loaded or demanded load, so loadScript is already installed
+         _ ->  return $  loadjsfile file  <>  concatMap(loadCallback file) scripts
 
-         
-jsRequirements auto (r:r':rs)
-         | r== r' = jsRequirements  auto $ r:rs
-         | otherwise= strRequirement r ++ jsRequirements auto (r':rs)
-
-jsRequirements auto (r:rs)= strRequirement r++jsRequirements auto rs
-  
-strRequirement (CSSFile s')          = loadcssfile s'
-strRequirement (CSS s')              = loadcss s'
-strRequirement (JScriptFile s' call) = loadjsfile s' call
-strRequirement (JScript s')          = loadjs s'
-strRequirement (ServerProc  f)= (unsafePerformIO $! addMessageFlows [f]) `seq` ""
+    
+strRequirement' (JScript scr)  = return scr
+strRequirement' (ServerProc  f)= do
+   liftIO $ addMessageFlows [f]
+   return ""
 
 
 

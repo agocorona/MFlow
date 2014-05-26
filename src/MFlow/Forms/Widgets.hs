@@ -554,7 +554,7 @@ tFieldEd  muser k  text= wfreeze k 0 $  do
    nam     <- genNewId
    let ipanel= nam++"panel"
        name= nam++"-"++k
-       install= "\ninstallEditField('"++muser++"','"++cookieuser++"','"++name++"','"++ipanel++"');\n"
+       install= "installEditField('"++muser++"','"++cookieuser++"','"++name++"','"++ipanel++"');\n"
        getTexts :: (Token -> IO ())
        getTexts token = do
          let (k,s):_ = tenv token
@@ -567,7 +567,6 @@ tFieldEd  muser k  text= wfreeze k 0 $  do
    requires [JScriptFile nicEditUrl [install]
             ,JScript     ajaxSendText
             ,JScript     installEditField
---            ,JScriptFile jqueryScript []
             ,ServerProc  ("_texts",  transient getTexts)]
 
    us <- getCurrentUser
@@ -580,8 +579,7 @@ tFieldEd  muser k  text= wfreeze k 0 $  do
 
 installEditField=
           "\nfunction installEditField(muser,cookieuser,name,ipanel){\
-            \if(muser== '' || document.cookie.search(cookieuser+'='+muser) != -1)\
-                  \bkLib.onDomLoaded(function() {\
+            \if(muser== '' || document.cookie.search(cookieuser+'='+muser) != -1){\
                     \var myNicEditor = new nicEditor({fullPanel : true, onSave : function(content, id, instance) {\
                          \ajaxSendText(id,content);\
                          \myNicEditor.removeInstance(name);\
@@ -589,7 +587,7 @@ installEditField=
                        \}});\
                     \myNicEditor.addInstance(name);\
                     \myNicEditor.setPanel(ipanel);\
-                 \})};\n"
+                 \}};\n"
 
 ajaxSendText = "\nfunction ajaxSendText(id,content){\
         \var arr= id.split('-');\
@@ -628,7 +626,7 @@ mField k= do
   lang <- getLang
   tField $ k ++ ('-':lang)
 
-newtype IteratedId= IteratedId  String deriving Typeable
+data IteratedId = IteratedId  String String deriving (Typeable, Show)
 
 -- | Permits to iterate the presentation of data and//or input fields and widgets within
 -- a web page that does not change. The placeholders are created with dField.  Both are widget
@@ -654,7 +652,7 @@ witerate
       View v m a -> View v m a
 witerate w= do
    name <- genNewId
-   setSessionData $ IteratedId name 
+   setSessionData $ IteratedId name mempty
    st <- get
    let t= mfkillTime st
    let installAutoEval=
@@ -666,7 +664,7 @@ witerate w= do
        w'= w `wcallback` (const $ do
                               modify $ \s -> s{mfPagePath=mfPagePath st
                                              ,mfSequence= mfSequence st
-                                             ,mfRequirements= if r== Nothing then  mfRequirements s else []
+--                                             ,mfRequirements= if r== Nothing then  mfRequirements s else []
                                              ,mfHttpHeaders=[]}
                               w) 
 
@@ -680,23 +678,28 @@ witerate w= do
 
      (ftag "div" <<< w') <! [("id",name)] 
 
-    Just sind -> View $ do
-         let t= mfToken st
-         modify $ \s -> s{mfRequirements=[],mfHttpHeaders=[]} -- !> "just"
-         resetCachePolicy 
-         FormElm _ mr <- runView w'
-         setCachePolicy 
-         reqs <- return . map ( \(Requirement r) -> unsafeCoerce r) =<< gets mfRequirements
-         let js = jsRequirements True reqs
+    Just sind -> refresh $ View $ do
+              FormElm _ mr <- runView w'
+              IteratedId _ render <- getSessionData `onNothing` return (IteratedId name mempty)
+              return $ FormElm (fromStrNoEncode render) mr
 
-         st' <- get 
-         liftIO . sendFlush t $ HttpData
-                                (mfHttpHeaders st') 
-                                (mfCookies st') (fromString js)
-         put st'{mfAutorefresh=True, inSync=True} 
-         return $ FormElm mempty Nothing  
+--     View $ do
+--         let t= mfToken st
+--         modify $ \s -> s{mfRequirements=[],mfHttpHeaders=[]} -- !> "just"
+--         resetCachePolicy 
+--         FormElm _ mr <- runView w'
+--         setCachePolicy 
+--
+--         reqs <- installAllRequirements
+--
+--         st' <- get 
+--         liftIO . sendFlush t $ HttpData
+--                                (mfHttpHeaders st') 
+--                                (mfCookies st')  (toByteString reqs)
+--         put st'{mfAutorefresh=True, inSync=True} 
+--         return $ FormElm mempty Nothing  
 
-   delSessionData $ IteratedId name
+   delSessionData $ IteratedId name mempty
    return ret
 
 
@@ -714,6 +717,7 @@ autoEvalLink = "\nfunction autoEvalLink(id,ind){\
            \url: actionurl+'?auto'+id+'='+ind,\
            \data: pdata,\
            \success: function (resp) {\
+               \alert(resp);\
                \eval(resp);\
                \autoEvalLink(id,ind);\
                \autoEvalForm(id);\
@@ -791,14 +795,12 @@ dField w= View $ do
     st <- get
     let env =  mfEnv st
 
-    IteratedId name <- getSessionData `onNothing` return (IteratedId noid)
-    let r =  lookup ("auto"++name) env
+    IteratedId name scripts <- getSessionData `onNothing` return (IteratedId noid mempty)
+    let r =  lookup ("auto"++name) env 
     if r == Nothing || (name == noid && newAsk st== True)
-     then do
---       requires [JScriptFile jqueryScript ["$(document).ready(function() {setId('"++id++"','" ++ toString (toByteString render)++"')});\n"]]
-       return $ FormElm((ftag "span" render) `attrs` [("id",id)]) mx
+     then return $ FormElm((ftag "span" render) `attrs` [("id",id)]) mx  
      else do
-       requires [JScript $  "setId('"++id++"','" ++ toString (toByteString $ render)++"');\n"]
+       setSessionData $ IteratedId name $ scripts <> "setId('"++id++"','" ++ toString (toByteString $ render)++"');" 
        return $ FormElm mempty mx
 
 noid= "noid"
@@ -821,9 +823,9 @@ edTemplate muser k w=  View $ do
        install= "installEditField('"++muser++"','"++cookieuser++"','"++name++"','"++ipanel++"');\n"
 
 
-   requires [JScriptFile nicEditUrl [install]
+   requires [JScript     installEditField
+            ,JScriptFile nicEditUrl [install]
             ,JScript     ajaxSendText
-            ,JScript     installEditField
             ,JScriptFile jqueryScript []
             ,ServerProc  ("_texts",  transient getTexts)]
    us <- getCurrentUser
@@ -835,14 +837,16 @@ edTemplate muser k w=  View $ do
                      ftag "span" content `attrs` [("id", name)])
                      mx
    where
-   getTexts :: (Token -> IO ())
+   getTexts :: Token -> IO ()  -- low level server process
    getTexts token= do
      let (k,s):_ = tenv token
      liftIO $ do
        writetField k  $ (fromStrNoEncode s `asTypeOf` viewFormat w)
        flushCached k
-       sendFlush token $ HttpData [] [] ""
+       sendFlush token $ HttpData [] [] "" --empty response
+
        return()
+
 
    viewFormat :: View v m a -> v
    viewFormat= undefined -- is a type function
@@ -967,7 +971,7 @@ prependUpdate   :: (MonadIO m,
 prependUpdate= update "prepend"
 
 update :: (MonadIO m, FormInput v)
-  => B.ByteString
+  => String
   -> View v m a
   -> View v m a
 update method w= do
@@ -993,20 +997,21 @@ update method w= do
                   ,JScriptFile jqueryScript [installscript]] 
          (ftag "div" <<< insertForm w) <! [("id",id)] 
 
-      else View $ do
-         let t= mfToken st            -- !> "JUST"
-         modify $ \s -> s{mfHttpHeaders=[]} -- !> "just"
-         resetCachePolicy
-         FormElm form mr <- runView $ insertForm w
-         setCachePolicy
-         st' <- get
-         let HttpData ctype c s= toHttpData $ method <> " " <> toByteString  form
-                          
-         (liftIO . sendFlush t $ HttpData (ctype ++
-                                mfHttpHeaders st') (mfCookies st' ++ c) s)
-         put st'{mfAutorefresh=True,newAsk=True}
-            
-         return $ FormElm mempty Nothing 
+      else refresh $ fromStr (method <> " ") ++> insertForm w
+--        View $ do
+--         let t= mfToken st            -- !> "JUST"
+--         modify $ \s -> s{mfHttpHeaders=[]} -- !> "just"
+--         resetCachePolicy
+--         FormElm form mr <- runView $ insertForm w
+--         setCachePolicy
+--         st' <- get
+--         let HttpData ctype c s= toHttpData $ method <> " " <> toByteString  form
+--                          
+--         (liftIO . sendFlush t $ HttpData (ctype ++
+--                                mfHttpHeaders st') (mfCookies st' ++ c) s)
+--         put st'{mfAutorefresh=True,newAsk=True}
+--            
+--         return $ FormElm mempty Nothing 
 
   where
   -- | adapted from http://www.codeproject.com/Articles/341151/Simple-AJAX-POST-Form-and-AJAX-Fetch-Link-to-Modal
@@ -1026,6 +1031,7 @@ update method w= do
            \success: function (resp) {\
                 \var ind= resp.indexOf(' ');\
                 \var dat= resp.substr(ind);\
+                \alert(resp);\
                 \var method= resp.substr(0,ind);\
                 \if(method== 'html')id1.html(dat);\
                 \else if (method == 'append') id1.append(dat);\
@@ -1290,36 +1296,17 @@ lazy v w=  do
                 \$(window).trigger('scroll');\
                  \});"
 
---        installscript2= "$(window).one('scroll',function(){\
---                \function lazyexec(){lazy('"++id++"','"++ path ++"',lazyexec)};\
---                \lazyexec()});"
-
-
     if r == Nothing  then View $ do
       requires [JScript lazyScript
                   ,JScriptFile jqueryScript [installscript,scrollposition]]
-      FormElm rendering mx <- runView w
+      reqs <- gets mfRequirements
+      FormElm _ mx <- runView w
+      modify $ \st-> st{mfRequirements= reqs}  --ignore requirements
       return $ FormElm (ftag "div" v `attrs` [("id",id)]) mx
          
-      else View $ do
-         resetCachePolicy
-         st' <- get
-         FormElm form mx <- runView w
-         setCachePolicy 
-         let t= mfToken st'
-         reqs <- installAllRequirements
-         let HttpData ctype c s= toHttpData $ toByteString  form
-         liftIO . sendFlush t $ HttpData (ctype ++
-                                mfHttpHeaders st') (mfCookies st' ++ c)
-                              $ toByteString reqs <> s
-         put st'{mfAutorefresh=True,inSync= True}
-
-         return $ FormElm mempty mx
-
+     else refresh w
 
     where
-
-
 
     scrollposition= "$.fn.scrollposition= function(){\
        \var pos= $(this).position();\
@@ -1355,8 +1342,21 @@ lazy v w=  do
     \$.ajax(dialogOpts);\
     \}}};"
 
+refresh w=  View $ do
+         resetCachePolicy
+         modify $ \st -> st{mfAutorefresh=True,inSync= True}
+         FormElm form mx <- runView w   -- !> show (mfInstalledScripts st')
+         setCachePolicy
+         st' <- get
+         let t= mfToken st'
+         reqs <- installAllRequirements
+         let HttpData ctype c s= toHttpData $ toByteString  form
+         liftIO . sendFlush t $ HttpData (ctype ++
+                                mfHttpHeaders st') (mfCookies st' ++ c)
+                              $ s <> toByteString reqs
+         return $ FormElm mempty mx
 
-waitAndExecute= "function waitAndExecute(sym,f) {\
-        \if (eval(sym)) {f();}\
-          \else {setTimeout(function() {waitAndExecute(sym,f)}, 50);}\
-        \}\n"
+--waitAndExecute= "function waitAndExecute(sym,f) {\
+--        \if (eval(sym)) {f();}\
+--          \else {setTimeout(function() {waitAndExecute(sym,f)}, 50);}\
+--        \}\n"

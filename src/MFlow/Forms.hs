@@ -1054,7 +1054,8 @@ ask w =  do
        else do
    
      let st= st1{needForm= NoElems, inSync= False, linkMatched= False
-                 ,mfRequirements= if newAsk st1 then [] else mfRequirements st1} 
+                 ,mfRequirements= []
+                 ,mfInstalledScripts=  if newAsk st1 then [] else mfInstalledScripts st1} 
      put st
      FormElm forms mx <- FlowM . lift  $ runView  w
      setCachePolicy
@@ -1079,7 +1080,7 @@ ask w =  do
                      ask w                                 
           else do
              reqs <-  FlowM $ lift installAllRequirements     --  !> "REPEAT"
-             
+             st' <- get
              let header= mfHeader st'
                  t= mfToken st'
              cont <- case (needForm st') of
@@ -1097,7 +1098,7 @@ ask w =  do
     where
     resetState st st'=
              put st{mfCookies=[]
-                   ,mfRequirements= mfRequirements st'
+                   ,mfInstalledScripts= mfInstalledScripts st'
                    ,newAsk= False
                    ,mfToken= mfToken st'
                    ,mfPageFlow= mfPageFlow st'

@@ -9,14 +9,17 @@ import Control.Monad.State
 
 import Control.Workflow (exec1)
 
+--jqueryScript= getConfig "cjqueryScript" "//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"
+--main4= runNavigation "" $ transientNav . page $ do
+--    requires [JScriptFile jqueryScript ["alert('hello')"]
+--             ,JScriptFile jqueryScript ["alert('hello again')"]]
+--    p "hello" ++> empty
 
-main = runNavigation "" $ transientNav. page $ do
-          lazy "loading.." w
-    where
-    w= do
-       let jqueryScript= getConfig "cjqueryScript" "//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"
-       requires[JScriptFile jqueryScript ["alert('hello');"]]
-       "hello" ++> noWidget
+
+main = runNavigation "" $ step. page $ lazy "loading"
+                                   (tFieldEd "editor" "hello" $ b "hello")
+
+
 
 main3= runNavigation "" $ transientNav. page $ do
     file <- fileUpload   <** submitButton "send"

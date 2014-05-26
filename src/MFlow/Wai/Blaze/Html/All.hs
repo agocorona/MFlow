@@ -55,9 +55,7 @@ import Data.Maybe(fromMaybe)
 import Data.Char(isNumber)
 import Network.Wai.Handler.WarpTLS as TLS
 
--- | The port is read from the first exectution parameter.
--- If no parameter, it is read from the PORT environment variable.
--- if this does not exist, the port 80 is used.
+
 getPortW= do
     args <- getArgs
     port <- case args of
@@ -74,6 +72,9 @@ getPortW= do
 -- | run a persistent flow. It uses `getPortW` to get the port
 -- The first parameter is the first element in the URL path.
 -- It also set the home page
+-- The port is read from the first parameter passed to the executable.
+-- If no parameter, it is read from the PORT environment variable.
+-- if this does not exist, the port 80 is used.
 runNavigation :: String -> FlowM Html (Workflow IO) () -> IO () 
 runNavigation n f= do
     unless (null n) $ setNoScript n
