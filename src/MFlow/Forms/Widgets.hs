@@ -662,7 +662,7 @@ witerate w= do
            \})\n"
    let r = lookup ("auto"++name) $ mfEnv st
        w'= w `wcallback` (const $ do
-                              delSessionData $ IteratedId name mempty
+                              setSessionData $ IteratedId name mempty
                               modify $ \s -> s{mfPagePath=mfPagePath st
                                              ,mfSequence= mfSequence st
                                              ,mfHttpHeaders=[]}
