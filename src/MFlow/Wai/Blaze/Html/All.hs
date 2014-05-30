@@ -27,6 +27,7 @@ module MFlow.Wai.Blaze.Html.All (
 ,module MFlow.Forms.Cache
 ,runNavigation
 ,runSecureNavigation
+,runSecureNavigation'
 ) where
 
 import MFlow
