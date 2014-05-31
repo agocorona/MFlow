@@ -18,6 +18,15 @@ import System.IO.Unsafe
 main5 = runNavigation "" $ step. page $ lazy "loading"
                                    (tFieldEd "editor" "hello" $ b "hello")
 
+swLink v w= do
+  id <- genNewId
+  wlink v w <! [("id",id),("style","visibility:visible"),("onclick",onclick)]
+  where
+  onclick= "function(id){
+    var elem= document.getElementById('html element id');
+    if(elem.style.visibility ='visible')
+       {elem.style.visibility = 'hidden'}
+    else{elem.style.visibility = 'visible'}
 
 
 ifInvalid w w'= View $ do
