@@ -61,6 +61,9 @@ instance Serializable Int where
   deserialize= read . unpack
 
 
+spinner= img ! src (fromString spinnerurl)
+ where
+ spinnerurl=  getConfig "spinner" "//ganglia.wikimedia.org/latest/img/spinner.gif"
 
 
 main= do
@@ -88,7 +91,7 @@ main= do
                        **> (divmenu  <<< br ++>  mainMenu) 
                        <** (El.div ! At.style "float:right;width:65%;overflow:auto;"
                             <<< (tFieldEd edadmin "intro" "enter intro text"
-                            <**  lazy "loading..." (tFieldEd edadmin "moreintro" "more intro text") )
+                            <**  lazy spinner (tFieldEd edadmin "moreintro" "more intro text") )
                             <++ do
                                 hr
                                 disquscript
