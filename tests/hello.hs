@@ -6,23 +6,41 @@ import Data.Time
 import Data.Monoid
 import MFlow.Forms.Internals
 import Control.Monad.State
-
+import Data.IORef
 import Control.Workflow (exec1)
+import Debug.Trace
+import Data.TCache.Memoization
+import System.IO.Unsafe
 
---jqueryScript= getConfig "cjqueryScript" "//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"
---main4= runNavigation "" $ transientNav . page $ do
---    requires [JScriptFile jqueryScript ["alert('hello')"]
---             ,JScriptFile jqueryScript ["alert('hello again')"]]
---    p "hello" ++> empty
+(!>)= flip trace
 
 
-main = runNavigation "" $ step. page $ lazy "loading"
+main5 = runNavigation "" $ step. page $ lazy "loading"
                                    (tFieldEd "editor" "hello" $ b "hello")
 
 
 
+ifInvalid w w'= View $ do
+    r@(FormElm _ v) <- runView w
+    case v of
+      Nothing -> runView w'
+      _ -> return r
+
+swchLink  v w= do
+  r <- restp
+  case r of
+   v -> wlink ('n':v) w !> "y"
+   ('n':v) -> wlink v w !> "n" >> empty
+ `ifInvalid` wlink v w
+
+main= runNavigation "" . step . page $ do
+     swchLink  "1" "hello"
+     wlink  () "->world"
+     empty
+
+
 main3= runNavigation "" $ transientNav. page $ do
-    file <- fileUpload   <** submitButton "send"
+    file <- fileUpload <** submitButton "send"
     p <<  show file ++> wlink () " again"
 
 main2= runNavigation "showResults" $ transientNav $ do

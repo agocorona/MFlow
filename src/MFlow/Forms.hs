@@ -1129,24 +1129,19 @@ nextMessage = do
          inPageFlow= mfPagePath st `isPrefixOf` npath
 
      put st{ mfPath= npath
-
-
            , mfPageFlow= inPageFlow 
-
            , mfEnv= env }                       
-
-
      where
 
-     comparePaths _ n [] xs=  n
-     comparePaths  o n _ [] = o
-     comparePaths  o n (v:path) (v': npath) | v== v' = comparePaths o (n+1)path npath
-                                        | otherwise= n
+--     comparePaths _ n [] xs=  n
+--     comparePaths  o n _ [] = o
+--     comparePaths  o n (v:path) (v': npath) | v== v' = comparePaths o (n+1)path npath
+--                                        | otherwise= n
 
      updateParams :: Bool -> Params -> Params -> Params
      updateParams False _ req= req
      updateParams True env req=
-        let params= takeWhile isparam env
+        let params= takeWhile isparam req -- env
             fs= fst $ head req
             parms= (case findIndex (\p -> fst p == fs)  params of
                       Nothing -> params

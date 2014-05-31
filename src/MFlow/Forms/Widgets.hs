@@ -137,7 +137,7 @@ instance (Typeable view, Typeable a) => Typeable (Medit view m a) where
 --
 -- normally to be used with autoRefresh and pageFlow when used with other widgets.
 wlogin :: (MonadIO m,Functor m,FormInput v) => View v m ()
-wlogin=  do
+wlogin=  wform $ do
    username <- getCurrentUser
    if username /= anonymous  
          then do

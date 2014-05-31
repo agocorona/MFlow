@@ -78,11 +78,7 @@ data Options= Wiki | CountI | CountS | Radio
 auto w= autoRefresh $ public >> maxAge 300 >> w 
 
 mainMenu :: View Html IO Options
-mainMenu= pageFlow "" $      -- bad practice: pageflows should have a non null string
-                             -- but that would change the URLs of the options
-                             -- and they are published as such.
-                             -- that would produce collisions in identifiers with other
-                             -- widgets
+mainMenu= pageFlow "menu" $      
   ul<<<(li << a ! href "/" << b "HOME"
    ++> tFieldEd "editor" "othermenu"  "Other menu options"
    **> (li <<<  (absLink Wiki << b "Wiki") )

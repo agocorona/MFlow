@@ -62,6 +62,7 @@ instance Serializable Int where
 
 
 
+
 main= do
    index tfieldKey
    setAdminUser adminname  adminname
@@ -86,7 +87,8 @@ main= do
                        **> (El.div ! At.style "float:right" <<<   wlogin)
                        **> (divmenu  <<< br ++>  mainMenu) 
                        <** (El.div ! At.style "float:right;width:65%;overflow:auto;"
-                            <<< (pageFlow "del"  (tFieldEd edadmin "intro" "enter intro text"))
+                            <<< (tFieldEd edadmin "intro" "enter intro text"
+                            <**  lazy "loading..." (tFieldEd edadmin "moreintro" "more intro text") )
                             <++ do
                                 hr
                                 disquscript

@@ -112,6 +112,9 @@ import Data.RefSerialize hiding (empty)
 import qualified Data.Text as T
 import System.Posix.Internals
 import Control.Exception
+import Crypto.PasswordStore
+
+
 --import Debug.Trace
 --(!>)  =   flip trace
 
@@ -489,28 +492,53 @@ instance  Serializable User where
   
 -- | Register an user/password 
 tCacheRegister ::  String -> String  -> IO (Maybe String)
-tCacheRegister user password  =  atomically $ do
-     withSTMResources [newuser]  doit
+tCacheRegister user password= tCacheRegister' 14 user password
+
+tCacheRegister' strength user password= do
+     salted_password <- makePassword (SB.pack password) strength
+     atomically $ do
+         let newuser = User user (SB.unpack salted_password)
+         withSTMResources [newuser] $ doit newuser
      where
-     newuser= User user password
-     doit [Just (User _ _)] = resources{toReturn= Just "user already exist"}
-     doit [Nothing] = resources{toAdd= [newuser],toReturn= Nothing}
+         doit newuser [Just (User _ _)] = resources{toReturn= Just "user already exist"}
+         doit newuser [Nothing] = resources{toAdd= [newuser],toReturn= Nothing}
+
+
+--     withSTMResources [newuser]  doit
+--     where
+--     newuser= User user password
+--     doit [Just (User _ _)] = resources{toReturn= Just "user already exist"}
+--     doit [Nothing] = resources{toAdd= [newuser],toReturn= Nothing}
 
 tCacheValidate ::  UserStr -> PasswdStr -> IO (Maybe String)
 tCacheValidate  u p =
     let user= eUser{userName=u}
-    in  atomically
+    in atomically
      $ withSTMResources [user]
      $ \ mu -> case mu of
          [Nothing] -> resources{toReturn= err }
-         [Just (User _ pass )] -> resources{toReturn= 
-               case pass==p  of
-                 True -> Nothing
-                 False -> err
+         [Just u@(User _ pass )] -> resources{toReturn =
+               case verifyPassword (SB.pack p) (SB.pack pass)
+                    || pass== p of   -- for backward compatibility for unhashed passwords
+                  True -> Nothing
+                  False -> err
                }
-
      where
      err= Just  "Username or password invalid"
+
+--    let user= eUser{userName=u}
+--    in  atomically
+--     $ withSTMResources [user]
+--     $ \ mu -> case mu of
+--         [Nothing] -> resources{toReturn= err }
+--         [Just (User _ pass )] -> resources{toReturn= 
+--               case pass==p  of
+--                 True -> Nothing
+--                 False -> err
+--               }
+--
+--     where
+--     err= Just  "Username or password invalid"
 
 userRegister u p= liftIO $ do
    Auth reg _ <- getAuthMethod :: IO Auth
