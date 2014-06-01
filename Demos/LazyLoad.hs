@@ -5,7 +5,7 @@ import Data.String
 -- #define ALONE -- to execute it alone, uncomment this
 #ifdef ALONE
 import MFlow.Wai.Blaze.Html.All
-main= runNavigation "showResults" . transientNav $ do
+main= runNavigation "lazy" . transientNav $ do
     setHeader $ docTypeHtml . body
     lazyLoad
 #else
@@ -16,12 +16,12 @@ import Menu
 data Opts=  Sequence | Recursive deriving(Show, Typeable)
 
 lazyLoad=  do
-    r <- page  $ wlink Sequence << p "Lazy present the 20 numbers"
+    r <- page  $ wlink Sequence  << p "Lazy present the 20 numbers"
              <|> wlink Recursive << p "present 20 numbers lazily recursive"
-    r <- case r of
+    n <- case r of
        Sequence  -> page $ pageFlow "lazy" $ lazyPresent  (0 :: Int) 20
        Recursive -> page $ pageFlow "lazy" $ lazyPresentR (0 :: Int) 20
-    page $ wlink () << p << (show r ++ " selected. Go to home" )
+    page $ wlink () << p << (show n ++ " selected. Go to home" )
 
 lazyPresent i n=  firstOf[lazy  spinner (wlink i $ p << (show i) ) | i <- [i..n :: Int]]
 

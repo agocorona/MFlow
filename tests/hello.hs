@@ -15,18 +15,20 @@ import System.IO.Unsafe
 (!>)= flip trace
 
 
-main5 = runNavigation "" $ step. page $ lazy "loading"
+
+main7 = runNavigation "" $ step. page $ lazy "loading"
                                    (tFieldEd "editor" "hello" $ b "hello")
 
-swLink v w= do
-  id <- genNewId
-  wlink v w <! [("id",id),("style","visibility:visible"),("onclick",onclick)]
-  where
-  onclick= "function(id){
-    var elem= document.getElementById('html element id');
-    if(elem.style.visibility ='visible')
-       {elem.style.visibility = 'hidden'}
-    else{elem.style.visibility = 'visible'}
+--hideShow w= do
+--  id <- genNewId
+--  requires[onclick]
+--  div ! onClick ("onclick("++id++")")
+--  where
+--  onclick= "function(id){
+--    var elem= document.getElementById('html element id');
+--    if(elem.style.visibility ='visible')
+--       {elem.style.visibility = 'hidden'}
+--    else{elem.style.visibility = 'visible'}
 
 
 ifInvalid w w'= View $ do
@@ -43,9 +45,10 @@ swchLink  v w= do
  `ifInvalid` wlink v w
 
 main= runNavigation "" . step . page $ do
-     swchLink  "1" "hello"
-     wlink  () "->world"
-     empty
+     (,) <$> getInt Nothing
+         <*> getInt Nothing
+         <** submitButton "enter"
+     return ()
 
 
 main3= runNavigation "" $ transientNav. page $ do
