@@ -41,10 +41,10 @@ instance (Read a, Show a) => Serializable a where
 
 refMaxIndex= getDBRef "maxIndex"
 
-urlShortener= redirect <|> newEntry
+urlShortener= page $ redirect <|> newEntry
 
 
-redirect= page $ restp >>= findUrl
+redirect= restp >>= findUrl
  where
  findUrl :: Int -> View Html IO ()
  findUrl ind= do
@@ -58,8 +58,8 @@ redirect= page $ restp >>= findUrl
 
 newEntry= do
  liftIO $ index indexUrl  !> "newEntry"
- ind <- page $ do
-    url <- getString Nothing <** submitButton "ok" <|> empty
+ ind <-  do
+    url <- getString Nothing <** submitButton "ok" <++ br <|> empty
     liftIO . atomically $ do
        let refUrl= getDBRef $ makeKey url
        found <- readDBRef refUrl
@@ -72,7 +72,8 @@ newEntry= do
             writeDBRef refMaxIndex $ MaxIndex max1
             return max1
         Just (ShortUrl _ ind) -> return ind
- page $ wlink ()  << b << (mydomain <> "/" <> show ind)
+ wlink ind   << b << (mydomain <> "/" <> show ind)
+ empty
 
 mydomain= "http://localhost"
 
