@@ -1072,7 +1072,7 @@ ask w =  do
          if  not (inSync st')  && not (newAsk st')
                                                        -- !> ("insync="++show (inSync st'))
                                                        -- !> ("newask="++show (newAsk st'))
-          then fail ""                                  -- !> "FAIL sync"
+          then fail ""                                   !> "FAIL sync"
           else if mfAutorefresh st' then do
                      resetState st st'                 -- !> ("EN AUTOREFRESH" ++ show [ mfPagePath st,mfPath st,mfPagePath st'])
 --                     modify $ \st -> st{mfPagePath=mfPagePath st'} !> "REPEAT"

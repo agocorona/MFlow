@@ -62,12 +62,27 @@ import Control.Concurrent
 import Control.Monad.Loc
 
 -- debug
---import Debug.Trace
---(!>) = flip trace 
+import Debug.Trace
+(!>) = flip trace 
 
 
 data FailBack a = BackPoint a | NoBack a | GoBack   deriving (Show,Typeable)
 
+instance Functor FailBack where
+  fmap f GoBack= GoBack
+  fmap f (BackPoint x)= BackPoint $ f x
+  fmap f (NoBack x)= NoBack $ f x
+
+instance Applicative FailBack where
+  pure x = NoBack x
+  _ <*> GoBack = GoBack
+  GoBack <*> _ = GoBack
+  k <*> x = NoBack $ (fromFailBack k)  (fromFailBack x)
+
+instance Alternative FailBack where
+   empty= GoBack
+   GoBack <|> f = f
+   f <|> _ = f
 
 instance (Serialize a) => Serialize (FailBack a ) where
    showp (BackPoint x)= insertString (fromString iCanFailBack) >> showp x
@@ -117,14 +132,30 @@ fromFailBack (NoBack  x)   = x
 fromFailBack (BackPoint  x)= x
 toFailBack x= NoBack x
 
+instance (Monad m,Applicative m) => Applicative (Sup m) where
+   pure x = Sup . return $ NoBack x
+   f <*> g= Sup $ do
+       k <- runSup f
+       x <- runSup g
+       return $ k <*> x
+
+instance(Monad m, Applicative m) => Alternative (Sup m) where
+   empty = Sup . return $ GoBack
+   f <|> g= Sup $ do
+       x <- runSup f
+       case x of
+        GoBack -> runSup g
+        other  -> return other
 
 -- | the FlowM monad executes the page navigation. It perform Backtracking when necessary to syncronize
 -- when the user press the back button or when the user enter an arbitrary URL. The instruction pointer
 -- is moved to the right position within the procedure to handle the request.
 --
 -- However this is transparent to the programmer, who codify in the style of a console application.
-newtype FlowM v m a= FlowM {runFlowM :: FlowMM v m a} deriving (Monad,MonadIO,Functor,MonadState(MFlowState v))
-flowM= FlowM
+newtype FlowM v m a= FlowM {runFlowM :: FlowMM v m a}
+        deriving (Applicative,Alternative,Monad,MonadIO,Functor
+                 ,MonadState(MFlowState v))
+
 --runFlowM= runView
 
 {-# NOINLINE breturn  #-}
@@ -134,7 +165,7 @@ flowM= FlowM
 -- This way when the user press the back button, the computation will execute back, to
 -- the returned code, according with the user navigation.
 breturn :: (Monad m) => a -> FlowM v m a
-breturn = flowM . Sup . return . BackPoint           -- !> "breturn"
+breturn = FlowM . Sup . return . BackPoint           -- !> "breturn"
 
 
 instance (Supervise s m,MonadIO m) => MonadIO (Sup  m) where
@@ -1120,7 +1151,7 @@ step
       -> FlowM view (Workflow m) a
 step f= do
    s <- get
-   flowM $ Sup $ do
+   FlowM $ Sup $ do
         (r,s') <- lift . WF.step $ runStateT (runSup $ runFlowM f) s
 
         -- when recovery of a workflow, the MFlow state is not considered
@@ -1142,7 +1173,7 @@ transientNav
       -> FlowM view (Workflow IO) a
 transientNav f= do
    s <- get
-   flowM $ Sup $ do
+   FlowM $ Sup $ do
         (r,s') <-  lift . unsafeIOtoWF $ runStateT (runSup $ runFlowM f) s
         put s'
         return r
@@ -1242,8 +1273,8 @@ getRestParam= do
               let name= head xs
               r <-  fmap valToMaybe $ readParam name 
               when (isJust r) $ modify $ \s -> s{inSync= True
-                                                ,linkMatched= True
-                                                ,mfPagePath= mfPagePath s++[name]}
+                                               ,linkMatched= True
+                                               ,mfPagePath= mfPagePath s++[name]}
               return r 
              
 
