@@ -62,8 +62,8 @@ import Control.Concurrent
 import Control.Monad.Loc
 
 -- debug
-import Debug.Trace
-(!>) = flip trace 
+--import Debug.Trace
+--(!>) = flip trace 
 
 
 data FailBack a = BackPoint a | NoBack a | GoBack   deriving (Show,Typeable)

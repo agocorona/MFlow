@@ -526,7 +526,7 @@ htmlEdit buttons jsuser w = do
                  \})};\n"
       install= "installHtmlField('"++jsuser++"','"++cookieuser++"','"++id++"',"++show buttons++");\n"
 
-  requires [JScriptFile nicEditUrl [installHtmlField,install]]
+  requires [JScript installHtmlField ,JScriptFile nicEditUrl [install]]
   w <! [("id",id)]
 
 
