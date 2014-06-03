@@ -3,7 +3,7 @@
 {-# LANGUAGE TypeFamilies, DeriveDataTypeable, TemplateHaskell #-}
 {-# OPTIONS -XCPP #-}
 module AcidState (
-acidState
+acidState, initAcid
 ) where
 
 import Data.Acid
@@ -34,8 +34,7 @@ type Message = String
 data Database = Database [Message]
 
 
-
-initAcid= openLocalStateFrom "dist/db/" (Database [])
+initAcid= openLocalStateFrom "Demos/db/" (Database [])
 
 addMessage :: Message -> Update Database ()
 addMessage msg = do
@@ -63,11 +62,9 @@ addMsg database msg = update database (AddMessage msg)
 
 
 acidState db= do
-
-  r <- page $ h3 << "Persistent message demo "
+  r <- page $ h3 << "Persistent message demo."
           ++> getString Nothing
           <** submitButton "OK"
-
 
   liftIO $ addMsg db r
 
@@ -78,4 +75,3 @@ acidState db= do
     ++> p << ("Here are the last 10 things in the db: " ++ last10)
     ++> wlink () << p << "next"
   acidState db
-

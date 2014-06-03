@@ -72,7 +72,7 @@ main= do
    userRegister edadmin edadmin
    userRegister "edituser" "edituser"
    syncWrite  $ Asyncronous 120 defaultCheck  1000
-
+   db <- initAcid
    setFilesPath "Demos/"
    addMessageFlows[
        -- Web Services --
@@ -128,7 +128,7 @@ main= do
              MCounter    ->   mcounter                           `showSource`  "MCounter.hs"
              MFlowPersist ->  transientNav mFlowPersistent       `showSource`  "MFlowPersistent.hs"
              RuntimeTemplates -> transientNav runtimeTemplates   `showSource`  "RuntimeTemplates.hs"
-             AcidState        -> transientNav (acidState undefined)     `showSource`  "AcidState.hs"
+             AcidState        -> transientNav (acidState db)     `showSource`  "AcidState.hs"
              InitialConfig -> initialConfig                      `showSource`  "InitialConfig.hs"
              SearchCart    -> searchCart                         `showSource`  "SearchCart.hs"
              GenerateForm  -> transientNav genForm
