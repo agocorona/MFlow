@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/tomberek/MFlow.png?branch=master)](https://travis-ci.org/tomberek/MFlow)
+[![Build Status](https://travis-ci.org/agocorona/MFlow.png?branch=master)](https://travis-ci.org/agocorona/MFlow)
 
 See the [MFlow demo and documentation site](http://mflowdemo.herokuapp.com)
 
