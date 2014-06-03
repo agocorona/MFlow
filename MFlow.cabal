@@ -128,7 +128,7 @@ executable demos-blaze
                    hamlet , shakespeare, monadloc , aws , network , hscolour ,
                    persistent-template , persistent-sqlite , persistent ,
                    conduit ,  http-conduit , monad-logger , safecopy ,
-                   time
+                   time, acid-state
     main-is: demos-blaze.hs
     buildable: True
     hs-source-dirs: Demos
