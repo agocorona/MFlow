@@ -34,8 +34,8 @@ import System.IO.Unsafe
 
 newtype Filename= Filename String deriving Typeable
 
-adminname= "admin"
-edadmin= "editor"
+adminname= getConfig "cadmin" "admin"
+edadmin= getConfig "edadmin" "editor"
 
 -- present the widget w decorated with the main menu on the left and the source code at the bottom
 page w= MF.ask $ do

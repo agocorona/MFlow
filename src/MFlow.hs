@@ -54,7 +54,7 @@ Fragment based streaming: 'sendFragment'  are  provided only at this level.
               ,RecordWildCards
               ,OverloadedStrings
               ,ScopedTypeVariables
-
+              ,BangPatterns
                #-}  
 module MFlow (
 Flow, Params, HttpData(..),Processable(..)
@@ -72,7 +72,7 @@ btag, bhtml, bbody,Attribs, addAttrs
 , userRegister, setAdminUser, getAdminName, Auth(..),getAuthMethod, setAuthMethod
 -- * static files
 -- * config
-,config, getConfig
+,config,getConfig
 ,setFilesPath
 -- * internal use
 ,addTokenToList,deleteTokenInList, msgScheduler,serveFile,newFlow
@@ -462,7 +462,8 @@ data Auth = Auth{
 
 _authMethod= unsafePerformIO $ newIORef $ Auth tCacheRegister tCacheValidate
 
--- | set an authentication method
+-- | set an authentication method. That includes the registration and validation calls.
+-- both return Nothing if sucessful. Otherwise they return a text mesage explaining the failure
 setAuthMethod auth= writeIORef _authMethod auth
 
 getAuthMethod = readIORef _authMethod
@@ -526,33 +527,15 @@ tCacheValidate  u p =
      where
      err= Just  "Username or password invalid"
 
---    let user= eUser{userName=u}
---    in  atomically
---     $ withSTMResources [user]
---     $ \ mu -> case mu of
---         [Nothing] -> resources{toReturn= err }
---         [Just (User _ pass )] -> resources{toReturn= 
---               case pass==p  of
---                 True -> Nothing
---                 False -> err
---               }
---
---     where
---     err= Just  "Username or password invalid"
-
-userRegister u p= liftIO $ do
+-- | register an user with the auth Method
+userRegister :: MonadIO m => UserStr -> PasswdStr -> m (Maybe String)
+userRegister !u !p= liftIO $ do
    Auth reg _ <- getAuthMethod :: IO Auth
    reg u p
 
 
 newtype Config= Config1 (M.Map String String) deriving (Read,Show,Typeable)
 
---defConfig= Config1 $ M.fromList
---            [("cadmin","admin")
---            ,("cjqueryScript","//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js")
---            ,("cjqueryCSS","//code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css")
---            ,("cjqueryUI","//code.jquery.com/ui/1.10.3/jquery-ui.js")
---            ,("cnicEditUrl","//js.nicedit.com/nicEdit-latest.js")]
 
 data Config0 = Config{cadmin :: UserStr           -- ^ Administrator name
                      ,cjqueryScript :: String     -- ^ URL of jquery
@@ -562,12 +545,6 @@ data Config0 = Config{cadmin :: UserStr           -- ^ Administrator name
                      }
                     deriving (Read, Show, Typeable)
 
---defConfig0= Config "admin" "//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"
---                           "//code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css"
---                           "//code.jquery.com/ui/1.10.3/jquery-ui.js"
---                           "//js.nicedit.com/nicEdit-latest.js"
---
---writeDefConfig0= writeFile "sal" $ show defConfig0
 
 change :: Config0 -> Config
 change Config{..} = Config1 $ M.fromList
@@ -594,21 +571,21 @@ rconf :: DBRef Config
 rconf= getDBRef keyConfig
 
 instance  Serializable Config where
-  serialize = B.pack . show
+  serialize (Config1 c)= B.pack  $ "Config1 (fromList[\n" <> (concat . intersperse ",\n" $ map show (M.toList c)) <> "])"
   deserialize s = unsafePerformIO $  (return $! read $! B.unpack s)
                    `CE.catch` \(e :: SomeException) ->  return (readOld s)
   setPersist = \_ -> Just filePersist
 
 -- | read a config variable from the config file \"mflow.config\". if it is not set, uses the second parameter and
 -- add it to the configuration list, so next time the administrator can change it in the configuration file
-getConfig k v= case M.lookup k config of
+getConfig k v=  case M.lookup k config of
      Nothing -> unsafePerformIO $ setConfig k v >> return v
      Just s  -> s
 
 -- | set an user-defined config variable
-setConfig k v=   atomically $ do
-   Config1 conf <- readConfig
-   writeDBRef rconf $ Config1 $ M.insert k v conf
+setConfig k v= atomically $ do
+     Config1 conf <-  readConfig
+     writeDBRef rconf $ Config1 $ M.insert k v conf
 
 
 -- user ---
@@ -624,10 +601,6 @@ setAdminUser :: MonadIO m => UserStr -> PasswdStr -> m ()
 setAdminUser user password= liftIO $  do
   userRegister user password
   setConfig "cadmin" user
---  atomically $ do
---   Config1 conf <- readConfig
---   writeDBRef rconf $ Config1 $ M.insert "cadmin" user conf
-
 
 
 getAdminName= getConfig "cadmin"  "admin"
@@ -707,7 +680,7 @@ addAttrs other _ = error  $ "addAttrs: byteString is not a tag: " ++ show other
 -- It uses 'Data.TCache.Memoization'. 
 -- The caching-uncaching follows the `setPersist` criteria
 setFilesPath :: MonadIO m => String -> m ()
-setFilesPath path= liftIO $ writeIORef rfilesPath path
+setFilesPath !path= liftIO $ writeIORef rfilesPath path
 
 rfilesPath= unsafePerformIO $ newIORef "files/"
 

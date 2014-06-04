@@ -41,22 +41,28 @@ instance (Read a, Show a) => Serializable a where
 
 refMaxIndex= getDBRef "maxIndex"
 
-urlShortener= page $ redirect <|> newEntry
+urlShortener= (once >> redirect) <|> (retry1 >> newEntry)
 
+once= modify $ \s -> s{newAsk=False}
 
-redirect= restp >>= findUrl
+noRetry= modify (\s -> s{inSync=False,newAsk=False}) >> empty
+
+retry1 = modify $ \s -> s{newAsk=True}
+
+redirect :: FlowM Html IO ()
+redirect= page $ restp >>= findUrl
  where
  findUrl :: Int -> View Html IO ()
  findUrl ind= do
  murl <- liftIO . atomically . select url $ indexUrl .==. ind
  case murl of
-  []    -> empty
+  []    -> noRetry !> "noRetry"
   [url] -> do
-     setHttpHeader "HTTP/1.1 301 Moved Permanently" ""
+     setHttpHeader "HTTP/1.1 301 Moved Permanently" ""  !> "ok"
      setHttpHeader "Location" $ B.pack url
      return ()
 
-newEntry= do
+newEntry= page $ do
  liftIO $ index indexUrl  !> "newEntry"
  ind <-  do
     url <- getString Nothing <** submitButton "ok" <++ br <|> empty

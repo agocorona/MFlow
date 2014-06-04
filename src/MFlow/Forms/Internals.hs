@@ -62,8 +62,8 @@ import Control.Concurrent
 import Control.Monad.Loc
 
 -- debug
---import Debug.Trace
---(!>) = flip trace 
+import Debug.Trace
+(!>) = flip trace 
 
 
 data FailBack a = BackPoint a | NoBack a | GoBack   deriving (Show,Typeable)
@@ -144,8 +144,8 @@ instance(Monad m, Applicative m) => Alternative (Sup m) where
    f <|> g= Sup $ do
        x <- runSup f
        case x of
-        GoBack -> runSup g
-        other  -> return other
+        GoBack -> runSup g !> "GOBACK"
+        _      -> return x
 
 -- | the FlowM monad executes the page navigation. It perform Backtracking when necessary to syncronize
 -- when the user press the back button or when the user enter an arbitrary URL. The instruction pointer

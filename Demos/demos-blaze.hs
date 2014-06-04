@@ -54,8 +54,13 @@ import CachingDataset
 import LazyLoad
 import Data.TCache.DefaultPersistence
 
-
 import Data.ByteString.Lazy.Char8 hiding (index)
+
+
+--import Debug.Trace
+--(!>)= flip trace
+
+
 instance Serializable Int where
   serialize= pack . show
   deserialize= read . unpack
@@ -68,12 +73,13 @@ spinner= img ! src (fromString spinnerurl)
 
 main= do
    index tfieldKey
+
    setAdminUser adminname  adminname
-   userRegister edadmin edadmin
+   userRegister edadmin    edadmin
    userRegister "edituser" "edituser"
    syncWrite  $ Asyncronous 120 defaultCheck  1000
    db <- initAcid
-   setFilesPath "Demos/"
+   setFilesPath  $ getConfig "filesPath" "Demos/"
    addMessageFlows[
        -- Web Services --
        ("apirest", wstateless restService),
