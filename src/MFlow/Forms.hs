@@ -75,7 +75,7 @@ typed responses. The user interface definitions are  based on a extension of
 formLets (<http://www.haskell.org/haskellwiki/Formlets>) with the addition of caching, links, formatting, attributes,
  extra combinators, callbaks and modifiers.
 The interaction with the user is  stateful. In the same computation there may be  many
-request-response interactions, in the same way than in the case of a console applications. 
+request-response interactions, in the same way than in the case of a console applications.
 
 * APPLICATION SERVER
 
@@ -681,10 +681,10 @@ setOption1 nam  val check= View $ do
 -- The user can move, rename it etc.
 fileUpload :: (FormInput view,
       Monad  m,Functor m) =>
-      View view m (String -- ^ original file ,
-                  ,String -- ^ file type
-                  ,String -- ^ temporal file uploaded
-                  )
+      View view m (String
+                  ,String
+                  ,String
+                  ) -- ^ ( original file, file type, temporal uploaded)
 fileUpload=
   getParam Nothing "file" Nothing <** modify ( \st ->  st{mfFileUpload = True})
 
@@ -716,7 +716,7 @@ fileUpload=
          -> View view m a
          -> View view m a
 (<<<) v form= View $ do
-  FormElm f mx <- runView form 
+  FormElm f mx <- runView form
   return $ FormElm (v  f) mx
 
 
@@ -729,9 +729,9 @@ infixr 5 <<<
 
 -- | Append formatting code to a widget
 --
--- @ getString "hi" <++ H1 << "hi there"@
+-- @ getString "hi" '<++' H1 '<<' "hi there"@
 --
--- It has a infix prority: @infixr 6@ higuer that '<<<' and most other operators
+-- It has a infix prority: @infixr 6@ higher than '<<<' and most other operators.
 (<++) :: (Monad m, Monoid v)
       => View v m a
       -> v
@@ -740,25 +740,25 @@ infixr 5 <<<
   FormElm f mx <-  runView  form
   return $ FormElm ( f <> v) mx
 
-infixr 6  ++> 
-infixr 6 <++ 
+infixr 6  ++>
+infixr 6 <++
 -- | Prepend formatting code to a widget
 --
--- @bold << "enter name" ++> getString Nothing @
+-- @bold '<<' "enter name" '++>' 'getString' 'Nothing' @
 --
--- It has a infix prority: @infixr 6@ higuer that '<<<' and most other operators
+-- It has a infix prority: @infixr 6@ higher than '<<<' and most other operators
 (++>) :: (Monad m,  Monoid view)
        => view -> View view m a -> View view m a
 html ++> w =  --  (html <>) <<< digest
  View $ do
-  FormElm f mx <- runView w 
+  FormElm f mx <- runView w
   return $ FormElm (html  <>  f) mx
 
 
 
 -- | Add attributes to the topmost tag of a widget
 --
--- it has a fixity @infix 8@
+-- It has a fixity @infix 8@
 infixl 8 <!
 widget <! attribs= View $ do
       FormElm fs  mx <- runView widget
@@ -932,7 +932,7 @@ login' uname setCookieFunc = do
      when (u /= uname) $ do
          let t'= t{tuser= uname}
     --     moveState (twfname t) t t'
-         put st{mfToken= t'} 
+         put st{mfToken= t'}
          liftIO $ deleteTokenInList t
          liftIO $ addTokenToList t'
          setCookieFunc cookieuser   uname "/"  (Just $ 365*24*60*60)
@@ -1028,7 +1028,7 @@ ask w =  do
  st1 <- get >>= \s -> return s{mfSequence=
                                    let seq= mfSequence s in
                                    if seq ==inRecovery then 0 else seq
-                              ,mfHttpHeaders =[],mfAutorefresh= False } 
+                              ,mfHttpHeaders =[],mfAutorefresh= False }
  if not . null $ mfTrace st1 then fail "" else do
   -- AJAX
   let env= mfEnv st1
@@ -1052,10 +1052,10 @@ ask w =  do
 --  if exist and it is not prefix of the current path being navigated to, backtrack
       else if not $  pagepath `isPrefixOf` mfPath st1 then fail ""    -- !> ("pagepath fail with "++ show (mfPath st1))
        else do
-   
+
      let st= st1{needForm= NoElems, inSync= False, linkMatched= False
                  ,mfRequirements= []
-                 ,mfInstalledScripts=  if newAsk st1 then [] else mfInstalledScripts st1} 
+                 ,mfInstalledScripts=  if newAsk st1 then [] else mfInstalledScripts st1}
      put st
      FormElm forms mx <- FlowM . lift  $ runView  w
      setCachePolicy
@@ -1077,7 +1077,7 @@ ask w =  do
                      resetState st st'                 -- !> ("EN AUTOREFRESH" ++ show [ mfPagePath st,mfPath st,mfPagePath st'])
 --                     modify $ \st -> st{mfPagePath=mfPagePath st'} !> "REPEAT"
                      FlowM $ lift  nextMessage
-                     ask w                                 
+                     ask w
           else do
              reqs <-  FlowM $ lift installAllRequirements     --  !> "REPEAT"
              st' <- get
@@ -1091,7 +1091,7 @@ ask w =  do
 
              let HttpData ctype c s= toHttpData cont
              liftIO . sendFlush t $ HttpData (ctype ++ mfHttpHeaders st') (mfCookies st' ++ c) s
-                          
+
              resetState st st'
              FlowM $ lift  nextMessage         -- !> "NEXTMESSAGE"
              ask w
@@ -1103,7 +1103,7 @@ ask w =  do
                    ,mfToken= mfToken st'
                    ,mfPageFlow= mfPageFlow st'
                    ,mfAjax= mfAjax st'
-                   ,mfData= mfData st' } 
+                   ,mfData= mfData st' }
 
 
 -- | A synonym of ask.
@@ -1129,8 +1129,9 @@ nextMessage = do
          inPageFlow= mfPagePath st `isPrefixOf` npath
 
      put st{ mfPath= npath
-           , mfPageFlow= inPageFlow 
-           , mfEnv= env }                       
+           , mfPageFlow= inPageFlow
+           , mfEnv= env }
+
      where
 
 --     comparePaths _ n [] xs=  n
@@ -1163,7 +1164,7 @@ isparam _= False
 wstateless
   :: (Typeable view,  FormInput view) =>
      View view IO () -> Flow
-wstateless w =  runFlow . transientNav . ask $ w **> (stop `asTypeOf` w) 
+wstateless w =  runFlow . transientNav . ask $ w **> (stop `asTypeOf` w)
 
 
 
@@ -1175,7 +1176,7 @@ wstateless w =  runFlow . transientNav . ask $ w **> (stop `asTypeOf` w)
 -- there are more than one form in the page.
 wform ::  (Monad m, FormInput view)
           => View view m b -> View view m b
-wform= insertForm         
+wform= insertForm
 --wform x = View $ do
 --     FormElm form mr <- (runView $   x )
 --     st <- get
@@ -1265,7 +1266,7 @@ wlabel str w = do
 -- | Creates a link to a the next step within the flow.
 -- A link can be composed with other widget elements.
 --  It can not be broken by its own definition.
--- It points to the page that created it. 
+-- It points to the page that created it.
 wlink :: (Typeable a, Show a, MonadIO m,  FormInput view)
          => a -> view -> View  view m a
 wlink x v=    View $ do
@@ -1428,7 +1429,7 @@ allOf xs= manyOf xs `validate` \rs ->
   FormElm fx rx   <- runView  x
   let (fxs, rxss) = unzip $ map (\(FormElm v r) -> (v,r)) fs
       rs= filter isJust rxss
-      rxs= if null rs then Nothing else  head rs 
+      rxs= if null rs then Nothing else  head rs
   return $ FormElm (fx <> mconcat (intersperse  fx fxs) <> fx)
          $ case (rx,rxs) of
             (Nothing, Nothing) -> Nothing
@@ -1588,7 +1589,7 @@ pageFlow str widget=do
      if   mfPageFlow s == False
        then do
        put s{mfPrefix= str ++ mfPrefix s
-            ,mfSequence=0 
+            ,mfSequence=0
             ,mfPageFlow= True
              }                               -- !> ("PARENT pageflow. prefix="++ str)
 
