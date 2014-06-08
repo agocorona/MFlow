@@ -4,7 +4,7 @@ Test
 errlog
 .tcachedata
 .cabal-sandbox
-cabal.sandbox
+cabal.sandbox*
 favicon
 IDE.session
 MFlow.lkshf
