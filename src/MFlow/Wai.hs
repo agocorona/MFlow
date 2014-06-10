@@ -77,10 +77,15 @@ instance Processable Request  where
      mkParams1 = Prelude.map mkParam1
      mkParam1 ( x,y)= (toString $ original  x, toString y)
 
-
+toApp :: (Request -> IO Response) -> Application
+#if MIN_VERSION_wai(3, 0, 0)
+toApp f req sendResponse = f req >>= sendResponse
+#else
+toApp = id
+#endif
 
 waiMessageFlow  ::  Application
-waiMessageFlow req1=   do
+waiMessageFlow = toApp $ \req1 -> do
      let httpreq1= requestHeaders  req1
 
      let cookies = getCookies  httpreq1
@@ -115,7 +120,18 @@ waiMessageFlow req1=   do
                                     CB.sinkHandle h
                                     lift $ release key
                                     return fp
+#if MIN_VERSION_wai(3, 0, 0)
+                               let backend' file info getBS = do
+                                        let src = do
+                                                bs <- liftIO getBS
+                                                when (not $ SB.null bs) $ do
+                                                    Data.Conduit.yield bs
+                                                    src
+                                        src $$ backend file info
+                               sinkRequestBody backend' rbt (requestBody req1)
+#else
                                requestBody req1 $$ sinkRequestBody backend rbt
+#endif
 
 --                         let fileparams= Prelude.map (\(param,FileInfo filename contentype content)
 --                                              -> (param,   SB.pack content )) files
