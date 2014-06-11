@@ -420,7 +420,7 @@ getSource file = liftIO $ cachedByKey file 0 $ do
 colourPrefs= unsafePerformIO readColourPrefs
 
 wiki =  page $ do
-    public >> maxAge 400 >> sMaxage 300
+    public >> maxAge 400 >> sMaxAge 300
     pagname <- restp <|> return "index"
     h1 ! At.style "text-align:center" <<<  tFieldEd "editor" (wikip ++pagname ++ "title.html")
                       (fromString pagname)
