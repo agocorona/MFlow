@@ -1,10 +1,11 @@
-{-# LANGUAGE  UndecidableInstances
+{-# LANGUAGE   UndecidableInstances
              , CPP
              , TypeSynonymInstances
              , MultiParamTypeClasses
              , DeriveDataTypeable
              , FlexibleInstances
-             , OverloadedStrings #-}
+             , OverloadedStrings
+             , TemplateHaskell #-}
 
 module MFlow.Wai(
      module MFlow.Cookies
@@ -57,6 +58,14 @@ import qualified Data.Text as T
 import Debug.Trace
 (!>) = flip trace
 
+
+toApp :: (Request -> IO Response) -> Application
+#if MIN_VERSION_wai(3, 0, 0)
+toApp f req sendResponse = f req >>= sendResponse
+#else
+toApp = id
+#endif
+
 flow=  "flow"
 
 instance Processable Request  where
@@ -77,12 +86,7 @@ instance Processable Request  where
      mkParams1 = Prelude.map mkParam1
      mkParam1 ( x,y)= (toString $ original  x, toString y)
 
-toApp :: (Request -> IO Response) -> Application
-#if MIN_VERSION_wai(3, 0, 0)
-toApp f req sendResponse = f req >>= sendResponse
-#else
-toApp = id
-#endif
+
 
 waiMessageFlow  ::  Application
 waiMessageFlow = toApp $ \req1 -> do

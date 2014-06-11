@@ -420,16 +420,16 @@ getSource file = liftIO $ cachedByKey file 0 $ do
 colourPrefs= unsafePerformIO readColourPrefs
 
 wiki =  page $ do
+    public >> maxAge 400 >> sMaxage 300
     pagname <- restp <|> return "index"
-    (docTypeHtml $ El.head $ El.title << pagname) 
-        ++> (El.body
-        <<< ( h1 ! At.style "text-align:center" <<<  tFieldEd "editor" (wikip ++pagname ++ "title.html") (fromString pagname))
+    h1 ! At.style "text-align:center" <<<  tFieldEd "editor" (wikip ++pagname ++ "title.html")
+                      (fromString pagname)
         **> tFieldEd "editor" (wikip ++ pagname ++ "body.html") "Enter the body"
         <++ do
            hr
            disquscript
 
-        )
+  
 
   
 wikip="wiki/"
