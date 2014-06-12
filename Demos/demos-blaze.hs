@@ -97,7 +97,7 @@ main= do
                        **> (divmenu  <<< br ++>  mainMenu) 
                        <** (El.div ! At.style "float:right;width:65%;overflow:auto;"
                             <<< (tFieldEd edadmin "intro" "enter intro text"
-                            <**  lazy spinner (public >> maxAge 300 >> tFieldEd edadmin "moreintro" "more intro text") )
+                            <**  tFieldEd edadmin "moreintro" "more intro text") 
                             <++ do
                                 hr
                                 disquscript
