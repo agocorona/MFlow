@@ -44,7 +44,8 @@ Fragment based streaming: 'sendFragment'  are  provided only at this level.
 -}
 
 
-{-# LANGUAGE  DeriveDataTypeable, UndecidableInstances
+{-# LANGUAGE   DeriveDataTypeable
+              ,UndecidableInstances
               ,ExistentialQuantification
               ,MultiParamTypeClasses
               ,FunctionalDependencies
@@ -82,23 +83,18 @@ btag, bhtml, bbody,Attribs, addAttrs
 where
 import Control.Concurrent.MVar 
 import Data.IORef
-import GHC.Conc(unsafeIOToSTM)
 import Data.Typeable
-import Data.Maybe(isJust, isNothing, fromMaybe, fromJust)
-import Data.Char(isSeparator) 
-import Data.List(isPrefixOf,isSuffixOf,isInfixOf, elem , span, (\\),intersperse)
-import Control.Monad(when) 
-
+import Data.Maybe( fromMaybe )
+import Data.Char(isSeparator, toLower) 
+import Data.List(isPrefixOf,isSuffixOf,isInfixOf, intercalate)
+import Control.Monad(when, liftM, void) 
 import Data.Monoid
-import Control.Concurrent(forkIO,threadDelay,killThread, myThreadId, ThreadId)
-import Data.Char(toLower)
-
-import Unsafe.Coerce
+import Control.Concurrent(forkIO, myThreadId, ThreadId)
 import System.IO.Unsafe
 import Data.TCache
 import Data.TCache.DefaultPersistence  hiding(Indexable(..))
 import Data.TCache.Memoization
-import qualified Data.ByteString.Lazy.Char8 as B  (head, readFile,ByteString, concat,pack, unpack,empty,append,cons,fromChunks)
+import qualified Data.ByteString.Lazy.Char8 as B  (head, readFile, concat,pack, unpack,empty)
 import Data.ByteString.Lazy.Internal (ByteString(Chunk))
 import qualified Data.ByteString.Char8 as SB
 import qualified Data.Map as M
@@ -108,9 +104,6 @@ import Control.Workflow
 import MFlow.Cookies
 import Control.Monad.Trans
 import qualified Control.Exception as CE
-import Data.RefSerialize hiding (empty)
-import qualified Data.Text as T
-import System.Posix.Internals
 import Control.Exception
 import Crypto.PasswordStore
 
@@ -141,25 +134,26 @@ instance Read Token where
         (ui,str')= span(/='@') str1
         i        = drop (length anonymous) ui
         (w,str2) = span (not . isSeparator) $ tail str'
-        newVar _= unsafePerformIO  $ newEmptyMVar
+        newVar _= unsafePerformIO  newEmptyMVar
 
 
      readsPrec _ str= error $ "parse error in Token read from: "++ str
 
 instance Serializable Token  where
-  serialize  = B.pack . show
-  deserialize= read . B.unpack
-  setPersist =   \_ -> Just filePersist
+  serialize    = B.pack . show
+  deserialize  = read . B.unpack
+  setPersist _ = Just filePersist
 
 iorefqmap= unsafePerformIO  . newMVar $ M.empty
 
+addTokenToList :: Token -> IO ()
 addTokenToList t@Token{..} =
-   modifyMVar_ iorefqmap $ \ map ->
-     return $ M.insert  ( tind  ++ twfname  ++ tuser ) t map
+   modifyMVar_ iorefqmap $ \ map' ->
+     return $ M.insert  ( tind  ++ twfname  ++ tuser ) t map'
 
 deleteTokenInList t@Token{..} =
-   modifyMVar_ iorefqmap $ \ map ->
-     return $ M.delete  (tind  ++ twfname  ++ tuser) map
+   modifyMVar_ iorefqmap $ \ map' ->
+     return $ M.delete  (tind  ++ twfname  ++ tuser) map'
 
 getToken msg=  do
       qmap  <- readMVar iorefqmap
@@ -223,21 +217,23 @@ data Resp  = Fragm HttpData
            | Resp HttpData
 
 
-
-
 -- | The anonymous user
-anonymous= "anon#"
+anonymous :: String
+anonymous = "anon#"
 
 -- | It is the path of the root flow
-noScriptRef= unsafePerformIO $ newIORef "noscript"
+noScriptRef :: IORef String
+noScriptRef = unsafePerformIO $ newIORef "noscript"
 
-noScript= unsafePerformIO $ readIORef noScriptRef
+noScript :: String
+noScript = unsafePerformIO $ readIORef noScriptRef
 
 -- | set the flow to be executed when the URL has no path. The home page.
 --
 -- By default it is "noscript".
 -- Although it is changed by `runNavigation` to his own flow name.
-setNoScript scr= writeIORef noScriptRef scr
+setNoScript :: String -> IO ()
+setNoScript = writeIORef noScriptRef
 
 {-
 instance  (Monad m, Show a) => Traceable (Workflow m a) where
@@ -247,9 +243,10 @@ instance  (Monad m, Show a) => Traceable (Workflow m a) where
 -}
 -- | send a complete response 
 --send ::   Token  -> HttpData -> IO()
-send  t@(Token _ _ _ _ _ _ _ qresp) msg=   do
+send  t@(Token _ _ _ _ _ _ _ qresp) msg=
       ( putMVar qresp  . Resp $  msg )   -- !> ("<<<<< send "++ show t) 
 
+sendFlush :: Token -> HttpData -> IO ()
 sendFlush t msg=  flushRec t >>  send t msg      -- !> "sendFlush "
 
 -- | send a response fragment. Useful for streaming. the last packet must be sent trough 'send'
@@ -262,7 +259,7 @@ sendEndFragment (Token _ _ _ _ _ _ _ qresp) msg=  putMVar qresp  $ EndFragm   ms
 
 --emptyReceive (Token  queue _  _)= emptyQueue queue
 receive ::  Typeable a => Token -> IO a
-receive t= receiveReq t >>= return  . fromReq
+receive t= liftM fromReq (receiveReq t)
 
 flushResponse t@(Token _ _ _ _ _ _ _ qresp)= tryTakeMVar qresp
 
@@ -270,9 +267,9 @@ flushResponse t@(Token _ _ _ _ _ _ _ qresp)= tryTakeMVar qresp
 flushRec t@(Token _ _ _ _ _ _ queue _)= tryTakeMVar  queue   -- !> "flushRec"
 
 receiveReq ::  Token -> IO Req
-receiveReq t@(Token _ _ _ _ _ _ queue  _)= do
- r <-   readMVar queue      -- !> (">>>>>> receiveReq ")
- return r                   -- !> "receiveReq >>>>"
+receiveReq t@(Token _ _ _ _ _ _ queue  _)=
+   readMVar queue      -- !> (">>>>>> receiveReq ")
+-- return r                   -- !> "receiveReq >>>>"
 
 fromReq :: Typeable a => Req -> a
 fromReq  (Req x) = x' where
@@ -287,12 +284,12 @@ receiveReqTimeout :: Int
                   -> IO Req
 receiveReqTimeout 0 0 t= receiveReq t
 receiveReqTimeout time time2 t=
-  let id= keyWF (twfname t)  t in withKillTimeout id time time2 (receiveReq t)
+  let id' = keyWF (twfname t)  t in withKillTimeout id' time time2 (receiveReq t)
 
-
+delMsgHistory :: Token -> IO ()
 delMsgHistory t = do
-      let statKey=  keyWF (twfname t)  t                  -- !> "wf"      --let qnme= keyWF wfname t
-      delWFHistory1 statKey                               -- `debug` "delWFHistory"
+      let statKey=  keyWF (twfname t)  t -- !> "wf"      --let qnme= keyWF wfname t
+      delWFHistory1 statKey              -- `debug` "delWFHistory"
       
 
 
@@ -306,11 +303,10 @@ stateless f = transient proc
   where
   proc t@(Token _ _ _ _ _ _ queue qresp) = loop t queue qresp
   loop t queue qresp=do
-    req <- takeMVar queue                       -- !> (">>>>>> stateless " ++ thread t)
+    req <- takeMVar queue           -- !> (">>>>>> stateless " ++ thread t)
     resp <- f (getParams req)
-    (putMVar qresp  $ Resp  resp  ) -- !> ("<<<<<< stateless " ++thread t)
-    loop t queue qresp                          -- !>  ("enviado stateless " ++ thread t)
-
+    putMVar qresp  $ Resp  resp     -- !> ("<<<<<< stateless " ++thread t)
+    loop t queue qresp              -- !>  ("enviado stateless " ++ thread t)
 
 
 -- | Executes a monadic computation that send and receive messages, but does
@@ -327,14 +323,17 @@ _messageFlows= unsafePerformIO $ newMVar emptyFList
   emptyFList= M.empty  :: WorkflowList  IO Token ()
 
 -- | add a list of flows to be scheduled. Each entry in the list is a pair @(path, flow)@
-addMessageFlows wfs=  modifyMVar_ _messageFlows(\ms ->  return $ M.union (M.fromList $ map flt wfs)ms)
+addMessageFlows :: [(String, Token -> Workflow IO ())] -> IO ()
+addMessageFlows wfs=  modifyMVar_ _messageFlows(return . M.union (M.fromList $ map flt wfs))
   where flt ("",f)= (noScript,f)
         flt e= e
 
 -- | return the list of the scheduler
+getMessageFlows :: IO (WorkflowList IO Token ())
 getMessageFlows = readMVar _messageFlows
 
-delMessageFlow wfname= modifyMVar_ _messageFlows (\ms -> return $ M.delete wfname ms)
+delMessageFlow :: String -> IO ()
+delMessageFlow wfname= modifyMVar_ _messageFlows (return . M.delete wfname)
 
 
 sendToMF Token{..} msg= putMVar tsendq (Req msg)  -- !> "sendToMF"
@@ -365,8 +364,6 @@ recFromMF t@Token{..}  = do
                  return  result
 
 
-
-
 -- | The scheduler creates a Token with every `Processable`
 -- message that arrives and send the mesage to the appropriate flow, then wait for the response
 -- and return it.
@@ -377,7 +374,7 @@ msgScheduler
   => a  -> IO (HttpData, ThreadId)
 msgScheduler x  = do
   token <- getToken x
-  th <- myThreadId
+  _ <- myThreadId
   let wfname = takeWhile (/='/') $ pwfname x
   criticalSection (tblock token) $ do
      sendToMF token x                             -- !> show th                             
@@ -388,7 +385,7 @@ msgScheduler x  = do
   criticalSection mv f= bracket
       (takeMVar mv)
       (putMVar mv)
-      $ const $ f
+      $ const f
       
   --start the flow if not started yet
   startMessageFlow wfname token = 
@@ -396,7 +393,7 @@ msgScheduler x  = do
         wfs <- getMessageFlows
         r   <- startWF wfname  token   wfs          -- !>( "init wf " ++ wfname)
         case r of
-          Left NotFound -> do
+          Left NotFound ->
                  (sendFlush token =<<  serveFile  (pwfname x))
                     `CE.catch` \(e:: CE.SomeException) -> do
                        showError wfname token (show e)
@@ -412,16 +409,15 @@ msgScheduler x  = do
           Left (WFException e)-> do
               showError wfname token e
               moveState wfname token token{tind= "error/"++tuser token}
-              deleteTokenInList token                       -- !> "DELETETOKEN"
+              deleteTokenInList token              -- !> "DELETETOKEN"
               
-              
-          Right _ ->  delMsgHistory token >> return ()      -- !> ("finished " ++ wfname)
+          Right _ ->  void (delMsgHistory token)   -- !> ("finished " ++ wfname)
 
 
 
 showError wfname token@Token{..} e= do
    t <- return . calendarTimeToString =<< toCalendarTime =<< getClockTime
-   let msg= errorMessage t e tuser (Prelude.concat $ intersperse "/" tpath) tenv
+   let msg= errorMessage t e tuser (intercalate "/" tpath) tenv
    logError  msg
    fresp <- getNotFoundResponse
    let admin=  getAdminName
@@ -437,8 +433,10 @@ errorMessage t e u path env=
      "\n\nREQUEST:\n\n" ++
      show env
 
+line :: MVar ()
 line= unsafePerformIO $ newMVar ()
 
+logError :: String -> IO ()
 logError err= do
      takeMVar line
      putStrLn err
@@ -447,53 +445,59 @@ logError err= do
      hFlush hlog
      putMVar line ()
 
+logFileName :: FilePath
 logFileName= "errlog"
 
-
-
 -- | The handler of the error log
+hlog :: Handle
 hlog= unsafePerformIO $ openFile logFileName ReadWriteMode
 
 ------ USER MANAGEMENT -------
 
 data Auth = Auth{
-   uregister ::  UserStr -> PasswdStr -> (IO (Maybe String)),
-   uvalidate ::  UserStr -> PasswdStr -> (IO (Maybe String))}
+   uregister ::  UserStr -> PasswdStr -> IO (Maybe String),
+   uvalidate ::  UserStr -> PasswdStr -> IO (Maybe String)}
 
+_authMethod :: IORef Auth
 _authMethod= unsafePerformIO $ newIORef $ Auth tCacheRegister tCacheValidate
 
 -- | set an authentication method. That includes the registration and validation calls.
 -- both return Nothing if sucessful. Otherwise they return a text mesage explaining the failure
-setAuthMethod auth= writeIORef _authMethod auth
 
+setAuthMethod :: Auth -> IO ()
+setAuthMethod = writeIORef _authMethod
+
+getAuthMethod :: IO Auth
 getAuthMethod = readIORef _authMethod
-
 
 data User= User
             { userName :: String
             , upassword :: String
             } deriving (Read, Show, Typeable)
 
-
+eUser :: User
 eUser= User (error1 "username") (error1 "password")
 
 error1 s= error $ s ++ " undefined"
 
-userPrefix= "user/"
+userPrefix :: String
+userPrefix = "user/"
+
 instance Indexable User where
    key User{userName= user}= keyUserName user
 
 -- | Return  the key name of an user
-keyUserName n= userPrefix++n
+keyUserName :: String -> String
+keyUserName n = userPrefix++n
 
 instance  Serializable User where
-  serialize=  B.pack . show
-  deserialize=   read . B.unpack
-  setPersist =   \_ -> Just filePersist
+  serialize    =  B.pack . show
+  deserialize  =  read . B.unpack
+  setPersist _ =  Just filePersist
   
 -- | Register an user/password 
 tCacheRegister ::  String -> String  -> IO (Maybe String)
-tCacheRegister user password= tCacheRegister' 14 user password
+tCacheRegister = tCacheRegister' 14
 
 tCacheRegister' strength user password= do
      salted_password <- makePassword (SB.pack password) strength
@@ -518,7 +522,7 @@ tCacheValidate  u p =
      $ withSTMResources [user]
      $ \ mu -> case mu of
          [Nothing] -> resources{toReturn= err }
-         [Just u@(User _ pass )] -> resources{toReturn =
+         [Just u@(User _ pass )] -> resources{ toReturn =
                case verifyPassword (SB.pack p) (SB.pack pass)
                     || pass== p of   -- for backward compatibility for unhashed passwords
                   True -> Nothing
@@ -552,38 +556,43 @@ change Config{..} = Config1 $ M.fromList
             ,("cjqueryScript", cjqueryScript)
             ,("cjqueryCSS",cjqueryCSS)
             ,("cjqueryUI",cjqueryUI)
-            ,("cnicEditUrl",cnicEditUrl)]
+            ,("cnicEditUrl",cnicEditUrl)
+            ]
 
 config :: M.Map String String
 config= unsafePerformIO $! do
   Config1 c <- atomically $! readConfig
   return c
 
-readConfig=  readDBRef rconf `onNothing`  return (Config1 $ M.fromList []) -- defConfig
+readConfig :: STM Config
+readConfig=  readDBRef rconf `onNothing` return (Config1 $ M.fromList []) -- defConfig
 
 readOld :: ByteString -> Config
-readOld s= (change . read . B.unpack $ s)
+readOld s= change . read . B.unpack $ s
 
+keyConfig :: String
 keyConfig= "mflow.config"
+
 instance Indexable Config where key _= keyConfig
 
 rconf :: DBRef Config
 rconf= getDBRef keyConfig
 
 instance  Serializable Config where
-  serialize (Config1 c)= B.pack  $ "Config1 (fromList[\n" <> (concat . intersperse ",\n" $ map show (M.toList c)) <> "])"
+  serialize (Config1 c)= B.pack  $ "Config1 (fromList[\n" <> intercalate ",\n" (map show (M.toList c)) <> "])"
   deserialize s = unsafePerformIO $  (return $! read $! B.unpack s)
                    `CE.catch` \(e :: SomeException) ->  return (readOld s)
-  setPersist = \_ -> Just filePersist
+  setPersist _ =  Just filePersist
 
 -- | read a config variable from the config file \"mflow.config\". if it is not set, uses the second parameter and
 -- add it to the configuration list, so next time the administrator can change it in the configuration file
-getConfig k v=  case M.lookup k config of
-     Nothing -> unsafePerformIO $ setConfig k v >> return v
-     Just s  -> s
+getConfig :: String -> String -> String
+getConfig k v = fromMaybe (unsafePerformIO $ setConfig k v >> return v)
+                (M.lookup k config) 
 
 -- | set an user-defined config variable
-setConfig k v= atomically $ do
+setConfig :: String -> String -> IO ()
+setConfig k v = atomically $ do
      Config1 conf <-  readConfig
      writeDBRef rconf $ Config1 $ M.insert k v conf
 
@@ -602,27 +611,29 @@ setAdminUser user password= liftIO $  do
   userRegister user password
   setConfig "cadmin" user
 
-
+getAdminName :: String
 getAdminName= getConfig "cadmin"  "admin"
 
 
 --------------- ERROR RESPONSES --------
 
-defNotFoundResponse isAdmin msg= fresp $
-     case isAdmin of
-           True -> B.pack msg
-           _    -> "The administrator has been notified"
+defNotFoundResponse :: Bool -> String -> ByteString
+defNotFoundResponse isAdmin msg = fresp
+  (if isAdmin
+   then B.pack msg
+   else "The administrator has been notified") 
   where
-  fresp msg=
-   "<html><h4>Error 404: Page not found or error ocurred</h4> <p style=\"font-family:courier\">" <> msg <>"</p>" <>
-   "<br/>" <> opts <> "<br/><a href=\"/\" >press here to go home</a></html>"
+   fresp msg' = 
+    "<html><h4>Error 404: Page not found or error ocurred</h4> <p style=\"font-family:courier\">" <> msg' <>"</p>" <>
+    "<br/>" <> opts <> "<br/><a href=\"/\" >press here to go home</a></html>"
 
    
-  paths= Prelude.map B.pack . M.keys $ unsafePerformIO getMessageFlows
-  opts=  "options: " <> B.concat (Prelude.map  (\s ->
+   paths = Prelude.map B.pack . M.keys $ unsafePerformIO getMessageFlows
+   opts  = "options: " <> B.concat (Prelude.map  (\s ->
                           "<a href=\"/"<>  s <>"\">"<> s <>"</a>, ") $ filter (\s -> B.head s /= '_') paths)
 
-notFoundResponse=  unsafePerformIO $ newIORef defNotFoundResponse
+notFoundResponse :: IORef (Bool -> String -> ByteString)
+notFoundResponse =  unsafePerformIO $ newIORef defNotFoundResponse
 
 -- | set the  404 "not found" response.
 --
@@ -636,22 +647,23 @@ setNotFoundResponse ::
   -> String     
   -> ByteString)  
   -> IO ()
-
 setNotFoundResponse f= liftIO $ writeIORef notFoundResponse  f
-getNotFoundResponse= liftIO $ readIORef notFoundResponse
+
+getNotFoundResponse :: IO (Bool -> String -> ByteString)
+getNotFoundResponse = liftIO $ readIORef notFoundResponse
 
 --------------- BASIC BYTESTRING TAGS -------------------
 
-
 type Attribs= [(String,String)]
+
 -- | Writes a XML tag in a ByteString. It is the most basic form of formatting. For
 -- more sophisticated formatting , use "MFlow.Forms.XHtml" or "MFlow.Forms.HSP".
 btag :: String -> Attribs  -> ByteString -> ByteString
 btag t rs v= "<" <> pt <> attrs rs <> ">" <> v <> "</" <> pt <> ">"
  where
- pt= B.pack t
- attrs []= B.empty
- attrs rs=  B.pack $ concatMap(\(n,v) -> (' ' :   n) ++ "=\"" ++ v++ "\"" ) rs
+ pt        = B.pack t
+ attrs []  = B.empty
+ attrs rs' = B.pack $ concatMap(\(n,v') -> (' ' :   n) ++ "=\"" ++ v' ++ "\"" ) rs'
 
 -- |
 -- > bhtml ats v= btag "html" ats v
@@ -682,20 +694,22 @@ addAttrs other _ = error  $ "addAttrs: byteString is not a tag: " ++ show other
 setFilesPath :: MonadIO m => String -> m ()
 setFilesPath !path= liftIO $ writeIORef rfilesPath path
 
-rfilesPath= unsafePerformIO $ newIORef "files/"
+rfilesPath :: IORef String
+rfilesPath = unsafePerformIO $ newIORef "files/"
 
-serveFile path'= do
+serveFile :: String -> IO HttpData
+serveFile path' = do
      when(let hpath= Prelude.head path' in hpath == '/' || hpath =='\\') $ error noperm
      when(not(".." `isSuffixOf` path') && ".." `isInfixOf` path') $ error noperm
      filesPath <- readIORef rfilesPath
      let path= filesPath ++ path'
-     mr <-  cachedByKey path 0  $   (B.readFile  path >>=  return . Just) `CE.catch` ioerr (return Nothing)
+     mr <-  cachedByKey path 0  $ liftM Just (B.readFile path) `CE.catch` ioerr (return Nothing)
      case mr of
       Nothing -> error "not found" -- return $ HttpData  [setMime "text/plain"] [] $ pack $  "not accessible"
       Just r ->
          let ext  = reverse . takeWhile (/='.') $ reverse path
              mmime= lookup (map toLower ext) mimeTable
-             mime = case mmime of Just m -> m ;Nothing -> "application/octet-stream"
+             mime = fromMaybe "application/octet-stream" mmime
 
          in return $ HttpData  [setMime mime, ("Cache-Control", "max-age=360000")] [] r
    where
@@ -707,27 +721,27 @@ serveFile path'= do
 
 data NFlow= NFlow !Integer deriving (Read, Show, Typeable)
 
-
-
 instance Indexable NFlow where
   key _= "Flow"
 
-instance  Serializable NFlow where
-  serialize=  B.pack . show
-  deserialize=   read . B.unpack
-  setPersist =   \_ -> Just filePersist
+instance Serializable NFlow where
+  serialize    = B.pack . show
+  deserialize  = read . B.unpack
+  setPersist _ = Just filePersist
 
-rflow= getDBRef . key $ NFlow undefined
+rflow :: DBRef NFlow
+rflow = getDBRef . key $ NFlow undefined
 
-newFlow=  do
+newFlow :: IO SB.ByteString
+newFlow = do
         TOD t _ <- getClockTime
         atomically $ do 
                     NFlow n <- readDBRef rflow `onNothing` return (NFlow 0)
                     writeDBRef rflow . NFlow $ n+1
                     return . SB.pack . show $ t + n
 
-
-mimeTable=[
+mimeTable :: [(String, SB.ByteString)]
+mimeTable = [
     ("html",	"text/html"),
     ("htm",	"text/html"),
     ("txt",	"text/plain"),
