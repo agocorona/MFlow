@@ -18,7 +18,7 @@ attr= fromString
 grid = do
   r <- page  $ pageFlow "grid"
              $ addLink
-           ++> wEditList table  row ["",""] "wEditListAdd"
+           ++> wEditList table  row [(0,""),(0,"")] "wEditListAdd"
            <** submitButton "submit"
            
   page  $ p << (show r ++ " returned")
