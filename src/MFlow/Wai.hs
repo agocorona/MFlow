@@ -55,8 +55,8 @@ import System.IO
 import qualified Data.Text as T
 
 
-import Debug.Trace
-(!>) = flip trace
+--import Debug.Trace
+--(!>) = flip trace
 
 
 toApp :: (Request -> IO Response) -> Application
