@@ -1608,11 +1608,13 @@ pageFlow str widget=do
                                                                                                    -- !> ("END CHILD pageflow. prefix="++ str))
 
 
-
---acum map []= map
---acum map (x:xs)  =
---  let map' = case M.lookup x map of
---                 Nothing -> M.insert  x 1 map
---                 Just n  -> M.insert  x (n+1) map
---  in acum map' xs
-
+                                                                                 -- !> ("END CHILD pageflow. prefix="++ str))
+-- | send raw data to the client.
+--
+-- example
+--
+-- >rawSend $ HttpData  [("Content-Type","text/plain"), ("Cache-Control", "max-age=360000")] [] "hello"
+rawSend :: (FormInput v,MonadIO m) => HttpData -> View v m ()
+rawSend dat=  do
+    tok <- getToken
+    liftIO $ sendFlush tok dat
