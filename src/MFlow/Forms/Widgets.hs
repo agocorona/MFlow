@@ -329,8 +329,8 @@ wEditList :: (Typeable a,Read a
              ,Functor m,MonadIO m, Executable m)
 #endif
           => (view ->view)     -- ^ The holder tag
-          -> (Maybe String -> View view Identity a) -- ^ the contained widget, initialized  by a string
-          -> [String]          -- ^ The initial list of values.
+          -> (Maybe a -> View view Identity a) -- ^ the contained widget, initialized  by a value of its type
+          -> [a]          -- ^ The initial list of values.
           -> String            -- ^ The id of the button or link that will create a new list element when clicked
           -> View view m  [a]
 wEditList holderview w xs addId = do
