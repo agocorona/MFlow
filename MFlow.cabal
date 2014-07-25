@@ -120,26 +120,26 @@ library
     other-modules:  MFlow.Wai.Response
 
 
---executable demos-blaze
---    build-depends: MFlow , RefSerialize , TCache ,
---                   tcache-AWS , directory , Workflow , base ,
---                   blaze-html , bytestring , containers , mtl ,
---                   old-time , stm , text , transformers , vector ,
---                   hamlet , shakespeare, monadloc , aws , network , hscolour ,
---                   persistent-template , persistent-sqlite , persistent ,
---                   conduit ,  http-conduit , monad-logger , safecopy ,
---                   time, acid-state
---    main-is: demos-blaze.hs
---    buildable: True
---    hs-source-dirs: Demos
---    other-modules:  TestREST ShopCart AjaxSample TraceSample IncreaseString IncreaseInt
---                    AutoCompList ListEdit AutoComplete Menu RuntimeTemplates
---                    LoginSample CheckBoxes Multicounter MFlowPersistent
---                    Combination Options ContentManagement Database
---                    PreventGoingBack Counter MCounter  PushDecrease
---                    Dialog PushSample Grid Radio Actions
---                    SumView AcidState SearchCart
---                    InitialConfig GenerateForm GenerateFormUndo GenerateFormUndoMsg WebService
---                    LazyLoad CachingDataset
---    ghc-options: -iDemos -threaded -rtsopts
---
+executable demos-blaze
+    build-depends: MFlow , RefSerialize , TCache ,
+                   tcache-AWS , directory , Workflow , base ,
+                   blaze-html , bytestring , containers , mtl ,
+                   old-time , stm , text , transformers , vector ,
+                   hamlet , shakespeare, monadloc , aws , network , hscolour ,
+                   persistent-template , persistent-sqlite , persistent ,
+                   conduit ,  http-conduit , monad-logger , safecopy ,
+                   time, acid-state
+    main-is: demos-blaze.hs
+    buildable: True
+    hs-source-dirs: Demos
+    other-modules:  TestREST ShopCart AjaxSample TraceSample IncreaseString IncreaseInt
+                    AutoCompList ListEdit AutoComplete Menu RuntimeTemplates
+                    LoginSample CheckBoxes Multicounter MFlowPersistent
+                    Combination Options ContentManagement Database
+                    PreventGoingBack Counter MCounter  PushDecrease
+                    Dialog PushSample Grid Radio Actions
+                    SumView AcidState SearchCart
+                    InitialConfig GenerateForm GenerateFormUndo GenerateFormUndoMsg WebService
+                    LazyLoad CachingDataset
+    ghc-options: -iDemos -threaded -rtsopts
+
