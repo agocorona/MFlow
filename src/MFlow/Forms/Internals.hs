@@ -65,6 +65,7 @@ import Control.Monad.Loc
 import Debug.Trace
 (!>) = flip trace 
 
+infixl 9 !>
 
 data FailBack a = BackPoint a | NoBack a | GoBack   deriving (Show,Typeable)
 

@@ -1057,7 +1057,7 @@ ask w =  do
                  ,mfRequirements= []
                  ,mfInstalledScripts=  if newAsk st1 then [] else mfInstalledScripts st1}
      put st
-     FormElm forms mx <- FlowM . lift  $ runView  w
+     FormElm forms mx <- FlowM . lift  $ runView  w            --  !> "eval"
      setCachePolicy
      st' <- get
      if notSyncInAction st' then put st'{notSyncInAction=False}>> ask w
@@ -1070,24 +1070,24 @@ ask w =  do
 
        Nothing ->
          if  not (inSync st')  && not (newAsk st')
-                                                       -- !> ("insync="++show (inSync st'))
-                                                       -- !> ("newask="++show (newAsk st'))
-          then fail ""                                  -- !> "FAIL sync"
+                                                      --  !> ("insync="++show (inSync st'))
+                                                      --  !> ("newask="++show (newAsk st'))
+          then fail ""                                --  !> "FAIL sync"
           else if mfAutorefresh st' then do
-                     resetState st st'                 -- !> ("EN AUTOREFRESH" ++ show [ mfPagePath st,mfPath st,mfPagePath st'])
+                     resetState st st'                --  !> ("EN AUTOREFRESH" ++ show [ mfPagePath st,mfPath st,mfPagePath st'])
 --                     modify $ \st -> st{mfPagePath=mfPagePath st'} !> "REPEAT"
                      FlowM $ lift  nextMessage
                      ask w
           else do
-             reqs <-  FlowM $ lift installAllRequirements     --  !> "REPEAT"
-             st' <- get
+             reqs <-  FlowM $ lift installAllRequirements    --   !> "REPEAT"
+             st' <- get                                      --   !> (B.unpack $ toByteString reqs)
              let header= mfHeader st'
                  t= mfToken st'
              cont <- case (needForm st') of
                       HasElems  ->  do
                                frm <- formPrefix  st' forms False   -- !> ("formPrefix="++ show(mfPagePath st'))
-                               return . header $  reqs <> frm
-                      _     ->  return . header $  reqs <> forms
+                               return . header $ reqs <> frm
+                      _     -> return . header $ reqs <> forms
 
              let HttpData ctype c s= toHttpData cont
              liftIO . sendFlush t $ HttpData (ctype ++ mfHttpHeaders st') (mfCookies st' ++ c) s
@@ -1618,3 +1618,4 @@ rawSend :: (FormInput v,MonadIO m) => HttpData -> View v m ()
 rawSend dat=  do
     tok <- getToken
     liftIO $ sendFlush tok dat
+    modify $ \st -> st{mfAutorefresh= True}
