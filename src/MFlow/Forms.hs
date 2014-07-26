@@ -1098,7 +1098,8 @@ ask w =  do
     where
     resetState st st'=
              put st{mfCookies=[]
-                   ,mfInstalledScripts= mfInstalledScripts st'
+                   -- if autorefresh, keep the list of installed scripts
+                   ,mfInstalledScripts= if mfAutorefresh st' then mfInstalledScripts st' else []
                    ,newAsk= False
                    ,mfToken= mfToken st'
                    ,mfPageFlow= mfPageFlow st'
