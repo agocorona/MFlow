@@ -52,7 +52,7 @@ import GenerateFormUndoMsg
 import WebService
 import CachingDataset
 import LazyLoad
-import TryHplay
+--import TryHplay
 import Data.TCache.DefaultPersistence
 
 import Data.ByteString.Lazy.Char8 hiding (index)
@@ -86,9 +86,10 @@ main= do
        ("apirest", wstateless restService),
        ("apikv"  , wstateless keyValueService),
        ("apiparser", wstateless  parserService)
-       ("tryhplay", transient tryHplay]
+--       ("tryhplay", transient tryHplay
+       ]
+-- main flow
    runNavigation "" $ do
-
        setHeader $ stdheader 
        setTimeouts 400 $ 60 * 60
        r <- step . page $ do
