@@ -1104,7 +1104,8 @@ ask w =  do
                    ,mfToken= mfToken st'
                    ,mfPageFlow= mfPageFlow st'
                    ,mfAjax= mfAjax st'
-                   ,mfData= mfData st' }
+                   ,mfData= mfData st'
+                   ,mfSomeNotValidates= False}
 
 
 -- | A synonym of ask.
@@ -1400,13 +1401,14 @@ manyOf xs= whidden () *> (View $ do
       forms <- mapM runView  xs
       let vs  = mconcat $ map (\(FormElm v _) ->   v) forms
           res1= catMaybes $ map (\(FormElm _ r) -> r) forms
-      return . FormElm vs $ Just res1)
+      nval <- gets mfSomeNotValidates
+      return . FormElm vs $ if nval then Nothing else Just res1)
 
 -- | like manyOf, but does not validate if one or more of the widgets does not validate
 allOf xs= manyOf xs `validate` \rs ->
       if length rs== length xs
          then return Nothing
-         else return $ Just mempty
+         else return $ Just "Not all of the required data completed"
 
 (>:>) :: (Monad m, Monoid v) => View v m a -> View v m [a]  -> View v m [a]
 (>:>) w ws = View $ do

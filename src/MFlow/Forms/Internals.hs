@@ -249,6 +249,7 @@ instance  Monad m => Supervise (MFlowState v) (WState v m) where
             , mfData=mfData
             , mfTrace= mfTrace
             , inSync=False
+            , mfSomeNotValidates= False
             , newAsk=False}
 
 
@@ -429,8 +430,8 @@ instance (FormInput view,MonadIO m) => MonadIO (View view m) where
     liftIO io= let x= liftIO io in x `seq` lift x -- to force liftIO==unsafePerformIO on the Identity monad
 
 -- | Execute the widget in a monad and return the result in another.
-changeMonad :: (Monad m, Executable m1)
-             => View v m1 a -> View v m a
+changeMonad :: (Monad m, Executable m')
+             => View v m' a -> View v m a
 changeMonad w= View . StateT $ \s ->
     let (r,s')= execute $ runStateT  ( runView w)    s
     in mfSequence s' `seq` return (r,s')
@@ -645,6 +646,7 @@ data MFlowState view= MFlowState{
    mfCached         :: Bool,
    newAsk           :: Bool,
    inSync           :: Bool,
+   mfSomeNotValidates :: Bool,
    mfLang           :: Lang,
    mfEnv            :: Params,
    needForm         :: NeedForm,
@@ -667,11 +669,9 @@ data MFlowState view= MFlowState{
    mfPath           :: [String],
    mfPagePath       :: [String],
    mfPrefix         :: String,
---   mfPIndex         :: Int,
+
    mfPageFlow       :: Bool,
    linkMatched      :: Bool,
---   mfPendingPath      :: [String],
-
 
    mfAutorefresh   :: Bool,
    mfTrace          :: [String],
@@ -682,7 +682,7 @@ data MFlowState view= MFlowState{
 type Void = Char
 
 mFlowState0 :: (FormInput view) => MFlowState view
-mFlowState0 = MFlowState 0 False  True  True  "en"
+mFlowState0 = MFlowState 0 False  True  True  False "en"
                 [] NoElems False (error "token of mFlowState0 used")
                 0 0 [] [] stdHeader False [] [] M.empty  Nothing 0 False
                 [] []  "" False False  False [] False
@@ -959,6 +959,7 @@ cachedWidget key t mf =  View .  StateT $ \s ->  do
         let((FormElm  form _), sec)= execute $! cachedByKey key t $ proc mf s{mfCached=True}
         let((FormElm  _ mx2), s2)  = execute $ runStateT  ( runView mf)    s{mfSeqCache= sec,mfCached=True}
         let s''=  s{inSync = inSync s2
+                   ,mfSomeNotValidates= mfSomeNotValidates s2
                    ,mfRequirements=mfRequirements s2
                    ,mfPath= mfPath s2
                    ,mfPagePath= mfPagePath s2
@@ -1307,6 +1308,7 @@ readParam x1 = r
               [(x,"")] ->  return $ Validated x
               _ -> do
                    let err= inred . fromStr $ "can't read \"" ++ str ++ "\" as type " ++  show (typeOf x)
+                   modify $ \st -> st{mfSomeNotValidates= True}
                    return $ NotValidated str err
 
 

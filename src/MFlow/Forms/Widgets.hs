@@ -231,13 +231,13 @@ modifyWidget selector modifier  w = View $ do
      ws <- getEdited selector
      let n =  length (ws `asTypeOf` [w])
      let key= "widget"++ show selector ++  show n ++ show (typeOf $ typ w)
-     let cw = wcached key 0  w
+     let cw =  wcached key 0  w
      addEdited selector (key,cw)
      FormElm form _ <-  runView cw
      let elem=  toByteString   form
      return . FormElm mempty . Just $   selector <> "." <> modifier <>"('" <> elem <> "');"
      where
-     typ :: View v Identity a -> a
+     typ :: View v m a -> a
      typ = undefined
 
 -- | Return the javascript to be executed on the browser to prepend a widget to the location
@@ -265,7 +265,7 @@ modifyWidget selector modifier  w = View $ do
 
 prependWidget
 #if defined(__GLASGOW_HASKELL__) && (__GLASGOW_HASKELL__ >= 707)
-  :: (Typeable a, MonadIO m, Executable m, FormInput v, Typeable Identity, Typeable m)
+  :: (Typeable a, MonadIO m, Executable m, FormInput v, Typeable Indentity,  Typeable m)
 #else
   :: (Typeable a, MonadIO m, Executable m, FormInput v)
 #endif
@@ -277,7 +277,7 @@ prependWidget sel w= modifyWidget sel "prepend" w
 -- | Like 'prependWidget' but append the widget instead of prepend.
 appendWidget
 #if defined(__GLASGOW_HASKELL__) && (__GLASGOW_HASKELL__ >= 707)
-  :: (Typeable a, MonadIO m, Executable m, FormInput v, Typeable Identity, Typeable m) =>
+  :: (Typeable a, MonadIO m, Executable m, FormInput v, Typeable Identity,  Typeable m) =>
 #else
      :: (Typeable a, MonadIO m, Executable m, FormInput v) =>
 #endif
@@ -287,7 +287,7 @@ appendWidget sel w= modifyWidget sel "append" w
 -- | L  ike 'prependWidget' but set the entire content of the selector instead of prepending an element
 setWidget
 #if defined(__GLASGOW_HASKELL__) && (__GLASGOW_HASKELL__ >= 707)
-  :: (Typeable a, MonadIO m, Executable m, FormInput v, Typeable m,  Typeable Identity) =>
+  :: (Typeable a, MonadIO m, Executable m, FormInput v, Typeable Identity, Typeable m) =>
 #else
    :: (Typeable a, MonadIO m, Executable m, FormInput v) =>
 #endif
@@ -333,7 +333,7 @@ wEditList :: (Typeable a,Read a
           -> [a]          -- ^ The initial list of values.
           -> String            -- ^ The id of the button or link that will create a new list element when clicked
           -> View view m  [a]
-wEditList holderview w xs addId = do
+wEditList holderview w xs addId = pageFlow addId $ do
     let ws=  map (w . Just) xs
         wn=  w Nothing
     id1<- genNewId
@@ -344,12 +344,9 @@ wEditList holderview w xs addId = do
     requires [JScriptFile jqueryScript [installevents] ]
 
     ws' <- getEdited sel
-
-    r <-  (holderview  <<< (allOf $ ws' ++ map changeMonad ws)) <! [("id",id1)]
+    r <-  (holderview  <<< (manyOf $ ws' ++ map changeMonad ws)) <! [("id",id1)]
     delEdited sel ws'
     return r
-
-
 
 
 -- | Present the JQuery autocompletion list, from a procedure defined by the programmer, to a text box.
@@ -404,7 +401,7 @@ wautocompleteEdit
 #endif
     => String                                 -- ^ the initial text of the box
     -> (String -> IO [String])                -- ^ the autocompletion procedure: receives a prefix, return a list of options.
-    -> (Maybe String  -> View v Identity a)   -- ^ the widget to add, initialized with the string entered in the box
+    -> (Maybe String  -> View v Identity a)          -- ^ the widget to add, initialized with the string entered in the box
     -> [String]                               -- ^ initial set of values
     -> View v m [a]                           -- ^ resulting widget
 wautocompleteEdit phold autocomplete  elem values= do
@@ -419,14 +416,14 @@ wautocompleteEdit phold autocomplete  elem values= do
                           return $ jaddtoautocomp textx r
 
 
-    requires [JScriptFile jqueryScript  [events textx ajaxc]
+    requires [JScriptFile jqueryScript [events textx ajaxc]
              ,CSSFile jqueryCSS
              ,JScriptFile jqueryUI []]
 
     ws' <- getEdited sel
 
     r<- (ftag "div" mempty  `attrs` [("id",  id1)]
-      ++> allOf (ws' ++ (map (changeMonad . elem . Just) values)))
+      ++> manyOf (ws' ++ (map (changeMonad . elem . Just) values)))
       <++ ftag "input" mempty
              `attrs` [("type", "text")
                      ,("id", textx)

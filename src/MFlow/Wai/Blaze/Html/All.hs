@@ -66,10 +66,31 @@ getPortW= do
                return $ fromMaybe "80" $ lookup "PORT" env
     let porti= if and $ map isNumber port then fromIntegral $ read port
                                           else 80
+
     putStr "using port "
     print porti
     return porti
 
+--getPortW= do
+--    args <- getArgs
+--    let h= Prelude.head args
+--        ht= Prelude.head $ tail args
+--    port <- if isport h then return h
+--            else if isport ht then return ht
+--            else  do
+--               env <- getEnvironment
+--               return $ fromMaybe "80" $ lookup "PORT" env
+--                       
+--    let porti=   if isport port then fromIntegral $ read port
+--                                 else 80
+--                                         
+--
+--    putStr "using port "
+--    print porti
+--    return porti
+--    where
+--    isport x= and $ map isNumber x
+    
 -- | run a persistent flow. It uses `getPortW` to get the port
 -- The first parameter is the first element in the URL path.
 -- It also set the home page

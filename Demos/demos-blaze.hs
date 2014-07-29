@@ -52,6 +52,7 @@ import GenerateFormUndoMsg
 import WebService
 import CachingDataset
 import LazyLoad
+import TryHplay
 import Data.TCache.DefaultPersistence
 
 import Data.ByteString.Lazy.Char8 hiding (index)
@@ -84,7 +85,8 @@ main= do
        -- Web Services --
        ("apirest", wstateless restService),
        ("apikv"  , wstateless keyValueService),
-       ("apiparser", wstateless  parserService)]
+       ("apiparser", wstateless  parserService)
+       ("tryhplay", transient tryHplay]
    runNavigation "" $ do
 
        setHeader $ stdheader 
