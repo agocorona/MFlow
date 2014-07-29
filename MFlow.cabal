@@ -113,7 +113,7 @@ library
                      MFlow.Forms.Admin MFlow.Cookies MFlow.Wai
                      MFlow.Forms.Blaze.Html MFlow.Forms.Test
                      MFlow.Forms.Widgets MFlow.Forms.Internals
-                     MFlow.Forms.WebApi MFlow.Forms.Cache
+                     MFlow.Forms.WebApi MFlow.Forms.Cache, haste-compiler
     exposed: True
     buildable: True
     hs-source-dirs: src .
