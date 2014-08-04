@@ -265,7 +265,7 @@ modifyWidget selector modifier  w = View $ do
 
 prependWidget
 #if defined(__GLASGOW_HASKELL__) && (__GLASGOW_HASKELL__ >= 707)
-  :: (Typeable a, MonadIO m, Executable m, FormInput v, Typeable Indentity,  Typeable m)
+  :: (Typeable a, MonadIO m, Executable m, FormInput v, Typeable Identity,  Typeable m)
 #else
   :: (Typeable a, MonadIO m, Executable m, FormInput v)
 #endif

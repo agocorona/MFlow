@@ -1125,7 +1125,7 @@ nextMessage = do
          t2= mfSessionTime st
      msg <- liftIO ( receiveReqTimeout t1 t2  t)
      let req=   getParams msg
-         env=   updateParams inPageFlow (mfEnv st) req  -- !> ("PAGEFLOW="++ show inPageFlow)
+         env=   updateParams inPageFlow (mfEnv st) req   -- !> ("PAGEFLOW="++ show inPageFlow)
          npath= pwfPath msg
          path=  mfPath st
          inPageFlow= mfPagePath st `isPrefixOf` npath
@@ -1144,12 +1144,16 @@ nextMessage = do
      updateParams :: Bool -> Params -> Params -> Params
      updateParams False _ req= req
      updateParams True env req=
-        let params= takeWhile isparam req -- env
-            fs= fst $ head req
-            parms= (case findIndex (\p -> fst p == fs)  params of
-                      Nothing -> params
-                      Just  i -> Data.List.take i params)
-                    ++  req
+        let old= takeWhile isparam  env
+            (new,rest)= Data.List.break isparam  req
+            parms= new++ old++ rest
+        
+--        let params= takeWhile isparam  env
+--            fs= fst $ head req
+--            parms= (case findIndex (\p -> fst p == fs)  params of
+--                      Nothing -> params
+--                      Just  i -> Data.List.take i params)
+--                    ++  req
         in parms
 --                 !> "IN PAGE FLOW"  !>  ("parms=" ++ show parms )
 --                                    !>  ("env=" ++ show env)
