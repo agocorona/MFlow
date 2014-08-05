@@ -1145,7 +1145,7 @@ nextMessage = do
      updateParams False _ req= req
      updateParams True env req=
         let old= takeWhile isparam  env
-            (new,rest)= Data.List.break isparam  req
+            (new,rest)= Data.List.span isparam  req
             parms= new++ old++ rest
         
 --        let params= takeWhile isparam  env
