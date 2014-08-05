@@ -1146,7 +1146,7 @@ nextMessage = do
      updateParams True env req=
         let old= takeWhile isparam  env
             (new,rest)= Data.List.break isparam  req
-            parms= new++ old++ rest
+            parms= new ++ rest ++ old
         
 --        let params= takeWhile isparam  env
 --            fs= fst $ head req
