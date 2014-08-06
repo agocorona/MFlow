@@ -1,7 +1,7 @@
 language: haskell
 before_install:  cabal install monadloc-pp
-deploy:
-  provider: heroku
-  api_key: "f0a47850-7f86-4f59-872d-8c9c85153d71"
-  app: mflowdemo
-  strategy: git
+# deploy:
+#  provider: heroku
+#  api_key: "f0a47850-7f86-4f59-872d-8c9c85153d71"
+#  app: mflowdemo
+
