@@ -129,7 +129,7 @@ executable demos-blaze
                    hamlet , shakespeare, monadloc , aws == 0.9.1 , network , hscolour ,
                    persistent-template , persistent-sqlite , persistent ,
                    conduit ,  http-conduit , monad-logger , safecopy ,
-                   time, acid-state ==0.12.2, data-default
+                   time, acid-state ==0.12.2, data-default, auto-update == 0.1.0.0
     main-is: demos-blaze.hs
     buildable: True
     hs-source-dirs: Demos
