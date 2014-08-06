@@ -126,7 +126,7 @@ executable demos-blaze
                    tcache-AWS , directory , Workflow , base ,
                    blaze-html , bytestring , containers , mtl ,
                    old-time , stm , text , transformers , vector ,
-                   hamlet , shakespeare, monadloc , aws , network , hscolour ,
+                   hamlet , shakespeare, monadloc , aws == 0.9.1 , network , hscolour ,
                    persistent-template , persistent-sqlite , persistent ,
                    conduit ,  http-conduit , monad-logger , safecopy ,
                    time, acid-state, data-default, haste-compiler
