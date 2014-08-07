@@ -1556,9 +1556,10 @@ insertForm w=View $ do
 controlForms :: (FormInput v, MonadState (MFlowState v) m)
     => MFlowState v -> MFlowState v -> v -> v -> m (v,Bool)
 controlForms s1 s2 v1 v2= case (needForm s1, needForm s2) of
---    (HasForm,HasElems) -> do
---       v2' <- formPrefix s2 v2 True
---       return (v1 ++ [v2'], True)
+    (HasForm,HasElems) -> do
+      v2' <- formPrefix s2 v2 True
+      return (v1 <> v2', True)
+
     (HasElems, HasForm) -> do
        v1' <- formPrefix s1 v1 True
        return (v1' <> v2 , True)
