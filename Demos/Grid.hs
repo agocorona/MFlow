@@ -4,7 +4,7 @@ module Grid ( grid) where
 import Data.String
 import Text.Blaze.Html5.Attributes as At hiding (step)
 
--- #define ALONE -- to execute it alone, uncomment this
+#define ALONE -- to execute it alone, uncomment this
 #ifdef ALONE
 import MFlow.Wai.Blaze.Html.All
 main= runNavigation "" $ transientNav grid

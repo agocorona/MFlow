@@ -211,7 +211,7 @@ FlowM, View(..), FormElm(..), FormInput(..)
 ,encryptedLogout, userWidget, paranoidUserWidget, encryptedUserWidget, login, paranoidLogin, encryptedLogin,
 userName,
 -- * User interaction
-ask, page, askt, clearEnv, wstateless, pageFlow,
+ask, page, askt, clearEnv, wstateless, pageFlow, 
 -- * formLets
 -- | They usually produce the HTML form elements (depending on the FormInput instance used)
 -- It is possible to modify their attributes with the `<!` operator.
@@ -248,6 +248,9 @@ cachedWidget, wcached, wfreeze,
 
 -- * ByteString tags
 ,btag,bhtml,bbody
+
+-- * send raw bytestring data
+,rawSend
 
 -- * Normalization
 ,flatten, normalize
@@ -1616,13 +1619,20 @@ pageFlow str widget=do
 
 
                                                                                  -- !> ("END CHILD pageflow. prefix="++ str))
--- | send raw data to the client.
+-- | send raw bytestring data to the client. usable for
 --
 -- example
 --
--- >rawSend $ HttpData  [("Content-Type","text/plain"), ("Cache-Control", "max-age=360000")] [] "hello"
-rawSend :: (FormInput v,MonadIO m) => HttpData -> View v m ()
+-- > do
+--      setHttpHeader  "Content-Type" "text//plain"
+--      maxAge 36000
+--      rawSend longdata
+
+rawSend ::  (FormInput v,MonadIO m, Functor m) => ByteString -> View v m ()
 rawSend dat=  do
+    setCachePolicy
+    st <- get
     tok <- getToken
-    liftIO $ sendFlush tok dat
+    liftIO $ sendFlush tok $ HttpData ( mfHttpHeaders st) (mfCookies st) dat
     modify $ \st -> st{mfAutorefresh= True}
+    stop

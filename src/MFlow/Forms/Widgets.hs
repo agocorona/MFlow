@@ -71,6 +71,7 @@ import MFlow.Forms.Cache
 
 
 
+
 --jqueryScript= "//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"
 --jqueryScript1="//code.jquery.com/jquery-1.9.1.js"
 --
@@ -235,10 +236,12 @@ modifyWidget selector modifier  w = View $ do
      addEdited selector (key,cw)
      FormElm form _ <-  runView cw
      let elem=  toByteString   form
-     return . FormElm mempty . Just $   selector <> "." <> modifier <>"('" <> elem <> "');"
+     return . FormElm mempty . Just $   selector <> "." <> modifier <> "('" <> elem <> "');"
      where
      typ :: View v m a -> a
      typ = undefined
+
+
 
 -- | Return the javascript to be executed on the browser to prepend a widget to the location
 -- identified by the selector (the bytestring parameter), The selector must have the form of a jquery expression
