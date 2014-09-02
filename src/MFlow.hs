@@ -75,7 +75,7 @@ btag, bhtml, bbody,Attribs, addAttrs
 ,config,getConfig
 ,setFilesPath
 -- * internal use
-,addTokenToList,deleteTokenInList, msgScheduler,serveFile,newFlow
+,addTokenToList,deleteTokenInList, msgScheduler,serveFile,mimeTable, newFlow
 ,UserStr,PasswdStr, User(..),eUser
 
 )
@@ -695,13 +695,14 @@ serveFile path'= do
       Just r ->
          let ext  = reverse . takeWhile (/='.') $ reverse path
              mmime= lookup (map toLower ext) mimeTable
-             mime = case mmime of Just m -> m ;Nothing -> "application/octet-stream"
+             mime = case mmime of Just m -> m; Nothing -> "application/octet-stream"
 
          in return $ HttpData  [setMime mime, ("Cache-Control", "max-age=360000")] [] r
    where
    noperm= "no permissions"
    ioerr x= \(e :: CE.IOException) ->  x
    setMime x= ("Content-Type",x)
+
 
 --------------------- FLOW ID GENERATOR ------------
 
