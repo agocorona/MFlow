@@ -3,9 +3,9 @@
 {- |
 Instantiation of the 'FormInput' class for blaze-html <http://hackage.haskell.org/package/blaze-html>
 
-This package is included in "MFlow.Wai.Blaze.Hml.All".
+This package is included in "MFlow.Wai.Blaze.Html.All".
 
-Use it to create applicaitons with this kind of formatting.
+Use it to create applications with this kind of formatting.
 -}
 module MFlow.Forms.Blaze.Html where
 import MFlow
