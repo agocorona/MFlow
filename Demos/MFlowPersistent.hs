@@ -17,6 +17,8 @@
 {-# LANGUAGE TemplateHaskell   #-}
 {-# LANGUAGE TypeFamilies      #-}
 {-# LANGUAGE NoMonomorphismRestriction #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE CPP #-}
 
 module MFlowPersistent
@@ -25,6 +27,7 @@ where
 
 
 import           Control.Monad.IO.Class  (liftIO)
+import           Control.Monad.Logger
 import           Database.Persist
 import           Database.Persist.Sqlite
 import           Database.Persist.TH
@@ -56,7 +59,7 @@ BlogPost
 
 
 
-pool= unsafePerformIO $ createSqlitePool ":memory:" 10
+pool= unsafePerformIO $ runNoLoggingT( createSqlitePool ":memory:" 10 )
 
 runSQL sql= liftIO $  runSqlPersistMPool sql pool
 
