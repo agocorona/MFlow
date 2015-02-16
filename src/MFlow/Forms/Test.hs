@@ -15,7 +15,7 @@
             -XOverlappingInstances
             -XFlexibleInstances
             -XUndecidableInstances
-            -XPatternGuards 
+            -XPatternGuards
             -XRecordWildCards
             #-}
 
@@ -23,7 +23,7 @@ module MFlow.Forms.Test (Generate(..),runTest,runTest1,inject, ask, askt, userWi
 import MFlow.Forms hiding(ask,askt,getUser,userWidget,getUserSimple)
 import qualified MFlow.Forms (ask)
 import MFlow.Forms.Internals
-import MFlow.Forms(FormInput(..)) 
+import MFlow.Forms(FormInput(..))
 import MFlow.Forms.Admin
 import Control.Workflow as WF
 import Control.Concurrent
@@ -92,22 +92,22 @@ instance (Bounded a, Enum a) => Generate a where
           typeOfIO :: IO a -> a
           typeOfIO = undefined
 
--- | run a list of flows with a number of simultaneous threads
-runTest :: [(Int, Flow)] -> IO () 
+-- | Run a list of flows with a number of simultaneous threads
+runTest :: [(Int, Flow)] -> IO ()
 runTest ps= do
   mapM_ (forkIO . run1) ps
   putStrLn $ "started " ++ (show . sum . fst $ unzip ps) ++ " threads"
-   
+
   where
   run1 (nusers,  proc) =  replicateM_ nusers $ runTest1 proc
-  
+
 runTest1 f = do
     atomicModifyIORef testNumber (\n -> (n+1,n+1))
     name <- generate
     x <- generate
     y <- generate
     z <- generate
-     
+
     let t = Token x y z [] [] undefined undefined undefined
     WF.start  name   f t
 
@@ -116,10 +116,10 @@ testNumber= unsafePerformIO $ newIORef 0
 getTestNumber :: MonadIO m => m Int
 getTestNumber= liftIO $ readIORef testNumber
 
--- | inject substitutes an expression by other. It may be used to override
+-- | Inject substitutes an expression by other. It may be used to override
 -- ask interaction with the user. It should bee used infix for greater readability:
 --
--- > ask something    `inject` const someother
+-- > ask something    `inject` const some other
 --
 -- The parameter passed is the test number
 -- if the flow has not been executed by runTest, inject return the original
@@ -128,7 +128,7 @@ inject exp v= do
    n <- getTestNumber
    if n== 0 then exp else exp `seq` return $ v n
 
--- | a simulated ask that generate  simulated user input of the type expected.
+-- | A simulated ask that generate  simulated user input of the type expected.
 --
 --  It forces the web page rendering, since it is monadic and can contain
 -- side effects and load effects to be tested.
@@ -155,7 +155,7 @@ ask w = do
 --                _         -> ask w
 
 
--- | instead of generating a result like `ask`, the result is given as the first parameter
+-- | Instead of generating a result like `ask`, the result is given as the first parameter
 -- so it does not need a Generate instance.
 --
 -- It forces the web page rendering, since it is monadic so it can contain
@@ -195,11 +195,11 @@ askt v w =  do
 -- It is intended to be used in a infix notation, on the right of the code,
 -- in order to separate the code assertions from the application code and make clearly
 -- visible them as a form of documentation.
--- separated from it:
+-- Separated from it:
 --
 -- > liftIO $ print (x :: Int)          `verify` (return $ x > 10, "x < = 10")
 --
--- the expression is monadic to allow for complex verifications that may involve IO actions
+-- The expression is monadic to allow for complex verifications that may involve IO actions
 verifyM :: Monad m => m b -> (m Bool, String) -> m b
 verifyM f (mprop, msg)= do
     prop <- mprop
@@ -246,7 +246,7 @@ waction w f= do
   MFlow.Forms.waction (return x) f
 
 userWidget :: ( MonadIO m, Functor m
-          , FormInput view) 
+          , FormInput view)
          => Maybe String
          -> View view m (Maybe (String,String), Maybe String)
          -> View view m String
@@ -265,7 +265,7 @@ userWidget muser formuser= do
              t'= t{tuser= uname}
          put st{mfToken= t'}
          return ()
-   
+
 getUserSimple :: ( MonadIO m, FormInput view, Typeable view
                  ,  Functor m)
               => FlowM view m String
@@ -305,8 +305,8 @@ instance Monoid  TestM  where
 
 instance  FormInput TestM  where
     ftag = const id
-    inred  = const id 
-    fromStr = const id 
+    inred  = const id
+    fromStr = const id
     flink var _= let(n,v)=break (=='=') var in  \t ->t{tflink= (n,tail v):tflink t}
     finput n _ v _ _ = \t -> t{tfinput = (n,v):tfinput t}
     ftextarea n v= \t -> t{tftextarea = (n,v):tftextarea t}

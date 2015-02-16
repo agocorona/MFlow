@@ -58,12 +58,12 @@ import Data.TCache.Memoization
 --
 
 import Control.Exception as CE
-import Control.Concurrent 
+import Control.Concurrent
 import Control.Monad.Loc
 
 -- debug
 import Debug.Trace
-(!>) = flip trace 
+(!>) = flip trace
 
 infixl 9 !>
 
@@ -92,9 +92,9 @@ instance (Serialize a) => Serialize (FailBack a ) where
 
    readp = choice [icanFailBackp,repeatPleasep,noFailBackp]
     where
-    noFailBackp   = symbol noFailBack >> readp >>= return . NoBack      
-    icanFailBackp = symbol iCanFailBack >> readp >>= return . BackPoint 
-    repeatPleasep = symbol repeatPlease  >> return  GoBack          
+    noFailBackp   = symbol noFailBack >> readp >>= return . NoBack
+    icanFailBackp = symbol iCanFailBack >> readp >>= return . BackPoint
+    repeatPleasep = symbol repeatPlease  >> return  GoBack
 
 iCanFailBack= "B"
 repeatPlease= "G"
@@ -103,9 +103,9 @@ noFailBack= "N"
 newtype Sup m a = Sup { runSup :: m (FailBack a ) }
 
 class MonadState s m => Supervise s m where
-   supBack     :: s -> m ()           -- called before backtracing. state passed is the previous
+   supBack     :: s -> m ()           -- called before backtracking. state passed is the previous
    supBack = const $ return ()        -- By default the state passed is the last one
-   
+
    supervise ::    m (FailBack a) -> m (FailBack a)
    supervise= id
 
@@ -148,7 +148,7 @@ instance(Monad m, Applicative m) => Alternative (Sup m) where
         GoBack -> runSup g !> "GOBACK"
         _      -> return x
 
--- | the FlowM monad executes the page navigation. It perform Backtracking when necessary to syncronize
+-- | the FlowM monad executes the page navigation. It perform Backtracking when necessary to synchronize
 -- when the user press the back button or when the user enter an arbitrary URL. The instruction pointer
 -- is moved to the right position within the procedure to handle the request.
 --
@@ -219,7 +219,7 @@ instance (Monoid view,Serialize a) => Serialize (FormElm view a) where
 --
 --  The monadic code is executed from the beginning each time the page is presented or refreshed
 --
---  use 'pageFlow' if your page has more than one monadic computation with dynamic behaviour
+--  use 'pageFlow' if your page has more than one monadic computation with dynamic behavior
 --
 -- use 'pageFlow' to identify each subflow branch of a conditional
 --
@@ -245,7 +245,7 @@ instance  Monad m => Supervise (MFlowState v) (WState v m) where
    supBack st= do     -- the previous state is recovered, with the exception of these fields:
       MFlowState{..} <- get
       put st{ mfEnv= mfEnv,mfToken=mfToken
-            , mfPath=mfPath 
+            , mfPath=mfPath
             , mfData=mfData
             , mfTrace= mfTrace
             , inSync=False
@@ -289,7 +289,7 @@ instance  MonadLoc (FlowM v IO) where
 --
 --       where
 --       handler1 loc s (e :: SomeException)=
---        return (GoBack, s{mfTrace= Just ["exception: " ++show e]}) 
+--        return (GoBack, s{mfTrace= Just ["exception: " ++show e]})
 
 instance  FormInput v => MonadLoc (View v IO)  where
     withLoc loc f = View $ do
@@ -317,22 +317,19 @@ instance  FormInput v => MonadLoc (View v IO)  where
 
 
 
-
-
-
 instance Functor (FormElm view ) where
   fmap f (FormElm form x)= FormElm form (fmap f x)
 
 instance  (Monad m,Functor m) => Functor (View view m) where
   fmap f x= View $   fmap (fmap f) $ runView x
 
-  
+
 instance (Monoid view,Functor m, Monad m) => Applicative (View view m) where
   pure a  = View  .  return . FormElm mempty $ Just a
   View f <*> View g= View $
                    f >>= \(FormElm form1 k) ->
                    g >>= \(FormElm form2 x) ->
-                   return $ FormElm (form1 `mappend` form2) (k <*> x) 
+                   return $ FormElm (form1 `mappend` form2) (k <*> x)
 
 instance (FormInput view,Functor m, Monad m) => Alternative (View view m) where
   empty= View $ return $ FormElm mempty Nothing
@@ -351,34 +348,33 @@ instance (FormInput view,Functor m, Monad m) => Alternative (View view m) where
                          (_,Just _) -> path2
                          _          -> path
                    if hasform then put s2{needForm= HasForm,mfPagePath= path3}
-                              else put s2{mfPagePath=path3}    
-                   return $ FormElm mix (k <|> x) 
+                              else put s2{mfPagePath=path3}
+                   return $ FormElm mix (k <|> x)
 
 
 instance  (FormInput view, Monad m) => Monad (View view m) where
     View x >>= f = View $ do
-           FormElm form1 mk <- x   
+           FormElm form1 mk <- x
            case mk of
              Just k  -> do
                 st'' <- get
                 let st = st''{ linkMatched = False  }
-                put st      
+                put st
                 FormElm form2 mk <- runView $ f k
                 st' <- get
                 (mix, hasform) <- controlForms st st' form1 form2
                 when hasform $ put st'{needForm= HasForm}
 
                 return $ FormElm mix mk
-             Nothing -> 
+             Nothing ->
                 return $ FormElm form1 Nothing
-                        
 
 
     return = View .  return . FormElm  mempty . Just
 --    fail msg= View . return $ FormElm [inRed msg] Nothing
 
 
-  
+
 
 instance (FormInput v,Monad m, Functor m, Monoid a) => Monoid (View v m a) where
   mappend x y = mappend <$> x <*> y  -- beware that both operands must validate to generate a sum
@@ -386,14 +382,14 @@ instance (FormInput v,Monad m, Functor m, Monoid a) => Monoid (View v m a) where
 
 
 -- | It is a callback in the view monad. The callback rendering substitutes the widget rendering
--- when the latter is validated, without afecting the rendering of other widgets. This allow
--- the simultaneous execution of different behaviours in different widgets in the
+-- when the latter is validated, without affecting the rendering of other widgets. This allow
+-- the simultaneous execution of different behaviors in different widgets in the
 -- same page. The inspiration is the callback primitive in the Seaside Web Framework
 -- that allows similar functionality (See <http://www.seaside.st>)
 --
 -- This is the visible difference with 'waction' callbacks, which execute a
 -- a flow in the FlowM monad that takes complete control of the navigation, while wactions are
--- executed whithin the same page.
+-- executed within the same page.
 wcallback
   :: Monad m =>
      View view m a -> (a -> View view m b) -> View view m b
@@ -403,11 +399,8 @@ wcallback (View x) f = View $ do
      Just k  -> do
        modify $ \st -> st{linkMatched= False, needForm=NoElems}
        runView (f k)
-       
+
      Nothing -> return $ FormElm form1 Nothing
-
-
-
 
 
 
@@ -470,7 +463,7 @@ infixr 2 <+>
 
 
 
--- | The first elem result (even if it is not validated) is discarded, and the secod is returned
+-- | The first elem result (even if it is not validated) is discarded, and the second is returned
 -- . This contrast with the applicative operator '*>' which fails the whole validation if
 -- the validation of the first elem fails.
 --
@@ -493,7 +486,7 @@ infixr 2 <+>
    FormElm form2 x <- runView g
    s2 <- get
    (mix,hasform) <- controlForms s1 s2 form1 form2
-   when hasform $ put s2{needForm= HasForm} 
+   when hasform $ put s2{needForm= HasForm}
    return $ FormElm mix (k *> x)
 
 
@@ -502,7 +495,7 @@ valid form= View $ do
    FormElm form mx <- runView form
    return $ FormElm form $ Just undefined
 
-infixr 1  **>  ,  <** 
+infixr 1  **>  ,  <**
 
 -- | The second elem result (even if it is not validated) is discarded, and the first is returned
 -- . This contrast with the applicative operator '*>' which fails the whole validation if
@@ -520,7 +513,7 @@ infixr 1  **>  ,  <**
    FormElm form2 x <- runView $ valid g
    s2 <- get
    (mix,hasform) <- controlForms s1 s2 form1 form2
-   when hasform $ put s2{needForm= HasForm} 
+   when hasform $ put s2{needForm= HasForm}
    return $ FormElm mix (k <* x)
 
 
@@ -531,7 +524,7 @@ infixr 1  **>  ,  <**
 --  Usually this check is nos necessary unless conditional code make it necessary
 --
 -- @menu= do
---       mop <- getGoStraighTo 
+--       mop <- getGoStraighTo
 --       case mop of
 --        Just goop -> goop
 --        Nothing -> do
@@ -599,7 +592,7 @@ onBacktrack doit onback= do
     False -> (lift doit) >>= breturn
     True  -> onback
 
--- | less powerflul version of `onBacktrack`: The second computation simply undo the effect of
+-- | less powerful version of `onBacktrack`: The second computation simply undo the effect of
 -- the first one, and the flow continues backward ever. It can be used as a rollback mechanism in
 -- the context of long running transactions.
 compensate :: Monad m =>  m a ->  m a -> FlowM v m a
@@ -636,12 +629,12 @@ type Lang=  String
 --   HasForm -> False
 --   HasElems _ -> True
 --   NoElems -> False
-   
+
 
 
 data NeedForm= HasForm | HasElems  | NoElems deriving Show
 
-data MFlowState view= MFlowState{   
+data MFlowState view= MFlowState{
    mfSequence       :: Int,
    mfCached         :: Bool,
    newAsk           :: Bool,
@@ -702,13 +695,13 @@ mFlowState0 = MFlowState 0 False  True  True  False "en"
 -- >      html' <- getHistory
 -- >      setHistory $ html' `mappend` html
 
-setSessionData ::  (Typeable a,MonadState (MFlowState view) m) => a -> m ()  
+setSessionData ::  (Typeable a,MonadState (MFlowState view) m) => a -> m ()
 setSessionData  x=
   modify $ \st -> st{mfData= M.insert  (typeOf x ) (unsafeCoerce x) (mfData st)}
 
 delSessionData x=
   modify $ \st -> st{mfData= M.delete  (typeOf x ) (mfData st)}
-  
+
 -- | Get the session data of the desired type if there is any.
 getSessionData ::  (Typeable a, MonadState (MFlowState view) m) =>  m (Maybe a)
 getSessionData =  resp where
@@ -738,7 +731,7 @@ getToken :: MonadState (MFlowState view) m => m Token
 getToken= gets mfToken
 
 
--- get a parameter form the las received response
+-- get a parameter form the last received response
 getEnv ::  MonadState (MFlowState view) m =>  m Params
 getEnv = gets mfEnv
 
@@ -746,7 +739,7 @@ stdHeader v = v
 
 
 -- | Set the header-footer that will enclose the widgets. It must be provided in the
--- same formatting than them, altrough with normalization to byteStrings any formatting can be used
+-- same formatting than them, although with normalization to ByteStrings any formatting can be used
 --
 -- This header uses XML trough Haskell Server Pages (<http://hackage.haskell.org/package/hsp>)
 --
@@ -850,7 +843,7 @@ setHttpHeader n v =
 
 -- | Set
 --  1) the timeout of the flow execution since the last user interaction.
--- Once passed, the flow executes from the begining.
+-- Once passed, the flow executes from the beginning.
 --
 -- 2) In persistent flows
 -- it set the session state timeout for the flow, that is persistent. If the
@@ -859,7 +852,7 @@ setHttpHeader n v =
 -- As the other state primitives, it can be run in the Flow and in the View monad
 --
 -- `transient` flows restart anew.
--- persistent flows (that use `step`) restart at the las saved execution point, unless
+-- persistent flows (that use `step`) restart at the last saved execution point, unless
 -- the session time has expired for the user.
 setTimeouts :: ( MonadState (MFlowState v) m) => Int -> Integer ->  m ()
 setTimeouts kt st= do
@@ -902,10 +895,10 @@ class (Monoid view,Typeable view)   => FormInput view where
     fromStrNoEncode :: String -> view
     ftag :: String -> view  -> view
     inred   :: view -> view
-    flink ::  String -> view -> view 
+    flink ::  String -> view -> view
     flink1:: String -> view
-    flink1 verb = flink verb (fromStr  verb) 
-    finput :: Name -> Type -> Value -> Checked -> OnClick -> view 
+    flink1 verb = flink verb (fromStr  verb)
+    finput :: Name -> Type -> Value -> Checked -> OnClick -> view
     ftextarea :: String -> T.Text -> view
     fselect :: String -> view -> view
     foption :: String -> view -> Bool -> view
@@ -917,7 +910,7 @@ class (Monoid view,Typeable view)   => FormInput view where
 
 
 --instance (MonadIO m) => MonadIO (FlowM view m) where
---    liftIO io= let x= liftIO io in x `seq` lift x -- to force liftIO==unsafePerformIO onf the Identity monad
+--    liftIO io= let x= liftIO io in x `seq` lift x -- to force liftIO==unsafePerformIO of the Identity monad
 
 --instance Executable (View v m) where
 --  execute f =  execute $  evalStateT  f mFlowState0
@@ -1016,20 +1009,20 @@ The flow is executed in a loop. When the flow is finished, it is started again
 @
 -}
 runFlow :: (FormInput view, MonadIO m)
-        => FlowM view (Workflow m) () -> Token -> Workflow m () 
+        => FlowM view (Workflow m) () -> Token -> Workflow m ()
 runFlow  f t=
-  loop (startState t) f   t 
+  loop (startState t) f t
   where
   loop  s f t = do
-    (mt,s) <- runFlowOnce2 s f  
+    (mt,s) <- runFlowOnce2 s f
     let t'= fromFailBack mt
     let t''= t'{tpath=[twfname t']}
     liftIO $ do
-       flushRec t'' 
+       flushRec t''
        sendToMF t'' t''
     let s'= case mfSequence s  of
              -1  -> s                     -- !> "end of recovery loop"
-             _   -> s{mfPath=[twfname t],mfPagePath=[],mfEnv=[]} 
+             _   -> s{mfPath=[twfname t],mfPagePath=[],mfEnv=[]}
     loop   s' f t''{tpath=[]}             -- !> "LOOPAGAIN"
 
 inRecovery= -1
@@ -1044,14 +1037,14 @@ startState t= mFlowState0{mfToken=t
                    ,mfSequence= inRecovery
                    ,mfPath= tpath t
                    ,mfEnv= tenv t
-                   ,mfPagePath=[]}  
+                   ,mfPagePath=[]}
 
 runFlowOnce2 s f  =
   runStateT (runSup . runFlowM $ do
         backInit
-        f  
+        f
         getToken) s
-        
+
 
   where
   backInit= do
@@ -1063,7 +1056,7 @@ runFlowOnce2 s f  =
          recover <- lift $ isInRecover
          when (back && not recover) . modify $ \s -> s{ newAsk= True,mfPagePath=[twfname t]}
          breturn ()
-         
+
        tr ->  error $ disp tr
      where
      disp tr= "TRACE (error in the last line):\n\n" ++(concat $ intersperse "\n" tr)
@@ -1073,13 +1066,12 @@ runFlowOnceReturn
   ::   FormInput v => MFlowState v -> FlowM v m a -> Token -> m (FailBack a, MFlowState v)
 runFlowOnceReturn  s f t =
   runStateT (runSup $ runFlowM f) (startState t)
-        
 
 
 -- | Run a persistent flow inside the current flow. It is identified by the procedure and
 -- the string identifier.
--- unlike the normal flows, that run within infinite loops, runFlowIn executes once.
--- In subsequent executions, the flow will get the intermediate responses from te log
+-- Unlike the normal flows, that run within infinite loops, runFlowIn executes once.
+-- In subsequent executions, the flow will get the intermediate responses from the log
 -- and will return the result without asking again.
 -- This is useful for asking once, storing in the log and subsequently retrieving user
 -- defined configurations by means of persistent flows with web formularies.
@@ -1090,7 +1082,7 @@ runFlowIn
   -> FlowM  view  (Workflow IO)  b
   -> FlowM view m b
 runFlowIn wf f= FlowM . Sup $ do
-      st <- get     
+      st <- get
       let t = mfToken st
       (r,st') <- liftIO $ exec1nc wf $ runFlow1 st f t
       put st{mfPath= mfPath st'}
@@ -1102,7 +1094,7 @@ runFlowIn wf f= FlowM . Sup $ do
   runFlow1 st f t= runStateT (runSup . runFlowM $ f) st
 
 
--- | to unlift a FlowM computation. useful for executing the configuration generated by runFLowIn
+-- | To unlift a FlowM computation. useful for executing the configuration generated by runFLowIn
 -- outside of the web flow (FlowM) monad
 runFlowConf :: (FormInput view, MonadIO m) => FlowM view m a ->  m a
 runFlowConf  f = do
@@ -1113,7 +1105,7 @@ runFlowConf  f = do
   evalStateT (runSup . runFlowM $   f )  mFlowState0{mfToken=t} >>= return . fromFailBack   -- >> return ()
 
 
--- | run a transient Flow from the IO monad.
+-- | Run a transient Flow from the IO monad.
 --runNav :: String -> FlowM Html IO () -> IO ()
 --runNav ident f= exec1 ident $ runFlowOnce (transientNav f) undefined
 
@@ -1140,7 +1132,7 @@ instance (FormInput v,Serialize a)
 
 
 
--- | stores the result of the flow in a  persistent log. When restarted, it get the result
+-- | Stores the result of the flow in a  persistent log. When restarted, it get the result
 -- from the log and it does not execute it again. When no results are in the log, the computation
 -- is executed. It is equivalent to 'Control.Workflow.step' but in the FlowM monad.
 step
@@ -1159,8 +1151,8 @@ step f= do
         -- when recovery of a workflow, the MFlow state is not considered
         when( mfSequence s' /= inRecovery) $ put s' -- !> (show $ mfSequence s') -- else put  s{newAsk=True}
         return r
- 
--- | to execute transient flows as if they were persistent
+
+-- | To execute transient flows as if they were persistent,
 -- it can be used instead of step, but it does  log nothing.
 -- Thus, it is faster and convenient when no session state must be stored beyond the lifespan of
 -- the server process.
@@ -1253,7 +1245,7 @@ fromValidated (NotValidated s err)= error $ "fromValidated: NotValidated "++ s
 getParam1 :: (Monad m, MonadState (MFlowState v) m, Typeable a, Read a, FormInput v)
           => String -> Params ->  m (ParamResult v a)
 getParam1 par req = case lookup par req of
-    Just x -> readParam x  
+    Just x -> readParam x
     Nothing  -> return  NoParam
 
 -- Read a segment in the REST path. if it does not match with the type requested
@@ -1261,24 +1253,24 @@ getParam1 par req = case lookup par req of
 getRestParam :: (Read a, Typeable a, Monad m, Functor m, MonadState (MFlowState v) m, FormInput v)
              => m (Maybe a)
 getRestParam= do
-  st <- get 
+  st <- get
   let lpath = mfPath st
   if  linkMatched st
-   then return Nothing          
+   then return Nothing
    else case  stripPrefix (mfPagePath st) lpath  of
      Nothing -> return Nothing
-     Just [] -> return Nothing   
+     Just [] -> return Nothing
      Just xs -> do
 --        case stripPrefix  (mfPrefix st) (head xs)  of
 --             Nothing -> return Nothing
 --             Just name ->
               let name= head xs
-              r <-  fmap valToMaybe $ readParam name 
+              r <-  fmap valToMaybe $ readParam name
               when (isJust r) $ modify $ \s -> s{inSync= True
                                                ,linkMatched= True
                                                ,mfPagePath= mfPagePath s++[name]}
-              return r 
-             
+              return r
+
 
 
 -- | return the value of a post or get param in the form ?param=value&param2=value2...
@@ -1286,7 +1278,7 @@ getKeyValueParam par= do
   st <- get
   r <- getParam1 par $ mfEnv st
   return $ valToMaybe r
-  
+
 readParam :: (Monad m, MonadState (MFlowState v) m, Typeable a, Read a, FormInput v)
            => String -> m (ParamResult v a)
 readParam x1 = r
@@ -1294,7 +1286,7 @@ readParam x1 = r
  r= do
      modify $ \s -> s{inSync= True}
      maybeRead x1
-      
+
  getType ::  m (ParamResult v a) -> a
  getType= undefined
  x= getType r
@@ -1315,7 +1307,7 @@ readParam x1 = r
 ---- Requirements
 
 
--- | Requirements are javascripts, Stylesheets or server processes (or any instance of the 'Requirement' class) that are included in the
+-- | Requirements are JavaScripts, Stylesheets or server processes (or any instance of the 'Requirement' class) that are included in the
 -- Web page or in the server when a widget specifies this. @requires@ is the
 -- procedure to be called with the list of requirements.
 -- Various widgets in the page can require the same element, MFlow will install it once.
@@ -1390,7 +1382,7 @@ loadScript ="function loadScript(name, filename){\
     \}\
   \}\
  \}"
-   
+
 loadCallback depend script=
   let varname= addrStr depend in
   "\naddLoadEvent("++varname++",function(){"++ script++"});"
@@ -1425,7 +1417,7 @@ data WebRequirement= JScriptFile
 
 instance Eq (String, Flow) where
    (x,_) == (y,_)= x == y
- 
+
 instance Ord (String, Flow) where
    compare(x,_)  (y,_)= compare x y
 instance Show (String, Flow) where
@@ -1452,7 +1444,7 @@ strRequirement r=do
    r1 <- strRequirement' r
    modify $ \st -> st{mfInstalledScripts= mfInstalledScripts st ++ [r]}
    return r1
-        
+
 strRequirement' (CSSFile scr)          = return $ loadcssfile scr
 strRequirement' (CSS scr)              = return $ loadcss scr
 strRequirement' (JScriptFile file scripts) = do
@@ -1477,7 +1469,7 @@ strRequirement' (JScriptFile file scripts) = do
                -- other script file has been loaded or demanded load, so loadScript is already installed
          _ ->  return $  loadjsfile file  <>  concatMap(loadCallback file) scripts
 
-    
+
 strRequirement' (JScript scr)  = return scr
 strRequirement' (ServerProc  f)= do
    liftIO $ addMessageFlows [f]
@@ -1537,9 +1529,9 @@ formPrefix st form anchored= do
 
 
 
-     
 
--- | insert a form tag if the widget has form input fields. If not, it does nothing
+
+-- | Insert a form tag if the widget has form input fields. If not, it does nothing
 insertForm w=View $ do
     FormElm forms mx <- runView w
     st <- get
@@ -1549,10 +1541,10 @@ insertForm w=View $ do
                        put st{needForm= HasForm}
                        return   frm
               _    ->  return forms
-    
+
     return $ FormElm cont mx
 
--- isert a form tag if necessary when two pieces of HTML have to mix as a result of >>= >> <|>  or <+> operators
+-- Insert a form tag if necessary when two pieces of HTML have to mix as a result of >>= >> <|>  or <+> operators
 controlForms :: (FormInput v, MonadState (MFlowState v) m)
     => MFlowState v -> MFlowState v -> v -> v -> m (v,Bool)
 controlForms s1 s2 v1 v2= case (needForm s1, needForm s2) of
@@ -1569,7 +1561,7 @@ currentPath  st=  concat ['/':v| v <- mfPagePath st ]
 
 -- | Generate a new string. Useful for creating tag identifiers and other attributes.
 --
--- if the page is refreshed, the identifiers generated are the same.
+-- If the page is refreshed, the identifiers generated are the same.
 genNewId :: MonadState (MFlowState view) m =>  m String
 genNewId=  do
   st <- get
@@ -1579,13 +1571,13 @@ genNewId=  do
           prefseq=  mfPrefix st
       put $ st{mfSequence= n+1}
 
-      return $ 'p':show n++prefseq  
+      return $ 'p':show n++prefseq
     True  -> do
       let n = mfSeqCache st
       put $ st{mfSeqCache=n+1}
       return $  'c' : (show n)
 
--- | get the next ideitifier that will be created by genNewId
+-- | Get the next identifier that will be created by genNewId
 getNextId :: MonadState (MFlowState view) m =>  m String
 getNextId=  do
   st <- get
@@ -1597,6 +1589,3 @@ getNextId=  do
     True  -> do
       let n = mfSeqCache st
       return $  'c' : (show n)
-
-
-

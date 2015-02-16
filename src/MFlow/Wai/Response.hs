@@ -5,7 +5,7 @@ module MFlow.Wai.Response where
 import Network.Wai
 import MFlow.Cookies
 
-import Data.ByteString.Lazy.UTF8 
+import Data.ByteString.Lazy.UTF8
 import MFlow
 import Data.Typeable
 import Data.Monoid
@@ -42,7 +42,7 @@ mkparam (x,y)= (mk  x, y)
 instance ToResponse TResp where
   toResponse (TResp x)= toResponse x
   toResponse (TRespR r)= toResponse r
-  
+
 instance ToResponse Response where
       toResponse = id
 
@@ -57,6 +57,3 @@ instance  ToResponse HttpData  where
   toResponse (Error str)=  responseLBS status404 [("Content-Type", "text/html")] str
 
 --  toResponse $ error "FATAL ERROR: HttpData errors should not reach here: MFlow.Forms.Response.hs "
-   
-
-

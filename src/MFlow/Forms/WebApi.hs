@@ -1,12 +1,12 @@
 -----------------------------------------------------------------------------
 --
--- A haskell formlet is the combination of a parameter parser to read input plus a writer to generate HTTP
+-- A Haskell formlet is the combination of a parameter parser to read input plus a writer to generate HTTP
 -- output
 --
 -- I use this similarity to create parsec-like combinators that use the formlet monad in MFlow
 --(the View monad) to parse the web service parameters and to generate the output.
 --
--- This service below implements a service that sum or multiply two Int-egers.
+-- This service below implements a service that sum or multiply two Integers.
 --
 -- > parserService :: View Html IO ()
 -- > parserService=
@@ -40,7 +40,7 @@ import Control.Monad.State
 import Data.Typeable
 import Data.Monoid
 -- | Get the next segment of the REST path. if there is no one or if the data does not match
--- with the type expected, then ir return invalid.
+-- with the type expected, then it return invalid.
 --  Therefore a monadic sequence in the View monad will not continue
 restp :: (Monad m,Functor m, FormInput v,Typeable a,Read a) => View v m a
 restp =  View $ do
@@ -49,7 +49,7 @@ restp =  View $ do
 
 
 
--- | check that the next rest segment has a certain value. It return invalid otherwise.
+-- | Check that the next rest segment has a certain value. It return invalid otherwise.
 -- therefore a monadic sequence in the View monad will not continue
 rest v= do
    r <- restp
@@ -57,7 +57,7 @@ rest v= do
     else
      modify (\s -> s{mfPagePath= reverse . tail . reverse $ mfPagePath s}) >> stop
 
--- | get a parameter from a GET or POST key-value input.
+-- | Get a parameter from a GET or POST key-value input.
 wparam par= View $ do
    mr <- getKeyValueParam par
    return $ FormElm mempty mr
@@ -86,6 +86,3 @@ infixl 3 <?>
   case mx of
     Nothing -> runView $ v ++> stop
     Just _ -> return r
-
-
-

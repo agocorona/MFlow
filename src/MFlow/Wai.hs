@@ -44,7 +44,7 @@ import Network.Wai
 import Network.Wai.Parse
 import qualified  Data.Conduit.Binary as CB
 import Control.Monad.Trans.Resource
-import Network.HTTP.Types 
+import Network.HTTP.Types
 import Data.Conduit
 import Data.Conduit.Lazy
 import qualified Data.Conduit.List as CList
@@ -148,7 +148,7 @@ waiMessageFlow = toApp $ \req1 -> do
 
 
      let req = case retcookies of
-          [] -> req1{requestHeaders= filesp ++ mkParams (params  ++ cookies) ++ requestHeaders req1}  
+          [] -> req1{requestHeaders= filesp ++ mkParams (params  ++ cookies) ++ requestHeaders req1}
           _  -> req1{requestHeaders= filesp ++ mkParams ((flow, flowval): params ++ cookies) ++ requestHeaders req1}
 
 

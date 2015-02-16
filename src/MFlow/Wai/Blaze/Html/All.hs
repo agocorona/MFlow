@@ -80,24 +80,24 @@ getPortW= do
 --            else  do
 --               env <- getEnvironment
 --               return $ fromMaybe "80" $ lookup "PORT" env
---                       
+--
 --    let porti=   if isport port then fromIntegral $ read port
 --                                 else 80
---                                         
+--
 --
 --    putStr "using port "
 --    print porti
 --    return porti
 --    where
 --    isport x= and $ map isNumber x
-    
--- | run a persistent flow. It uses `getPortW` to get the port
+
+-- | Run a persistent flow. It uses `getPortW` to get the port
 -- The first parameter is the first element in the URL path.
 -- It also set the home page
 -- The port is read from the first parameter passed to the executable.
 -- If no parameter, it is read from the PORT environment variable.
 -- if this does not exist, the port 80 is used.
-runNavigation :: String -> FlowM Html (Workflow IO) () -> IO () 
+runNavigation :: String -> FlowM Html (Workflow IO) () -> IO ()
 runNavigation n f= do
     unless (null n) $ setNoScript n
     addMessageFlows[(n, runFlow f)]

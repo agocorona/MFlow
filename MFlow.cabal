@@ -8,7 +8,7 @@ maintainer: agocorona@gmail.com
 stability: experimental
 bug-reports: https://github.com/agocorona/MFlow/issues
 synopsis: stateful, RESTful web framework
-description: MFlow is a Web Framework that turns Web programing back into just ordinary programming by automating all the extra
+description: MFlow is a Web Framework that turns Web programming back into just ordinary programming by automating all the extra
              complexities.
              .
              The goals of MFlow are:
@@ -18,11 +18,11 @@ description: MFlow is a Web Framework that turns Web programing back into just o
              -At the same time, to maintain, for the user, all the freedom that it has in web applications.
              -For scalability-sensitive applications, to avoid the fat state snapshots that continuation based frameworks need to cope with these two previous requirements. State replication and Horizontal scalability must be possible.
              .
-             -For REST advocates, to maintain the elegant notation of REST urls and the statelessness of GET requests.
+             -For REST advocates, to maintain the elegant notation of REST URLs and the statelessness of GET requests.
              .
              -For expert haskell programmers, to reuse the already existent web libraries and techniques.
              .
-             -For beginner programmers and for Software Enginners, to provide with a high level DSL of reusable, self contained widgets for the user interface, and multipage procedures that can work together provided that they statically typecheck, with zero configuration.
+             -For beginner programmers and for Software Engineers, to provide with a high level DSL of reusable, self contained widgets for the user interface, and multipage procedures that can work together provided that they statically typecheck, with zero configuration.
              .
              -For highly interactive applications, to give dynamic widgets that have their own dynamic behaviors in the page, and communicate themselves without the need of explicit  JavaScript programming.
              .
@@ -36,17 +36,17 @@ description: MFlow is a Web Framework that turns Web programing back into just o
              .
              State consistence and transactions are given by the TCache package. It is data cache within the STM monad (Software Transactional Memory).  Serialization and deserialization of data is programmer defined, so it can adapt it to any database, although any other database interface can be used. Default persistence in files comes out of the box for rapid development purposes.
              .
-             The processes interact trough widgets, that are an extension of formlets with additional applicative combinators , formatting, link management, callbacks, modifiers, caching and AJAX. All is coded in pure haskell. Each widget return statically typed data. They can dynamically modify themselves using AJAX internally (ust prefix it with autorefresh). They are auto-contained: they may include their own JavaScript code, server code and client code in a single pure Haskell procedure that can be combined with other widgets with no other configuration.
+             The processes interact trough widgets, that are an extension of formlets with additional applicative combinators , formatting, link management, callbacks, modifiers, caching and AJAX. All is coded in pure haskell. Each widget return statically typed data. They can dynamically modify themselves using AJAX internally (just prefix it with auto refresh). They are auto-contained: they may include their own JavaScript code, server code and client code in a single pure Haskell procedure that can be combined with other widgets with no other configuration.
              .
-             To combine widgets, applicative combinators are used. Widgets with dynamic behaviours can use the monadic syntax and callbacks.
+             To combine widgets, applicative combinators are used. Widgets with dynamic behaviors can use the monadic syntax and callbacks.
              .
-             The interfaces and communications are abstract, but there are bindings for blaze-html, HSP, Text.XHtml and byteString, Hack and WAI but it can be extended to non Web based architectures.
+             The interfaces and communications are abstract, but there are bindings for blaze-HTML, HSP, Text.XHtml and ByteString, Hack and WAI but it can be extended to non Web based architectures.
              .
-             Bindings for hack, and hsp >= 0.8,  are not compiled by Hackage, and do not appear, but are included in the package files. To use them, add then to the exported modules and execute cabal install
+             Bindings for hack, and HSP >= 0.8,  are not compiled by Hackage, and do not appear, but are included in the package files. To use them, add then to the exported modules and execute cabal install
              .
              0.4.5.8 added rawSend
              .
-             The version 0.4.5.4 add compatibility with ghc 7.8
+             The version 0.4.5.4 add compatibility with GHC 7.8
              .
              The version 0.4.5 composable HTTP caching, lazy load, caching datasets in the browser HTTP cache
              .
@@ -69,15 +69,15 @@ description: MFlow is a Web Framework that turns Web programing back into just o
              .
              - Automatic independent refreshing of widgets via Ajax. (see 'http://haskell-web.blogspot.com.es/2013/06/and-finally-widget-auto-refreshing.html')
              .
-             - Page flows: Monadic widgets that can express his own behaviour and can run its own independent page flow. (see http://haskell-web.blogspot.com.es/2013/06/the-promising-land-of-monadic-formlets.html)
+             - Page flows: Monadic widgets that can express his own behavior and can run its own independent page flow. (see http://haskell-web.blogspot.com.es/2013/06/the-promising-land-of-monadic-formlets.html)
              .
              - Widget callbacks, used in page flows, that change the rendering of the widget (see http://haskell-web.blogspot.com.es/2013/06/callbacks-in-mflow.html)
              .
-             - Widgets in modal and non modal dialogs (using jQuery dialog)
+             - Widgets in modal and non modal dialogues (using jQuery dialog)
              .
              - Other jQuery widgets as MFlow widgets
              .
-             The version 0.2 added better WAI integration, higher level dynamic Widgets, content management, multilanguage, blaze-html support, stateful ajax for server-side control, user-defined data in sessions and widget requirements for automatic installation of scripts, CSS and server flows.
+             The version 0.2 added better WAI integration, higher level dynamic Widgets, content management, multilanguage, blaze-HTML support, stateful Ajax for server-side control, user-defined data in sessions and widget requirements for automatic installation of scripts, CSS and server flows.
              .
              The version 0.1 had transparent back button management, cached widgets, callbacks, modifiers, heterogeneous formatting, AJAX, and WAI integration.
              .
@@ -111,7 +111,7 @@ library
                    http-types , conduit  ,conduit-extra, text , parsec , warp ,
                    warp-tls , random , blaze-html , blaze-markup ,
                    monadloc, clientsession, pwstore-fast
-                   
+
     exposed-modules: MFlow MFlow.Wai.Blaze.Html.All MFlow.Forms
                      MFlow.Forms.Admin MFlow.Cookies MFlow.Wai
                      MFlow.Forms.Blaze.Html MFlow.Forms.Test
@@ -122,7 +122,7 @@ library
     hs-source-dirs: src .
     other-modules:  MFlow.Wai.Response
 
- 
+
 --executable demos-blaze
 --    build-depends: MFlow , RefSerialize , TCache ,
 --                   tcache-AWS , directory , Workflow , base ,

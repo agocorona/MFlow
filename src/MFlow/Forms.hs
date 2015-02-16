@@ -21,7 +21,7 @@
 MFlow run stateful server processes. This version is the first stateful web framework
 that is as RESTful as a web framework can be.
 
-The routes are expressed as normal, monadic haskell code in the FlowM monad. Local links
+The routes are expressed as normal, monadic Haskell code in the FlowM monad. Local links
 point to alternative routes within this monadic computation just like a textual menu
 in a console application. Any GET page is directly reachable by means of a RESTful URL.
 
@@ -29,28 +29,28 @@ At any moment the flow can respond to the back button or to any RESTful path tha
 If the procedure is waiting for another different page, the FlowM monad backtrack until the path partially match
 . From this position the execution goes forward until the rest of the path match. This way the
 statelessness is optional. However, it is possible to store a session state, which may backtrack or
-not when the navigation goes back and forth. It is upto the programmer.
+not when the navigation goes back and forth. It is up to the programmer.
 
 
 All the flow of requests and responses are coded by the programmer in a single procedure.
-Allthoug single request-response flows are possible. Therefore, the code is
+Although single request-response flows are possible. Therefore, the code is
 more understandable. It is not continuation based. It uses a log for thread state persistence and backtracking for
-handling the back button. Back button state syncronization is supported out-of-the-box
+handling the back button. Back button state synchronization is supported out-of-the-box
 
 The MFlow architecture is scalable, since the state is serializable and small
 
 The processes are stopped and restarted by the
-application server on demand, including the execution state (if the Wokflow monad is used).
+application server on demand, including the execution state (if the Workflow monad is used).
 Therefore session management is automatic. State consistence and transactions are given by the TCache package.
 
 The processes interact trough widgets, that are an extension of formlets with
 additional applicative combinators, formatting, link management, callbacks, modifiers, caching,
-byteString conversion and AJAX. All is coded in pure haskell.
+ByteString conversion and AJAX. All is coded in pure Haskell.
 
-The interfaces and communications are abstract, but there are bindings for blaze-html, HSP, Text.XHtml and byteString
+The interfaces and communications are abstract, but there are bindings for blaze-html, HSP, Text.XHtml and ByteString
 , Hack and WAI but it can be extended to non Web based architectures.
 
-Bindings for hack, and hsp >= 0.8,  are not compiled by Hackage, and do not appear, but are included in the package files.
+Bindings for hack, and HSP >= 0.8,  are not compiled by Hackage, and do not appear, but are included in the package files.
 To use them, add then to the exported modules and execute cabal install
 
 It is designed for applications that can be run with no deployment with runghc in order
@@ -60,35 +60,35 @@ This module implement  stateful processes (flows) that are optionally persistent
 This means that they automatically store and recover his execution state. They are executed by the MFlow app server.
 defined in the "MFlow" module.
 
-These processses interact with the user trough user interfaces made of widgets (see below) that return back statically typed responses to
+These processes interact with the user trough user interfaces made of widgets (see below) that return back statically typed responses to
 the calling process. Because flows are stateful, not request-response, the code is more understandable, because
-all the flow of request and responses is coded by the programmer in a single procedure in the FlowM monad. Allthoug
+all the flow of request and responses is coded by the programmer in a single procedure in the FlowM monad. Although
 single request-response flows and callbacks are possible.
 
 This module is abstract with respect to the formatting (here referred with the type variable @view@) . For an
 instantiation for "Text.XHtml"  import "MFlow.Forms.XHtml", "MFlow.Hack.XHtml.All"  or "MFlow.Wai.XHtml.All" .
-To use Haskell Server Pages import "MFlow.Forms.HSP". However the functionalities are documented here.
+To use Haskell Server Pages import "MFlow.Forms.HSP". However the functions are documented here.
 
 `ask` is the only method for user interaction. It run in the @MFlow view m@ monad, with @m@ the monad chosen by the user, usually IO.
 It send user interfaces (in the @View view m@ monad) and return statically
 typed responses. The user interface definitions are  based on a extension of
-formLets (<http://www.haskell.org/haskellwiki/Formlets>) with the addition of caching, links, formatting, attributes,
- extra combinators, callbaks and modifiers.
+formlets (<http://www.haskell.org/haskellwiki/Formlets>) with the addition of caching, links, formatting, attributes,
+ extra combinators, callbacks and modifiers.
 The interaction with the user is  stateful. In the same computation there may be  many
 request-response interactions, in the same way than in the case of a console applications.
 
 * APPLICATION SERVER
 
-Therefore, session and state management is simple and transparent: it is in the haskell
+Therefore, session and state management is simple and transparent: it is in the Haskell
 structures in the scope of the computation. `transient` (normal) procedures have no persistent session state
 and `stateless` procedures accept a single request and return a single response.
 
 `MFlow.Forms.step` is a lifting monad transformer that permit persistent server procedures that
 remember the execution state even after system shutdowns by using the package workflow (<http://hackage.haskell.org/package/Workflow>) internally.
-This state management is transparent. There is no programer interface for session management.
+This state management is transparent. There is no programmer interface for session management.
 
 The programmer set the process timeout and the session timeout with `setTimeouts`.
-If the procedure has been stopped due to the process timeout or due to a system shutdowm,
+If the procedure has been stopped due to the process timeout or due to a system shutdown,
 the procedure restart in the last state when a request for this procedure arrives
 (if the procedure uses the `step` monad transformer)
 
@@ -107,7 +107,7 @@ It is possible to use more than one format in the same widget.
 
 Links defined with `wlink` are treated the same way than forms. They are type safe and return values
  to the same flow of execution.
-It is posssible to combine links and forms in the same widget by using applicative combinators  but also
+It is possible to combine links and forms in the same widget by using applicative combinators  but also
 additional applicative combinators like  \<+> !*> , |*|. Widgets are also monoids, so they can
 be combined as such.
 
@@ -115,7 +115,7 @@ be combined as such.
 
 [@Runtime templates@]  'template', 'edTemplate', 'witerate' and 'dField' permit the edition of
 the widget content at runtime, and the management of placeholders with input fields and data fields
-within the template with no navigation in the client, little bandwidth usage and little server load. Enven less
+within the template with no navigation in the client, little bandwidth usage and little server load. Even less
 than using 'autoRefresh'.
 
 * IN PREVIOUS RELEASES
@@ -127,12 +127,12 @@ than using 'autoRefresh'.
 [@Error traces@] using the monadloc package, now each runtime error (in a monadic statement) has a complete execution trace.
 
 
-[@RESTful URLs@] Now each page is directly reachable by means of a intuitive, RESTful url, whose path is composed by the sucession
+[@RESTful URLs@] Now each page is directly reachable by means of a intuitive, RESTful URL, whose path is composed by the succession
 of links clicked to reach such page and such point in the procedure. Just what you would expect.
 
-[@Page flows@] each widget-formlet can have its own independent behaviour within the page. They can
+[@Page flows@] each widget-formlet can have its own independent behavior within the page. They can
 refresh independently trough AJAX by means of 'autoRefresh'. Additionally, 'pageFlow' initiates the page flow mode or a
-subpage flow by adding a well know indetifier prefix for links and form parameters.
+subpage flow by adding a well know identifier prefix for links and form parameters.
 
 [@Modal Dialogs@] 'wdialog' present a widget within a modal or non modal jQuery dialog. while a monadic
 widget-formlet can add different form elements depending on the user responses, 'wcallback' can
@@ -144,21 +144,21 @@ substitute the widget by other. (See 'Demos/demos.blaze.hs' for some examples)
 
 [@blaze-html support@] see <http://hackage.haskell.org/package/blaze-html> import "MFlow.Forms.Blaze.Html" or "MFlow.Wai.Blaze.Html.All" to use Blaze-Html
 
-[@AJAX@] Now an ajax procedures (defined with 'ajax' can perform many interactions with the browser widgets, instead
+[@AJAX@] Now an Ajax procedures (defined with 'ajax' can perform many interactions with the browser widgets, instead
 of a single request-response (see 'ajaxSend').
 
 [@Active widgets@] "MFlow.Forms.Widgets" contains active widgets that interact with the
 server via Ajax and dynamically control other widgets: 'wEditList', 'autocomplete' 'autocompleteEdit' and others.
 
-[@Requirements@] a widget can specify javaScript files, JavasScript online scipts, CSS files, online CSS and server processes
- and any other instance of the 'Requrement' class. See 'requires' and 'WebRequirements'
+[@Requirements@] a widget can specify JavaScript files, JavaScript online scripts, CSS files, online CSS and server processes
+ and any other instance of the 'Requirement' class. See 'requires' and 'WebRequirements'
 
 [@content-management@] for templating and online edition of the content template. See 'tFieldEd' 'tFieldGen' and 'tField'
 
 [@multilanguage@] see 'mField' and 'mFieldEd'
 
 [@URLs to internal states@] if the web navigation is trough GET forms or links,
- an URL can express a direct path to the n-th step of a flow, So this URL can be shared with other users.
+ an URL can express a direct path to the nth step of a flow, So this URL can be shared with other users.
 Just like in the case of an ordinary stateless application.
 
 
@@ -173,9 +173,9 @@ the widget content comes from a database and it is  shared by all users.
 
 
 [@Callbacks@] `waction` add a callback to a widget. It is executed when its input is validated.
-The callback may initate a flow of interactions with the user or simply executes an internal computation.
+The callback may initiate a flow of interactions with the user or simply executes an internal computation.
 Callbacks are necessary for the creation of abstract container
-widgets that may not know the behaviour of its content. with callbacks, the widget manages its content as  black boxes.
+widgets that may not know the behavior of its content. with callbacks, the widget manages its content as  black boxes.
 
 
 [@Modifiers@] `wmodify` change the visualization and result returned by the widget. For example it may hide a
@@ -186,15 +186,15 @@ Example:
 @ ask $ wform userloginform \``validate`\` valdateProc \``waction`\` loginProc \``wmodify`\` hideIfLogged@
 
 
-[@attributes for formLet elements@]  to add atributes to widgets. See the  '<!' opèrator
+[@attributes for formLet elements@]  to add attributes to widgets. See the  '<!' operator
 
 
-[@ByteString normalization and hetereogeneous formatting@] For caching the rendering of widgets at the
- ByteString level, and to permit many formatring styles
+[@ByteString normalization and heterogeneous formatting@] For caching the rendering of widgets at the
+ ByteString level, and to permit many formatting styles
 in the same page, there are operators that combine different formats which are converted to ByteStrings.
 For example the header and footer may be coded in XML, while the formlets may be formatted using Text.XHtml.
 
-[@File Server@] With file caching. See "MFlow.FileServer"
+[@File Server@] With file caching. See "MFlow.File Server"
 
 
 -}
@@ -211,13 +211,13 @@ FlowM, View(..), FormElm(..), FormInput(..)
 ,encryptedLogout, userWidget, paranoidUserWidget, encryptedUserWidget, login, paranoidLogin, encryptedLogin,
 userName,
 -- * User interaction
-ask, page, askt, clearEnv, wstateless, pageFlow, 
+ask, page, askt, clearEnv, wstateless, pageFlow,
 -- * formLets
 -- | They usually produce the HTML form elements (depending on the FormInput instance used)
 -- It is possible to modify their attributes with the `<!` operator.
--- They are combined with applicative ombinators and some additional ones
+-- They are combined with applicative combinators and some additional ones
 -- formatting can be added with the formatting combinators.
--- modifiers change their presentation and behaviour
+-- modifiers change their presentation and behavior
 getString,getInt,getInteger, getTextBox
 ,getMultilineText,getBool,getSelect, setOption,setSelectedOption, getPassword,
 getRadio, setRadio, setRadioActive, wlabel, getCheckBoxes, genCheckBoxes, setCheckBox,
@@ -233,9 +233,9 @@ cachedWidget, wcached, wfreeze,
 (<+>),(|*>),(|+|), (**>),(<**),(<|>),(<*),(<$>),(<*>),(>:>)
 
 ---- * Normalized (convert to ByteString) widget combinators
----- | These dot operators are indentical to the non dot operators, with the addition of the conversion of the arguments to lazy byteStrings
+---- | These dot operators are identical to the non dot operators, with the addition of the conversion of the arguments to lazy ByteStrings
 ----
----- The purpose is to combine heterogeneous formats into byteString-formatted widgets that
+---- The purpose is to combine heterogeneous formats into ByteString-formatted widgets that
 ---- can be cached with `cachedWidget`
 --,(.<+>.), (.|*>.), (.|+|.), (.**>.),(.<**.), (.<|>.),
 
@@ -243,7 +243,7 @@ cachedWidget, wcached, wfreeze,
 ,(<<<),(++>),(<++),(<!)
 
 ---- * Normalized (convert to ByteString) formatting combinators
----- | Some combinators that convert the formatting of their arguments to lazy byteString
+---- | Some combinators that convert the formatting of their arguments to lazy ByteString
 ----(.<<.),(.<++.),(.++>.)
 
 -- * ByteString tags
@@ -354,7 +354,7 @@ validate  formt val= View $ do
 -- calling page.
 -- It is useful when the widget is inside widget containers that may treat it as a black box.
 --
--- It returns a result  that can be significative or, else, be ignored with '<**' and '**>'.
+-- It returns a result  that can be significant or, else, be ignored with '<**' and '**>'.
 -- An action may or may not initiate his own dialog with the user via `ask`
 waction
   :: (FormInput view, Monad m)
@@ -383,7 +383,7 @@ waction f ac = do
                      modify $ \s ->s{notSyncInAction= True}
                      return (FormElm mempty Nothing)
 
--- | change the rendering and the return value of a page. This is superseeded by page flows.
+-- | change the rendering and the return value of a page. This is superseded by page flows.
 wmodify :: (Monad m, FormInput v)
         => View v m a
         -> (v -> Maybe a -> WState v m (v, Maybe b))
@@ -491,7 +491,7 @@ setCheckBox checked v= View $ do
         ( checked || (isJust mn  && v== fromJust mn)) Nothing)
       ret
 
--- | Read the checkboxes dinamically created by JavaScript within the view parameter
+-- | Read the checkboxes dynamically created by JavaScript within the view parameter
 -- see for example `selectAutocomplete` in "MFlow.Forms.Widgets"
 genCheckBoxes :: (Monad m, FormInput view) => view ->  View view m  CheckBoxes
 genCheckBoxes v= View $ do
@@ -693,7 +693,7 @@ fileUpload=
 
 
 
--- | Enclose Widgets within some formating.
+-- | Enclose Widgets within some formatting.
 -- @view@ is intended to be instantiated to a particular format
 --
 -- NOTE: It has a infix priority : @infixr 5@ less than the one of @++>@ and @<++@ of the operators, so use parentheses when appropriate,
@@ -734,7 +734,7 @@ infixr 5 <<<
 --
 -- @ getString "hi" '<++' H1 '<<' "hi there"@
 --
--- It has a infix prority: @infixr 6@ higher than '<<<' and most other operators.
+-- It has a infix priority: @infixr 6@ higher than '<<<' and most other operators.
 (<++) :: (Monad m, Monoid v)
       => View v m a
       -> v
@@ -749,7 +749,7 @@ infixr 6 <++
 --
 -- @bold '<<' "enter name" '++>' 'getString' 'Nothing' @
 --
--- It has a infix prority: @infixr 6@ higher than '<<<' and most other operators
+-- It has a infix priority: @infixr 6@ higher than '<<<' and most other operators
 (++>) :: (Monad m,  Monoid view)
        => view -> View view m a -> View view m a
 html ++> w =  --  (html <>) <<< digest
@@ -773,7 +773,7 @@ widget <! attribs= View $ do
 
 -- | Is an example of login\/register validation form needed by 'userWidget'. In this case
 -- the form field appears in a single line. it shows, in sequence, entries for the username,
--- password, a button for loging, a entry to repeat password necesary for registering
+-- password, a button for logging, a entry to repeat password necessary for registering
 -- and a button for registering.
 -- The user can build its own user login\/validation forms by modifying this example
 --
@@ -810,7 +810,7 @@ noWidget ::  (FormInput view,
      View view m a
 noWidget= Control.Applicative.empty
 
--- | a sinonym of noWidget that can be used in a monadic expression in the View monad does not continue
+-- | a synonym of noWidget that can be used in a monadic expression in the View monad does not continue
 stop :: (FormInput view,
      Monad m, Functor m) =>
      View view m a
@@ -830,7 +830,7 @@ wraw x= View . return . FormElm x $ Just ()
 notValid :: Monad m => view -> View view m a
 notValid x= View . return $ FormElm x Nothing
 
--- | Wether the user is logged or is anonymous
+-- | If the user is logged or is anonymous
 isLogged :: MonadState (MFlowState v) m => m Bool
 isLogged= do
    rus <-  return . tuser =<< gets mfToken
@@ -838,7 +838,7 @@ isLogged= do
 
 -- | return the result if going forward
 --
--- If the process is backtraking, it does not validate,
+-- If the process is backtracking, it does not validate,
 -- in order to continue the backtracking
 returnIfForward :: (Monad m, FormInput view,Functor m) => b -> View view m b
 returnIfForward x = do
@@ -881,7 +881,7 @@ userWidget' muser formuser login1Func = do
          then returnIfForward user
          else formuser `validate` val muser `wcallback` login1Func
    where
-   val _ (Nothing,_) = return . Just $ fromStr "Plese fill in the user/passwd to login, or user/passwd/passwd to register"
+   val _ (Nothing,_) = return . Just $ fromStr "Please fill in the user/passwd to login, or user/passwd/passwd to register"
 
    val mu (Just us, Nothing)=
         if isNothing mu || isJust mu && fromJust mu == fst us
@@ -1016,11 +1016,11 @@ askt v w =  ask w
 --
 -- 'ask' also synchronizes the execution of the flow with the user page navigation by
 
--- * Backtracking (invoking previous 'ask' staement in the flow) when detecting mismatches between
+-- * Backtracking (invoking previous 'ask' statement in the flow) when detecting mismatches between
 -- get and post parameters and what is expected by the widgets
 -- until a total or partial match is found.
 --
--- * Advancing in the flow by matching a single requests with one or more sucessive ask statements
+-- * Advancing in the flow by matching a single requests with one or more successive ask statements
 --
 -- Backtracking and advancing can occur in a single request, so the flow in any state can reach any
 -- other state in the flow if the request has the required parameters.
@@ -1113,7 +1113,7 @@ ask w =  do
 
 -- | A synonym of ask.
 --
--- Maybe more appropiate for pages with long interactions with the user
+-- Maybe more appropriate for pages with long interactions with the user
 -- while the result has little importance.
 page
   :: (FormInput view) =>
@@ -1150,7 +1150,7 @@ nextMessage = do
         let old= takeWhile isparam  env
             (new,rest)= Data.List.span isparam  req
             parms= new++ old++ rest
-        
+
 --        let params= takeWhile isparam  env
 --            fs= fst $ head req
 --            parms= (case findIndex (\p -> fst p == fs)  params of
@@ -1168,8 +1168,8 @@ isparam ('p': r:_,_)=   isNumber r
 isparam ('c': r:_,_)=   isNumber r
 isparam _= False
 
--- | Creates a stateless flow (see `stateless`) whose behaviour is defined as a widget. It is a
--- higuer level form of the latter
+-- | Creates a stateless flow (see `stateless`) whose behavior is defined as a widget. It is a
+-- higher level form of the latter
 wstateless
   :: (Typeable view,  FormInput view) =>
      View view IO () -> Flow
@@ -1181,7 +1181,7 @@ wstateless w =  runFlow . transientNav . ask $ w **> (stop `asTypeOf` w)
 
 
 -- | Wrap a widget with form element within a form-action element.
--- Usually this is not necessary since this wrapping is done automatically by the @Wiew@ monad, unless
+-- Usually this is not necessary since this wrapping is done automatically by the @View@ monad, unless
 -- there are more than one form in the page.
 wform ::  (Monad m, FormInput view)
           => View view m b -> View view m b
@@ -1216,8 +1216,8 @@ newtype AjaxSessionId= AjaxSessionId String deriving Typeable
 -- >        b <<  text "click the box"
 -- >          ++> getInt (Just 0) <! [("id","text1"),("onclick", ajaxc elemval)]
 ajax :: (MonadIO m, FormInput v)
-     => (String ->  View v m ByteString)  -- ^ user defined procedure, executed in the server.Receives the value of the javascript expression and must return another javascript expression that will be executed in the web browser
-     ->  View v m (String -> String)      -- ^ returns a function that accept a javascript expression and return a javascript event handler expression that invokes the ajax server procedure
+     => (String ->  View v m ByteString)  -- ^ user defined procedure, executed in the server.Receives the value of the JavaScript expression and must return another JavaScript expression that will be executed in the web browser
+     ->  View v m (String -> String)      -- ^ returns a function that accept a JavaScript expression and return a JavaScript event handler expression that invokes the ajax server procedure
 ajax  f =  do
      requires[JScript ajaxScript]
      t <- gets mfToken
@@ -1237,7 +1237,7 @@ installServerControl id f= do
       put st{mfAjax=Just ajxl'}
       return $ \param ->  "doServer("++"'" ++  twfname t ++"','"++id++"',"++ param++")"
 
--- | Send the javascript expression, generated by the procedure parameter as a ByteString, execute it in the browser and the result is returned back
+-- | Send the JavaScript expression, generated by the procedure parameter as a ByteString, execute it in the browser and the result is returned back
 --
 -- The @ajaxSend@ invocation must be inside a ajax procedure or else a /No ajax session set/ error will be produced
 ajaxSend
@@ -1316,7 +1316,7 @@ wlink x v=    View $ do
 -- >   page $ p << "fourth page" ++> wlink () << p << "will not reach here"
 --
 -- After navigating to the third page, when
--- ckicking in the link, will backtrack to the first, and will validate the first link as if the click
+-- clicking in the link, will backtrack to the first, and will validate the first link as if the click
 -- where done in the first page. Then the second page would be displayed.
 --
 -- In monadic widgets, it also backtrack to the statement where the absLink is located without the
@@ -1587,7 +1587,7 @@ instance FormInput  ByteString  where
 ------ page Flows ----
 
 -- | Prepares the state for a page flow. It add a prefix to every form element or link identifier for the formlets and also
--- keep the state of the links clicked and form imput entered within the widget.
+-- keep the state of the links clicked and form input entered within the widget.
 -- If the computation within the widget has branches  @if@ @case@ etc, each branch must have its pageFlow with a distinct identifier.
 -- See <http://haskell-web.blogspot.com.es/2013/06/the-promising-land-of-monadic-formlets.html>
 pageFlow

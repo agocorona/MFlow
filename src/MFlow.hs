@@ -5,11 +5,11 @@ it implements an scheduler of  'Processable'  messages that are served according
 the source identification and the verb invoked.
 The scheduler executed the appropriate workflow (using the workflow package).
 The workflow will send additional messages to the source and wait for the responses.
-The diaglog is identified by a 'Token', which is associated to the flow.
+The dialog is identified by a 'Token', which is associated to the flow.
 . The computation state is optionally logged. On timeout, the process is killed. When invoked again,
 the execution state is recovered as if no interruption took place.
 
-There is no asumption about message codification, so instantiations
+There is no assumption about message codification, so instantiations
 of this scheduler for different infrastructures is possible,
 including non-Web based ones as long as they support or emulate cookies.
 
@@ -17,17 +17,17 @@ including non-Web based ones as long as they support or emulate cookies.
 
 "MFlow.Wai" is a instantiation for the WAI interface.
 
-"MFlow.Forms" implements a monadic type safe interface with composabe widgets and and applicative
-combinator as well as an higher comunication interface.
+"MFlow.Forms" implements a monadic type safe interface with composable widgets and and applicative
+combinator as well as an higher communication interface.
 
 "MFlow.Forms.XHtml" is an instantiation for the Text.XHtml format
 
-"MFlow.Forms.Blaze.Html" is an instantaiation for  blaze-html
+"MFlow.Forms.Blaze.Html" is an instantiation for  blaze-html
 
 "MFlow.Forms.HSP"  is an instantiation for the Haskell Server Pages  format
 
 There are some @*.All@ packages that contain a mix of these instantiations.
-For exmaple, "MFlow.Wai.Blaze.Html.All" includes most of all necessary for using MFlow with
+For example, "MFlow.Wai.Blaze.Html.All" includes most of all necessary for using MFlow with
 Wai <http://hackage.haskell.org/package/wai> and
 Blaze-html <http://hackage.haskell.org/package/blaze-html>
 
@@ -38,7 +38,7 @@ All these details are hidden in the monad of "MFlow.Forms" that provides an high
 
 Fragment based streaming: 'sendFragment'  are  provided only at this level.
 
-'stateless' and 'transient' server processeses are also possible. the first are request-response
+'stateless' and 'transient' server processes are also possible. the first are request-response
  . `transient` processes do not persist after timeout, so they restart anew after a timeout or a crash.
 
 -}
@@ -55,7 +55,7 @@ Fragment based streaming: 'sendFragment'  are  provided only at this level.
               ,OverloadedStrings
               ,ScopedTypeVariables
               ,BangPatterns
-               #-}  
+               #-}
 module MFlow (
 Flow, Params, HttpData(..),Processable(..)
 , Token(..), ProcList
@@ -80,14 +80,14 @@ btag, bhtml, bbody,Attribs, addAttrs
 
 )
 where
-import Control.Concurrent.MVar 
+import Control.Concurrent.MVar
 import Data.IORef
 import GHC.Conc(unsafeIOToSTM)
 import Data.Typeable
 import Data.Maybe(isJust, isNothing, fromMaybe, fromJust)
-import Data.Char(isSeparator) 
+import Data.Char(isSeparator)
 import Data.List(isPrefixOf,isSuffixOf,isInfixOf, elem , span, (\\),intersperse)
-import Control.Monad(when) 
+import Control.Monad(when)
 
 import Data.Monoid
 import Control.Concurrent(forkIO,threadDelay,killThread, myThreadId, ThreadId)
@@ -120,7 +120,7 @@ import Crypto.PasswordStore
 
 
 -- | a Token identifies a flow that handle messages. The scheduler compose a Token with every `Processable`
--- message that arrives and send the mesage to the appropriate flow.
+-- message that arrives and send the message to the appropriate flow.
 data Token = Token{twfname,tuser, tind :: String , tpath :: [String], tenv:: Params, tblock:: MVar Bool, tsendq :: MVar Req, trecq :: MVar Resp}  deriving  Typeable
 
 instance Indexable  Token  where
@@ -196,7 +196,7 @@ type Params =  [(String,String)]
 
 class Processable a where
      pwfname :: a -> String
-     pwfname s= Prelude.head $ pwfPath s 
+     pwfname s= Prelude.head $ pwfPath s
      pwfPath :: a -> [String]
      puser :: a -> String
      pind :: a -> String
@@ -209,14 +209,14 @@ instance Processable Token where
      pind = tind
      getParams = tenv
 
-instance Processable  Req   where 
+instance Processable  Req   where
     pwfname (Req x)= pwfname x
     pwfPath (Req x)= pwfPath x
     puser (Req x)= puser x
-    pind (Req x)= pind x   
+    pind (Req x)= pind x
     getParams (Req x)= getParams  x
 --    getServer (Req x)= getServer  x
---    getPort (Req x)= getPort  x 
+--    getPort (Req x)= getPort  x
 
 data Resp  = Fragm HttpData
            | EndFragm HttpData
@@ -245,10 +245,10 @@ instance  (Monad m, Show a) => Traceable (Workflow m a) where
               x <- iox
               return $ debug x (str++" => Workflow "++ show x)
 -}
--- | send a complete response 
+-- | send a complete response
 --send ::   Token  -> HttpData -> IO()
 send  t@(Token _ _ _ _ _ _ _ qresp) msg=   do
-      ( putMVar qresp  . Resp $  msg )   -- !> ("<<<<< send "++ show t) 
+      ( putMVar qresp  . Resp $  msg )   -- !> ("<<<<< send "++ show t)
 
 sendFlush t msg=  flushRec t >>  send t msg      -- !> "sendFlush "
 
@@ -293,14 +293,14 @@ receiveReqTimeout time time2 t=
 delMsgHistory t = do
       let statKey=  keyWF (twfname t)  t                  -- !> "wf"      --let qnme= keyWF wfname t
       delWFHistory1 statKey                               -- `debug` "delWFHistory"
-      
+
 
 
 -- | executes a simple request-response computation that receive the params and return a response
 --
 -- It is used with `addMessageFlows`
 --
--- There is a higuer level version @wstateless@ in "MFLow.Forms"
+-- There is a higher level version @wstateless@ in "MFLow.Forms"
 stateless ::  (Params -> IO HttpData) -> Flow
 stateless f = transient proc
   where
@@ -314,10 +314,10 @@ stateless f = transient proc
 
 
 -- | Executes a monadic computation that send and receive messages, but does
--- not store its state in permanent storage. The process once stopped, will restart anew 
+-- not store its state in permanent storage. The process once stopped, will restart anew
 --
 ---- It is used with `addMessageFlows` `hackMessageFlow` or `waiMessageFlow`
-transient :: (Token -> IO ()) -> Flow   
+transient :: (Token -> IO ()) -> Flow
 transient f=  unsafeIOtoWF . f -- WF(\s -> f t>>= \x-> return (s, x) )
 
 
@@ -340,7 +340,7 @@ delMessageFlow wfname= modifyMVar_ _messageFlows (\ms -> return $ M.delete wfnam
 sendToMF Token{..} msg= putMVar tsendq (Req msg)  -- !> "sendToMF"
 
 --recFromMF :: (Typeable a,  Typeable c, Processable a) => Token -> a -> IO c
-recFromMF t@Token{..}  = do  
+recFromMF t@Token{..}  = do
     m <-  takeMVar trecq                          -- !> "recFromMF <<<<<< "
     case m  of
         Resp r  ->  return  r                      -- !> "<<<<<<   recFromMF"
@@ -350,12 +350,12 @@ recFromMF t@Token{..}  = do
 
     where
     getStream r =  do
-         mr <-  takeMVar trecq 
+         mr <-  takeMVar trecq
          case mr of
             Fragm h -> do
                  rest <- unsafeInterleaveIO $  getStream  h
                  let result=  mappend  r   rest
-                 return  result 
+                 return  result
             EndFragm h -> do
                  let result=  mappend r   h
                  return  result
@@ -368,7 +368,7 @@ recFromMF t@Token{..}  = do
 
 
 -- | The scheduler creates a Token with every `Processable`
--- message that arrives and send the mesage to the appropriate flow, then wait for the response
+-- message that arrives and send the message to the appropriate flow, then wait for the response
 -- and return it.
 --
 -- It is the core of the application server. "MFLow.Wai" and "MFlow.Hack" use it
@@ -380,16 +380,16 @@ msgScheduler x  = do
   th <- myThreadId
   let wfname = takeWhile (/='/') $ pwfname x
   criticalSection (tblock token) $ do
-     sendToMF token x                             -- !> show th                             
-     th <- startMessageFlow wfname token     
-     r  <- recFromMF token                          
-     return (r,th)                                --  !> let HttpData _ _ r1=r in B.unpack r1 
+     sendToMF token x                             -- !> show th
+     th <- startMessageFlow wfname token
+     r  <- recFromMF token
+     return (r,th)                                --  !> let HttpData _ _ r1=r in B.unpack r1
   where
   criticalSection mv f= bracket
       (takeMVar mv)
       (putMVar mv)
       $ const $ f
-      
+
   --start the flow if not started yet
   startMessageFlow wfname token = 
    forkIO $ do
@@ -408,13 +408,12 @@ msgScheduler x  = do
           Left Timeout -> do
               hFlush stdout                                       -- !>  ("TIMEOUT in msgScheduler" ++ (show $ unsafePerformIO myThreadId))
               deleteTokenInList token
-             
+
           Left (WFException e)-> do
               showError wfname token e
               moveState wfname token token{tind= "error/"++tuser token}
               deleteTokenInList token                       -- !> "DELETETOKEN"
-              
-              
+
           Right _ ->  delMsgHistory token >> return ()      -- !> ("finished " ++ wfname)
 
 
@@ -463,7 +462,7 @@ data Auth = Auth{
 _authMethod= unsafePerformIO $ newIORef $ Auth tCacheRegister tCacheValidate
 
 -- | set an authentication method. That includes the registration and validation calls.
--- both return Nothing if sucessful. Otherwise they return a text mesage explaining the failure
+-- both return Nothing if successful. Otherwise they return a text message explaining the failure
 setAuthMethod auth= writeIORef _authMethod auth
 
 getAuthMethod = readIORef _authMethod
@@ -490,8 +489,8 @@ instance  Serializable User where
   serialize=  B.pack . show
   deserialize=   read . B.unpack
   setPersist =   \_ -> Just filePersist
-  
--- | Register an user/password 
+
+-- | Register an user/password
 tCacheRegister ::  String -> String  -> IO (Maybe String)
 tCacheRegister user password= tCacheRegister' 14 user password
 
@@ -614,10 +613,10 @@ defNotFoundResponse isAdmin msg= fresp $
            _    -> "The administrator has been notified"
   where
   fresp msg=
-   "<html><h4>Error 404: Page not found or error ocurred</h4> <p style=\"font-family:courier\">" <> msg <>"</p>" <>
+   "<html><h4>Error 404: Page not found or error occurred</h4> <p style=\"font-family:courier\">" <> msg <>"</p>" <>
    "<br/>" <> opts <> "<br/><a href=\"/\" >press here to go home</a></html>"
 
-   
+
   paths= Prelude.map B.pack . M.keys $ unsafePerformIO getMessageFlows
   opts=  "options: " <> B.concat (Prelude.map  (\s ->
                           "<a href=\"/"<>  s <>"\">"<> s <>"</a>, ") $ filter (\s -> B.head s /= '_') paths)
@@ -631,10 +630,10 @@ notFoundResponse=  unsafePerformIO $ newIORef defNotFoundResponse
 --  -> String      The error string
 --  -> HttpData)   The response. See `defNotFoundResponse` code for an example
 
-setNotFoundResponse :: 
-    (Bool    
-  -> String     
-  -> ByteString)  
+setNotFoundResponse ::
+    (Bool
+  -> String
+  -> ByteString)
   -> IO ()
 
 setNotFoundResponse f= liftIO $ writeIORef notFoundResponse  f
@@ -668,7 +667,7 @@ addAttrs :: ByteString -> Attribs -> ByteString
 addAttrs (Chunk "<" (Chunk tag rest)) rs=
    Chunk "<"(Chunk tag  (B.pack $ concatMap(\(n,v) -> (' ' :   n) ++ "=" ++  v ) rs))  <> rest
 
-addAttrs other _ = error  $ "addAttrs: byteString is not a tag: " ++ show other
+addAttrs other _ = error  $ "addAttrs: ByteString is not a tag: " ++ show other
 
 
 ------------------- FILE SERVER -----------
@@ -677,8 +676,8 @@ addAttrs other _ = error  $ "addAttrs: byteString is not a tag: " ++ show other
 -- The files are cached (memoized) according with the "Data.TCache" policies in the program space. This avoid the blocking of
 -- the efficient GHC threads by frequent IO calls.So it enhances the performance
 -- in the context of heavy concurrence.
--- It uses 'Data.TCache.Memoization'. 
--- The caching-uncaching follows the `setPersist` criteria
+-- It uses 'Data.TCache.Memoization'.
+-- The caching and uncaching follows the `setPersist` criteria
 setFilesPath :: MonadIO m => String -> m ()
 setFilesPath !path= liftIO $ writeIORef rfilesPath path
 
@@ -722,7 +721,7 @@ rflow= getDBRef . key $ NFlow undefined
 
 newFlow=  do
         TOD t _ <- getClockTime
-        atomically $ do 
+        atomically $ do
                     NFlow n <- readDBRef rflow `onNothing` return (NFlow 0)
                     writeDBRef rflow . NFlow $ n+1
                     return . SB.pack . show $ t + n
@@ -733,7 +732,7 @@ mimeTable=[
     ("htm",	"text/html"),
     ("txt",	"text/plain"),
     ("hs",      "text/plain"),
-    ("lhs",      "text/plain"), 
+    ("lhs",      "text/plain"),
     ("jpeg",	"image/jpeg"),
     ("pdf",	"application/pdf"),
     ("js",	"application/x-javascript"),
@@ -926,4 +925,3 @@ mimeTable=[
     ("z",	"application/x-compress")
 
  ]
-

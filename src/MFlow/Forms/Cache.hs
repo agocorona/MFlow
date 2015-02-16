@@ -30,62 +30,62 @@ data CacheElem = Private | Public | NoCache | NoStore
                | ETag ByteString | Vary ByteString
                deriving(Typeable, Show,Eq,Ord)
 
--- | to delete all previous directives
+-- | To delete all previous directives
 resetCachePolicy :: (MonadState (MFlowState v) m, Monad m) => m ()
 resetCachePolicy= do
   modify $ \s -> s{mfHttpHeaders=[]}
   setSessionData ([] :: [CacheElem])
 
--- | add @no-cache@ to the @Cache-Control@ header directive. It deletes all expires and put max-age=0
+-- | Add @no-cache@ to the @Cache-Control@ header directive. It deletes all expires and put max-age=0
 --
 -- It means that the widget need not to be cached
 noCache :: (MonadState (MFlowState v) m, MonadIO m) => m ()
 noCache =  set  NoCache
 
--- | add @no-cache: <string>@  to the Cache-Control header directive
+-- | Add @no-cache: <string>@  to the Cache-Control header directive
 --
--- it deletes the header string (sensible cookies for example) from the data stored in the cache
+-- It deletes the header string (sensible cookies for example) from the data stored in the cache
 noCache' :: (MonadState (MFlowState v) m, MonadIO m) => ByteString -> m ()
 noCache' s =  set ( NoCache' s)
 
--- | add @no-store@ to the @Cache-Control@ header directive. It deletes  @expires@ and put @max-age: 0@
+-- | Add @no-store@ to the @Cache-Control@ header directive. It deletes  @expires@ and put @max-age: 0@
 --
--- stronger kind of noCache. Not even store temporally
+-- Stronger kind of noCache. Not even store temporally
 noStore :: (MonadState (MFlowState v) m, MonadIO m) => m ()
 noStore =  set NoStore
 
--- | add @expires: <date string>@ to the @Cache-Control@ header directive. it deletes @max-age@
+-- | Add @expires: <date string>@ to the @Cache-Control@ header directive. it deletes @max-age@
 -- Currently it takes the last one if many
 --
 -- The page will be cached until this date
 expires :: (MonadState (MFlowState v) m, MonadIO m) =>  ByteString ->  m ()
 expires s =  set (Expires  s)
 
--- | add @max-age: <seconds>@ to the @Cache-Control@ header directive. if there are more than one, it chooses the lower one
+-- | Add @max-age: <seconds>@ to the @Cache-Control@ header directive. if there are more than one, it chooses the lower one
 --
 -- The page will be stored in the cache for that amount of seconds
 maxAge  :: (MonadState (MFlowState v) m, MonadIO m) =>   Int ->   m ()
 maxAge t =  set (MaxAge t)
 
--- | add @private@ to the @Cache-Control@ header directive. it delete @public@ if any
+-- | Add @private@ to the @Cache-Control@ header directive. it delete @public@ if any
 --
 -- It means that the page that holds the widget must not be shared by other users.
 private :: (MonadState (MFlowState v) m, MonadIO m) => m ()
 private =  set Private
 
--- | add @public@ to the @Cache-Control@ header directive.
+-- | Add @public@ to the @Cache-Control@ header directive.
 --
--- means that the cache can share the page content with other users.
+-- Means that the cache can share the page content with other users.
 public :: (MonadState (MFlowState v) m, MonadIO m) => m ()
 public =  set Public
 
--- | add @sMaxAge <seconds>@ to the @Cache-Control@ header directive. if many, chooses the minimum
+-- | Add @sMaxAge <seconds>@ to the @Cache-Control@ header directive. if many, chooses the minimum
 --
--- specify the time to hold the page for intermediate caches: for example proxies and CDNs.
+-- Specify the time to hold the page for intermediate caches: for example proxies and CDNs.
 sMaxAge :: (MonadState (MFlowState v) m, MonadIO m) => Int -> m ()
 sMaxAge secs =  set (SMaxAge secs)
 
--- | add @noTransform@ to the @Cache-Control@ header directive.
+-- | Add @noTransform@ to the @Cache-Control@ header directive.
 --
 -- Tell CDNs that the content should not be transformed to save space and so on
 noTransform :: (MonadState (MFlowState v) m, MonadIO m) => m ()
@@ -93,23 +93,23 @@ noTransform =  set NoTransform
 
 -- | add @mustRevalidate@ to the @Cache-Control@ header directive.
 --
--- the cache must verify that the page has not changed.
+-- The cache must verify that the page has not changed.
 mustRevalidate  :: (MonadState (MFlowState v) m, MonadIO m) => m ()
 mustRevalidate =  set MustRevalidate
 
--- | add @proxyRevalidate@ to the @Cache-Control@ header directive.
+-- | Add @proxyRevalidate@ to the @Cache-Control@ header directive.
 --
 -- The same than mustRevalidate, for shared caches (proxies etc)
 proxyRevalidate :: (MonadState (MFlowState v) m, MonadIO m) => m ()
 proxyRevalidate =  set ProxyRevalidate
 
--- | add @etag <string>@ to the  header directives.
+-- | Add @etag <string>@ to the  header directives.
 --
--- it is a resource identifier for the page that substitutes the URL identifier
+-- It is a resource identifier for the page that substitutes the URL identifier
 etag :: (MonadState (MFlowState v) m, MonadIO m) =>  ByteString ->  m ()
 etag s =  set (ETag s)
 
--- | add @vary <string>@ to the header directives.
+-- | Add @vary <string>@ to the header directives.
 --
 -- Usually the page add this identifier to the URL string, that is the default identifier
 -- So the same page with different etags will be cached and server separately
@@ -173,7 +173,7 @@ onNothing  mmx mmy= do
    Nothing -> mmy
 
 
--- | return the composition of the current directives. Used by the page internally
+-- | Return the composition of the current directives. Used by the page internally
 setCachePolicy :: (MonadState (MFlowState v) m, Monad m) => m ()
 setCachePolicy= do
    rs <- getSessionData `onNothing` return  []

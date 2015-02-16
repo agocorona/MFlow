@@ -62,5 +62,3 @@ instance FormInput  Html  where
 
 instance Typeable Html where
      typeOf =  \_ -> mkTyConApp (mkTyCon3 "xhtml" "Text.XHtml.Strict" "Html") []
-
-

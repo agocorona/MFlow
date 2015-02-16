@@ -63,7 +63,7 @@ showCookie' (n,v,p,me) = n <> "="  <>  v  <>
 showMaxAge Nothing =  ""
 showMaxAge (Just e)  =  ";Max-age=" <> e
 
-splitCookies cookies  = f cookies []  
+splitCookies cookies  = f cookies []
     where
     f s r | B.null s  = r
     f xs0 r =
@@ -80,7 +80,7 @@ splitCookies cookies  = f cookies []
 
 ----------------------------
 
---readEnv :: Parser [(String,String)] 
+--readEnv :: Parser [(String,String)]
 readEnv = (do
           n <-  urlEncoded
           string "="
@@ -91,7 +91,7 @@ urlEncoded :: Parsec String ()  String
 urlEncoded
  = many ( alphaNum `mplus` extra `mplus` safe
          `mplus` do{ char '+' ; return ' '}
-         `mplus` do{ char '%' ; hexadecimal }                 
+         `mplus` do{ char '%' ; hexadecimal }
          )
 
 
@@ -99,7 +99,7 @@ urlEncoded
 extra = satisfy (`Prelude.elem` "!*'(),/\"")
 --
 --safe :: Parser Char
-safe = satisfy (`Prelude.elem` "$-_.") 
+safe = satisfy (`Prelude.elem` "$-_.")
 ----
 --hexadecimal :: Parser HexString
 hexadecimal = do d1 <- hexDigit

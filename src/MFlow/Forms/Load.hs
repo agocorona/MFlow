@@ -50,6 +50,3 @@ instance FormInput  Html  where
 
 
     flink v str = ShrtString v "link" $ flink  v str
-
-
-
