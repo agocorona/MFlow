@@ -5,7 +5,7 @@ Instantiation of the 'FormInput' class for blaze-html <http://hackage.haskell.or
 
 This package is included in "MFlow.Wai.Blaze.Hml.All".
 
-Use it to create applicaitons with this kind of formatting.
+Use it to create applications with this kind of formatting.
 -}
 module MFlow.Forms.Blaze.Html where
 import MFlow
@@ -25,7 +25,7 @@ import Data.Monoid
 --import Data.Text as T
 import Text.Blaze.Internal
 
--- | used to insert html elements within a tag with the appropriate infix priority for the
+-- | Used to insert html elements within a tag with the appropriate infix priority for the
 -- other operators used in MFlow. Also it can be used for adding markup to
 -- widgets with this signature such are 'wlink' ad 'setOption'
 (<<) :: ToMarkup a => (Markup -> t) -> a -> t
@@ -68,10 +68,3 @@ instance FormInput Html where
     attrs tag ((n,v):attribs) =
        let tag'= tag ! (customAttribute $ stringTag n) (toValue v)
        in attrs tag' attribs
-
-
-
-
-
-
-

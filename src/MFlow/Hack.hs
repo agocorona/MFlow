@@ -29,7 +29,7 @@ import Control.Concurrent.MVar
 import Control.Concurrent
 import Control.Exception
 import qualified Data.Map as M
-import Data.Maybe 
+import Data.Maybe
 import Data.TCache
 import Data.TCache.DefaultPersistence
 import Control.Workflow hiding (Indexable(..))
@@ -52,7 +52,7 @@ instance Processable Env  where
       where
       sc=  tail $ pathInfo env
    puser env = fromMaybe anonymous $ lookup  cookieuser $ http env
-                    
+
    pind env= fromMaybe (error ": No FlowID") $ lookup flow $ http env
    getParams=  http
 --   getServer env= serverName env
@@ -60,7 +60,7 @@ instance Processable Env  where
 --   getPort env= serverPort env
 
 
-                    
+
 ---------------------------------------------
 
 
@@ -83,11 +83,11 @@ instance Processable Env  where
 --webScheduler   :: Env
 --               -> ProcList
 --               -> IO (TResp, ThreadId)
---webScheduler = msgScheduler 
+--webScheduler = msgScheduler
 
---theDir= unsafePerformIO getCurrentDirectory 
+--theDir= unsafePerformIO getCurrentDirectory
 
-wFMiddleware :: (Env -> Bool) -> (Env-> IO Response) ->   (Env -> IO Response) 
+wFMiddleware :: (Env -> Bool) -> (Env-> IO Response) ->   (Env -> IO Response)
 wFMiddleware filter f = \ env ->  if filter env then hackMessageFlow env    else f env -- !> "new message"
 
 -- | An instance of the abstract "MFlow" scheduler to the Hack interface
@@ -108,7 +108,7 @@ wFMiddleware filter f = \ env ->  if filter env then hackMessageFlow env    else
 -- @
 --hackMessageFlow :: [(String, (Token -> Workflow IO ()))]
 --                -> (Env -> IO Response)
---hackMessageFlow  messageFlows = 
+--hackMessageFlow  messageFlows =
 -- unsafePerformIO (addMessageFlows messageFlows) `seq`
 -- hackWorkflow -- wFMiddleware f   other
 -- where
@@ -133,7 +133,7 @@ splitPath str=
 
 hackMessageFlow  ::  Env ->  IO Response
 hackMessageFlow req1=   do
-     let httpreq1= http  req1  
+     let httpreq1= http  req1
      let cookies= {-# SCC "getCookies" #-} getCookies  httpreq1
 
      (flowval , retcookies) <-  case lookup ( flow) cookies of
@@ -141,8 +141,8 @@ hackMessageFlow req1=   do
               Nothing  -> do
                      fl <- newFlow
                      return ( fl,  [( flow,  fl,  "/",(Just $ show $ 365*24*60*60))])
-                     
-{-  for state persistence in cookies 
+
+{-  for state persistence in cookies
      putStateCookie req1 cookies
      let retcookies= case getStateCookie req1 of
                                 Nothing -> retcookies1
@@ -151,7 +151,7 @@ hackMessageFlow req1=   do
 
      let input=
            case  ( requestMethod req1, lookup  "Content-Type" httpreq1 )  of
-              (POST,Just "application/x-www-form-urlencoded") -> urlDecode . unpack $ hackInput  req1 
+              (POST,Just "application/x-www-form-urlencoded") -> urlDecode . unpack $ hackInput  req1
               (GET, _) -> urlDecode . queryString $ req1
               _ -> []
 
@@ -197,12 +197,12 @@ getStateCookie req= do
 {-
 persistInCookies= setPersist  PersistStat{readStat=readResource, writeStat=writeResource, deleteStat=deleteResource}
     where
-    writeResource stat= modifyMVar_ tvresources $  \mmap -> 
+    writeResource stat= modifyMVar_ tvresources $  \mmap ->
                                       case mmap of
                                             Just map-> return $ Just $ M.insert (keyResource stat) (serialize stat) map
                                             Nothing -> return $ Just $ M.fromList [((keyResource stat),   (serialize stat)) ]
     readResource stat= do
-           mstr <- withMVar tvresources $ \mmap -> 
+           mstr <- withMVar tvresources $ \mmap ->
                                 case mmap of
                                    Just map -> return $ M.lookup (keyResource stat) map
                                    Nothing -> return  Nothing
@@ -210,7 +210,7 @@ persistInCookies= setPersist  PersistStat{readStat=readResource, writeStat=write
              Nothing -> return Nothing
              Just str -> return $ deserialize str
 
-    deleteResource stat= modifyMVar_ tvresources $  \mmap-> 
+    deleteResource stat= modifyMVar_ tvresources $  \mmap->
                               case mmap of
                                   Just map -> return $ Just $ M.delete  (keyResource stat) map
                                   Nothing ->  return $ Nothing

@@ -35,9 +35,9 @@ instance Monoid TResp where
 
 
 instance ToResponse TResp where
-  toResponse (TResp x)= toResponse x 
+  toResponse (TResp x)= toResponse x
   toResponse (TRespR r)= toResponse r
-  
+
 instance ToResponse Response where
       toResponse = id
 

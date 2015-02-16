@@ -1,4 +1,3 @@
-
 {- |
 Some dynamic widgets, widgets that dynamically edit content in other widgets,
 widgets for templating, content management and multilanguage. And some primitives
@@ -88,7 +87,7 @@ nicEditUrl=   getConfig "cnicEditUrl"   "//js.nicedit.com/nicEdit-latest.js"
 ------- User Management ------
 
 -- | Present a user form if not logged in. Otherwise, the user name and a logout link is presented.
--- The paremeters and the behaviour are the same as 'userWidget'.
+-- The parameters and the behavior are the same as 'userWidget'.
 -- Only the display is different
 userFormOrName  mode wid= userWidget mode wid `wmodify` f  <** maybeLogout
   where
@@ -132,7 +131,7 @@ instance (Typeable view, Typeable a) => Typeable (Medit view m a) where
 
 #endif
 
--- | If not logged, it present a page flow which askm  for the user name, then the password if not logged
+-- | If not logged, it present a page flow which asks for the user name, then the password if not logged
 --
 -- If logged, it present the user name and a link to logout
 --
@@ -140,10 +139,10 @@ instance (Typeable view, Typeable a) => Typeable (Medit view m a) where
 wlogin :: (MonadIO m,Functor m,FormInput v) => View v m ()
 wlogin=  wform $ do
    username <- getCurrentUser
-   if username /= anonymous  
+   if username /= anonymous
          then do
            private; noCache;noStore
-           return username 
+           return username
          else do
           name <- getString Nothing <! hint "login name"
                                     <! size (9 :: Int)
@@ -151,16 +150,16 @@ wlogin=  wform $ do
           pass <- getPassword <! hint "password"
                               <! size 9
                      <++ ftag "br" mempty
-                     <** submitButton "login" 
-          val  <- userValidate (name,pass)  
+                     <** submitButton "login"
+          val  <- userValidate (name,pass)
           case val of
             Just msg -> notValid msg
             Nothing  -> login name >> (return name)
-       
+
    `wcallback` (\name -> ftag "b" (fromStr $ "logged as " ++ name++ " ")
-                     ++> pageFlow "logout" (submitButton "logout")) -- wlink ("logout" :: String) (ftag "b" $ fromStr " logout")) 
+                     ++> pageFlow "logout" (submitButton "logout")) -- wlink ("logout" :: String) (ftag "b" $ fromStr " logout"))
    `wcallback`  const (logout >> wlogin)
-   
+
 focus = [("onload","this.focus()")]
 hint s= [("placeholder",s)]
 size n= [("size",show n)]
@@ -198,7 +197,7 @@ delEdited
 #endif
   MonadState (MFlowState view) m)
        => B.ByteString           -- ^ identifier
-         -> [View v m1 a] -> m ()  -- ^ withess
+         -> [View v m1 a] -> m ()  -- ^ witness
 delEdited id witness=do
     Medit stored <-  getSessionData `onNothing` return (Medit (M.empty))
     let (ks, ws)=  unzip $ fromMaybe [] $ M.lookup id stored
@@ -243,15 +242,15 @@ modifyWidget selector modifier  w = View $ do
 
 
 
--- | Return the javascript to be executed on the browser to prepend a widget to the location
--- identified by the selector (the bytestring parameter), The selector must have the form of a jquery expression
+-- | Return the JavaScript to be executed on the browser to prepend a widget to the location
+-- identified by the selector (the bytestring parameter), The selector must have the form of a jQuery expression
 -- . It stores the added widgets in the edited list, that is accessed with 'getEdited'
 --
 -- The resulting string can be executed in the browser. 'ajax' will return the code to
--- execute the complete ajax roundtrip. This code returned by ajax must be in an eventhabdler.
+-- execute the complete ajax roundtrip. This code returned by ajax must be in an event handler.
 --
 -- This example  will insert a widget in the div  when the element with identifier
--- /clickelem/  is clicked. when the form is sbmitted, the widget values are returned
+-- /clickelem/  is clicked. when the form is submitted, the widget values are returned
 -- and the list of edited widgets are deleted.
 --
 -- >    id1<- genNewId
@@ -272,9 +271,9 @@ prependWidget
 #else
   :: (Typeable a, MonadIO m, Executable m, FormInput v)
 #endif
-  => B.ByteString           -- ^ jquery selector
+  => B.ByteString           -- ^ jQuery selector
   -> View v Identity a      -- ^ widget to prepend
-  -> View v m B.ByteString  -- ^ string returned with the jquery string to be executed in the browser
+  -> View v m B.ByteString  -- ^ string returned with the jQuery string to be executed in the browser
 prependWidget sel w= modifyWidget sel "prepend" w
 
 -- | Like 'prependWidget' but append the widget instead of prepend.
@@ -287,7 +286,7 @@ appendWidget
         B.ByteString -> View v Identity a -> View v m B.ByteString
 appendWidget sel w= modifyWidget sel "append" w
 
--- | L  ike 'prependWidget' but set the entire content of the selector instead of prepending an element
+-- | Like 'prependWidget' but set the entire content of the selector instead of prepending an element
 setWidget
 #if defined(__GLASGOW_HASKELL__) && (__GLASGOW_HASKELL__ >= 707)
   :: (Typeable a, MonadIO m, Executable m, FormInput v, Typeable Identity, Typeable m) =>
@@ -352,11 +351,11 @@ wEditList holderview w xs addId = pageFlow addId $ do
     return r
 
 
--- | Present the JQuery autocompletion list, from a procedure defined by the programmer, to a text box.
+-- | Present the JQuery auto-completion list, from a procedure defined by the programmer, to a text box.
 wautocomplete
   :: (Show a, MonadIO m, FormInput v)
   => Maybe String       -- ^ Initial value
-  -> (String -> IO a)   -- ^ Autocompletion procedure: will receive a prefix and return a list of strings
+  -> (String -> IO a)   -- ^ Auto-completion procedure: will receive a prefix and return a list of strings
   -> View v m String
 wautocomplete mv autocomplete  = do
     text1 <- genNewId
@@ -380,13 +379,13 @@ wautocomplete mv autocomplete  = do
     jaddtoautocomp text1 us= "$('#"<>fromString text1<>"').autocomplete({ source: " <> fromString( show us) <> "  });"
 
 
--- | Produces a text box. It gives a autocompletion list to the textbox. When return
+-- | Produces a text box. It gives a auto-completion list to the textbox. When return
 -- is pressed in the textbox, the box content is used to create a widget of a kind defined
 -- by the user, which will be situated above of the textbox. When submitted, the result is the content
 -- of the created widgets (the validated ones).
 --
 -- 'wautocompleteList' is an specialization of this widget, where
--- the widget parameter is fixed, with a checkbox that delete the eleement when unselected
+-- the widget parameter is fixed, with a checkbox that delete the element when unselected
 -- . This fixed widget is as such (using generic 'FormElem' class tags):
 --
 -- > ftag "div"    <<< ftag "input" mempty
@@ -403,7 +402,7 @@ wautocompleteEdit
      , FormInput v)
 #endif
     => String                                 -- ^ the initial text of the box
-    -> (String -> IO [String])                -- ^ the autocompletion procedure: receives a prefix, return a list of options.
+    -> (String -> IO [String])                -- ^ the auto-completion procedure: receives a prefix, return a list of options.
     -> (Maybe String  -> View v Identity a)          -- ^ the widget to add, initialized with the string entered in the box
     -> [String]                               -- ^ initial set of values
     -> View v m [a]                           -- ^ resulting widget
@@ -457,7 +456,7 @@ deriving instance Typeable Identity
 #endif
 
 -- | A specialization of 'wutocompleteEdit' which make appear each chosen option with
--- a checkbox that deletes the element when uncheched. The result, when submitted, is the list of selected elements.
+-- a checkbox that deletes the element when unchecked. The result, when submitted, is the list of selected elements.
 wautocompleteList
 #if defined(__GLASGOW_HASKELL__) && (__GLASGOW_HASKELL__ >= 707)
   :: (Functor m, MonadIO m, Executable m, FormInput v, Typeable m, Typeable Identity) =>
@@ -503,7 +502,7 @@ readtField text k= atomically $ do
     Just (TField k v) -> if v /= mempty then return $ fromStrNoEncode $ toString v else return text
     Nothing -> return text
 
--- | Creates a rich text editor aroun a text field or a text area widget.
+-- | Creates a rich text editor around a text field or a text area widget.
 --   This code:
 --
 -- > page $ p "Insert the text"
@@ -511,7 +510,7 @@ readtField text k= atomically $ do
 -- >           (getMultilineText "" <! [("rows","3"),("cols","80")]) <++ br
 -- >    <** submitButton "enter"
 --
---   Creates a rich text area with bold and italic buttons. The buttons are the ones alled
+--   Creates a rich text area with bold and italic buttons. The buttons are the ones added
 --   in the nicEdit editor.
 htmlEdit :: (Monad m, FormInput v) =>  [String] -> UserStr -> View v m a -> View v m a
 htmlEdit buttons jsuser w = do
@@ -563,7 +562,7 @@ tFieldEd  muser k  text= wfreeze k 0 $  do
            flushCached k
            sendFlush token $ HttpData [] [] ""
            return()
-   
+
    requires [JScriptFile nicEditUrl [install]
             ,JScript     ajaxSendText
             ,JScript     installEditField
@@ -571,7 +570,7 @@ tFieldEd  muser k  text= wfreeze k 0 $  do
 
    us <- getCurrentUser
    when(us== muser) noCache
-   
+
    (ftag "div" mempty `attrs` [("id",ipanel)]) ++>
     notValid (ftag "span" content `attrs` [("id", name)])
 
@@ -666,7 +665,7 @@ witerate w= do
                               modify $ \s -> s{mfPagePath=mfPagePath st
                                              ,mfSequence= mfSequence st
                                              ,mfHttpHeaders=[]}
-                              w) 
+                              w)
 
    ret <- case r of
     Nothing -> do
@@ -686,18 +685,18 @@ witerate w= do
 --     View $ do
 --         let t= mfToken st
 --         modify $ \s -> s{mfRequirements=[],mfHttpHeaders=[]} -- !> "just"
---         resetCachePolicy 
+--         resetCachePolicy
 --         FormElm _ mr <- runView w'
---         setCachePolicy 
+--         setCachePolicy
 --
 --         reqs <- installAllRequirements
 --
---         st' <- get 
+--         st' <- get
 --         liftIO . sendFlush t $ HttpData
---                                (mfHttpHeaders st') 
+--                                (mfHttpHeaders st')
 --                                (mfCookies st')  (toByteString reqs)
---         put st'{mfAutorefresh=True, inSync=True} 
---         return $ FormElm mempty Nothing  
+--         put st'{mfAutorefresh=True, inSync=True}
+--         return $ FormElm mempty Nothing
 
    delSessionData $ IteratedId name mempty
    return ret
@@ -795,11 +794,11 @@ dField w= View $ do
     let env =  mfEnv st
 
     IteratedId name scripts <- getSessionData `onNothing` return (IteratedId noid mempty)
-    let r =  lookup ("auto"++name) env 
+    let r =  lookup ("auto"++name) env
     if r == Nothing || (name == noid && newAsk st== True)
-     then return $ FormElm((ftag "span" render) `attrs` [("id",id)]) mx  
+     then return $ FormElm((ftag "span" render) `attrs` [("id",id)]) mx
      else do
-       setSessionData $ IteratedId name $ scripts <> "setId('"++id++"','" ++ toString (toByteString $ render)++"');" 
+       setSessionData $ IteratedId name $ scripts <> "setId('"++id++"','" ++ toString (toByteString $ render)++"');"
        return $ FormElm mempty mx
 
 noid= "noid"
@@ -862,7 +861,7 @@ template k w= View $ do
 
 
 ------------------- JQuery widgets -------------------
--- | present the JQuery datepicker calendar to choose a date.
+-- | present the JQuery datePicker calendar to choose a date.
 -- The second parameter is the configuration. Use \"()\" by default.
 -- See http://jqueryui.com/datepicker/
 datePicker :: (Monad m, FormInput v) => String -> Maybe String -> View v m (Int,Int,Int)
@@ -922,14 +921,14 @@ autoRefresh
      FormInput v)
   => View v m a
   -> View v m a
-autoRefresh =  update "html" 
+autoRefresh =  update "html"
 
--- | In some cases, it is neccessary that a link or form inside a 'autoRefresh' or 'update' block
+-- | In some cases, it is necessary that a link or form inside a 'autoRefresh' or 'update' block
 -- should not be autorefreshed, since it produces side effects in the rest of the page that
 -- affect to the rendering of the whole. If you like to refresh the whole page, simply add
 -- noAutoRefresh attribute to the widget to force the refresh of the whole page when it is activated.
 --
--- That behaviour is common at the last sentence of the 'autoRefresh' block.
+-- That behavior is common at the last sentence of the 'autoRefresh' block.
 --
 -- This is a cascade menu example.
 --
@@ -987,14 +986,14 @@ update method w= do
     st <- get
     let insync =  inSync st
     let env= mfEnv st
-    let r= lookup ("auto"++id) env      
+    let r= lookup ("auto"++id) env
     if r == Nothing
       then do
          requires [JScript $ timeoutscript t
                   ,JScript ajaxGetLink
                   ,JScript ajaxPostForm
-                  ,JScriptFile jqueryScript [installscript]] 
-         (ftag "div" <<< insertForm w) <! [("id",id)] 
+                  ,JScriptFile jqueryScript [installscript]]
+         (ftag "div" <<< insertForm w) <! [("id",id)]
 
       else refresh $ fromStr (method <> " ") ++> insertForm w
 --        View $ do
@@ -1005,12 +1004,12 @@ update method w= do
 --         setCachePolicy
 --         st' <- get
 --         let HttpData ctype c s= toHttpData $ method <> " " <> toByteString  form
---                          
+--
 --         (liftIO . sendFlush t $ HttpData (ctype ++
 --                                mfHttpHeaders st') (mfCookies st' ++ c) s)
 --         put st'{mfAutorefresh=True,newAsk=True}
---            
---         return $ FormElm mempty Nothing 
+--
+--         return $ FormElm mempty Nothing
 
   where
   -- | adapted from http://www.codeproject.com/Articles/341151/Simple-AJAX-POST-Form-and-AJAX-Fetch-Link-to-Modal
@@ -1111,17 +1110,17 @@ timeoutscript t=
 
 data UpdateMethod= Append | Prepend | Html deriving Show
 
--- | continously execute a widget and update the content.
+-- | continuously execute a widget and update the content.
 -- The update method specify how the update is done. 'Html' means a substitution of content.
 -- The second parameter is the delay for the next retry in case of disconnection, in milliseconds.
 --
 -- It can be used to show data updates in the server. The widget is executed in a different process than
 --  the one of the rest of the page.
 -- Updates in the session context are not seen by the push widget. It has his own context.
--- To communicate with te widget, use DBRef's or TVar and the
+-- To communicate with the widget, use DBRef's or TVar and the
 -- STM semantics for waiting updates using 'retry'.
 --
--- Widgets in a push can have links and forms, but since they are asunchonous, they can not
+-- Widgets in a push can have links and forms, but since they are asynchronous, they can not
 -- return inputs. but they can modify the server state.
 -- push ever return an invalid response to the calling widget, so it never
 -- triggers the advance of the navigation.
@@ -1263,7 +1262,7 @@ getSpinner conf mv= do
 
 
 
--- | takes as argument a widget and delay the load until it is visible. The renderring to
+-- | takes as argument a widget and delay the load until it is visible. The rendering to
 -- be shown during the load is the specified in the first parameter. The resulting lazy
 -- widget behaves programatically in the same way.
 --
@@ -1286,7 +1285,7 @@ lazy v w=  do
     st <- get
     let path = currentPath st
         env = mfEnv st
-        r= lookup ("auto"++id) env   
+        r= lookup ("auto"++id) env
         t = mfkillTime st -1
         installscript =  "$(document).ready(function(){\
                 \function lazyexec(){lazy('"++id++"','"++ path ++"',lazyexec)};\
@@ -1301,7 +1300,7 @@ lazy v w=  do
       FormElm _ mx <- runView w
       modify $ \st-> st{mfRequirements= reqs}  --ignore requirements
       return $ FormElm (ftag "div" v `attrs` [("id",id)]) mx
-         
+
      else refresh w
 
     where

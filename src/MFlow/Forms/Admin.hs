@@ -114,7 +114,7 @@ adminMFlow= do
 
    case op of
     "users" -> users
-    "sync" ->  liftIO $ syncCache >> print "syncronized cache"
+    "sync" ->  liftIO $ syncCache >> print "synchronized cache"
     "flush" -> liftIO $ atomically flushAll >> print "flushed cache"
 
     "errors" -> errors
@@ -136,10 +136,6 @@ errors= do
        let rows= [wlink (Prelude.head e) (b << Prelude.head e) `waction` optionsUser  : map (\x ->noWidget <++ fromStr x) (Prelude.tail e) | e <- ls]
        showFormList rows 0 10
   breturn()
-
-
-
-
 
 
 
@@ -172,4 +168,3 @@ optionsUser  us = do
      else do
       wf <-  ask $ firstOf [ wlink wf (p << wf) | (wf,_) <-  wfss]
       ask $ p << unpack (showHistory . fromJust . fromJust $ lookup wf  wfss) ++>  wlink () (p << "press to menu")
-
