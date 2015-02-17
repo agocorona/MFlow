@@ -675,8 +675,7 @@ addAttrs other _ = error  $ "addAttrs: ByteString is not a tag: " ++ show other
 
 -- | Set the path of the files in the web server. The links to the files are relative to it.
 -- The files are cached (memoized) according with the "Data.TCache" policies in the program space. This avoid the blocking of
--- the efficient GHC threads by frequent IO calls. This it enhances the performance
--- in the context of heavy concurrency.
+-- the efficient GHC threads by frequent IO calls. This enhances the performance in the context of heavy concurrency.
 -- It uses 'Data.TCache.Memoization'.
 -- The caching and uncaching follows the `setPersist` criteria
 setFilesPath :: MonadIO m => String -> m ()
