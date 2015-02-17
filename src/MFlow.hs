@@ -1,30 +1,31 @@
 {- | Non monadic low level primitives that implement the MFlow application server.
 See "MFlow.Form" for the higher level interface that you may use.
 
-it implements an scheduler of  'Processable'  messages that are served according with
+It implements a scheduler of 'Processable' messages that are served according to
 the source identification and the verb invoked.
-The scheduler executed the appropriate workflow (using the workflow package).
+The scheduler executes the appropriate workflow (using the workflow package).
 The workflow will send additional messages to the source and wait for the responses.
-The dialog is identified by a 'Token', which is associated to the flow.
-. The computation state is optionally logged. On timeout, the process is killed. When invoked again,
+The dialog is identified by a 'Token', which is associated to the 'Flow'.
+The computation state is optionally logged, on timeout the process is killed, when invoked again,
 the execution state is recovered as if no interruption took place.
 
 There is no assumption about message codification, so instantiations
 of this scheduler for different infrastructures is possible,
-including non-Web based ones as long as they support or emulate cookies.
+including non-web based ones as long as they support or emulate cookies.
 
 "MFlow.Hack" is an instantiation for the Hack interface in a Web context.
 
 "MFlow.Wai" is a instantiation for the WAI interface.
 
-"MFlow.Forms" implements a monadic type safe interface with composable widgets and and applicative
-combinator as well as an higher communication interface.
+"MFlow.Forms" implements a monadic type safe interface with composable widgets and an applicative
+combinator with a higher-level communication interface.
 
 "MFlow.Forms.XHtml" is an instantiation for the Text.XHtml format
 
-"MFlow.Forms.Blaze.Html" is an instantiation for  blaze-html
-
 "MFlow.Forms.HSP"  is an instantiation for the Haskell Server Pages  format
+
+"MFlow.Forms.Blaze.Html" is an instantiation for blaze-html. Use this instead of XHtml and HSP,
+which are for backwards compat reasons.
 
 There are some @*.All@ packages that contain a mix of these instantiations.
 For example, "MFlow.Wai.Blaze.Html.All" includes most of all necessary for using MFlow with
@@ -34,12 +35,12 @@ Blaze-html <http://hackage.haskell.org/package/blaze-html>
 
 In order to manage resources, there are primitives that kill the process and its state after a timeout.
 
-All these details are hidden in the monad of "MFlow.Forms" that provides an higher level interface.
+All these details are hidden in the monad of "MFlow.Forms" which provides an higher level interface.
 
-Fragment based streaming: 'sendFragment'  are  provided only at this level.
+Fragment based streaming: 'sendFragment' are  provided only at this level.
 
-'stateless' and 'transient' server processes are also possible. the first are request-response
- . `transient` processes do not persist after timeout, so they restart anew after a timeout or a crash.
+'stateless' and 'transient' server processes are also possible. 'stateless' are request-response processes.
+While 'transient' processes do not persist after timeout, they restart anew after a timeout or a crash.
 
 -}
 
@@ -59,7 +60,7 @@ Fragment based streaming: 'sendFragment'  are  provided only at this level.
 module MFlow (
 Flow, Params, HttpData(..),Processable(..)
 , Token(..), ProcList
--- * low level comunication primitives. Use `ask` instead
+-- * low level comunication primitives. Use 'ask' instead
 ,flushRec, flushResponse, receive, receiveReq, receiveReqTimeout, send, sendFlush, sendFragment
 , sendEndFragment, sendToMF
 -- * Flow configuration
@@ -119,8 +120,8 @@ import Crypto.PasswordStore
 --(!>)  =   flip trace
 
 
--- | a Token identifies a flow that handle messages. The scheduler compose a Token with every `Processable`
--- message that arrives and send the message to the appropriate flow.
+-- | A 'Token' identifies a 'Flow' that handle messages. The scheduler composes a 'Token' with every 'Processable'
+-- message that arrives and sends the message to the appropriate 'Flow'.
 data Token = Token{twfname,tuser, tind :: String , tpath :: [String], tenv:: Params, tblock:: MVar Bool, tsendq :: MVar Req, trecq :: MVar Resp}  deriving  Typeable
 
 instance Indexable  Token  where
@@ -225,18 +226,18 @@ data Resp  = Fragm HttpData
 
 
 
--- | The anonymous user
+-- | The anonymous user.
 anonymous= "anon#"
 
--- | It is the path of the root flow
+-- | The path of the root flow.
 noScriptRef= unsafePerformIO $ newIORef "noscript"
 
 noScript= unsafePerformIO $ readIORef noScriptRef
 
--- | set the flow to be executed when the URL has no path. The home page.
+-- | Set the flow to be executed when the URL has no path. The home page.
 --
 -- By default it is "noscript".
--- Although it is changed by `runNavigation` to his own flow name.
+-- Although it is changed by `runNavigation` to it's own flow name.
 setNoScript scr= writeIORef noScriptRef scr
 
 {-
@@ -245,14 +246,14 @@ instance  (Monad m, Show a) => Traceable (Workflow m a) where
               x <- iox
               return $ debug x (str++" => Workflow "++ show x)
 -}
--- | send a complete response
+-- | Send a complete response.
 --send ::   Token  -> HttpData -> IO()
 send  t@(Token _ _ _ _ _ _ _ qresp) msg=   do
       ( putMVar qresp  . Resp $  msg )   -- !> ("<<<<< send "++ show t)
 
 sendFlush t msg=  flushRec t >>  send t msg      -- !> "sendFlush "
 
--- | send a response fragment. Useful for streaming. the last packet must be sent trough 'send'
+-- | Send a response fragment, useful for streaming. The last packet must be sent trough 'send'.
 sendFragment ::  Token  -> HttpData -> IO()
 sendFragment (Token _ _ _ _ _ _ _ qresp) msg=   putMVar qresp  . Fragm $  msg
 
@@ -296,9 +297,9 @@ delMsgHistory t = do
 
 
 
--- | executes a simple request-response computation that receive the params and return a response
+-- | Executes a simple request-response computation that receive the params and return a response.
 --
--- It is used with `addMessageFlows`
+-- It is used with 'addMessageFlows'
 --
 -- There is a higher level version @wstateless@ in "MFLow.Forms"
 stateless ::  (Params -> IO HttpData) -> Flow
@@ -313,8 +314,8 @@ stateless f = transient proc
 
 
 
--- | Executes a monadic computation that send and receive messages, but does
--- not store its state in permanent storage. The process once stopped, will restart anew
+-- | Executes a monadic computation that are send and receive messages, but does
+-- not store it's state in permanent storage. The process once stopped, will restart anew
 --
 ---- It is used with `addMessageFlows` `hackMessageFlow` or `waiMessageFlow`
 transient :: (Token -> IO ()) -> Flow
@@ -326,12 +327,12 @@ _messageFlows= unsafePerformIO $ newMVar emptyFList
   where
   emptyFList= M.empty  :: WorkflowList  IO Token ()
 
--- | add a list of flows to be scheduled. Each entry in the list is a pair @(path, flow)@
+-- | Add a list of flows to be scheduled. Each entry in the list is a pair @(path, flow)@
 addMessageFlows wfs=  modifyMVar_ _messageFlows(\ms ->  return $ M.union (M.fromList $ map flt wfs)ms)
   where flt ("",f)= (noScript,f)
         flt e= e
 
--- | return the list of the scheduler
+-- | Return the list of the scheduler.
 getMessageFlows = readMVar _messageFlows
 
 delMessageFlow wfname= modifyMVar_ _messageFlows (\ms -> return $ M.delete wfname ms)
@@ -367,11 +368,11 @@ recFromMF t@Token{..}  = do
 
 
 
--- | The scheduler creates a Token with every `Processable`
--- message that arrives and send the message to the appropriate flow, then wait for the response
--- and return it.
+-- | The scheduler creates a 'Token' with every 'Processable'
+-- message that arrives and sends the message to the appropriate flow, then waits for the response
+-- and returns it.
 --
--- It is the core of the application server. "MFLow.Wai" and "MFlow.Hack" use it
+-- This is the core of the application server. "MFLow.Wai" and "MFlow.Hack" use it
 msgScheduler
   :: (Typeable a,Processable a)
   => a  -> IO (HttpData, ThreadId)
@@ -450,7 +451,7 @@ logFileName= "errlog"
 
 
 
--- | The handler of the error log
+-- | The handler of the error log.
 hlog= unsafePerformIO $ openFile logFileName ReadWriteMode
 
 ------ USER MANAGEMENT -------
@@ -461,8 +462,8 @@ data Auth = Auth{
 
 _authMethod= unsafePerformIO $ newIORef $ Auth tCacheRegister tCacheValidate
 
--- | set an authentication method. That includes the registration and validation calls.
--- both return Nothing if successful. Otherwise they return a text message explaining the failure
+-- | Sets an authentication method, that includes the registration and validation calls.
+-- Both return Nothing if successful. Otherwise they return a text message explaining the failure.
 setAuthMethod auth= writeIORef _authMethod auth
 
 getAuthMethod = readIORef _authMethod
@@ -490,7 +491,7 @@ instance  Serializable User where
   deserialize=   read . B.unpack
   setPersist =   \_ -> Just filePersist
 
--- | Register an user/password
+-- | Register an user/password.
 tCacheRegister ::  String -> String  -> IO (Maybe String)
 tCacheRegister user password= tCacheRegister' 14 user password
 
@@ -526,7 +527,7 @@ tCacheValidate  u p =
      where
      err= Just  "Username or password invalid"
 
--- | register an user with the auth Method
+-- | Register a user with the auth method.
 userRegister :: MonadIO m => UserStr -> PasswdStr -> m (Maybe String)
 userRegister !u !p= liftIO $ do
    Auth reg _ <- getAuthMethod :: IO Auth
@@ -575,13 +576,13 @@ instance  Serializable Config where
                    `CE.catch` \(e :: SomeException) ->  return (readOld s)
   setPersist = \_ -> Just filePersist
 
--- | read a config variable from the config file \"mflow.config\". if it is not set, uses the second parameter and
--- add it to the configuration list, so next time the administrator can change it in the configuration file
+-- | Read a config variable from the config file \"mflow.config\". If it is not set, use the second parameter and
+-- add it to the configuration list so next time the administrator can change it in the configuration file.
 getConfig k v=  case M.lookup k config of
      Nothing -> unsafePerformIO $ setConfig k v >> return v
      Just s  -> s
 
--- | set an user-defined config variable
+-- | Set an user-defined config variable.
 setConfig k v= atomically $ do
      Config1 conf <-  readConfig
      writeDBRef rconf $ Config1 $ M.insert k v conf
@@ -593,9 +594,9 @@ type UserStr= String
 type PasswdStr= String
 
 
--- | set the Administrator user and password.
--- It must be defined in Main , before any configuration parameter is read, before the execution
--- of any flow
+-- | Set the Administrator user and password.
+-- It must be defined in Main, before any configuration parameter is read and before the execution
+-- of any flow.
 setAdminUser :: MonadIO m => UserStr -> PasswdStr -> m ()
 setAdminUser user password= liftIO $  do
   userRegister user password
@@ -623,7 +624,7 @@ defNotFoundResponse isAdmin msg= fresp $
 
 notFoundResponse=  unsafePerformIO $ newIORef defNotFoundResponse
 
--- | set the  404 "not found" response.
+-- | Set the  404 "not found" response.
 --
 -- The parameter is as follows:
 --    (Bool        Either if the user is Administrator or not
@@ -674,8 +675,8 @@ addAttrs other _ = error  $ "addAttrs: ByteString is not a tag: " ++ show other
 
 -- | Set the path of the files in the web server. The links to the files are relative to it.
 -- The files are cached (memoized) according with the "Data.TCache" policies in the program space. This avoid the blocking of
--- the efficient GHC threads by frequent IO calls.So it enhances the performance
--- in the context of heavy concurrence.
+-- the efficient GHC threads by frequent IO calls. This it enhances the performance
+-- in the context of heavy concurrency.
 -- It uses 'Data.TCache.Memoization'.
 -- The caching and uncaching follows the `setPersist` criteria
 setFilesPath :: MonadIO m => String -> m ()
