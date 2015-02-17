@@ -4,65 +4,57 @@ See the [MFlow demo and documentation site](http://mflowdemo.herokuapp.com)
 
 # MFlow
 
+MFlow is a web framework that turns the mess of web programming from handlers and configuration files back into sane and normal programming. Your code is the website.
 
 MFlow Web applications are much like console applications. You just write an ordinary sequential program with inputs, outputs and control statements where the inputs and outputs are web pages. MFlow will run the sequence forward and backward depending on your input to find the appropriate location in the sequence to respond your query.
 
-MFlow uses Haskell magic to counteract the wicked magic of web programming. It terrifies the programmer with all their explosion of events, configurations, plumbing  lookups and identifiers. MFlow restores Web programming to the intuitive and natural way, without inversion of control.
+MFlow uses Haskell magic to counteract the wicked magic of web programming. It terrifies the programmer with all their explosion of events, configurations, plumbing, lookups, and identifiers. MFlow restores Web programming to the intuitive and natural way, without inversion of control.
 
+## The goals of MFlow are:
 
-MFlow works just in the same way people would read a cooking recipe: Each person look for instructions forward or backward until they find the correct point in the sequence appropriate for his state in the cooking process. To know his state, the people remember the name of the steps already done, but not the details of each step. That is exactly what MFlow does. All is pure tracking, backtracking and event logging. MFlow find the appropriate location in the code where respond to each request.
+-Inverting back the inversion of control of web applications and turn web programming into ordinary, intuitive, imperative-like programming.
 
-Other frameworks try to do it with heavy page state or execution state snapshots That is too bad for scalability and this has limited the acceptance of this model for large scale web applications.
+-At the same time, maintaining for the programmer all the freedom that they have in web applications. MFlow keeps out of your way.
 
-Additionally MFlow has nice unique features for the creation of rich and dynamic applications: widgets can exhibit dynamic behaviors and refresh independently on their own without using implicit AJAX. The code for these dynamic widgets are, again much like console applications. With a few changes, a multi-page application can be converted into a dynamic auto-refreshed widget that can be inserted in a page along with others.
+-For scalability-sensitive applications, no fat state snapshots that other continuation-based frameworks need to cope with these two previous requirements. State replication and horizontal scalability are central to MFlow's philosophy.
 
-MFlow is the only Web Framework that uses matching of requests and true backtracking as the mechanism for browser-server synchronization. Each link or form in the page return type safe responses. The navigation is also type safe since it is encoded within a monadic procedure and is enforced by the type safety of the Haskell language. The server process ever synchronize with the browser request. There are no sequence errors. The page is composed of reusable type-safe components called widgets that may change their rendering depending o the user responses by auto refreshing themselves  without using JavaScript.
+-For REST advocates, MFlow maintains the elegant notation of REST URLs and the statelessness of GET requests.
 
-Since the navigation is coded as a normal procedure under the navigation monad, any navigation sequence can be reusable. Deployment and configuration is reduced to zero. The elements can work together if they type-check. In the examples you will see different ways to combine components: either widgets inside widgets, different widgets in a page or complete application flows called as normal procedures in a program.
+-For expert Haskell programmers, reuse of already existing web libraries and techniques is trivial.
 
-## Goals:
+-For beginner programmers and for software engineers, MFlow provides a high level DSL of reusable and self contained widgets for the user interface, and multipage procedures that work together provided that they statically typecheck with zero configuration.
 
--To invert back the inversion of control of web applications and turn web programming into ordinary, intuitive, imperative-like, programming, as seen by the programmer.
+-For highly interactive applications, MFlow gives dynamic widgets that have their own behaviors in the page and they communicate without the need of explicit JavaScript programming.
 
--At the same time, to maintain for the user all the freedom that he has in web applications. Back buttons, bookmarked URLs must work.
-
--For scalability-sensitive applications, to avoid the fat state snapshots that continuation based frameworks need to cope with these two previous requirements. State replication and horizontal scalability must be possible.
-
--For REST advocates, to maintain the elegant notation of REST URLs and the statelessness of GET requests.
-
--For expert Haskell programmers, to reuse the already existent web libraries and techniques.
-
--For beginner programmers and for Software Engineers, to provide with a high level DSL of reusable, self contained widgets as the user interface, and multipage procedures that can work together provided that they statically typecheck, with zero configuration.
-
--For highly interactive applications, to give dynamic widgets that have their own dynamic behaviors in the page, and communicate themselves without the need of explicit  JavaScript programming.
+-No deployment, speed up the development process. see <http://haskell-web.blogspot.com.es/2013/05/a-web-application-in-tweet.html>
 
 ## How navigation works:
 
-MFlow solves the first requirements using an innovative approach. The routes are expressed as normal, monadic Haskell code in the FlowM monad. Local links point to alternative routes within this monadic computation just like a textual menu in a console application. Any GET page is directly reachable by means of a RESTful URL.
+MFlow solves the problem of re-inversion of control by using a different approach, routes are expressed as normal monadic Haskell code in the FlowM monad, local links point to alternative routes within this monadic computation, this means any GET page is directly reachable by means of a RESTful URL.
 
-At any moment the flow can respond to the back button or to any RESTful path that the user may paste in the navigation bar. If the procedure is waiting for another different page, the FlowM monad backtrack until the path partially match. From this position on, the execution goes forward until the rest of the path match.  Thus, no matter the previous state of the server process, it recover the state of execution appropriate for the request. This way the server process is virtually stateless for any GET request. However, it is possible to store a session state, which may backtrack or not when the navigation goes back and forth. It is up to the programmer. Synchronization between server state and web browser state is supported out-of-the-box.
+At any moment the flow can respond to the back button or to any RESTful path that the user may paste in the navigation bar. If the procedure is waiting for another different page, the FlowM monad backtrack until the paths partially match. From this position on the execution goes forward until the rest of the paths match. Thus, no matter the previous state of the server process it will recover the state of execution appropriate for the request. This way the server process is virtually stateless for any GET request. It is also possible to store a session state, which may backtrack or not, when the navigation goes back and forth. MFlow keeps it all in sync, synchronization between server state and web browser state is supported out-of-the-box.
 
-When the state matters, and user interactions can last for long, such are shopping carts, it uses a log for thread state persistence. The server process shut itself down after a programmer defined timeout. Once a new request of the same user arrive, the log is used to recover the process state. There is no need to store a snapshot of every continuation, just the result of each step.
+When the state matters, and user interactions can last for long period of time, such are shopping carts etc., MFlow uses a log for thread state persistence. The server process shuts itself down after a programmer defined timeout, once a new request of the same user arrives, the log is used to recover the process state. There is no need to store a snapshot of every continuation, just the result of each step. This solves the problem of fat state snapshots and give a very lightweight way to handle state.
 
 ## Data tier:
 
-State consistence and transactions are given by the TCache package.
+State consistency and transactions are handled by the TCache package.
 
 http://hackage.haskell.org/package/TCache
 
-It is data cache within the STM monad (Software Transactional Memory).  Serialization and deserialization of data is programmer defined, so it can adapt it to any database, although any other database interface can be used. Default persistence in files comes out of the box for rapid development purposes.
+It is data cache within the STM monad (Software Transactional Memory), serialization and deserialization of data is programmer defined. TCache can adapt to any database, default persistence in files comes out of the box for rapid development purposes, but you can switch to a variety of backends when needed, see the database examples for more details.
 
-##  Widgets:
+## Widgets:
 
-The processes interact trough widgets, that are an extension of formlets with additional applicative combinators , formatting, link management, callbacks, modifiers, caching and AJAX. All is coded in pure Haskell. Each widget return statically typed data. They can dynamically modify themselves using AJAX internally (Just prefix it with autorefresh). They are auto-contained: they may include their own JavaScript code, server code and client code in a single pure Haskell procedure that can be combined with other widgets with no other configuration.
+The processes interact through widgets, which are an extension of formlets with additional applicative combinators, formatting, link management, callbacks, modifiers, caching, and AJAX. All of it is coded in pure Haskell and you use pure Haskell to make your own widgets. Each widget return statically typed data, they can dynamically modify themselves using AJAX internally (just prefix it with auto refresh), are auto-contained: they may include their own JavaScript code, server code and client code in a single pure Haskell procedure that can be combined with other widgets with no other configuration.
 
-To combine widgets, applicative combinators are used. Widgets with dynamic behaviors can use the monadic syntax and callbacks.
+To combine widgets, applicative combinators are used. Widgets with dynamic behaviors that use the monadic syntax and callbacks. When you combine widgets, everything is type checked and making large websites by gluing together small reusable building blocks is the entire aim of the MFlow project.
 
 ## Modularity:
 
-The interfaces and communications are abstract, but there are bindings for blaze-html, HSP, Text.XHtml and ByteString, Hack and WAI but it can be extended to non Web based architectures.
+The interfaces and communications are abstract and there are bindings for blaze-HTML, HSP, Text.XHtml, ByteString, Hack, and WAI. So it can be extended to non web based architectures.
 
-Bindings for hack, and hsp >= 0.8,  are not compiled by Hackage, and do not appear, but are included in the package files. To use them, add then to the exported modules and execute cabal install
+Bindings for hack, and HSP >= 0.8,  are not installed by default, but are included in the package files. To use them, add them to the exported modules and execute cabal install
 
 It is designed for applications that can be run with no deployment with runghc in order to speed up the development process. see <http://haskell-web.blogspot.com.es/2013/05/a-web-application-in-tweet.html>
 
