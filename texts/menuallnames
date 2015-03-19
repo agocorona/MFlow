@@ -1,0 +1,2 @@
+<h1>Menu</h1><div>The title and this test has been added at runtime.</div><div>This <i><a href="/" title="" target="">link to the home</a></i> has been also added.</div><div>You can edit this by logging as edituser/edituser&nbsp;</div><div>(from time to time heroku will erase the changes)</div>
+<a href="/noscript/templates/runtimetemplates/newname"><p>enter a new name</p></a><a href="/noscript/templates/runtimetemplates/listnames"><p>List names</p></a><p><a href="/noscript/templates/runtimetemplates/exit">Exit to the home page</a></p>

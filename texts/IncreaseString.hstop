@@ -1,0 +1,1 @@
+<h1>A loop that concatenate text in a text box</h1><div>This program uses a text box in a page within a loop that add "1" to the text input. It checks that the length of the string is less than 5. You can press the back button to see what happens.</div><br>
