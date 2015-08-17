@@ -1,0 +1,127 @@
+Configuring http-types-0.8.6...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Building http-types-0.8.6...
+Preprocessing library http-types-0.8.6...
+[1 of 7] Compiling Network.HTTP.Types.Version ( Network\HTTP\Types\Version.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\HTTP\Types\Version.o )
+[2 of 7] Compiling Network.HTTP.Types.URI ( Network\HTTP\Types\URI.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\HTTP\Types\URI.o )
+
+Network\HTTP\Types\URI.hs:41:1: Warning:
+    The import of ‘Data.Monoid’ is redundant
+      except perhaps to import instances from ‘Data.Monoid’
+    To import instances alone, use: import Data.Monoid()
+
+Network\HTTP\Types\URI.hs:146:26: Warning:
+    In the use of ‘B.breakByte’ (imported from Data.ByteString):
+    Deprecated: "It is an internal function and should never have been exported. Use 'break (== x)' instead. (There are rewrite rules that handle this special case of 'break'.)"
+
+Network\HTTP\Types\URI.hs:281:22: Warning:
+    In the use of ‘B.breakByte’ (imported from Data.ByteString):
+    Deprecated: "It is an internal function and should never have been exported. Use 'break (== x)' instead. (There are rewrite rules that handle this special case of 'break'.)"
+
+Network\HTTP\Types\URI.hs:311:20: Warning:
+    In the use of ‘B.breakByte’ (imported from Data.ByteString):
+    Deprecated: "It is an internal function and should never have been exported. Use 'break (== x)' instead. (There are rewrite rules that handle this special case of 'break'.)"
+
+Network\HTTP\Types\URI.hs:323:18: Warning:
+    In the use of ‘B.breakByte’ (imported from Data.ByteString):
+    Deprecated: "It is an internal function and should never have been exported. Use 'break (== x)' instead. (There are rewrite rules that handle this special case of 'break'.)"
+[3 of 7] Compiling Network.HTTP.Types.Status ( Network\HTTP\Types\Status.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\HTTP\Types\Status.o )
+
+Network\HTTP\Types\Status.hs:128:1: Warning: Tab character
+
+Network\HTTP\Types\Status.hs:129:1: Warning: Tab character
+
+Network\HTTP\Types\Status.hs:130:1: Warning: Tab character
+
+Network\HTTP\Types\Status.hs:131:1: Warning: Tab character
+
+Network\HTTP\Types\Status.hs:132:1: Warning: Tab character
+
+Network\HTTP\Types\Status.hs:133:1: Warning: Tab character
+
+Network\HTTP\Types\Status.hs:134:1: Warning: Tab character
+
+Network\HTTP\Types\Status.hs:135:1: Warning: Tab character
+
+Network\HTTP\Types\Status.hs:136:1: Warning: Tab character
+
+Network\HTTP\Types\Status.hs:137:1: Warning: Tab character
+
+Network\HTTP\Types\Status.hs:138:1: Warning: Tab character
+
+Network\HTTP\Types\Status.hs:139:1: Warning: Tab character
+
+Network\HTTP\Types\Status.hs:140:1: Warning: Tab character
+
+Network\HTTP\Types\Status.hs:141:1: Warning: Tab character
+
+Network\HTTP\Types\Status.hs:142:1: Warning: Tab character
+
+Network\HTTP\Types\Status.hs:143:1: Warning: Tab character
+
+Network\HTTP\Types\Status.hs:144:1: Warning: Tab character
+
+Network\HTTP\Types\Status.hs:145:1: Warning: Tab character
+
+Network\HTTP\Types\Status.hs:146:1: Warning: Tab character
+
+Network\HTTP\Types\Status.hs:147:1: Warning: Tab character
+
+Network\HTTP\Types\Status.hs:148:1: Warning: Tab character
+
+Network\HTTP\Types\Status.hs:149:1: Warning: Tab character
+
+Network\HTTP\Types\Status.hs:150:1: Warning: Tab character
+
+Network\HTTP\Types\Status.hs:151:1: Warning: Tab character
+
+Network\HTTP\Types\Status.hs:152:1: Warning: Tab character
+
+Network\HTTP\Types\Status.hs:153:1: Warning: Tab character
+
+Network\HTTP\Types\Status.hs:154:1: Warning: Tab character
+
+Network\HTTP\Types\Status.hs:155:1: Warning: Tab character
+
+Network\HTTP\Types\Status.hs:156:1: Warning: Tab character
+
+Network\HTTP\Types\Status.hs:157:1: Warning: Tab character
+
+Network\HTTP\Types\Status.hs:158:1: Warning: Tab character
+
+Network\HTTP\Types\Status.hs:159:1: Warning: Tab character
+
+Network\HTTP\Types\Status.hs:160:1: Warning: Tab character
+
+Network\HTTP\Types\Status.hs:161:1: Warning: Tab character
+
+Network\HTTP\Types\Status.hs:162:1: Warning: Tab character
+
+Network\HTTP\Types\Status.hs:163:1: Warning: Tab character
+
+Network\HTTP\Types\Status.hs:164:1: Warning: Tab character
+
+Network\HTTP\Types\Status.hs:165:1: Warning: Tab character
+
+Network\HTTP\Types\Status.hs:166:1: Warning: Tab character
+
+Network\HTTP\Types\Status.hs:167:1: Warning: Tab character
+
+Network\HTTP\Types\Status.hs:168:1: Warning: Tab character
+
+Network\HTTP\Types\Status.hs:169:1: Warning: Tab character
+[4 of 7] Compiling Network.HTTP.Types.QueryLike ( Network\HTTP\Types\QueryLike.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\HTTP\Types\QueryLike.o )
+[5 of 7] Compiling Network.HTTP.Types.Method ( Network\HTTP\Types\Method.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\HTTP\Types\Method.o )
+[6 of 7] Compiling Network.HTTP.Types.Header ( Network\HTTP\Types\Header.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\HTTP\Types\Header.o )
+
+Network\HTTP\Types\Header.hs:40:1: Warning:
+    The import of ‘Data.Monoid’ is redundant
+      except perhaps to import instances from ‘Data.Monoid’
+    To import instances alone, use: import Data.Monoid()
+[7 of 7] Compiling Network.HTTP.Types ( Network\HTTP\Types.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\HTTP\Types.o )
+In-place registering http-types-0.8.6...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Installing library in
+C:\Users\magocoal\AppData\Roaming\stack\snapshots\x86_64-windows\nightly-2015-06-16\7.10.2\lib\x86_64-windows-ghc-7.10.2\http-types-0.8.6-7Nz2S2UdbvoLtWaGR7p5gH
+Registering http-types-0.8.6...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset

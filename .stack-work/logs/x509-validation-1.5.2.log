@@ -1,0 +1,20 @@
+Configuring x509-validation-1.5.2...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Building x509-validation-1.5.2...
+Preprocessing library x509-validation-1.5.2...
+[1 of 5] Compiling Data.X509.Validation.Fingerprint ( Data\X509\Validation\Fingerprint.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\X509\Validation\Fingerprint.o )
+[2 of 5] Compiling Data.X509.Validation.Signature ( Data\X509\Validation\Signature.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\X509\Validation\Signature.o )
+[3 of 5] Compiling Data.X509.Validation.Types ( Data\X509\Validation\Types.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\X509\Validation\Types.o )
+[4 of 5] Compiling Data.X509.Validation.Cache ( Data\X509\Validation\Cache.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\X509\Validation\Cache.o )
+[5 of 5] Compiling Data.X509.Validation ( Data\X509\Validation.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\X509\Validation.o )
+
+Data\X509\Validation.hs:32:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+In-place registering x509-validation-1.5.2...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Installing library in
+C:\Users\magocoal\AppData\Roaming\stack\snapshots\x86_64-windows\nightly-2015-06-16\7.10.2\lib\x86_64-windows-ghc-7.10.2\x509-validation-1.5.2-8euWARXQvKG94rrycubTqC
+Registering x509-validation-1.5.2...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset

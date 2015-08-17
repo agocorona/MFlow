@@ -1,0 +1,131 @@
+Configuring TCache-0.12.0...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Building TCache-0.12.0...
+Preprocessing library TCache-0.12.0...
+
+on the commandline: Warning:
+    -XOverlappingInstances is deprecated: instead use per-instance pragmas OVERLAPPING/OVERLAPPABLE/OVERLAPS
+
+Data\TCache\IndexQuery.hs:74:46: Warning:
+    -XOverlappingInstances is deprecated: instead use per-instance pragmas OVERLAPPING/OVERLAPPABLE/OVERLAPS
+
+Data\Persistent\IDynamic.hs:1:16: Warning:
+    -XOverlappingInstances is deprecated: instead use per-instance pragmas OVERLAPPING/OVERLAPPABLE/OVERLAPS
+[ 1 of 10] Compiling Data.TCache.IResource ( Data\TCache\IResource.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\TCache\IResource.o )
+
+Data\TCache\IResource.hs:66:5: Warning: Tab character
+
+Data\TCache\IResource.hs:67:5: Warning: Tab character
+
+Data\TCache\IResource.hs:68:5: Warning: Tab character
+
+Data\TCache\IResource.hs:69:5: Warning: Tab character
+
+Data\TCache\IResource.hs:70:5: Warning: Tab character
+
+Data\TCache\IResource.hs:71:5: Warning: Tab character
+
+Data\TCache\IResource.hs:72:5: Warning: Tab character
+
+Data\TCache\IResource.hs:75:5: Warning: Tab character
+
+Data\TCache\IResource.hs:76:5: Warning: Tab character
+
+Data\TCache\IResource.hs:77:5: Warning: Tab character
+[ 2 of 10] Compiling Data.TCache.Defs ( Data\TCache\Defs.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\TCache\Defs.o )
+[ 3 of 10] Compiling Data.TCache.Triggers ( Data\TCache\Triggers.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\TCache\Triggers.o )
+[ 4 of 10] Compiling Data.TCache      ( Data\TCache.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\TCache.o )
+
+Data\TCache.hs:721:1: Warning: Tab character
+
+Data\TCache.hs:789:1: Warning: Tab character
+
+Data\TCache.hs:790:1: Warning: Tab character
+
+Data\TCache.hs:791:1: Warning: Tab character
+
+Data\TCache.hs:792:1: Warning: Tab character
+
+Data\TCache.hs:793:1: Warning: Tab character
+
+Data\TCache.hs:794:1: Warning: Tab character
+
+Data\TCache.hs:794:83: Warning: Tab character
+
+Data\TCache.hs:795:1: Warning: Tab character
+
+Data\TCache.hs:796:1: Warning: Tab character
+
+Data\TCache.hs:798:67: Warning: Tab character
+
+Data\TCache.hs:799:1: Warning: Tab character
+
+Data\TCache.hs:801:1: Warning: Tab character
+
+Data\TCache.hs:802:1: Warning: Tab character
+
+Data\TCache.hs:803:1: Warning: Tab character
+
+Data\TCache.hs:804:1: Warning: Tab character
+
+Data\TCache.hs:805:1: Warning: Tab character
+
+Data\TCache.hs:806:1: Warning: Tab character
+
+Data\TCache.hs:807:1: Warning: Tab character
+
+Data\TCache.hs:808:1: Warning: Tab character
+
+Data\TCache.hs:809:1: Warning: Tab character
+
+Data\TCache.hs:809:26: Warning: Tab character
+
+Data\TCache.hs:810:1: Warning: Tab character
+
+Data\TCache.hs:811:1: Warning: Tab character
+
+Data\TCache.hs:812:1: Warning: Tab character
+
+Data\TCache.hs:812:15: Warning: Tab character
+
+Data\TCache.hs:815:1: Warning: Tab character
+
+Data\TCache.hs:837:1: Warning: Tab character
+
+Data\TCache.hs:855:5: Warning: Tab character
+
+Data\TCache.hs:856:5: Warning: Tab character
+
+Data\TCache.hs:940:10: Warning: Tab character
+
+Data\TCache.hs:949:5: Warning: Tab character
+
+Data\TCache.hs:950:13: Warning: Tab character
+
+Data\TCache.hs:951:13: Warning: Tab character
+
+Data\TCache.hs:954:13: Warning: Tab character
+
+Data\TCache.hs:955:5: Warning: Tab character
+
+Data\TCache.hs:970:1: Warning: Tab character
+
+Data\TCache.hs:971:1: Warning: Tab character
+
+Data\TCache.hs:1010:9: Warning: Tab character
+
+Data\TCache.hs:1011:9: Warning: Tab character
+
+Data\TCache.hs:1012:9: Warning: Tab character
+[ 5 of 10] Compiling Data.TCache.DefaultPersistence ( Data\TCache\DefaultPersistence.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\TCache\DefaultPersistence.o )
+[ 6 of 10] Compiling Data.TCache.IndexQuery ( Data\TCache\IndexQuery.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\TCache\IndexQuery.o )
+[ 7 of 10] Compiling Data.TCache.IndexText ( Data\TCache\IndexText.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\TCache\IndexText.o )
+[ 8 of 10] Compiling Data.TCache.Memoization ( Data\TCache\Memoization.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\TCache\Memoization.o )
+[ 9 of 10] Compiling Data.Persistent.Collection ( Data\Persistent\Collection.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Persistent\Collection.o )
+[10 of 10] Compiling Data.Persistent.IDynamic ( Data\Persistent\IDynamic.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Persistent\IDynamic.o )
+In-place registering TCache-0.12.0...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Installing library in
+C:\Users\magocoal\AppData\Roaming\stack\snapshots\x86_64-windows\nightly-2015-06-16\7.10.2\lib\x86_64-windows-ghc-7.10.2\TCache-0.12.0-5nUInytLeZI4X0pMeJzPco
+Registering TCache-0.12.0...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset

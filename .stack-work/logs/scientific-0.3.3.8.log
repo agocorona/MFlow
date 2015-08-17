@@ -1,0 +1,24 @@
+Configuring scientific-0.3.3.8...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Building scientific-0.3.3.8...
+Preprocessing library scientific-0.3.3.8...
+[1 of 4] Compiling Math.NumberTheory.Logarithms ( src\Math\NumberTheory\Logarithms.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Math\NumberTheory\Logarithms.o )
+[2 of 4] Compiling Data.Scientific  ( src\Data\Scientific.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Scientific.o )
+
+src\Data\Scientific.hs:92:1: Warning:
+    The import of ‘Data.Functor’ is redundant
+      except perhaps to import instances from ‘Data.Functor’
+    To import instances alone, use: import Data.Functor()
+[3 of 4] Compiling Data.Text.Lazy.Builder.Scientific ( src\Data\Text\Lazy\Builder\Scientific.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Text\Lazy\Builder\Scientific.o )
+[4 of 4] Compiling Data.ByteString.Builder.Scientific ( src\Data\ByteString\Builder\Scientific.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\ByteString\Builder\Scientific.o )
+
+src\Data\ByteString\Builder\Scientific.hs:26:1: Warning:
+    The import of ‘Data.Monoid’ is redundant
+      except perhaps to import instances from ‘Data.Monoid’
+    To import instances alone, use: import Data.Monoid()
+In-place registering scientific-0.3.3.8...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Installing library in
+C:\Users\magocoal\AppData\Roaming\stack\snapshots\x86_64-windows\nightly-2015-06-16\7.10.2\lib\x86_64-windows-ghc-7.10.2\scientific-0.3.3.8-HM66sibFESrHKHYoCVX6uD
+Registering scientific-0.3.3.8...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset

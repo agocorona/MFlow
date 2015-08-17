@@ -1,0 +1,26 @@
+Configuring x509-store-1.5.0...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Building x509-store-1.5.0...
+Preprocessing library x509-store-1.5.0...
+[1 of 3] Compiling Data.X509.Memory ( Data\X509\Memory.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\X509\Memory.o )
+
+Data\X509\Memory.hs:19:1: Warning:
+    The import of ‘PEM’ from module ‘Data.PEM’ is redundant
+[2 of 3] Compiling Data.X509.File   ( Data\X509\File.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\X509\File.o )
+
+Data\X509\File.hs:6:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+[3 of 3] Compiling Data.X509.CertificateStore ( Data\X509\CertificateStore.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\X509\CertificateStore.o )
+
+Data\X509\CertificateStore.hs:10:1: Warning:
+    The import of ‘Data.Monoid’ is redundant
+      except perhaps to import instances from ‘Data.Monoid’
+    To import instances alone, use: import Data.Monoid()
+In-place registering x509-store-1.5.0...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Installing library in
+C:\Users\magocoal\AppData\Roaming\stack\snapshots\x86_64-windows\nightly-2015-06-16\7.10.2\lib\x86_64-windows-ghc-7.10.2\x509-store-1.5.0-GBsE1Hj1FIQ90d0UtxK7ba
+Registering x509-store-1.5.0...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset

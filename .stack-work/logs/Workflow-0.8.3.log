@@ -1,0 +1,20 @@
+Configuring Workflow-0.8.3...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Building Workflow-0.8.3...
+Preprocessing library Workflow-0.8.3...
+
+on the commandline: Warning:
+    -XOverlappingInstances is deprecated: instead use per-instance pragmas OVERLAPPING/OVERLAPPABLE/OVERLAPS
+
+Control\Workflow.hs:1:15: Warning:
+    -XOverlappingInstances is deprecated: instead use per-instance pragmas OVERLAPPING/OVERLAPPABLE/OVERLAPS
+[1 of 4] Compiling Control.Workflow.Stat ( Control\Workflow\Stat.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Control\Workflow\Stat.o )
+[2 of 4] Compiling Control.Workflow ( Control\Workflow.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Control\Workflow.o )
+[3 of 4] Compiling Control.Workflow.Configuration ( Control\Workflow\Configuration.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Control\Workflow\Configuration.o )
+[4 of 4] Compiling Control.Workflow.Patterns ( Control\Workflow\Patterns.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Control\Workflow\Patterns.o )
+In-place registering Workflow-0.8.3...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Installing library in
+C:\Users\magocoal\AppData\Roaming\stack\snapshots\x86_64-windows\nightly-2015-06-16\7.10.2\lib\x86_64-windows-ghc-7.10.2\Workflow-0.8.3-Lqe7uN4w4hW8TjdlOMPuRz
+Registering Workflow-0.8.3...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset

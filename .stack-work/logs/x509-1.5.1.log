@@ -1,0 +1,52 @@
+Configuring x509-1.5.1...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Building x509-1.5.1...
+Preprocessing library x509-1.5.1...
+[ 1 of 12] Compiling Data.X509.Internal ( Data\X509\Internal.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\X509\Internal.o )
+[ 2 of 12] Compiling Data.X509.DistinguishedName ( Data\X509\DistinguishedName.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\X509\DistinguishedName.o )
+
+Data\X509\DistinguishedName.hs:18:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+
+Data\X509\DistinguishedName.hs:19:1: Warning:
+    The import of ‘Data.Monoid’ is redundant
+      except perhaps to import instances from ‘Data.Monoid’
+    To import instances alone, use: import Data.Monoid()
+[ 3 of 12] Compiling Data.X509.ExtensionRaw ( Data\X509\ExtensionRaw.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\X509\ExtensionRaw.o )
+
+Data\X509\ExtensionRaw.hs:15:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+[ 4 of 12] Compiling Data.X509.Ext    ( Data\X509\Ext.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\X509\Ext.o )
+
+Data\X509\Ext.hs:43:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+[ 5 of 12] Compiling Data.X509.AlgorithmIdentifier ( Data\X509\AlgorithmIdentifier.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\X509\AlgorithmIdentifier.o )
+[ 6 of 12] Compiling Data.X509.CRL    ( Data\X509\CRL.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\X509\CRL.o )
+
+Data\X509\CRL.hs:19:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+[ 7 of 12] Compiling Data.X509.Signed ( Data\X509\Signed.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\X509\Signed.o )
+[ 8 of 12] Compiling Data.X509.PublicKey ( Data\X509\PublicKey.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\X509\PublicKey.o )
+[ 9 of 12] Compiling Data.X509.Cert   ( Data\X509\Cert.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\X509\Cert.o )
+
+Data\X509\Cert.hs:16:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+[10 of 12] Compiling Data.X509.CertificateChain ( Data\X509\CertificateChain.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\X509\CertificateChain.o )
+[11 of 12] Compiling Data.X509.PrivateKey ( Data\X509\PrivateKey.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\X509\PrivateKey.o )
+[12 of 12] Compiling Data.X509        ( Data\X509.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\X509.o )
+In-place registering x509-1.5.1...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Installing library in
+C:\Users\magocoal\AppData\Roaming\stack\snapshots\x86_64-windows\nightly-2015-06-16\7.10.2\lib\x86_64-windows-ghc-7.10.2\x509-1.5.1-D6UiuX9sKSS2YiOZemLSxb
+Registering x509-1.5.1...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset

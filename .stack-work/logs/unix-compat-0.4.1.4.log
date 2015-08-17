@@ -1,0 +1,28 @@
+Configuring unix-compat-0.4.1.4...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Building unix-compat-0.4.1.4...
+Preprocessing library unix-compat-0.4.1.4...
+[1 of 9] Compiling System.PosixCompat.Internal.Time ( src\System\PosixCompat\Internal\Time.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\System\PosixCompat\Internal\Time.o )
+[2 of 9] Compiling System.PosixCompat.Unistd ( src\System\PosixCompat\Unistd.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\System\PosixCompat\Unistd.o )
+[3 of 9] Compiling System.PosixCompat.Types ( src\System\PosixCompat\Types.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\System\PosixCompat\Types.o )
+[4 of 9] Compiling System.PosixCompat.User ( .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\System\PosixCompat\User.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\System\PosixCompat\User.o )
+[5 of 9] Compiling System.PosixCompat.Extensions ( .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\System\PosixCompat\Extensions.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\System\PosixCompat\Extensions.o )
+[6 of 9] Compiling System.PosixCompat.Time ( src\System\PosixCompat\Time.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\System\PosixCompat\Time.o )
+[7 of 9] Compiling System.PosixCompat.Temp ( src\System\PosixCompat\Temp.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\System\PosixCompat\Temp.o )
+[8 of 9] Compiling System.PosixCompat.Files ( .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\System\PosixCompat\Files.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\System\PosixCompat\Files.o )
+[9 of 9] Compiling System.PosixCompat ( src\System\PosixCompat.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\System\PosixCompat.o )
+cbits\mktemp.c: In function '_gettemp':
+
+cbits\mktemp.c:107:17:
+     warning: passing argument 2 of '_stat64i32' from incompatible pointer type [enabled by default]
+c:\users\magocoal\appdata\local\programs\stack\x86_64-windows\ghc-7.10.2\mingw\bin\../lib/gcc/x86_64-w64-mingw32/4.6.3/../../../../x86_64-w64-mingw32/include/sys/stat.h:101:28: note: expected 'struct _stat64i32 *' but argument is of type 'struct stat *'
+
+cbits\mktemp.c:127:9:
+     warning: passing argument 2 of '_stat64i32' from incompatible pointer type [enabled by default]
+c:\users\magocoal\appdata\local\programs\stack\x86_64-windows\ghc-7.10.2\mingw\bin\../lib/gcc/x86_64-w64-mingw32/4.6.3/../../../../x86_64-w64-mingw32/include/sys/stat.h:101:28: note: expected 'struct _stat64i32 *' but argument is of type 'struct stat *'
+In-place registering unix-compat-0.4.1.4...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Installing library in
+C:\Users\magocoal\AppData\Roaming\stack\snapshots\x86_64-windows\nightly-2015-06-16\7.10.2\lib\x86_64-windows-ghc-7.10.2\unix-compat-0.4.1.4-AcgV6iJkKcf5Fpin0RhYV4
+Registering unix-compat-0.4.1.4...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset

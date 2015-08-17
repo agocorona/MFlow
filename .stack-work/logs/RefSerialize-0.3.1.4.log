@@ -1,0 +1,19 @@
+Configuring RefSerialize-0.3.1.4...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Building RefSerialize-0.3.1.4...
+Preprocessing library RefSerialize-0.3.1.4...
+
+Data\RefSerialize.hs:1:12: Warning:
+    -XOverlappingInstances is deprecated: instead use per-instance pragmas OVERLAPPING/OVERLAPPABLE/OVERLAPS
+
+Data\RefSerialize\Serialize.hs:1:14: Warning:
+    -XOverlappingInstances is deprecated: instead use per-instance pragmas OVERLAPPING/OVERLAPPABLE/OVERLAPS
+[1 of 3] Compiling Data.RefSerialize.Serialize ( Data\RefSerialize\Serialize.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\RefSerialize\Serialize.o )
+[2 of 3] Compiling Data.RefSerialize.Parser ( Data\RefSerialize\Parser.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\RefSerialize\Parser.o )
+[3 of 3] Compiling Data.RefSerialize ( Data\RefSerialize.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\RefSerialize.o )
+In-place registering RefSerialize-0.3.1.4...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Installing library in
+C:\Users\magocoal\AppData\Roaming\stack\snapshots\x86_64-windows\nightly-2015-06-16\7.10.2\lib\x86_64-windows-ghc-7.10.2\RefSerialize-0.3.1.4-414WfDqC6if21dYRnnl2mr
+Registering RefSerialize-0.3.1.4...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset

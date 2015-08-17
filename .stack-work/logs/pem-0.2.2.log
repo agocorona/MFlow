@@ -1,0 +1,18 @@
+Configuring pem-0.2.2...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Building pem-0.2.2...
+Preprocessing library pem-0.2.2...
+[1 of 4] Compiling Data.PEM.Types   ( Data\PEM\Types.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\PEM\Types.o )
+[2 of 4] Compiling Data.PEM.Writer  ( Data\PEM\Writer.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\PEM\Writer.o )
+[3 of 4] Compiling Data.PEM.Parser  ( Data\PEM\Parser.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\PEM\Parser.o )
+[4 of 4] Compiling Data.PEM         ( Data\PEM.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\PEM.o )
+
+Data\PEM.hs:11:1: Warning: Tab character
+
+Data\PEM.hs:14:1: Warning: Tab character
+In-place registering pem-0.2.2...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Installing library in
+C:\Users\magocoal\AppData\Roaming\stack\snapshots\x86_64-windows\nightly-2015-06-16\7.10.2\lib\x86_64-windows-ghc-7.10.2\pem-0.2.2-FobxOIdj6uGIHonZNFATO6
+Registering pem-0.2.2...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset

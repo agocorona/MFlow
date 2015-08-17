@@ -1,0 +1,25 @@
+Configuring cookie-0.4.1.5...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Building cookie-0.4.1.5...
+Preprocessing library cookie-0.4.1.5...
+[1 of 1] Compiling Web.Cookie       ( Web\Cookie.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Web\Cookie.o )
+
+Web\Cookie.hs:38:1: Warning:
+    The import of ‘Data.Monoid’ is redundant
+      except perhaps to import instances from ‘Data.Monoid’
+    To import instances alone, use: import Data.Monoid()
+
+Web\Cookie.hs:88:18: Warning:
+    In the use of ‘S.breakByte’ (imported from Data.ByteString):
+    Deprecated: "It is an internal function and should never have been exported. Use 'break (== x)' instead. (There are rewrite rules that handle this special case of 'break'.)"
+
+Web\Cookie.hs:200:21: Warning:
+    In the use of ‘parseTime’
+    (imported from Data.Time, but defined in time-1.5.0.1:Data.Time.Format.Parse):
+    Deprecated: "use "parseTimeM True" instead"
+In-place registering cookie-0.4.1.5...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Installing library in
+C:\Users\magocoal\AppData\Roaming\stack\snapshots\x86_64-windows\nightly-2015-06-16\7.10.2\lib\x86_64-windows-ghc-7.10.2\cookie-0.4.1.5-EF0150UExP1FlGeGqyMaz4
+Registering cookie-0.4.1.5...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset

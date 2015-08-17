@@ -1,0 +1,31 @@
+Configuring blaze-html-0.8.0.2...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Building blaze-html-0.8.0.2...
+Preprocessing library blaze-html-0.8.0.2...
+[ 1 of 21] Compiling Text.Blaze.XHtml5.Attributes ( src\Text\Blaze\XHtml5\Attributes.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Text\Blaze\XHtml5\Attributes.o )
+[ 2 of 21] Compiling Text.Blaze.XHtml1.Transitional.Attributes ( src\Text\Blaze\XHtml1\Transitional\Attributes.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Text\Blaze\XHtml1\Transitional\Attributes.o )
+[ 3 of 21] Compiling Text.Blaze.XHtml1.Strict.Attributes ( src\Text\Blaze\XHtml1\Strict\Attributes.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Text\Blaze\XHtml1\Strict\Attributes.o )
+[ 4 of 21] Compiling Text.Blaze.XHtml1.FrameSet.Attributes ( src\Text\Blaze\XHtml1\FrameSet\Attributes.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Text\Blaze\XHtml1\FrameSet\Attributes.o )
+[ 5 of 21] Compiling Text.Blaze.Html5.Attributes ( src\Text\Blaze\Html5\Attributes.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Text\Blaze\Html5\Attributes.o )
+[ 6 of 21] Compiling Text.Blaze.Html4.Transitional.Attributes ( src\Text\Blaze\Html4\Transitional\Attributes.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Text\Blaze\Html4\Transitional\Attributes.o )
+[ 7 of 21] Compiling Text.Blaze.Html4.Strict.Attributes ( src\Text\Blaze\Html4\Strict\Attributes.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Text\Blaze\Html4\Strict\Attributes.o )
+[ 8 of 21] Compiling Text.Blaze.Html4.FrameSet.Attributes ( src\Text\Blaze\Html4\FrameSet\Attributes.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Text\Blaze\Html4\FrameSet\Attributes.o )
+[ 9 of 21] Compiling Text.Blaze.Html  ( src\Text\Blaze\Html.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Text\Blaze\Html.o )
+[10 of 21] Compiling Text.Blaze.Html.Renderer.Pretty ( src\Text\Blaze\Html\Renderer\Pretty.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Text\Blaze\Html\Renderer\Pretty.o )
+[11 of 21] Compiling Text.Blaze.Html.Renderer.String ( src\Text\Blaze\Html\Renderer\String.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Text\Blaze\Html\Renderer\String.o )
+[12 of 21] Compiling Text.Blaze.Html.Renderer.Text ( src\Text\Blaze\Html\Renderer\Text.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Text\Blaze\Html\Renderer\Text.o )
+[13 of 21] Compiling Text.Blaze.Html.Renderer.Utf8 ( src\Text\Blaze\Html\Renderer\Utf8.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Text\Blaze\Html\Renderer\Utf8.o )
+[14 of 21] Compiling Text.Blaze.Html4.FrameSet ( src\Text\Blaze\Html4\FrameSet.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Text\Blaze\Html4\FrameSet.o )
+[15 of 21] Compiling Text.Blaze.Html4.Strict ( src\Text\Blaze\Html4\Strict.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Text\Blaze\Html4\Strict.o )
+[16 of 21] Compiling Text.Blaze.Html4.Transitional ( src\Text\Blaze\Html4\Transitional.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Text\Blaze\Html4\Transitional.o )
+[17 of 21] Compiling Text.Blaze.Html5 ( src\Text\Blaze\Html5.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Text\Blaze\Html5.o )
+[18 of 21] Compiling Text.Blaze.XHtml1.FrameSet ( src\Text\Blaze\XHtml1\FrameSet.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Text\Blaze\XHtml1\FrameSet.o )
+[19 of 21] Compiling Text.Blaze.XHtml1.Strict ( src\Text\Blaze\XHtml1\Strict.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Text\Blaze\XHtml1\Strict.o )
+[20 of 21] Compiling Text.Blaze.XHtml1.Transitional ( src\Text\Blaze\XHtml1\Transitional.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Text\Blaze\XHtml1\Transitional.o )
+[21 of 21] Compiling Text.Blaze.XHtml5 ( src\Text\Blaze\XHtml5.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Text\Blaze\XHtml5.o )
+In-place registering blaze-html-0.8.0.2...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Installing library in
+C:\Users\magocoal\AppData\Roaming\stack\snapshots\x86_64-windows\nightly-2015-06-16\7.10.2\lib\x86_64-windows-ghc-7.10.2\blaze-html-0.8.0.2-1SYOqOBHxZ5AsRDbXqdJgK
+Registering blaze-html-0.8.0.2...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset

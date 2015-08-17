@@ -96,10 +96,10 @@ urlEncoded
 
 
 --extra :: Parser Char
-extra = satisfy (`Prelude.elem` "!*'(),/\"")
+extra = satisfy (`Prelude.elem` ("!*'(),/\"" ::String))
 --
 --safe :: Parser Char
-safe = satisfy (`Prelude.elem` "$-_.")
+safe = satisfy (`Prelude.elem` ("$-_." :: String))
 ----
 --hexadecimal :: Parser HexString
 hexadecimal = do d1 <- hexDigit

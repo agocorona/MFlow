@@ -1,5 +1,5 @@
 name: MFlow
-version: 0.4.5.9
+version: 0.4.5.10
 cabal-version: >=1.8
 build-type: Simple
 license: BSD3
@@ -108,6 +108,8 @@ description: MFlow is a web framework that turns the mess of web programming fro
              .
              Changelog
              ~~~
+             .
+             0.4.5.10 compatibility with ghc 7.10
              .
              0.4.5.8 added rawSend
              .

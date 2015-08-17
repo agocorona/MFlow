@@ -1,0 +1,22 @@
+Configuring crypto-numbers-0.2.7...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Building crypto-numbers-0.2.7...
+Preprocessing library crypto-numbers-0.2.7...
+[1 of 7] Compiling Crypto.Number.Polynomial ( Crypto\Number\Polynomial.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Crypto\Number\Polynomial.o )
+[2 of 7] Compiling Crypto.Number.Basic ( Crypto\Number\Basic.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Crypto\Number\Basic.o )
+[3 of 7] Compiling Crypto.Number.F2m ( Crypto\Number\F2m.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Crypto\Number\F2m.o )
+
+Crypto\Number\F2m.hs:25:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+[4 of 7] Compiling Crypto.Number.Serialize ( Crypto\Number\Serialize.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Crypto\Number\Serialize.o )
+[5 of 7] Compiling Crypto.Number.Generate ( Crypto\Number\Generate.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Crypto\Number\Generate.o )
+[6 of 7] Compiling Crypto.Number.ModArithmetic ( Crypto\Number\ModArithmetic.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Crypto\Number\ModArithmetic.o )
+[7 of 7] Compiling Crypto.Number.Prime ( Crypto\Number\Prime.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Crypto\Number\Prime.o )
+In-place registering crypto-numbers-0.2.7...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Installing library in
+C:\Users\magocoal\AppData\Roaming\stack\snapshots\x86_64-windows\nightly-2015-06-16\7.10.2\lib\x86_64-windows-ghc-7.10.2\crypto-numbers-0.2.7-3k4vPwjKvYUArvg3EbzGUX
+Registering crypto-numbers-0.2.7...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset

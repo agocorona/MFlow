@@ -1,0 +1,27 @@
+Configuring crypto-random-0.0.9...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Building crypto-random-0.0.9...
+Preprocessing library crypto-random-0.0.9...
+[1 of 8] Compiling Crypto.Random.Entropy.Source ( Crypto\Random\Entropy\Source.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Crypto\Random\Entropy\Source.o )
+[2 of 8] Compiling Crypto.Random.Entropy.RDRand ( Crypto\Random\Entropy\RDRand.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Crypto\Random\Entropy\RDRand.o )
+[3 of 8] Compiling Crypto.Random.Entropy.Windows ( Crypto\Random\Entropy\Windows.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Crypto\Random\Entropy\Windows.o )
+[4 of 8] Compiling Crypto.Random.Test ( Crypto\Random\Test.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Crypto\Random\Test.o )
+
+Crypto\Random\Test.hs:23:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+[5 of 8] Compiling Crypto.Random.Entropy ( Crypto\Random\Entropy.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Crypto\Random\Entropy.o )
+[6 of 8] Compiling Crypto.Random.Generator ( Crypto\Random\Generator.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Crypto\Random\Generator.o )
+[7 of 8] Compiling Crypto.Random    ( Crypto\Random.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Crypto\Random.o )
+[8 of 8] Compiling Crypto.Random.API ( Crypto\Random\API.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Crypto\Random\API.o )
+cbits\rdrand.c: In function 'crypto_random_get_rand_bytes':
+
+cbits\rdrand.c:72:16:
+     warning: cast from pointer to integer of different size [-Wpointer-to-int-cast]
+In-place registering crypto-random-0.0.9...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Installing library in
+C:\Users\magocoal\AppData\Roaming\stack\snapshots\x86_64-windows\nightly-2015-06-16\7.10.2\lib\x86_64-windows-ghc-7.10.2\crypto-random-0.0.9-H3FFBnIfRQY6pmF4D5ldPG
+Registering crypto-random-0.0.9...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset

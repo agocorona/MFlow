@@ -1,0 +1,112 @@
+Configuring conduit-extra-1.1.9...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Building conduit-extra-1.1.9...
+Preprocessing library conduit-extra-1.1.9...
+[ 1 of 11] Compiling Data.Conduit.Zlib ( Data\Conduit\Zlib.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Conduit\Zlib.o )
+[ 2 of 11] Compiling Data.Conduit.Text ( Data\Conduit\Text.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Conduit\Text.o )
+
+Data\Conduit\Text.hs:41:1: Warning:
+    The qualified import of ‘Prelude’ is redundant
+      except perhaps to import instances from ‘Prelude’
+    To import instances alone, use: import Prelude()
+
+Data\Conduit\Text.hs:64:7: Warning:
+    Defined but not used: ‘codecName’
+
+Data\Conduit\Text.hs:153:21: Warning: Defined but not used: ‘name’
+[ 3 of 11] Compiling Data.Conduit.Network.UDP ( Data\Conduit\Network\UDP.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Conduit\Network\UDP.o )
+
+Data\Conduit\Network\UDP.hs:16:1: Warning:
+    The import of ‘SockAddr, AddrInfo’
+    from module ‘Network.Socket’ is redundant
+
+Data\Conduit\Network\UDP.hs:17:1: Warning:
+    The qualified import of ‘Network.Socket’ is redundant
+      except perhaps to import instances from ‘Network.Socket’
+    To import instances alone, use: import Network.Socket()
+[ 4 of 11] Compiling Data.Conduit.Network ( Data\Conduit\Network.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Conduit\Network.o )
+
+Data\Conduit\Network.hs:41:1: Warning:
+    Module ‘Prelude’ does not export ‘catch’
+
+Data\Conduit\Network.hs:43:1: Warning:
+    The qualified import of ‘Network.Socket’ is redundant
+      except perhaps to import instances from ‘Network.Socket’
+    To import instances alone, use: import Network.Socket()
+
+Data\Conduit\Network.hs:45:1: Warning:
+    The import of ‘recv’
+    from module ‘Network.Socket.ByteString’ is redundant
+
+Data\Conduit\Network.hs:49:1: Warning:
+    The qualified import of ‘Data.ByteString.Char8’ is redundant
+      except perhaps to import instances from ‘Data.ByteString.Char8’
+    To import instances alone, use: import Data.ByteString.Char8()
+
+Data\Conduit\Network.hs:51:1: Warning:
+    The import of ‘Control.Exception’ is redundant
+      except perhaps to import instances from ‘Control.Exception’
+    To import instances alone, use: import Control.Exception()
+
+Data\Conduit\Network.hs:84:1: Warning:
+    Top-level binding with no type signature:
+      serverSettings :: Int -> SN.HostPreference -> SN.ServerSettings
+
+Data\Conduit\Network.hs:85:1: Warning:
+    Top-level binding with no type signature:
+      clientSettings :: Int -> ByteString -> SN.ClientSettings
+[ 5 of 11] Compiling Data.Conduit.Lazy ( Data\Conduit\Lazy.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Conduit\Lazy.o )
+
+Data\Conduit\Lazy.hs:23:1: Warning:
+    Module ‘Control.Monad.Trans.Error’ is deprecated:
+      Use Control.Monad.Trans.Except instead
+
+Data\Conduit\Lazy.hs:33:1: Warning:
+    The import of ‘Data.Monoid’ is redundant
+      except perhaps to import instances from ‘Data.Monoid’
+    To import instances alone, use: import Data.Monoid()
+
+Data\Conduit\Lazy.hs:99:11: Warning:
+    In the use of type constructor or class ‘Error’
+    (imported from Control.Monad.Trans.Error):
+    Deprecated: "Use Control.Monad.Trans.Except instead"
+
+Data\Conduit\Lazy.hs:99:52: Warning:
+    In the use of type constructor or class ‘ErrorT’
+    (imported from Control.Monad.Trans.Error):
+    Deprecated: "Use Control.Monad.Trans.Except instead"
+[ 6 of 11] Compiling Data.Conduit.Filesystem ( Data\Conduit\Filesystem.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Conduit\Filesystem.o )
+[ 7 of 11] Compiling Data.Conduit.ByteString.Builder ( Data\Conduit\ByteString\Builder.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Conduit\ByteString\Builder.o )
+[ 8 of 11] Compiling Data.Conduit.Blaze ( Data\Conduit\Blaze.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Conduit\Blaze.o )
+[ 9 of 11] Compiling Data.Conduit.Binary ( Data\Conduit\Binary.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Conduit\Binary.o )
+
+Data\Conduit\Binary.hs:58:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+
+Data\Conduit\Binary.hs:376:27: Warning:
+    In the use of ‘S.breakByte’ (imported from Data.ByteString):
+    Deprecated: "It is an internal function and should never have been exported. Use 'break (== x)' instead. (There are rewrite rules that handle this special case of 'break'.)"
+
+Data\Conduit\Binary.hs:425:28: Warning:
+    In the use of ‘inlinePerformIO’
+    (imported from Data.ByteString.Internal):
+    Deprecated: "If you think you know what you are doing, use 'unsafePerformIO'. If you are sure you know what you are doing, use 'unsafeDupablePerformIO'. If you enjoy sharing an address space with a malevolent agent of chaos, try 'accursedUnutterablePerformIO'."
+
+Data\Conduit\Binary.hs:427:20: Warning:
+    In the use of ‘inlinePerformIO’
+    (imported from Data.ByteString.Internal):
+    Deprecated: "If you think you know what you are doing, use 'unsafePerformIO'. If you are sure you know what you are doing, use 'unsafeDupablePerformIO'. If you enjoy sharing an address space with a malevolent agent of chaos, try 'accursedUnutterablePerformIO'."
+[10 of 11] Compiling Data.Conduit.Process ( Data\Conduit\Process.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Conduit\Process.o )
+[11 of 11] Compiling Data.Conduit.Attoparsec ( Data\Conduit\Attoparsec.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Conduit\Attoparsec.o )
+
+Data\Conduit\Attoparsec.hs:108:9: Warning:
+    In the use of ‘TI.textP’ (imported from Data.Text.Internal):
+    Deprecated: "Use text instead"
+In-place registering conduit-extra-1.1.9...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Installing library in
+C:\Users\magocoal\AppData\Roaming\stack\snapshots\x86_64-windows\nightly-2015-06-16\7.10.2\lib\x86_64-windows-ghc-7.10.2\conduit-extra-1.1.9-5OoUCgTfWVE6ShVQ5FHYRU
+Registering conduit-extra-1.1.9...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset

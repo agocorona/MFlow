@@ -1,0 +1,16 @@
+Configuring byteable-0.1.1...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Building byteable-0.1.1...
+Preprocessing library byteable-0.1.1...
+[1 of 1] Compiling Data.Byteable    ( Data\Byteable.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Byteable.o )
+
+Data\Byteable.hs:48:11: Warning:
+    Rule "constEqBytes/ByteString" may never fire
+      because ‘constEqBytes’ might inline first
+    Probable fix: add an INLINE[n] or NOINLINE[n] pragma on ‘constEqBytes’
+In-place registering byteable-0.1.1...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Installing library in
+C:\Users\magocoal\AppData\Roaming\stack\snapshots\x86_64-windows\nightly-2015-06-16\7.10.2\lib\x86_64-windows-ghc-7.10.2\byteable-0.1.1-F2pcQljAfpbDG2panTEyo8
+Registering byteable-0.1.1...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset

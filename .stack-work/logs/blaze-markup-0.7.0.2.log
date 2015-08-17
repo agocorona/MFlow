@@ -1,0 +1,44 @@
+Configuring blaze-markup-0.7.0.2...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Building blaze-markup-0.7.0.2...
+Preprocessing library blaze-markup-0.7.0.2...
+[1 of 6] Compiling Text.Blaze.Internal ( src\Text\Blaze\Internal.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Text\Blaze\Internal.o )
+
+src\Text\Blaze\Internal.hs:74:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+
+src\Text\Blaze\Internal.hs:75:1: Warning:
+    The import of ‘Data.Monoid’ is redundant
+      except perhaps to import instances from ‘Data.Monoid’
+    To import instances alone, use: import Data.Monoid()
+[2 of 6] Compiling Text.Blaze.Renderer.String ( src\Text\Blaze\Renderer\String.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Text\Blaze\Renderer\String.o )
+[3 of 6] Compiling Text.Blaze.Renderer.Pretty ( src\Text\Blaze\Renderer\Pretty.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Text\Blaze\Renderer\Pretty.o )
+[4 of 6] Compiling Text.Blaze.Renderer.Text ( src\Text\Blaze\Renderer\Text.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Text\Blaze\Renderer\Text.o )
+
+src\Text\Blaze\Renderer\Text.hs:15:1: Warning:
+    The import of ‘Data.Monoid’ is redundant
+      except perhaps to import instances from ‘Data.Monoid’
+    To import instances alone, use: import Data.Monoid()
+[5 of 6] Compiling Text.Blaze.Renderer.Utf8 ( src\Text\Blaze\Renderer\Utf8.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Text\Blaze\Renderer\Utf8.o )
+
+src\Text\Blaze\Renderer\Utf8.hs:11:1: Warning:
+    The import of ‘Data.Monoid’ is redundant
+      except perhaps to import instances from ‘Data.Monoid’
+    To import instances alone, use: import Data.Monoid()
+[6 of 6] Compiling Text.Blaze       ( src\Text\Blaze.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Text\Blaze.o )
+
+src\Text\Blaze.hs:91:1: Warning:
+    The import of ‘Data.Monoid’ is redundant
+      except perhaps to import instances from ‘Data.Monoid’
+    To import instances alone, use: import Data.Monoid()
+
+src\Text\Blaze.hs:92:1: Warning:
+    The import of ‘Word’ from module ‘Data.Word’ is redundant
+In-place registering blaze-markup-0.7.0.2...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Installing library in
+C:\Users\magocoal\AppData\Roaming\stack\snapshots\x86_64-windows\nightly-2015-06-16\7.10.2\lib\x86_64-windows-ghc-7.10.2\blaze-markup-0.7.0.2-LHCHhj1b1Wx5HGWD4Uqkqk
+Registering blaze-markup-0.7.0.2...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset

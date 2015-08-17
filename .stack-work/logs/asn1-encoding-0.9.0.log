@@ -1,0 +1,36 @@
+Configuring asn1-encoding-0.9.0...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Building asn1-encoding-0.9.0...
+Preprocessing library asn1-encoding-0.9.0...
+[ 1 of 12] Compiling Data.ASN1.Get    ( Data\ASN1\Get.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\ASN1\Get.o )
+
+Data\ASN1\Get.hs:30:1: Warning:
+    The import of ‘Applicative’
+    from module ‘Control.Applicative’ is redundant
+[ 2 of 12] Compiling Data.ASN1.Internal ( Data\ASN1\Internal.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\ASN1\Internal.o )
+[ 3 of 12] Compiling Data.ASN1.Serialize ( Data\ASN1\Serialize.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\ASN1\Serialize.o )
+
+Data\ASN1\Serialize.hs:17:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+[ 4 of 12] Compiling Data.ASN1.Object ( Data\ASN1\Object.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\ASN1\Object.o )
+[ 5 of 12] Compiling Data.ASN1.BinaryEncoding.Writer ( Data\ASN1\BinaryEncoding\Writer.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\ASN1\BinaryEncoding\Writer.o )
+[ 6 of 12] Compiling Data.ASN1.Stream ( Data\ASN1\Stream.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\ASN1\Stream.o )
+[ 7 of 12] Compiling Data.ASN1.Error  ( Data\ASN1\Error.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\ASN1\Error.o )
+[ 8 of 12] Compiling Data.ASN1.Encoding ( Data\ASN1\Encoding.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\ASN1\Encoding.o )
+[ 9 of 12] Compiling Data.ASN1.BinaryEncoding.Parse ( Data\ASN1\BinaryEncoding\Parse.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\ASN1\BinaryEncoding\Parse.o )
+[10 of 12] Compiling Data.ASN1.BinaryEncoding.Raw ( Data\ASN1\BinaryEncoding\Raw.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\ASN1\BinaryEncoding\Raw.o )
+[11 of 12] Compiling Data.ASN1.Prim   ( Data\ASN1\Prim.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\ASN1\Prim.o )
+
+Data\ASN1\Prim.hs:59:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+[12 of 12] Compiling Data.ASN1.BinaryEncoding ( Data\ASN1\BinaryEncoding.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\ASN1\BinaryEncoding.o )
+In-place registering asn1-encoding-0.9.0...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Installing library in
+C:\Users\magocoal\AppData\Roaming\stack\snapshots\x86_64-windows\nightly-2015-06-16\7.10.2\lib\x86_64-windows-ghc-7.10.2\asn1-encoding-0.9.0-02Jaw23HbKVKRZvbsihOpM
+Registering asn1-encoding-0.9.0...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset

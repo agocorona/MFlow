@@ -1,0 +1,97 @@
+Configuring cryptohash-0.11.6...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Building cryptohash-0.11.6...
+Preprocessing library cryptohash-0.11.6...
+[ 1 of 23] Compiling Crypto.Hash.Utils.Cpu ( Crypto\Hash\Utils\Cpu.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Crypto\Hash\Utils\Cpu.o )
+
+on the commandline: Warning:
+    ‘Crypto.Hash.Utils.Cpu’ is marked as Trustworthy but has been inferred as safe!
+[ 2 of 23] Compiling Crypto.MAC.HMAC  ( Crypto\MAC\HMAC.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Crypto\MAC\HMAC.o )
+
+on the commandline: Warning:
+    ‘Crypto.MAC.HMAC’ is marked as Trustworthy but has been inferred as safe!
+[ 3 of 23] Compiling Crypto.Hash.Internal ( Crypto\Hash\Internal.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Crypto\Hash\Internal.o )
+[ 4 of 23] Compiling Crypto.Hash.Whirlpool ( Crypto\Hash\Whirlpool.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Crypto\Hash\Whirlpool.o )
+
+Crypto\Hash\Whirlpool.hs:50:11: Warning:
+    Rule "digestSize" may never fire
+      because ‘B.length’ might inline first
+    Probable fix: add an INLINE[n] or NOINLINE[n] pragma on ‘B.length’
+[ 5 of 23] Compiling Crypto.Hash.Skein512 ( Crypto\Hash\Skein512.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Crypto\Hash\Skein512.o )
+[ 6 of 23] Compiling Crypto.Hash.Skein256 ( Crypto\Hash\Skein256.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Crypto\Hash\Skein256.o )
+[ 7 of 23] Compiling Crypto.Hash.Tiger ( Crypto\Hash\Tiger.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Crypto\Hash\Tiger.o )
+
+Crypto\Hash\Tiger.hs:50:11: Warning:
+    Rule "digestSize" may never fire
+      because ‘B.length’ might inline first
+    Probable fix: add an INLINE[n] or NOINLINE[n] pragma on ‘B.length’
+[ 8 of 23] Compiling Crypto.Hash.RIPEMD160 ( Crypto\Hash\RIPEMD160.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Crypto\Hash\RIPEMD160.o )
+
+Crypto\Hash\RIPEMD160.hs:50:11: Warning:
+    Rule "digestSize" may never fire
+      because ‘B.length’ might inline first
+    Probable fix: add an INLINE[n] or NOINLINE[n] pragma on ‘B.length’
+[ 9 of 23] Compiling Crypto.Hash.SHA3 ( Crypto\Hash\SHA3.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Crypto\Hash\SHA3.o )
+[10 of 23] Compiling Crypto.Hash.SHA512 ( Crypto\Hash\SHA512.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Crypto\Hash\SHA512.o )
+
+Crypto\Hash\SHA512.hs:51:11: Warning:
+    Rule "digestSize" may never fire
+      because ‘B.length’ might inline first
+    Probable fix: add an INLINE[n] or NOINLINE[n] pragma on ‘B.length’
+[11 of 23] Compiling Crypto.Hash.SHA512t ( Crypto\Hash\SHA512t.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Crypto\Hash\SHA512t.o )
+
+on the commandline: Warning:
+    ‘Crypto.Hash.SHA512t’ is marked as Trustworthy but has been inferred as safe!
+[12 of 23] Compiling Crypto.Hash.SHA384 ( Crypto\Hash\SHA384.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Crypto\Hash\SHA384.o )
+
+Crypto\Hash\SHA384.hs:50:11: Warning:
+    Rule "digestSize" may never fire
+      because ‘B.length’ might inline first
+    Probable fix: add an INLINE[n] or NOINLINE[n] pragma on ‘B.length’
+[13 of 23] Compiling Crypto.Hash.SHA256 ( Crypto\Hash\SHA256.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Crypto\Hash\SHA256.o )
+
+Crypto\Hash\SHA256.hs:50:11: Warning:
+    Rule "digestSize" may never fire
+      because ‘B.length’ might inline first
+    Probable fix: add an INLINE[n] or NOINLINE[n] pragma on ‘B.length’
+[14 of 23] Compiling Crypto.Hash.SHA224 ( Crypto\Hash\SHA224.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Crypto\Hash\SHA224.o )
+
+Crypto\Hash\SHA224.hs:50:11: Warning:
+    Rule "digestSize" may never fire
+      because ‘B.length’ might inline first
+    Probable fix: add an INLINE[n] or NOINLINE[n] pragma on ‘B.length’
+[15 of 23] Compiling Crypto.Hash.SHA1 ( Crypto\Hash\SHA1.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Crypto\Hash\SHA1.o )
+
+Crypto\Hash\SHA1.hs:50:11: Warning:
+    Rule "digestSize" may never fire
+      because ‘B.length’ might inline first
+    Probable fix: add an INLINE[n] or NOINLINE[n] pragma on ‘B.length’
+[16 of 23] Compiling Crypto.Hash.MD5  ( Crypto\Hash\MD5.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Crypto\Hash\MD5.o )
+
+Crypto\Hash\MD5.hs:50:11: Warning:
+    Rule "digestSize" may never fire
+      because ‘B.length’ might inline first
+    Probable fix: add an INLINE[n] or NOINLINE[n] pragma on ‘B.length’
+[17 of 23] Compiling Crypto.Hash.MD4  ( Crypto\Hash\MD4.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Crypto\Hash\MD4.o )
+
+Crypto\Hash\MD4.hs:50:11: Warning:
+    Rule "digestSize" may never fire
+      because ‘B.length’ might inline first
+    Probable fix: add an INLINE[n] or NOINLINE[n] pragma on ‘B.length’
+[18 of 23] Compiling Crypto.Hash.MD2  ( Crypto\Hash\MD2.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Crypto\Hash\MD2.o )
+
+Crypto\Hash\MD2.hs:50:11: Warning:
+    Rule "digestSize" may never fire
+      because ‘B.length’ might inline first
+    Probable fix: add an INLINE[n] or NOINLINE[n] pragma on ‘B.length’
+[19 of 23] Compiling Crypto.Hash.Utils ( Crypto\Hash\Utils.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Crypto\Hash\Utils.o )
+[20 of 23] Compiling Crypto.Hash.Types ( Crypto\Hash\Types.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Crypto\Hash\Types.o )
+[21 of 23] Compiling Crypto.Hash      ( Crypto\Hash.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Crypto\Hash.o )
+[22 of 23] Compiling Crypto.MAC       ( Crypto\MAC.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Crypto\MAC.o )
+[23 of 23] Compiling Crypto.MAC.SHA3  ( Crypto\MAC\SHA3.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Crypto\MAC\SHA3.o )
+In-place registering cryptohash-0.11.6...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Installing library in
+C:\Users\magocoal\AppData\Roaming\stack\snapshots\x86_64-windows\nightly-2015-06-16\7.10.2\lib\x86_64-windows-ghc-7.10.2\cryptohash-0.11.6-5epyAhdyCoGIBkp2icUC24
+Registering cryptohash-0.11.6...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset

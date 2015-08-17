@@ -1,0 +1,44 @@
+Configuring vector-0.10.12.3...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Building vector-0.10.12.3...
+Preprocessing library vector-0.10.12.3...
+[ 1 of 19] Compiling Data.Vector.Storable.Internal ( Data\Vector\Storable\Internal.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Vector\Storable\Internal.o )
+[ 2 of 19] Compiling Data.Vector.Fusion.Util ( Data\Vector\Fusion\Util.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Vector\Fusion\Util.o )
+[ 3 of 19] Compiling Data.Vector.Fusion.Stream.Size ( Data\Vector\Fusion\Stream\Size.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Vector\Fusion\Stream\Size.o )
+
+Data\Vector\Fusion\Stream\Size.hs:25:10: Warning:
+    No explicit implementation for
+      ‘*’, ‘abs’, and ‘signum’
+    In the instance declaration for ‘Num Size’
+[ 4 of 19] Compiling Data.Vector.Internal.Check ( Data\Vector\Internal\Check.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Vector\Internal\Check.o )
+[ 5 of 19] Compiling Data.Vector.Fusion.Stream.Monadic ( Data\Vector\Fusion\Stream\Monadic.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Vector\Fusion\Stream\Monadic.o )
+[ 6 of 19] Compiling Data.Vector.Fusion.Stream ( Data\Vector\Fusion\Stream.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Vector\Fusion\Stream.o )
+[ 7 of 19] Compiling Data.Vector.Generic.Mutable ( Data\Vector\Generic\Mutable.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Vector\Generic\Mutable.o )
+[ 8 of 19] Compiling Data.Vector.Generic.Base ( Data\Vector\Generic\Base.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Vector\Generic\Base.o )
+[ 9 of 19] Compiling Data.Vector.Generic.New ( Data\Vector\Generic\New.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Vector\Generic\New.o )
+[10 of 19] Compiling Data.Vector.Generic ( Data\Vector\Generic.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Vector\Generic.o )
+[11 of 19] Compiling Data.Vector.Primitive.Mutable ( Data\Vector\Primitive\Mutable.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Vector\Primitive\Mutable.o )
+[12 of 19] Compiling Data.Vector.Primitive ( Data\Vector\Primitive.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Vector\Primitive.o )
+[13 of 19] Compiling Data.Vector.Storable.Mutable ( Data\Vector\Storable\Mutable.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Vector\Storable\Mutable.o )
+
+Data\Vector\Storable\Mutable.hs:450:1: Warning:
+    Rule "unsafeFromForeignPtr fp 0 n -> unsafeFromForeignPtr0 fp n " may never fire
+      because ‘unsafeFromForeignPtr’ might inline first
+    Probable fix: add an INLINE[n] or NOINLINE[n] pragma on ‘unsafeFromForeignPtr’
+[14 of 19] Compiling Data.Vector.Storable ( Data\Vector\Storable.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Vector\Storable.o )
+
+Data\Vector\Storable.hs:1398:1: Warning:
+    Rule "unsafeFromForeignPtr fp 0 n -> unsafeFromForeignPtr0 fp n " may never fire
+      because ‘unsafeFromForeignPtr’ might inline first
+    Probable fix: add an INLINE[n] or NOINLINE[n] pragma on ‘unsafeFromForeignPtr’
+[15 of 19] Compiling Data.Vector.Unboxed.Base ( Data\Vector\Unboxed\Base.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Vector\Unboxed\Base.o )
+[16 of 19] Compiling Data.Vector.Unboxed ( Data\Vector\Unboxed.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Vector\Unboxed.o )
+[17 of 19] Compiling Data.Vector.Unboxed.Mutable ( Data\Vector\Unboxed\Mutable.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Vector\Unboxed\Mutable.o )
+[18 of 19] Compiling Data.Vector.Mutable ( Data\Vector\Mutable.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Vector\Mutable.o )
+[19 of 19] Compiling Data.Vector      ( Data\Vector.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Vector.o )
+In-place registering vector-0.10.12.3...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Installing library in
+C:\Users\magocoal\AppData\Roaming\stack\snapshots\x86_64-windows\nightly-2015-06-16\7.10.2\lib\x86_64-windows-ghc-7.10.2\vector-0.10.12.3-1COyUuV1LrA1IjYnWfJnbs
+Registering vector-0.10.12.3...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset

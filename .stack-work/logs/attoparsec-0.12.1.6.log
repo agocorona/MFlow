@@ -1,0 +1,31 @@
+Configuring attoparsec-0.12.1.6...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Building attoparsec-0.12.1.6...
+Preprocessing library attoparsec-0.12.1.6...
+[ 1 of 21] Compiling Data.Attoparsec.Text.FastSet ( Data\Attoparsec\Text\FastSet.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Attoparsec\Text\FastSet.o )
+[ 2 of 21] Compiling Data.Attoparsec.Internal.Fhthagn ( Data\Attoparsec\Internal\Fhthagn.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Attoparsec\Internal\Fhthagn.o )
+[ 3 of 21] Compiling Data.Attoparsec.Text.Buffer ( Data\Attoparsec\Text\Buffer.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Attoparsec\Text\Buffer.o )
+[ 4 of 21] Compiling Data.Attoparsec.ByteString.Buffer ( Data\Attoparsec\ByteString\Buffer.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Attoparsec\ByteString\Buffer.o )
+[ 5 of 21] Compiling Data.Attoparsec.Zepto ( Data\Attoparsec\Zepto.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Attoparsec\Zepto.o )
+[ 6 of 21] Compiling Data.Attoparsec.Number ( Data\Attoparsec\Number.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Attoparsec\Number.o )
+[ 7 of 21] Compiling Data.Attoparsec.ByteString.FastSet ( Data\Attoparsec\ByteString\FastSet.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Attoparsec\ByteString\FastSet.o )
+[ 8 of 21] Compiling Data.Attoparsec.Internal.Types ( Data\Attoparsec\Internal\Types.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Attoparsec\Internal\Types.o )
+[ 9 of 21] Compiling Data.Attoparsec.Types ( Data\Attoparsec\Types.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Attoparsec\Types.o )
+[10 of 21] Compiling Data.Attoparsec.Internal ( Data\Attoparsec\Internal.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Attoparsec\Internal.o )
+[11 of 21] Compiling Data.Attoparsec.Combinator ( Data\Attoparsec\Combinator.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Attoparsec\Combinator.o )
+[12 of 21] Compiling Data.Attoparsec.ByteString.Internal ( Data\Attoparsec\ByteString\Internal.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Attoparsec\ByteString\Internal.o )
+[13 of 21] Compiling Data.Attoparsec.Text.Internal ( Data\Attoparsec\Text\Internal.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Attoparsec\Text\Internal.o )
+[14 of 21] Compiling Data.Attoparsec.Text ( Data\Attoparsec\Text.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Attoparsec\Text.o )
+[15 of 21] Compiling Data.Attoparsec.Text.Lazy ( Data\Attoparsec\Text\Lazy.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Attoparsec\Text\Lazy.o )
+[16 of 21] Compiling Data.Attoparsec.ByteString ( Data\Attoparsec\ByteString.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Attoparsec\ByteString.o )
+[17 of 21] Compiling Data.Attoparsec.ByteString.Char8 ( Data\Attoparsec\ByteString\Char8.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Attoparsec\ByteString\Char8.o )
+[18 of 21] Compiling Data.Attoparsec.Char8 ( Data\Attoparsec\Char8.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Attoparsec\Char8.o )
+[19 of 21] Compiling Data.Attoparsec.ByteString.Lazy ( Data\Attoparsec\ByteString\Lazy.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Attoparsec\ByteString\Lazy.o )
+[20 of 21] Compiling Data.Attoparsec.Lazy ( Data\Attoparsec\Lazy.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Attoparsec\Lazy.o )
+[21 of 21] Compiling Data.Attoparsec  ( Data\Attoparsec.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Attoparsec.o )
+In-place registering attoparsec-0.12.1.6...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Installing library in
+C:\Users\magocoal\AppData\Roaming\stack\snapshots\x86_64-windows\nightly-2015-06-16\7.10.2\lib\x86_64-windows-ghc-7.10.2\attoparsec-0.12.1.6-AshZw9oh9I5LrYNam960af
+Registering attoparsec-0.12.1.6...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset

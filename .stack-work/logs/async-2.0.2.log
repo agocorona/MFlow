@@ -1,0 +1,16 @@
+Configuring async-2.0.2...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Building async-2.0.2...
+Preprocessing library async-2.0.2...
+[1 of 1] Compiling Control.Concurrent.Async ( Control\Concurrent\Async.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Control\Concurrent\Async.o )
+
+Control\Concurrent\Async.hs:125:1: Warning:
+    The import of ‘Data.Traversable’ is redundant
+      except perhaps to import instances from ‘Data.Traversable’
+    To import instances alone, use: import Data.Traversable()
+In-place registering async-2.0.2...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Installing library in
+C:\Users\magocoal\AppData\Roaming\stack\snapshots\x86_64-windows\nightly-2015-06-16\7.10.2\lib\x86_64-windows-ghc-7.10.2\async-2.0.2-J3wPtBMkDlC1zlPIsbgEk9
+Registering async-2.0.2...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset

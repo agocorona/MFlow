@@ -1,0 +1,173 @@
+Configuring wai-extra-3.0.7.1...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Building wai-extra-3.0.7.1...
+Preprocessing library wai-extra-3.0.7.1...
+[ 1 of 25] Compiling Network.Wai.EventSource.EventStream ( Network\Wai\EventSource\EventStream.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\Wai\EventSource\EventStream.o )
+
+Network\Wai\EventSource\EventStream.hs:14:1: Warning:
+    The import of ‘Data.Monoid’ is redundant
+      except perhaps to import instances from ‘Data.Monoid’
+    To import instances alone, use: import Data.Monoid()
+[ 2 of 25] Compiling Network.Wai.EventSource ( Network\Wai\EventSource.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\Wai\EventSource.o )
+
+Network\Wai\EventSource.hs:11:1: Warning:
+    The import of ‘Blaze.ByteString.Builder’ is redundant
+      except perhaps to import instances from ‘Blaze.ByteString.Builder’
+    To import instances alone, use: import Blaze.ByteString.Builder()
+
+Network\Wai\EventSource.hs:16:1: Warning:
+    The import of ‘Response’ from module ‘Network.Wai’ is redundant
+[ 3 of 25] Compiling Network.Wai.Test ( Network\Wai\Test.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\Wai\Test.o )
+[ 4 of 25] Compiling Network.Wai.UrlMap ( Network\Wai\UrlMap.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\Wai\UrlMap.o )
+[ 5 of 25] Compiling Network.Wai.Middleware.StreamFile ( Network\Wai\Middleware\StreamFile.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\Wai\Middleware\StreamFile.o )
+[ 6 of 25] Compiling Network.Wai.Middleware.HttpAuth ( Network\Wai\Middleware\HttpAuth.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\Wai\Middleware\HttpAuth.o )
+
+Network\Wai\Middleware\HttpAuth.hs:18:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+
+Network\Wai\Middleware\HttpAuth.hs:111:37: Warning:
+    In the use of ‘S.breakByte’ (imported from Data.ByteString):
+    Deprecated: "It is an internal function and should never have been exported. Use 'break (== x)' instead. (There are rewrite rules that handle this special case of 'break'.)"
+[ 7 of 25] Compiling Network.Wai.Middleware.Vhost ( Network\Wai\Middleware\Vhost.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\Wai\Middleware\Vhost.o )
+
+Network\Wai\Middleware\Vhost.hs:10:1: Warning:
+    The import of ‘Data.Monoid’ is redundant
+      except perhaps to import instances from ‘Data.Monoid’
+    To import instances alone, use: import Data.Monoid()
+[ 8 of 25] Compiling Network.Wai.Middleware.Rewrite ( Network\Wai\Middleware\Rewrite.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\Wai\Middleware\Rewrite.o )
+[ 9 of 25] Compiling Network.Wai.Middleware.MethodOverridePost ( Network\Wai\Middleware\MethodOverridePost.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\Wai\Middleware\MethodOverridePost.o )
+
+Network\Wai\Middleware\MethodOverridePost.hs:13:1: Warning:
+    The import of ‘Data.Monoid’ is redundant
+      except perhaps to import instances from ‘Data.Monoid’
+    To import instances alone, use: import Data.Monoid()
+[10 of 25] Compiling Network.Wai.Middleware.MethodOverride ( Network\Wai\Middleware\MethodOverride.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\Wai\Middleware\MethodOverride.o )
+[11 of 25] Compiling Network.Wai.Middleware.Jsonp ( Network\Wai\Middleware\Jsonp.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\Wai\Middleware\Jsonp.o )
+
+Network\Wai\Middleware\Jsonp.hs:22:1: Warning:
+    The import of ‘Builder’
+    from module ‘Blaze.ByteString.Builder’ is redundant
+
+Network\Wai\Middleware\Jsonp.hs:24:1: Warning:
+    The import of ‘Data.Monoid’ is redundant
+      except perhaps to import instances from ‘Data.Monoid’
+    To import instances alone, use: import Data.Monoid()
+
+Network\Wai\Middleware\Jsonp.hs:28:1: Warning:
+    The import of ‘Data.CaseInsensitive’ is redundant
+      except perhaps to import instances from ‘Data.CaseInsensitive’
+    To import instances alone, use: import Data.CaseInsensitive()
+
+Network\Wai\Middleware\Jsonp.hs:29:1: Warning:
+    The import of ‘Network.HTTP.Types’ is redundant
+      except perhaps to import instances from ‘Network.HTTP.Types’
+    To import instances alone, use: import Network.HTTP.Types()
+
+Network\Wai\Middleware\Jsonp.hs:85:13: Warning:
+    A do-notation statement discarded a result of type ‘a’
+    Suppress this warning by saying ‘_ <- body sendChunk flush’
+    or by using the flag -fno-warn-unused-do-bind
+[12 of 25] Compiling Network.Wai.Middleware.Gzip ( Network\Wai\Middleware\Gzip.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\Wai\Middleware\Gzip.o )
+
+Network\Wai\Middleware\Gzip.hs:33:1: Warning:
+    The import of ‘Control.Monad.IO.Class’ is redundant
+      except perhaps to import instances from ‘Control.Monad.IO.Class’
+    To import instances alone, use: import Control.Monad.IO.Class()
+
+Network\Wai\Middleware\Gzip.hs:34:1: Warning:
+    The import of ‘Control.Monad.Trans.Resource’ is redundant
+      except perhaps to import instances from ‘Control.Monad.Trans.Resource’
+    To import instances alone, use: import Control.Monad.Trans.Resource()
+
+Network\Wai\Middleware\Gzip.hs:64:17: Warning:
+    In the use of ‘S.breakByte’ (imported from Data.ByteString):
+    Deprecated: "It is an internal function and should never have been exported. Use 'break (== x)' instead. (There are rewrite rules that handle this special case of 'break'.)"
+
+Network\Wai\Middleware\Gzip.hs:121:43: Warning:
+    This binding for ‘e’ shadows the existing binding
+      bound at Network\Wai\Middleware\Gzip.hs:103:5
+
+Network\Wai\Middleware\Gzip.hs:152:33: Warning:
+    Defined but not used: ‘blazeFinish’
+
+Network\Wai\Middleware\Gzip.hs:167:29: Warning:
+    This binding for ‘res’ shadows the existing binding
+      bound at Network\Wai\Middleware\Gzip.hs:147:15
+[13 of 25] Compiling Network.Wai.Middleware.RequestLogger.Internal ( Network\Wai\Middleware\RequestLogger\Internal.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\Wai\Middleware\RequestLogger\Internal.o )
+
+Network\Wai\Middleware\RequestLogger\Internal.hs:11:1: Warning:
+    The import of ‘Control.Concurrent’ is redundant
+      except perhaps to import instances from ‘Control.Concurrent’
+    To import instances alone, use: import Control.Concurrent()
+
+Network\Wai\Middleware\RequestLogger\Internal.hs:12:1: Warning:
+    The import of ‘Control.Monad’ is redundant
+      except perhaps to import instances from ‘Control.Monad’
+    To import instances alone, use: import Control.Monad()
+
+Network\Wai\Middleware\RequestLogger\Internal.hs:21:15: Warning:
+    Defined but not used: ‘flusher’
+
+Network\Wai\Middleware\RequestLogger\Internal.hs:22:14: Warning:
+    Defined but not used: ‘updater’
+[14 of 25] Compiling Network.Wai.Parse ( Network\Wai\Parse.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\Wai\Parse.o )
+[15 of 25] Compiling Network.Wai.Middleware.RequestLogger ( Network\Wai\Middleware\RequestLogger.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\Wai\Middleware\RequestLogger.o )
+
+Network\Wai\Middleware\RequestLogger.hs:31:1: Warning:
+    The import of ‘mconcat’ from module ‘Data.Monoid’ is redundant
+
+Network\Wai\Middleware\RequestLogger.hs:41:1: Warning:
+    The import of ‘Control.Monad’ is redundant
+      except perhaps to import instances from ‘Control.Monad’
+    To import instances alone, use: import Control.Monad()
+[16 of 25] Compiling Network.Wai.Middleware.Local ( Network\Wai\Middleware\Local.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\Wai\Middleware\Local.o )
+[17 of 25] Compiling Network.Wai.Middleware.CleanPath ( Network\Wai\Middleware\CleanPath.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\Wai\Middleware\CleanPath.o )
+
+Network\Wai\Middleware\CleanPath.hs:11:1: Warning:
+    The import of ‘Data.Monoid’ is redundant
+      except perhaps to import instances from ‘Data.Monoid’
+    To import instances alone, use: import Data.Monoid()
+[18 of 25] Compiling Network.Wai.Middleware.Autohead ( Network\Wai\Middleware\Autohead.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\Wai\Middleware\Autohead.o )
+
+Network\Wai\Middleware\Autohead.hs:7:1: Warning:
+    The import of ‘Data.Monoid’ is redundant
+      except perhaps to import instances from ‘Data.Monoid’
+    To import instances alone, use: import Data.Monoid()
+[19 of 25] Compiling Network.Wai.Request ( Network\Wai\Request.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\Wai\Request.o )
+[20 of 25] Compiling Network.Wai.Middleware.ForceSSL ( Network\Wai\Middleware\ForceSSL.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\Wai\Middleware\ForceSSL.o )
+[21 of 25] Compiling Network.Wai.Middleware.Approot ( Network\Wai\Middleware\Approot.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\Wai\Middleware\Approot.o )
+
+Network\Wai\Middleware\Approot.hs:32:1: Warning:
+    The qualified import of ‘Data.ByteString’ is redundant
+      except perhaps to import instances from ‘Data.ByteString’
+    To import instances alone, use: import Data.ByteString()
+
+Network\Wai\Middleware\Approot.hs:37:1: Warning:
+    The import of ‘requestHeaderHost’
+    from module ‘Network.Wai’ is redundant
+
+Network\Wai\Middleware\Approot.hs:38:1: Warning:
+    The import of ‘appearsSecure’
+    from module ‘Network.Wai.Request’ is redundant
+[22 of 25] Compiling Network.Wai.Middleware.AddHeaders ( Network\Wai\Middleware\AddHeaders.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\Wai\Middleware\AddHeaders.o )
+[23 of 25] Compiling Network.Wai.Middleware.AcceptOverride ( Network\Wai\Middleware\AcceptOverride.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\Wai\Middleware\AcceptOverride.o )
+[24 of 25] Compiling Network.Wai.Handler.CGI ( Network\Wai\Handler\CGI.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\Wai\Handler\CGI.o )
+
+Network\Wai\Handler\CGI.hs:24:1: Warning:
+    The import of ‘Data.Monoid’ is redundant
+      except perhaps to import instances from ‘Data.Monoid’
+    To import instances alone, use: import Data.Monoid()
+
+Network\Wai\Handler\CGI.hs:32:1: Warning:
+    The import of ‘Data.Monoid’ is redundant
+      except perhaps to import instances from ‘Data.Monoid’
+    To import instances alone, use: import Data.Monoid()
+[25 of 25] Compiling Network.Wai.Handler.SCGI ( Network\Wai\Handler\SCGI.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\Wai\Handler\SCGI.o )
+In-place registering wai-extra-3.0.7.1...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Installing library in
+C:\Users\magocoal\AppData\Roaming\stack\snapshots\x86_64-windows\nightly-2015-06-16\7.10.2\lib\x86_64-windows-ghc-7.10.2\wai-extra-3.0.7.1-9NZqZhNNsjUC1GooEvtTIf
+Registering wai-extra-3.0.7.1...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset

@@ -1,0 +1,23 @@
+Configuring unordered-containers-0.2.5.1...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Building unordered-containers-0.2.5.1...
+Preprocessing library unordered-containers-0.2.5.1...
+[1 of 8] Compiling Data.HashMap.UnsafeShift ( Data\HashMap\UnsafeShift.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\HashMap\UnsafeShift.o )
+[2 of 8] Compiling Data.HashMap.PopCount ( Data\HashMap\PopCount.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\HashMap\PopCount.o )
+[3 of 8] Compiling Data.HashMap.Unsafe ( Data\HashMap\Unsafe.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\HashMap\Unsafe.o )
+[4 of 8] Compiling Data.HashMap.Array ( Data\HashMap\Array.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\HashMap\Array.o )
+[5 of 8] Compiling Data.HashMap.Base ( Data\HashMap\Base.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\HashMap\Base.o )
+
+Data\HashMap\Base.hs:85:1: Warning:
+    The import of ‘Data.Functor’ is redundant
+      except perhaps to import instances from ‘Data.Functor’
+    To import instances alone, use: import Data.Functor()
+[6 of 8] Compiling Data.HashMap.Strict ( Data\HashMap\Strict.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\HashMap\Strict.o )
+[7 of 8] Compiling Data.HashMap.Lazy ( Data\HashMap\Lazy.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\HashMap\Lazy.o )
+[8 of 8] Compiling Data.HashSet     ( Data\HashSet.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\HashSet.o )
+In-place registering unordered-containers-0.2.5.1...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Installing library in
+C:\Users\magocoal\AppData\Roaming\stack\snapshots\x86_64-windows\nightly-2015-06-16\7.10.2\lib\x86_64-windows-ghc-7.10.2\unordered-containers-0.2.5.1-8pSB4fj3kA90e6c8fDcDhS
+Registering unordered-containers-0.2.5.1...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset

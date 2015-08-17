@@ -1,0 +1,46 @@
+Configuring lifted-base-0.2.3.6...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Building lifted-base-0.2.3.6...
+Preprocessing library lifted-base-0.2.3.6...
+[1 of 9] Compiling System.Timeout.Lifted ( System\Timeout\Lifted.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\System\Timeout\Lifted.o )
+
+System\Timeout\Lifted.hs:4:14: Warning:
+    ‘System.Timeout.Lifted’ is marked as Trustworthy but has been inferred as safe!
+[2 of 9] Compiling Foreign.Marshal.Utils.Lifted ( Foreign\Marshal\Utils\Lifted.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Foreign\Marshal\Utils\Lifted.o )
+
+Foreign\Marshal\Utils\Lifted.hs:6:14: Warning:
+    ‘Foreign.Marshal.Utils.Lifted’ is marked as Trustworthy but has been inferred as safe!
+[3 of 9] Compiling Data.IORef.Lifted ( Data\IORef\Lifted.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\IORef\Lifted.o )
+
+Data\IORef\Lifted.hs:6:14: Warning:
+    ‘Data.IORef.Lifted’ is marked as Trustworthy but has been inferred as safe!
+[4 of 9] Compiling Control.Concurrent.QSemN.Lifted ( Control\Concurrent\QSemN\Lifted.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Control\Concurrent\QSemN\Lifted.o )
+
+Control\Concurrent\QSemN\Lifted.hs:7:14: Warning:
+    ‘Control.Concurrent.QSemN.Lifted’ is marked as Trustworthy but has been inferred as safe!
+[5 of 9] Compiling Control.Concurrent.QSem.Lifted ( Control\Concurrent\QSem\Lifted.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Control\Concurrent\QSem\Lifted.o )
+
+Control\Concurrent\QSem\Lifted.hs:7:14: Warning:
+    ‘Control.Concurrent.QSem.Lifted’ is marked as Trustworthy but has been inferred as safe!
+[6 of 9] Compiling Control.Concurrent.Chan.Lifted ( Control\Concurrent\Chan\Lifted.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Control\Concurrent\Chan\Lifted.o )
+
+Control\Concurrent\Chan\Lifted.hs:6:14: Warning:
+    ‘Control.Concurrent.Chan.Lifted’ is marked as Trustworthy but has been inferred as safe!
+[7 of 9] Compiling Control.Concurrent.MVar.Lifted ( Control\Concurrent\MVar\Lifted.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Control\Concurrent\MVar\Lifted.o )
+
+Control\Concurrent\MVar\Lifted.hs:7:14: Warning:
+    ‘Control.Concurrent.MVar.Lifted’ is marked as Trustworthy but has been inferred as safe!
+[8 of 9] Compiling Control.Exception.Lifted ( Control\Exception\Lifted.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Control\Exception\Lifted.o )
+
+Control\Exception\Lifted.hs:11:14: Warning:
+    ‘Control.Exception.Lifted’ is marked as Trustworthy but has been inferred as safe!
+[9 of 9] Compiling Control.Concurrent.Lifted ( Control\Concurrent\Lifted.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Control\Concurrent\Lifted.o )
+
+Control\Concurrent\Lifted.hs:4:14: Warning:
+    ‘Control.Concurrent.Lifted’ is marked as Trustworthy but has been inferred as safe!
+In-place registering lifted-base-0.2.3.6...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Installing library in
+C:\Users\magocoal\AppData\Roaming\stack\snapshots\x86_64-windows\nightly-2015-06-16\7.10.2\lib\x86_64-windows-ghc-7.10.2\lifted-base-0.2.3.6-K3cQFA6mRg85rpDaA9numU
+Registering lifted-base-0.2.3.6...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset

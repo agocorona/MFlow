@@ -1,0 +1,21 @@
+Configuring securemem-0.1.9...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Building securemem-0.1.9...
+Preprocessing library securemem-0.1.9...
+[1 of 1] Compiling Data.SecureMem   ( Data\SecureMem.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\SecureMem.o )
+
+Data\SecureMem.hs:34:1: Warning:
+    The import of ‘Data.Monoid’ is redundant
+      except perhaps to import instances from ‘Data.Monoid’
+    To import instances alone, use: import Data.Monoid()
+
+Data\SecureMem.hs:35:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+In-place registering securemem-0.1.9...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Installing library in
+C:\Users\magocoal\AppData\Roaming\stack\snapshots\x86_64-windows\nightly-2015-06-16\7.10.2\lib\x86_64-windows-ghc-7.10.2\securemem-0.1.9-IVsZrOqGXes1eaVFfLeM4x
+Registering securemem-0.1.9...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset

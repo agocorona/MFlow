@@ -1,0 +1,190 @@
+Configuring resourcet-1.1.5...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Building resourcet-1.1.5...
+Preprocessing library resourcet-1.1.5...
+[1 of 4] Compiling Data.Acquire.Internal ( Data\Acquire\Internal.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Acquire\Internal.o )
+
+Data\Acquire\Internal.hs:17:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+[2 of 4] Compiling Control.Monad.Trans.Resource.Internal ( Control\Monad\Trans\Resource\Internal.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Control\Monad\Trans\Resource\Internal.o )
+
+Control\Monad\Trans\Resource\Internal.hs:26:1: Warning:
+    The import of ‘Applicative’
+    from module ‘Control.Applicative’ is redundant
+
+Control\Monad\Trans\Resource\Internal.hs:42:1: Warning:
+    Module ‘Control.Monad.Trans.Error’ is deprecated:
+      Use Control.Monad.Trans.Except instead
+
+Control\Monad\Trans\Resource\Internal.hs:58:1: Warning:
+    The import of ‘Control.Monad.ST’ is redundant
+      except perhaps to import instances from ‘Control.Monad.ST’
+    To import instances alone, use: import Control.Monad.ST()
+
+Control\Monad\Trans\Resource\Internal.hs:69:1: Warning:
+    The import of ‘Data.Word’ is redundant
+      except perhaps to import instances from ‘Data.Word’
+    To import instances alone, use: import Data.Word()
+
+Control\Monad\Trans\Resource\Internal.hs:70:1: Warning:
+    Module ‘Prelude’ does not export ‘catch’
+
+Control\Monad\Trans\Resource\Internal.hs:74:1: Warning:
+    The import of ‘Control.Monad.ST.Unsafe’ is redundant
+      except perhaps to import instances from ‘Control.Monad.ST.Unsafe’
+    To import instances alone, use: import Control.Monad.ST.Unsafe()
+
+Control\Monad\Trans\Resource\Internal.hs:80:1: Warning:
+    The qualified import of ‘Control.Monad.ST.Lazy.Unsafe’ is redundant
+      except perhaps to import instances from ‘Control.Monad.ST.Lazy.Unsafe’
+    To import instances alone, use: import Control.Monad.ST.Lazy.Unsafe()
+
+Control\Monad\Trans\Resource\Internal.hs:85:1: Warning:
+    The qualified import of ‘Control.Monad.ST.Lazy’ is redundant
+      except perhaps to import instances from ‘Control.Monad.ST.Lazy’
+    To import instances alone, use: import Control.Monad.ST.Lazy()
+
+Control\Monad\Trans\Resource\Internal.hs:298:11: Warning:
+    In the use of type constructor or class ‘Error’
+    (imported from Control.Monad.Trans.Error):
+    Deprecated: "Use Control.Monad.Trans.Except instead"
+
+Control\Monad\Trans\Resource\Internal.hs:298:56: Warning:
+    In the use of type constructor or class ‘ErrorT’
+    (imported from Control.Monad.Trans.Error):
+    Deprecated: "Use Control.Monad.Trans.Except instead"
+[3 of 4] Compiling Control.Monad.Trans.Resource ( Control\Monad\Trans\Resource.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Control\Monad\Trans\Resource.o )
+
+Control\Monad\Trans\Resource.hs:54:7: Warning:
+    The export item ‘ExceptionT(..)’ suggests that
+    ‘ExceptionT’ has (in-scope) constructors or class methods,
+    but it has none
+
+Control\Monad\Trans\Resource.hs:64:1: Warning:
+    The import of ‘throw’ from module ‘Control.Exception’ is redundant
+
+Control\Monad\Trans\Resource.hs:69:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+
+Control\Monad\Trans\Resource.hs:73:1: Warning:
+    The import of ‘Data.Monoid’ is redundant
+      except perhaps to import instances from ‘Data.Monoid’
+    To import instances alone, use: import Data.Monoid()
+
+Control\Monad\Trans\Resource.hs:76:1: Warning:
+    The import of ‘Control.Monad.Trans.Identity’ is redundant
+      except perhaps to import instances from ‘Control.Monad.Trans.Identity’
+    To import instances alone, use: import Control.Monad.Trans.Identity()
+
+Control\Monad\Trans\Resource.hs:77:1: Warning:
+    The import of ‘Control.Monad.Trans.List’ is redundant
+      except perhaps to import instances from ‘Control.Monad.Trans.List’
+    To import instances alone, use: import Control.Monad.Trans.List()
+
+Control\Monad\Trans\Resource.hs:78:1: Warning:
+    The import of ‘Control.Monad.Trans.Maybe’ is redundant
+      except perhaps to import instances from ‘Control.Monad.Trans.Maybe’
+    To import instances alone, use: import Control.Monad.Trans.Maybe()
+
+Control\Monad\Trans\Resource.hs:79:1: Warning:
+    Module ‘Control.Monad.Trans.Error’ is deprecated:
+      Use Control.Monad.Trans.Except instead
+
+Control\Monad\Trans\Resource.hs:79:1: Warning:
+    The import of ‘Control.Monad.Trans.Error’ is redundant
+      except perhaps to import instances from ‘Control.Monad.Trans.Error’
+    To import instances alone, use: import Control.Monad.Trans.Error()
+
+Control\Monad\Trans\Resource.hs:80:1: Warning:
+    The import of ‘Control.Monad.Trans.Reader’ is redundant
+      except perhaps to import instances from ‘Control.Monad.Trans.Reader’
+    To import instances alone, use: import Control.Monad.Trans.Reader()
+
+Control\Monad\Trans\Resource.hs:81:1: Warning:
+    The import of ‘Control.Monad.Trans.State’ is redundant
+      except perhaps to import instances from ‘Control.Monad.Trans.State’
+    To import instances alone, use: import Control.Monad.Trans.State()
+
+Control\Monad\Trans\Resource.hs:82:1: Warning:
+    The import of ‘Control.Monad.Trans.Writer’ is redundant
+      except perhaps to import instances from ‘Control.Monad.Trans.Writer’
+    To import instances alone, use: import Control.Monad.Trans.Writer()
+
+Control\Monad\Trans\Resource.hs:84:1: Warning:
+    The import of ‘Control.Monad.Trans.RWS’ is redundant
+      except perhaps to import instances from ‘Control.Monad.Trans.RWS’
+    To import instances alone, use: import Control.Monad.Trans.RWS()
+
+Control\Monad\Trans\Resource.hs:86:1: Warning:
+    The qualified import of ‘Control.Monad.Trans.RWS.Strict’ is redundant
+      except perhaps to import instances from ‘Control.Monad.Trans.RWS.Strict’
+    To import instances alone, use: import Control.Monad.Trans.RWS.Strict()
+
+Control\Monad\Trans\Resource.hs:87:1: Warning:
+    The qualified import of ‘Control.Monad.Trans.State.Strict’ is redundant
+      except perhaps to import instances from ‘Control.Monad.Trans.State.Strict’
+    To import instances alone, use: import Control.Monad.Trans.State.Strict()
+
+Control\Monad\Trans\Resource.hs:88:1: Warning:
+    The qualified import of ‘Control.Monad.Trans.Writer.Strict’ is redundant
+      except perhaps to import instances from ‘Control.Monad.Trans.Writer.Strict’
+    To import instances alone, use: import Control.Monad.Trans.Writer.Strict()
+
+Control\Monad\Trans\Resource.hs:91:1: Warning:
+    The import of ‘Control.Monad.ST’ is redundant
+      except perhaps to import instances from ‘Control.Monad.ST’
+    To import instances alone, use: import Control.Monad.ST()
+
+Control\Monad\Trans\Resource.hs:93:1: Warning:
+    The qualified import of ‘Control.Monad.ST.Lazy’ is redundant
+      except perhaps to import instances from ‘Control.Monad.ST.Lazy’
+    To import instances alone, use: import Control.Monad.ST.Lazy()
+
+Control\Monad\Trans\Resource.hs:96:1: Warning:
+    The import of ‘Control.Monad.Morph’ is redundant
+      except perhaps to import instances from ‘Control.Monad.Morph’
+    To import instances alone, use: import Control.Monad.Morph()
+
+Control\Monad\Trans\Resource.hs:222:1: Warning:
+    Defined but not used: ‘finally’
+[4 of 4] Compiling Data.Acquire     ( Data\Acquire.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Acquire.o )
+
+Data\Acquire.hs:14:1: Warning:
+    The import of ‘Control.Monad.Trans.Resource’ is redundant
+      except perhaps to import instances from ‘Control.Monad.Trans.Resource’
+    To import instances alone, use: import Control.Monad.Trans.Resource()
+
+Data\Acquire.hs:16:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+
+Data\Acquire.hs:17:1: Warning:
+    The import of ‘Control.Monad.Base’ is redundant
+      except perhaps to import instances from ‘Control.Monad.Base’
+    To import instances alone, use: import Control.Monad.Base()
+
+Data\Acquire.hs:19:1: Warning:
+    The import of ‘Control.Monad.Trans.Control’ is redundant
+      except perhaps to import instances from ‘Control.Monad.Trans.Control’
+    To import instances alone, use: import Control.Monad.Trans.Control()
+
+Data\Acquire.hs:21:1: Warning:
+    The import of ‘Data.Typeable’ is redundant
+      except perhaps to import instances from ‘Data.Typeable’
+    To import instances alone, use: import Data.Typeable()
+
+Data\Acquire.hs:22:1: Warning:
+    The import of ‘Control.Monad’ is redundant
+      except perhaps to import instances from ‘Control.Monad’
+    To import instances alone, use: import Control.Monad()
+In-place registering resourcet-1.1.5...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Installing library in
+C:\Users\magocoal\AppData\Roaming\stack\snapshots\x86_64-windows\nightly-2015-06-16\7.10.2\lib\x86_64-windows-ghc-7.10.2\resourcet-1.1.5-IKWk5HWuBgN1c608xCD0ZU
+Registering resourcet-1.1.5...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset

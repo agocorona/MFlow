@@ -1,0 +1,77 @@
+Configuring zlib-0.5.4.2...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Building zlib-0.5.4.2...
+Preprocessing library zlib-0.5.4.2...
+[1 of 5] Compiling Codec.Compression.Zlib.Stream ( .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Codec\Compression\Zlib\Stream.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Codec\Compression\Zlib\Stream.o )
+
+CodecCompressionZlibStream.hsc:111:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+
+CodecCompressionZlibStream.hsc:649:1: Warning: Tab character
+
+CodecCompressionZlibStream.hsc:650:1: Warning: Tab character
+
+CodecCompressionZlibStream.hsc:651:1: Warning: Tab character
+
+CodecCompressionZlibStream.hsc:652:1: Warning: Tab character
+
+CodecCompressionZlibStream.hsc:905:1: Warning: Tab character
+
+CodecCompressionZlibStream.hsc:945:1: Warning: Tab character
+
+CodecCompressionZlibStream.hsc:946:1: Warning: Tab character
+[2 of 5] Compiling Codec.Compression.Zlib.Internal ( Codec\Compression\Zlib\Internal.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Codec\Compression\Zlib\Internal.o )
+[3 of 5] Compiling Codec.Compression.Zlib.Raw ( Codec\Compression\Zlib\Raw.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Codec\Compression\Zlib\Raw.o )
+[4 of 5] Compiling Codec.Compression.Zlib ( Codec\Compression\Zlib.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Codec\Compression\Zlib.o )
+[5 of 5] Compiling Codec.Compression.GZip ( Codec\Compression\GZip.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Codec\Compression\GZip.o )
+cbits\inffast.c: In function 'inflate_fast':
+
+cbits\inffast.c:324:1:
+     warning: visibility attribute not supported in this configuration; ignored [-Wattributes]
+cbits\inftrees.c: In function 'inflate_table':
+
+cbits\inftrees.c:330:1:
+     warning: visibility attribute not supported in this configuration; ignored [-Wattributes]
+cbits\trees.c: In function '_tr_init':
+
+cbits\trees.c:410:1:
+     warning: visibility attribute not supported in this configuration; ignored [-Wattributes]
+cbits\trees.c: In function '_tr_stored_block':
+
+cbits\trees.c:883:1:
+     warning: visibility attribute not supported in this configuration; ignored [-Wattributes]
+cbits\trees.c: In function '_tr_align':
+
+cbits\trees.c:919:1:
+     warning: visibility attribute not supported in this configuration; ignored [-Wattributes]
+cbits\trees.c: In function '_tr_flush_block':
+
+cbits\trees.c:1020:1:
+     warning: visibility attribute not supported in this configuration; ignored [-Wattributes]
+cbits\trees.c: In function '_tr_tally':
+
+cbits\trees.c:1071:1:
+     warning: visibility attribute not supported in this configuration; ignored [-Wattributes]
+cbits\trees.c: At top level:
+
+cbits\trees.c:1244:1:
+     warning: visibility attribute not supported in this configuration; ignored [-Wattributes]
+
+cbits\trees.c:1244:1:
+     warning: visibility attribute not supported in this configuration; ignored [-Wattributes]
+cbits\zutil.c: In function 'zcalloc':
+
+cbits\zutil.c:308:1:
+     warning: visibility attribute not supported in this configuration; ignored [-Wattributes]
+cbits\zutil.c: In function 'zcfree':
+
+cbits\zutil.c:316:1:
+     warning: visibility attribute not supported in this configuration; ignored [-Wattributes]
+In-place registering zlib-0.5.4.2...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Installing library in
+C:\Users\magocoal\AppData\Roaming\stack\snapshots\x86_64-windows\nightly-2015-06-16\7.10.2\lib\x86_64-windows-ghc-7.10.2\zlib-0.5.4.2-7EfFFsXSCF6JCVS3xlYBS8
+Registering zlib-0.5.4.2...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset

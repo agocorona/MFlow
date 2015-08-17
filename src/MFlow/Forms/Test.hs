@@ -17,6 +17,7 @@
             -XUndecidableInstances
             -XPatternGuards
             -XRecordWildCards
+            -XFlexibleContexts
             #-}
 
 module MFlow.Forms.Test (Generate(..),runTest,runTest1,inject, ask, askt, userWidget, getUser, getUserSimple, verify) where
@@ -144,7 +145,7 @@ ask w = do
     breturn $ n `seq` mx `seq` r
 --    let u= undefined
 --    liftIO $ runStateT (runView mf) s
---    bool <- liftIO generate 
+--    bool <- liftIO generate
 --    case bool of
 --          False -> fail ""
 --          True -> do
@@ -378,7 +379,7 @@ ind= "ind"
 instance  Processable Params where
      pwfname = fromMaybe noScript  . lookup pwf
      puser= fromMaybe anonymous  . lookup cookieuser
-     pind = fromMaybe "0"  . lookup ind 
+     pind = fromMaybe "0"  . lookup ind
      getParams = id
 
 

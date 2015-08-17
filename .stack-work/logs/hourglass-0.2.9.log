@@ -1,0 +1,34 @@
+Configuring hourglass-0.2.9...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Building hourglass-0.2.9...
+Preprocessing library hourglass-0.2.9...
+[ 1 of 14] Compiling Data.Hourglass.Utils ( Data\Hourglass\Utils.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Hourglass\Utils.o )
+[ 2 of 14] Compiling Data.Hourglass.Zone ( Data\Hourglass\Zone.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Hourglass\Zone.o )
+[ 3 of 14] Compiling Data.Hourglass.Types ( Data\Hourglass\Types.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Hourglass\Types.o )
+[ 4 of 14] Compiling Data.Hourglass.Internal.Win ( Data\Hourglass\Internal\Win.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Hourglass\Internal\Win.o )
+[ 5 of 14] Compiling Data.Hourglass.Internal ( Data\Hourglass\Internal.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Hourglass\Internal.o )
+[ 6 of 14] Compiling Data.Hourglass.Calendar ( Data\Hourglass\Calendar.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Hourglass\Calendar.o )
+[ 7 of 14] Compiling Data.Hourglass.Diff ( Data\Hourglass\Diff.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Hourglass\Diff.o )
+
+Data\Hourglass\Diff.hs:22:1: Warning:
+    The import of ‘Data.Monoid’ is redundant
+      except perhaps to import instances from ‘Data.Monoid’
+    To import instances alone, use: import Data.Monoid()
+[ 8 of 14] Compiling Data.Hourglass.Time ( Data\Hourglass\Time.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Hourglass\Time.o )
+[ 9 of 14] Compiling Data.Hourglass.Local ( Data\Hourglass\Local.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Hourglass\Local.o )
+[10 of 14] Compiling Data.Hourglass.Format ( Data\Hourglass\Format.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Hourglass\Format.o )
+[11 of 14] Compiling Data.Hourglass.Epoch ( Data\Hourglass\Epoch.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Hourglass\Epoch.o )
+[12 of 14] Compiling System.Hourglass ( System\Hourglass.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\System\Hourglass.o )
+
+System\Hourglass.hs:23:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+[13 of 14] Compiling Data.Hourglass   ( Data\Hourglass.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Hourglass.o )
+[14 of 14] Compiling Data.Hourglass.Compat ( Data\Hourglass\Compat.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Hourglass\Compat.o )
+In-place registering hourglass-0.2.9...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Installing library in
+C:\Users\magocoal\AppData\Roaming\stack\snapshots\x86_64-windows\nightly-2015-06-16\7.10.2\lib\x86_64-windows-ghc-7.10.2\hourglass-0.2.9-J9n5law7FhAGiHMX3RAvHf
+Registering hourglass-0.2.9...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset

@@ -1,0 +1,22 @@
+Configuring iproute-1.4.0...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Building iproute-1.4.0...
+Preprocessing library iproute-1.4.0...
+[1 of 7] Compiling Data.IP.Addr     ( Data\IP\Addr.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\IP\Addr.o )
+[2 of 7] Compiling Data.IP.Mask     ( Data\IP\Mask.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\IP\Mask.o )
+[3 of 7] Compiling Data.IP.Range    ( Data\IP\Range.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\IP\Range.o )
+[4 of 7] Compiling Data.IP.Op       ( Data\IP\Op.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\IP\Op.o )
+[5 of 7] Compiling Data.IP.RouteTable.Internal ( Data\IP\RouteTable\Internal.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\IP\RouteTable\Internal.o )
+
+Data\IP\RouteTable\Internal.hs:10:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+[6 of 7] Compiling Data.IP.RouteTable ( Data\IP\RouteTable.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\IP\RouteTable.o )
+[7 of 7] Compiling Data.IP          ( Data\IP.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\IP.o )
+In-place registering iproute-1.4.0...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Installing library in
+C:\Users\magocoal\AppData\Roaming\stack\snapshots\x86_64-windows\nightly-2015-06-16\7.10.2\lib\x86_64-windows-ghc-7.10.2\iproute-1.4.0-KdvqsBdZvR00lrVHd2LOAb
+Registering iproute-1.4.0...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset

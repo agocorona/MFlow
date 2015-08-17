@@ -5,7 +5,8 @@
              , DeriveDataTypeable
              , FlexibleInstances
              , OverloadedStrings
-             , TemplateHaskell #-}
+             , TemplateHaskell
+             , FlexibleContexts #-}
 
 module MFlow.Wai(
      module MFlow.Cookies

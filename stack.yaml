@@ -1,0 +1,6 @@
+flags: {}
+packages:
+- '.'
+extra-deps: [monadloc-0.7.1
+]
+resolver:   nightly-2015-06-16  

@@ -1,0 +1,17 @@
+Configuring wai-3.0.2.3...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Building wai-3.0.2.3...
+Preprocessing library wai-3.0.2.3...
+[1 of 2] Compiling Network.Wai.Internal ( Network\Wai\Internal.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\Wai\Internal.o )
+[2 of 2] Compiling Network.Wai      ( Network\Wai.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\Wai.o )
+
+Network\Wai.hs:89:1: Warning:
+    The import of ‘Data.Monoid’ is redundant
+      except perhaps to import instances from ‘Data.Monoid’
+    To import instances alone, use: import Data.Monoid()
+In-place registering wai-3.0.2.3...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Installing library in
+C:\Users\magocoal\AppData\Roaming\stack\snapshots\x86_64-windows\nightly-2015-06-16\7.10.2\lib\x86_64-windows-ghc-7.10.2\wai-3.0.2.3-BMCmbPgSWt8EZeiY8Fh4df
+Registering wai-3.0.2.3...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset

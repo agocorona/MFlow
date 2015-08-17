@@ -1,0 +1,149 @@
+Configuring hashtables-1.2.0.2...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Building hashtables-1.2.0.2...
+Preprocessing library hashtables-1.2.0.2...
+[ 1 of 12] Compiling Data.HashTable.Internal.UnsafeTricks ( src\Data\HashTable\Internal\UnsafeTricks.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\HashTable\Internal\UnsafeTricks.o )
+
+src\Data\HashTable\Internal\UnsafeTricks.hs:27:1: Warning:
+    The import of ‘GHC.Exts’ is redundant
+      except perhaps to import instances from ‘GHC.Exts’
+    To import instances alone, use: import GHC.Exts()
+[ 2 of 12] Compiling Data.HashTable.Internal.IntArray ( src\Data\HashTable\Internal\IntArray.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\HashTable\Internal\IntArray.o )
+
+src\Data\HashTable\Internal\IntArray.hs:74:19: Warning:
+    In the use of ‘bitSize’ (imported from Data.Bits):
+    Deprecated: "Use 'bitSizeMaybe' or 'finiteBitSize' instead"
+[ 3 of 12] Compiling Data.HashTable.Internal.Array ( src\Data\HashTable\Internal\Array.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\HashTable\Internal\Array.o )
+[ 4 of 12] Compiling Data.HashTable.Internal.Linear.Bucket ( src\Data\HashTable\Internal\Linear\Bucket.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\HashTable\Internal\Linear\Bucket.o )
+[ 5 of 12] Compiling Data.HashTable.Internal.Utils ( src\Data\HashTable\Internal\Utils.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\HashTable\Internal\Utils.o )
+
+src\Data\HashTable\Internal\Utils.hs:44:12: Warning:
+    In the use of ‘bitSize’ (imported from Data.Bits):
+    Deprecated: "Use 'bitSizeMaybe' or 'finiteBitSize' instead"
+
+src\Data\HashTable\Internal\Utils.hs:54:31: Warning:
+    In the use of ‘bitSize’ (imported from Data.Bits):
+    Deprecated: "Use 'bitSizeMaybe' or 'finiteBitSize' instead"
+[ 6 of 12] Compiling Data.HashTable.Internal.CacheLine ( src\Data\HashTable\Internal\CacheLine.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\HashTable\Internal\CacheLine.o )
+
+src\Data\HashTable\Internal\CacheLine.hs:41:1: Warning:
+    The import of ‘GHC.Exts’ is redundant
+      except perhaps to import instances from ‘GHC.Exts’
+    To import instances alone, use: import GHC.Exts()
+[ 7 of 12] Compiling Data.HashTable.Internal.CheapPseudoRandomBitStream ( src\Data\HashTable\Internal\CheapPseudoRandomBitStream.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\HashTable\Internal\CheapPseudoRandomBitStream.o )
+
+src\Data\HashTable\Internal\CheapPseudoRandomBitStream.hs:16:1: Warning:
+    The import of ‘Word’ from module ‘Data.Word’ is redundant
+[ 8 of 12] Compiling Data.HashTable.Class ( src\Data\HashTable\Class.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\HashTable\Class.o )
+[ 9 of 12] Compiling Data.HashTable.ST.Basic ( src\Data\HashTable\ST\Basic.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\HashTable\ST\Basic.o )
+
+src\Data\HashTable\ST\Basic.hs:125:10: Warning:
+    In the use of ‘bitSize’ (imported from Data.Bits):
+    Deprecated: "Use 'bitSizeMaybe' or 'finiteBitSize' instead"
+
+src\Data\HashTable\ST\Basic.hs:368:30: Warning:
+    In the use of ‘bitSize’ (imported from Data.Bits):
+    Deprecated: "Use 'bitSizeMaybe' or 'finiteBitSize' instead"
+[10 of 12] Compiling Data.HashTable.ST.Cuckoo ( src\Data\HashTable\ST\Cuckoo.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\HashTable\ST\Cuckoo.o )
+
+src\Data\HashTable\ST\Cuckoo.hs:182:29: Warning:
+    In the use of ‘bitSize’ (imported from Data.Bits):
+    Deprecated: "Use 'bitSizeMaybe' or 'finiteBitSize' instead"
+[11 of 12] Compiling Data.HashTable.ST.Linear ( src\Data\HashTable\ST\Linear.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\HashTable\ST\Linear.o )
+[12 of 12] Compiling Data.HashTable.IO ( src\Data\HashTable\IO.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\HashTable\IO.o )
+
+src\Data\HashTable\IO.hs:97:1: Warning:
+    SPECIALISE pragma on INLINE function probably won't fire: ‘new’
+
+src\Data\HashTable\IO.hs:98:1: Warning:
+    SPECIALISE pragma on INLINE function probably won't fire: ‘new’
+
+src\Data\HashTable\IO.hs:99:1: Warning:
+    SPECIALISE pragma on INLINE function probably won't fire: ‘new’
+
+src\Data\HashTable\IO.hs:107:1: Warning:
+    SPECIALISE pragma on INLINE function probably won't fire: ‘newSized’
+
+src\Data\HashTable\IO.hs:108:1: Warning:
+    SPECIALISE pragma on INLINE function probably won't fire: ‘newSized’
+
+src\Data\HashTable\IO.hs:109:1: Warning:
+    SPECIALISE pragma on INLINE function probably won't fire: ‘newSized’
+
+src\Data\HashTable\IO.hs:118:1: Warning:
+    SPECIALISE pragma on INLINE function probably won't fire: ‘insert’
+
+src\Data\HashTable\IO.hs:120:1: Warning:
+    SPECIALISE pragma on INLINE function probably won't fire: ‘insert’
+
+src\Data\HashTable\IO.hs:122:1: Warning:
+    SPECIALISE pragma on INLINE function probably won't fire: ‘insert’
+
+src\Data\HashTable\IO.hs:132:1: Warning:
+    SPECIALISE pragma on INLINE function probably won't fire: ‘delete’
+
+src\Data\HashTable\IO.hs:134:1: Warning:
+    SPECIALISE pragma on INLINE function probably won't fire: ‘delete’
+
+src\Data\HashTable\IO.hs:136:1: Warning:
+    SPECIALISE pragma on INLINE function probably won't fire: ‘delete’
+
+src\Data\HashTable\IO.hs:146:1: Warning:
+    SPECIALISE pragma on INLINE function probably won't fire: ‘lookup’
+
+src\Data\HashTable\IO.hs:148:1: Warning:
+    SPECIALISE pragma on INLINE function probably won't fire: ‘lookup’
+
+src\Data\HashTable\IO.hs:150:1: Warning:
+    SPECIALISE pragma on INLINE function probably won't fire: ‘lookup’
+
+src\Data\HashTable\IO.hs:161:1: Warning:
+    SPECIALISE pragma on INLINE function probably won't fire: ‘fromList’
+
+src\Data\HashTable\IO.hs:163:1: Warning:
+    SPECIALISE pragma on INLINE function probably won't fire: ‘fromList’
+
+src\Data\HashTable\IO.hs:165:1: Warning:
+    SPECIALISE pragma on INLINE function probably won't fire: ‘fromList’
+
+src\Data\HashTable\IO.hs:176:1: Warning:
+    SPECIALISE pragma on INLINE function probably won't fire: ‘fromListWithSizeHint’
+
+src\Data\HashTable\IO.hs:178:1: Warning:
+    SPECIALISE pragma on INLINE function probably won't fire: ‘fromListWithSizeHint’
+
+src\Data\HashTable\IO.hs:180:1: Warning:
+    SPECIALISE pragma on INLINE function probably won't fire: ‘fromListWithSizeHint’
+
+src\Data\HashTable\IO.hs:190:1: Warning:
+    SPECIALISE pragma on INLINE function probably won't fire: ‘toList’
+
+src\Data\HashTable\IO.hs:192:1: Warning:
+    SPECIALISE pragma on INLINE function probably won't fire: ‘toList’
+
+src\Data\HashTable\IO.hs:194:1: Warning:
+    SPECIALISE pragma on INLINE function probably won't fire: ‘toList’
+
+src\Data\HashTable\IO.hs:208:1: Warning:
+    SPECIALISE pragma on INLINE function probably won't fire: ‘foldM’
+
+src\Data\HashTable\IO.hs:210:1: Warning:
+    SPECIALISE pragma on INLINE function probably won't fire: ‘foldM’
+
+src\Data\HashTable\IO.hs:212:1: Warning:
+    SPECIALISE pragma on INLINE function probably won't fire: ‘foldM’
+
+src\Data\HashTable\IO.hs:223:1: Warning:
+    SPECIALISE pragma on INLINE function probably won't fire: ‘mapM_’
+
+src\Data\HashTable\IO.hs:225:1: Warning:
+    SPECIALISE pragma on INLINE function probably won't fire: ‘mapM_’
+
+src\Data\HashTable\IO.hs:227:1: Warning:
+    SPECIALISE pragma on INLINE function probably won't fire: ‘mapM_’
+In-place registering hashtables-1.2.0.2...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Installing library in
+C:\Users\magocoal\AppData\Roaming\stack\snapshots\x86_64-windows\nightly-2015-06-16\7.10.2\lib\x86_64-windows-ghc-7.10.2\hashtables-1.2.0.2-15528SFvNkpLbylOKxAfXz
+Registering hashtables-1.2.0.2...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset

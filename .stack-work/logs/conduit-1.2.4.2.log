@@ -1,0 +1,395 @@
+Configuring conduit-1.2.4.2...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Building conduit-1.2.4.2...
+Preprocessing library conduit-1.2.4.2...
+[1 of 8] Compiling Data.Conduit.Internal.Pipe ( Data\Conduit\Internal\Pipe.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Conduit\Internal\Pipe.o )
+
+Data\Conduit\Internal\Pipe.hs:48:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+
+Data\Conduit\Internal\Pipe.hs:60:1: Warning:
+    The import of ‘Data.Monoid’ is redundant
+      except perhaps to import instances from ‘Data.Monoid’
+    To import instances alone, use: import Data.Monoid()
+[2 of 8] Compiling Data.Conduit.Internal.Conduit ( Data\Conduit\Internal\Conduit.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Conduit\Internal\Conduit.o )
+
+Data\Conduit\Internal\Conduit.hs:86:1: Warning:
+    Module ‘Prelude’ does not export ‘catch’
+
+Data\Conduit\Internal\Conduit.hs:87:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+
+Data\Conduit\Internal\Conduit.hs:100:1: Warning:
+    The import of ‘Data.Monoid’ is redundant
+      except perhaps to import instances from ‘Data.Monoid’
+    To import instances alone, use: import Data.Monoid()
+
+Data\Conduit\Internal\Conduit.hs:107:1: Warning:
+    The import of ‘Data.Traversable’ is redundant
+      except perhaps to import instances from ‘Data.Traversable’
+    To import instances alone, use: import Data.Traversable()
+[3 of 8] Compiling Data.Conduit.Internal.Fusion ( Data\Conduit\Internal\Fusion.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Conduit\Internal\Fusion.o )
+[4 of 8] Compiling Data.Conduit.Internal.List.Stream ( Data\Conduit\Internal\List\Stream.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Conduit\Internal\List\Stream.o )
+[5 of 8] Compiling Data.Conduit.Internal ( Data\Conduit\Internal.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Conduit\Internal.o )
+[6 of 8] Compiling Data.Conduit     ( Data\Conduit.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Conduit.o )
+[7 of 8] Compiling Data.Conduit.List ( Data\Conduit\List.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Conduit\List.o )
+
+Data.Conduit.List:1:1: Warning:
+    Orphan rule: "conduit: $$ foldM" [ALWAYS] forall @ (m :: * -> *)
+                                                     @ b
+                                                     @ a21
+                                                     $dMonad :: Monad m
+                                                     $dMonad1 :: Monad m
+                                                     src :: Source m a21
+                                                     f :: b -> a21 -> m b
+                                                     b1 :: b
+                   $$ @ m
+                      @ a21
+                      @ b
+                      $dMonad
+                      src
+                      (unstream
+                         @ a21
+                         @ Data.Void.Void
+                         @ m
+                         @ b
+                         (Data.Conduit.Internal.Fusion.ConduitWithStream
+                            @ a21
+                            @ Data.Void.Void
+                            @ m
+                            @ b
+                            (let {
+                               $dApplicative :: Prelude.Applicative
+                                                  (ConduitM a21 Data.Void.Void m)
+                               = Data.Conduit.Internal.Conduit.$fApplicativeConduitM
+                                   @ a21
+                                   @ Data.Void.Void
+                                   @ m
+                                   (Data.Conduit.Internal.Conduit.$fFunctorConduitM
+                                      @ a21
+                                      @ Data.Void.Void
+                                      @ m)
+                             } in
+                             letrec {
+                               loop :: b -> ConduitM a21 Data.Void.Void m b {- Arity: 1 -}
+                               = \ accum :: b ->
+                                 let {
+                                   f1 :: ConduitM a21 Data.Void.Void m b {- Arity: 1 -}
+                                   = Data.Conduit.Internal.Conduit.$fMonadConduitM_$creturn
+                                       @ a21
+                                       @ Data.Void.Void
+                                       @ m
+                                       $dApplicative
+                                       @ b
+                                       accum
+                                 } in
+                                 $ @ (forall b2.
+                                      (b -> CI.Pipe a21 a21 Data.Void.Void () m b2)
+                                      -> CI.Pipe a21 a21 Data.Void.Void () m b2)
+                                   @ (ConduitM a21 Data.Void.Void m b)
+                                   (\ tpl :: forall b2.
+                                             (b -> CI.Pipe a21 a21 Data.Void.Void () m b2)
+                                             -> CI.Pipe a21 a21 Data.Void.Void () m b2 ->
+                                    tpl)
+                                     `cast`
+                                   (<forall b2.
+                                     (b -> CI.Pipe a21 a21 Data.Void.Void () m b2)
+                                     -> CI.Pipe a21 a21 Data.Void.Void () m b2>_R
+                                    ->_R Sym (Data.Conduit.Internal.Conduit.NTCo:ConduitM[0]
+                                                  <a21>_N <Data.Void.Void>_N <m>_N <b>_R))
+                                   (\ @ b2 rest :: b -> CI.Pipe a21 a21 Data.Void.Void () m b2 ->
+                                    Data.Conduit.Internal.Pipe.NeedInput
+                                      @ a21
+                                      @ a21
+                                      @ Data.Void.Void
+                                      @ ()
+                                      @ m
+                                      @ b2
+                                      (\ i1 :: a21 ->
+                                       CI.unConduitM
+                                         @ a21
+                                         @ Data.Void.Void
+                                         @ m
+                                         @ b
+                                         @ b2
+                                         (Data.Conduit.Internal.Conduit.$fMonadConduitM_$c>>=
+                                            @ a21
+                                            @ Data.Void.Void
+                                            @ m
+                                            $dApplicative
+                                            @ b
+                                            @ b
+                                            ($ @ (m b)
+                                               @ (ConduitM a21 Data.Void.Void m b)
+                                               (Data.Conduit.Internal.Conduit.$fMonadBasebaseConduitM_$clift
+                                                  @ a21
+                                                  @ Data.Void.Void
+                                                  @ m
+                                                  @ b
+                                                  $dMonad1)
+                                               (f accum i1))
+                                            (\ accum' :: b ->
+                                             case accum' of accum'1 { DEFAULT -> loop accum'1 }))
+                                         rest)
+                                      ($ @ (CI.Pipe a21 a21 Data.Void.Void () m b2)
+                                         @ (() -> CI.Pipe a21 a21 Data.Void.Void () m b2)
+                                         (Prelude.const
+                                            @ (CI.Pipe a21 a21 Data.Void.Void () m b2)
+                                            @ ())
+                                         (CI.unConduitM
+                                            @ a21
+                                            @ Data.Void.Void
+                                            @ m
+                                            @ b
+                                            @ b2
+                                            f1
+                                            rest)))
+                             } in
+                             loop b1)
+                            (foldMS @ b @ a21 @ m $dMonad1 f b1 @ Data.Void.Void)))
+                   = letrec {
+                       go :: CI.Pipe () () a21 () m () -> b -> m b {- Arity: 2 -}
+                       = \ ds :: CI.Pipe () () a21 () m () b2 :: b ->
+                         case ds of wild {
+                           CI.HaveOutput src1 ds1 a22
+                           -> >>=
+                                @ m
+                                $dMonad1
+                                @ b
+                                @ b
+                                (f b2 a22)
+                                (\ b' :: b -> case b' of b'1 { DEFAULT -> go src1 b'1 })
+                           CI.NeedInput ds1 c -> go (c ghc-prim-0.4.0.0:GHC.Tuple.()) b2
+                           CI.Done ds1
+                           -> case ds1 of wild1 { () -> return @ m $dMonad1 @ b b2 }
+                           CI.PipeM msrc
+                           -> >>=
+                                @ m
+                                $dMonad1
+                                @ (CI.Pipe () () a21 () m ())
+                                @ b
+                                msrc
+                                (\ src1 :: CI.Pipe () () a21 () m () -> go src1 b2)
+                           CI.Leftover src1 ds1 -> case ds1 of wild1 { () -> go src1 b2 } }
+                     } in
+                     go
+                       (src
+                          `cast`
+                        (Data.Conduit.Internal.Conduit.NTCo:ConduitM[0]
+                             <()>_N <a21>_N <m>_N <()>_R)
+                          @ ()
+                          (Data.Conduit.Internal.Pipe.Done @ () @ () @ a21 @ () @ m @ ()))
+                       b1
+
+Data.Conduit.List:1:1: Warning:
+    Orphan rule: "conduit: $$ fold" [ALWAYS] forall @ (m :: * -> *)
+                                                    @ b
+                                                    @ a21
+                                                    $dMonad :: Monad m
+                                                    $dMonad1 :: Monad m
+                                                    src :: Source m a21
+                                                    f :: b -> a21 -> b
+                                                    b1 :: b
+                   $$ @ m
+                      @ a21
+                      @ b
+                      $dMonad
+                      src
+                      (unstream
+                         @ a21
+                         @ Data.Void.Void
+                         @ m
+                         @ b
+                         (Data.Conduit.Internal.Fusion.ConduitWithStream
+                            @ a21
+                            @ Data.Void.Void
+                            @ m
+                            @ b
+                            (let {
+                               $dApplicative :: Prelude.Applicative
+                                                  (ConduitM a21 Data.Void.Void m)
+                               = Data.Conduit.Internal.Conduit.$fApplicativeConduitM
+                                   @ a21
+                                   @ Data.Void.Void
+                                   @ m
+                                   (Data.Conduit.Internal.Conduit.$fFunctorConduitM
+                                      @ a21
+                                      @ Data.Void.Void
+                                      @ m)
+                             } in
+                             letrec {
+                               loop :: b -> ConduitM a21 Data.Void.Void m b {- Arity: 1 -}
+                               = \ accum :: b ->
+                                 case accum of accum1 { DEFAULT ->
+                                 let {
+                                   f1 :: ConduitM a21 Data.Void.Void m b {- Arity: 1 -}
+                                   = Data.Conduit.Internal.Conduit.$fMonadConduitM_$creturn
+                                       @ a21
+                                       @ Data.Void.Void
+                                       @ m
+                                       $dApplicative
+                                       @ b
+                                       accum1
+                                 } in
+                                 let {
+                                   g :: a21 -> b = f accum1
+                                 } in
+                                 $ @ (forall b2.
+                                      (b -> CI.Pipe a21 a21 Data.Void.Void () m b2)
+                                      -> CI.Pipe a21 a21 Data.Void.Void () m b2)
+                                   @ (ConduitM a21 Data.Void.Void m b)
+                                   (\ tpl :: forall b2.
+                                             (b -> CI.Pipe a21 a21 Data.Void.Void () m b2)
+                                             -> CI.Pipe a21 a21 Data.Void.Void () m b2 ->
+                                    tpl)
+                                     `cast`
+                                   (<forall b2.
+                                     (b -> CI.Pipe a21 a21 Data.Void.Void () m b2)
+                                     -> CI.Pipe a21 a21 Data.Void.Void () m b2>_R
+                                    ->_R Sym (Data.Conduit.Internal.Conduit.NTCo:ConduitM[0]
+                                                  <a21>_N <Data.Void.Void>_N <m>_N <b>_R))
+                                   (\ @ b2 rest :: b -> CI.Pipe a21 a21 Data.Void.Void () m b2 ->
+                                    Data.Conduit.Internal.Pipe.NeedInput
+                                      @ a21
+                                      @ a21
+                                      @ Data.Void.Void
+                                      @ ()
+                                      @ m
+                                      @ b2
+                                      (\ i1 :: a21 ->
+                                       CI.unConduitM
+                                         @ a21
+                                         @ Data.Void.Void
+                                         @ m
+                                         @ b
+                                         @ b2
+                                         (loop (g i1))
+                                         rest)
+                                      ($ @ (CI.Pipe a21 a21 Data.Void.Void () m b2)
+                                         @ (() -> CI.Pipe a21 a21 Data.Void.Void () m b2)
+                                         (Prelude.const
+                                            @ (CI.Pipe a21 a21 Data.Void.Void () m b2)
+                                            @ ())
+                                         (CI.unConduitM
+                                            @ a21
+                                            @ Data.Void.Void
+                                            @ m
+                                            @ b
+                                            @ b2
+                                            f1
+                                            rest))) }
+                             } in
+                             loop b1)
+                            (foldS @ b @ a21 @ m $dMonad1 f b1 @ Data.Void.Void)))
+                   = letrec {
+                       go :: CI.Pipe () () a21 () m () -> b -> m b {- Arity: 2 -}
+                       = \ ds :: CI.Pipe () () a21 () m () b2 :: b ->
+                         case ds of wild {
+                           CI.HaveOutput src1 ds1 a22
+                           -> Prelude.$! @ b @ (m b) (go src1) (f b2 a22)
+                           CI.NeedInput ds1 c -> go (c ghc-prim-0.4.0.0:GHC.Tuple.()) b2
+                           CI.Done ds1
+                           -> case ds1 of wild1 { () -> return @ m $dMonad1 @ b b2 }
+                           CI.PipeM msrc
+                           -> >>=
+                                @ m
+                                $dMonad1
+                                @ (CI.Pipe () () a21 () m ())
+                                @ b
+                                msrc
+                                (\ src1 :: CI.Pipe () () a21 () m () -> go src1 b2)
+                           CI.Leftover src1 ds1 -> case ds1 of wild1 { () -> go src1 b2 } }
+                     } in
+                     go
+                       (src
+                          `cast`
+                        (Data.Conduit.Internal.Conduit.NTCo:ConduitM[0]
+                             <()>_N <a21>_N <m>_N <()>_R)
+                          @ ()
+                          (Data.Conduit.Internal.Pipe.Done @ () @ () @ a21 @ () @ m @ ()))
+                       b1
+[8 of 8] Compiling Data.Conduit.Lift ( Data\Conduit\Lift.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Conduit\Lift.o )
+
+Data\Conduit\Lift.hs:74:1: Warning:
+    The import of ‘Data.Monoid’ is redundant
+      except perhaps to import instances from ‘Data.Monoid’
+    To import instances alone, use: import Data.Monoid()
+
+Data\Conduit\Lift.hs:77:1: Warning:
+    Module ‘Control.Monad.Trans.Error’ is deprecated:
+      Use Control.Monad.Trans.Except instead
+
+Data\Conduit\Lift.hs:128:26: Warning:
+    In the use of type constructor or class ‘E.ErrorT’
+    (imported from Control.Monad.Trans.Error):
+    Deprecated: "Use Control.Monad.Trans.Except instead"
+
+Data\Conduit\Lift.hs:128:56: Warning:
+    In the use of type constructor or class ‘E.Error’
+    (imported from Control.Monad.Trans.Error):
+    Deprecated: "Use Control.Monad.Trans.Except instead"
+
+Data\Conduit\Lift.hs:130:29: Warning:
+    In the use of type constructor or class ‘E.ErrorT’
+    (imported from Control.Monad.Trans.Error):
+    Deprecated: "Use Control.Monad.Trans.Except instead"
+
+Data\Conduit\Lift.hs:133:12: Warning:
+    In the use of data constructor ‘E.ErrorT’
+    (imported from Control.Monad.Trans.Error):
+    Deprecated: "Use Control.Monad.Trans.Except instead"
+
+Data\Conduit\Lift.hs:139:16: Warning:
+    In the use of type constructor or class ‘E.Error’
+    (imported from Control.Monad.Trans.Error):
+    Deprecated: "Use Control.Monad.Trans.Except instead"
+
+Data\Conduit\Lift.hs:140:20: Warning:
+    In the use of type constructor or class ‘E.ErrorT’
+    (imported from Control.Monad.Trans.Error):
+    Deprecated: "Use Control.Monad.Trans.Except instead"
+
+Data\Conduit\Lift.hs:145:25: Warning:
+    In the use of ‘E.runErrorT’
+    (imported from Control.Monad.Trans.Error):
+    Deprecated: "Use Control.Monad.Trans.Except instead"
+
+Data\Conduit\Lift.hs:150:56: Warning:
+    In the use of ‘E.runErrorT’
+    (imported from Control.Monad.Trans.Error):
+    Deprecated: "Use Control.Monad.Trans.Except instead"
+
+Data\Conduit\Lift.hs:159:16: Warning:
+    In the use of type constructor or class ‘E.Error’
+    (imported from Control.Monad.Trans.Error):
+    Deprecated: "Use Control.Monad.Trans.Except instead"
+
+Data\Conduit\Lift.hs:160:20: Warning:
+    In the use of type constructor or class ‘E.ErrorT’
+    (imported from Control.Monad.Trans.Error):
+    Deprecated: "Use Control.Monad.Trans.Except instead"
+
+Data\Conduit\Lift.hs:161:29: Warning:
+    In the use of type constructor or class ‘E.ErrorT’
+    (imported from Control.Monad.Trans.Error):
+    Deprecated: "Use Control.Monad.Trans.Except instead"
+
+Data\Conduit\Lift.hs:162:23: Warning:
+    In the use of type constructor or class ‘E.ErrorT’
+    (imported from Control.Monad.Trans.Error):
+    Deprecated: "Use Control.Monad.Trans.Except instead"
+
+Data\Conduit\Lift.hs:167:32: Warning:
+    In the use of ‘E.runErrorT’
+    (imported from Control.Monad.Trans.Error):
+    Deprecated: "Use Control.Monad.Trans.Except instead"
+In-place registering conduit-1.2.4.2...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Installing library in
+C:\Users\magocoal\AppData\Roaming\stack\snapshots\x86_64-windows\nightly-2015-06-16\7.10.2\lib\x86_64-windows-ghc-7.10.2\conduit-1.2.4.2-6w6V1jBF4QOLuhdOCVCzZi
+Registering conduit-1.2.4.2...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset

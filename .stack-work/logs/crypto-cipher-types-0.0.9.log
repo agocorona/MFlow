@@ -1,0 +1,33 @@
+Configuring crypto-cipher-types-0.0.9...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Building crypto-cipher-types-0.0.9...
+Preprocessing library crypto-cipher-types-0.0.9...
+[ 1 of 10] Compiling Crypto.Cipher.Types.Utils ( Crypto\Cipher\Types\Utils.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Crypto\Cipher\Types\Utils.o )
+[ 2 of 10] Compiling Crypto.Cipher.Types.GF ( Crypto\Cipher\Types\GF.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Crypto\Cipher\Types\GF.o )
+
+Crypto\Cipher\Types\GF.hs:16:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+[ 3 of 10] Compiling Crypto.Cipher.Types.Base ( Crypto\Cipher\Types\Base.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Crypto\Cipher\Types\Base.o )
+[ 4 of 10] Compiling Crypto.Cipher.Types.Block ( Crypto\Cipher\Types\Block.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Crypto\Cipher\Types\Block.o )
+
+Crypto\Cipher\Types\Block.hs:38:1: Warning:
+    The import of ‘Bits’ from module ‘Data.Bits’ is redundant
+[ 5 of 10] Compiling Crypto.Cipher.Types.BlockIO ( Crypto\Cipher\Types\BlockIO.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Crypto\Cipher\Types\BlockIO.o )
+
+Crypto\Cipher\Types\BlockIO.hs:22:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+[ 6 of 10] Compiling Crypto.Cipher.Types.Unsafe ( Crypto\Cipher\Types\Unsafe.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Crypto\Cipher\Types\Unsafe.o )
+[ 7 of 10] Compiling Crypto.Cipher.Types.OfIO ( Crypto\Cipher\Types\OfIO.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Crypto\Cipher\Types\OfIO.o )
+[ 8 of 10] Compiling Crypto.Cipher.Types.Stream ( Crypto\Cipher\Types\Stream.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Crypto\Cipher\Types\Stream.o )
+[ 9 of 10] Compiling Crypto.Cipher.Types.AEAD ( Crypto\Cipher\Types\AEAD.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Crypto\Cipher\Types\AEAD.o )
+[10 of 10] Compiling Crypto.Cipher.Types ( Crypto\Cipher\Types.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Crypto\Cipher\Types.o )
+In-place registering crypto-cipher-types-0.0.9...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Installing library in
+C:\Users\magocoal\AppData\Roaming\stack\snapshots\x86_64-windows\nightly-2015-06-16\7.10.2\lib\x86_64-windows-ghc-7.10.2\crypto-cipher-types-0.0.9-7fh37Ly4VLPKhwwe0j0lXN
+Registering crypto-cipher-types-0.0.9...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset

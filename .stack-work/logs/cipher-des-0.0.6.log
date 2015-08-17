@@ -1,0 +1,19 @@
+Configuring cipher-des-0.0.6...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Building cipher-des-0.0.6...
+Preprocessing library cipher-des-0.0.6...
+[1 of 4] Compiling Crypto.Cipher.DES.Primitive ( Crypto\Cipher\DES\Primitive.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Crypto\Cipher\DES\Primitive.o )
+[2 of 4] Compiling Crypto.Cipher.DES.Serialization ( Crypto\Cipher\DES\Serialization.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Crypto\Cipher\DES\Serialization.o )
+
+Crypto\Cipher\DES\Serialization.hs:35:19: Warning:
+    In the use of ‘B.inlinePerformIO’
+    (imported from Data.ByteString.Internal):
+    Deprecated: "If you think you know what you are doing, use 'unsafePerformIO'. If you are sure you know what you are doing, use 'unsafeDupablePerformIO'. If you enjoy sharing an address space with a malevolent agent of chaos, try 'accursedUnutterablePerformIO'."
+[3 of 4] Compiling Crypto.Cipher.TripleDES ( Crypto\Cipher\TripleDES.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Crypto\Cipher\TripleDES.o )
+[4 of 4] Compiling Crypto.Cipher.DES ( Crypto\Cipher\DES.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Crypto\Cipher\DES.o )
+In-place registering cipher-des-0.0.6...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Installing library in
+C:\Users\magocoal\AppData\Roaming\stack\snapshots\x86_64-windows\nightly-2015-06-16\7.10.2\lib\x86_64-windows-ghc-7.10.2\cipher-des-0.0.6-8NcVpYhOkxZDc2CYfIoJIv
+Registering cipher-des-0.0.6...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset

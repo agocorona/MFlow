@@ -1,0 +1,16 @@
+Configuring cipher-rc4-0.1.4...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Building cipher-rc4-0.1.4...
+Preprocessing library cipher-rc4-0.1.4...
+[1 of 1] Compiling Crypto.Cipher.RC4 ( Crypto\Cipher\RC4.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Crypto\Cipher\RC4.o )
+
+Crypto\Cipher\RC4.hs:37:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+In-place registering cipher-rc4-0.1.4...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Installing library in
+C:\Users\magocoal\AppData\Roaming\stack\snapshots\x86_64-windows\nightly-2015-06-16\7.10.2\lib\x86_64-windows-ghc-7.10.2\cipher-rc4-0.1.4-HhSLkJoU5p5JxWfvf4I6Du
+Registering cipher-rc4-0.1.4...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset

@@ -1,0 +1,25 @@
+Configuring stringsearch-0.3.6.6...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Building stringsearch-0.3.6.6...
+Preprocessing library stringsearch-0.3.6.6...
+[ 1 of 15] Compiling Data.ByteString.Lazy.Search.KarpRabin ( Data\ByteString\Lazy\Search\KarpRabin.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\ByteString\Lazy\Search\KarpRabin.o )
+[ 2 of 15] Compiling Data.ByteString.Search.KarpRabin ( Data\ByteString\Search\KarpRabin.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\ByteString\Search\KarpRabin.o )
+[ 3 of 15] Compiling Data.ByteString.Search.Internal.Utils ( Data\ByteString\Search\Internal\Utils.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\ByteString\Search\Internal\Utils.o )
+[ 4 of 15] Compiling Data.ByteString.Search.Internal.KnuthMorrisPratt ( Data\ByteString\Search\Internal\KnuthMorrisPratt.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\ByteString\Search\Internal\KnuthMorrisPratt.o )
+[ 5 of 15] Compiling Data.ByteString.Search.KMP ( Data\ByteString\Search\KMP.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\ByteString\Search\KMP.o )
+[ 6 of 15] Compiling Data.ByteString.Search.KnuthMorrisPratt ( Data\ByteString\Search\KnuthMorrisPratt.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\ByteString\Search\KnuthMorrisPratt.o )
+[ 7 of 15] Compiling Data.ByteString.Lazy.Search.KMP ( Data\ByteString\Lazy\Search\KMP.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\ByteString\Lazy\Search\KMP.o )
+[ 8 of 15] Compiling Data.ByteString.Search.Substitution ( Data\ByteString\Search\Substitution.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\ByteString\Search\Substitution.o )
+[ 9 of 15] Compiling Data.ByteString.Lazy.Search.Internal.BoyerMoore ( Data\ByteString\Lazy\Search\Internal\BoyerMoore.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\ByteString\Lazy\Search\Internal\BoyerMoore.o )
+[10 of 15] Compiling Data.ByteString.Search.DFA ( Data\ByteString\Search\DFA.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\ByteString\Search\DFA.o )
+[11 of 15] Compiling Data.ByteString.Lazy.Search ( Data\ByteString\Lazy\Search.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\ByteString\Lazy\Search.o )
+[12 of 15] Compiling Data.ByteString.Lazy.Search.DFA ( Data\ByteString\Lazy\Search\DFA.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\ByteString\Lazy\Search\DFA.o )
+[13 of 15] Compiling Data.ByteString.Search.Internal.BoyerMoore ( Data\ByteString\Search\Internal\BoyerMoore.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\ByteString\Search\Internal\BoyerMoore.o )
+[14 of 15] Compiling Data.ByteString.Search.BoyerMoore ( Data\ByteString\Search\BoyerMoore.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\ByteString\Search\BoyerMoore.o )
+[15 of 15] Compiling Data.ByteString.Search ( Data\ByteString\Search.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\ByteString\Search.o )
+In-place registering stringsearch-0.3.6.6...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Installing library in
+C:\Users\magocoal\AppData\Roaming\stack\snapshots\x86_64-windows\nightly-2015-06-16\7.10.2\lib\x86_64-windows-ghc-7.10.2\stringsearch-0.3.6.6-LD3tXxltwdY99HXR2kj3px
+Registering stringsearch-0.3.6.6...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset

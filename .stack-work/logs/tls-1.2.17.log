@@ -1,0 +1,135 @@
+Configuring tls-1.2.17...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Building tls-1.2.17...
+Preprocessing library tls-1.2.17...
+[ 1 of 50] Compiling Network.TLS.Util.ASN1 ( Network\TLS\Util\ASN1.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\TLS\Util\ASN1.o )
+[ 2 of 50] Compiling Network.TLS.RNG  ( Network\TLS\RNG.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\TLS\RNG.o )
+[ 3 of 50] Compiling Network.TLS.MAC  ( Network\TLS\MAC.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\TLS\MAC.o )
+[ 4 of 50] Compiling Network.TLS.ErrT ( Network\TLS\ErrT.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\TLS\ErrT.o )
+[ 5 of 50] Compiling Network.TLS.Extension.EC ( Network\TLS\Extension\EC.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\TLS\Extension\EC.o )
+[ 6 of 50] Compiling Network.TLS.Util.Serialization ( Network\TLS\Util\Serialization.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\TLS\Util\Serialization.o )
+[ 7 of 50] Compiling Network.TLS.Crypto.ECDH ( Network\TLS\Crypto\ECDH.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\TLS\Crypto\ECDH.o )
+[ 8 of 50] Compiling Network.TLS.Crypto.DH ( Network\TLS\Crypto\DH.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\TLS\Crypto\DH.o )
+[ 9 of 50] Compiling Network.TLS.Types ( Network\TLS\Types.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\TLS\Types.o )
+[10 of 50] Compiling Network.TLS.X509 ( Network\TLS\X509.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\TLS\X509.o )
+[11 of 50] Compiling Network.TLS.Session ( Network\TLS\Session.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\TLS\Session.o )
+[12 of 50] Compiling Network.TLS.Measurement ( Network\TLS\Measurement.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\TLS\Measurement.o )
+[13 of 50] Compiling Network.TLS.Crypto ( Network\TLS\Crypto.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\TLS\Crypto.o )
+[14 of 50] Compiling Network.TLS.Struct ( Network\TLS\Struct.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\TLS\Struct.o )
+[15 of 50] Compiling Network.TLS.Hooks ( Network\TLS\Hooks.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\TLS\Hooks.o )
+[16 of 50] Compiling Network.TLS.Credentials ( Network\TLS\Credentials.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\TLS\Credentials.o )
+
+Network\TLS\Credentials.hs:20:1: Warning:
+    The import of ‘Data.Monoid’ is redundant
+      except perhaps to import instances from ‘Data.Monoid’
+    To import instances alone, use: import Data.Monoid()
+[17 of 50] Compiling Network.TLS.Wire ( Network\TLS\Wire.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\TLS\Wire.o )
+
+Network\TLS\Wire.hs:53:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+[18 of 50] Compiling Network.TLS.Cap  ( Network\TLS\Cap.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\TLS\Cap.o )
+[19 of 50] Compiling Network.TLS.Util ( Network\TLS\Util.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\TLS\Util.o )
+[20 of 50] Compiling Network.TLS.Backend ( Network\TLS\Backend.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\TLS\Backend.o )
+[21 of 50] Compiling Network.TLS.Cipher ( Network\TLS\Cipher.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\TLS\Cipher.o )
+[22 of 50] Compiling Network.TLS.Packet ( Network\TLS\Packet.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\TLS\Packet.o )
+
+Network\TLS\Packet.hs:66:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+[23 of 50] Compiling Network.TLS.Extension ( Network\TLS\Extension.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\TLS\Extension.o )
+
+Network\TLS\Extension.hs:44:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+[24 of 50] Compiling Network.TLS.State ( Network\TLS\State.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\TLS\State.o )
+
+Network\TLS\State.hs:58:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+[25 of 50] Compiling Network.TLS.Compression ( Network\TLS\Compression.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\TLS\Compression.o )
+[26 of 50] Compiling Network.TLS.Parameters ( Network\TLS\Parameters.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\TLS\Parameters.o )
+
+Network\TLS\Parameters.hs:37:1: Warning:
+    The import of ‘Data.Monoid’ is redundant
+      except perhaps to import instances from ‘Data.Monoid’
+    To import instances alone, use: import Data.Monoid()
+[27 of 50] Compiling Network.TLS.Record.State ( Network\TLS\Record\State.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\TLS\Record\State.o )
+
+Network\TLS\Record\State.hs:29:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+[28 of 50] Compiling Network.TLS.Record.Types ( Network\TLS\Record\Types.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\TLS\Record\Types.o )
+
+Network\TLS\Record\Types.hs:44:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+[29 of 50] Compiling Network.TLS.Handshake.State ( Network\TLS\Handshake\State.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\TLS\Handshake\State.o )
+
+Network\TLS\Handshake\State.hs:54:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+[30 of 50] Compiling Network.TLS.Context.Internal ( Network\TLS\Context\Internal.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\TLS\Context\Internal.o )
+[31 of 50] Compiling Network.TLS.Handshake.Certificate ( Network\TLS\Handshake\Certificate.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\TLS\Handshake\Certificate.o )
+[32 of 50] Compiling Network.TLS.Handshake.Key ( Network\TLS\Handshake\Key.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\TLS\Handshake\Key.o )
+[33 of 50] Compiling Network.TLS.Handshake.Process ( Network\TLS\Handshake\Process.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\TLS\Handshake\Process.o )
+
+Network\TLS\Handshake\Process.hs:16:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+[34 of 50] Compiling Network.TLS.Handshake.Signature ( Network\TLS\Handshake\Signature.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\TLS\Handshake\Signature.o )
+
+Network\TLS\Handshake\Signature.hs:30:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+[35 of 50] Compiling Network.TLS.Record.Engage ( Network\TLS\Record\Engage.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\TLS\Record\Engage.o )
+
+Network\TLS\Record\Engage.hs:15:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+[36 of 50] Compiling Network.TLS.Record.Disengage ( Network\TLS\Record\Disengage.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\TLS\Record\Disengage.o )
+[37 of 50] Compiling Network.TLS.Record ( Network\TLS\Record.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\TLS\Record.o )
+[38 of 50] Compiling Network.TLS.Receiving ( Network\TLS\Receiving.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\TLS\Receiving.o )
+[39 of 50] Compiling Network.TLS.Sending ( Network\TLS\Sending.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\TLS\Sending.o )
+
+Network\TLS\Sending.hs:13:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+[40 of 50] Compiling Network.TLS.IO   ( Network\TLS\IO.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\TLS\IO.o )
+[41 of 50] Compiling Network.TLS.Handshake.Common ( Network\TLS\Handshake\Common.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\TLS\Handshake\Common.o )
+[42 of 50] Compiling Network.TLS.Handshake.Client ( Network\TLS\Handshake\Client.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\TLS\Handshake\Client.o )
+
+Network\TLS\Handshake\Client.hs:35:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+[43 of 50] Compiling Network.TLS.Handshake.Server ( Network\TLS\Handshake\Server.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\TLS\Handshake\Server.o )
+
+Network\TLS\Handshake\Server.hs:36:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+[44 of 50] Compiling Network.TLS.Handshake ( Network\TLS\Handshake.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\TLS\Handshake.o )
+[45 of 50] Compiling Network.TLS.Context ( Network\TLS\Context.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\TLS\Context.o )
+[46 of 50] Compiling Network.TLS.Core ( Network\TLS\Core.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\TLS\Core.o )
+[47 of 50] Compiling Network.TLS.Internal ( Network\TLS\Internal.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\TLS\Internal.o )
+[48 of 50] Compiling Network.TLS      ( Network\TLS.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\TLS.o )
+[49 of 50] Compiling Network.TLS.Extra.Cipher ( Network\TLS\Extra\Cipher.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\TLS\Extra\Cipher.o )
+[50 of 50] Compiling Network.TLS.Extra ( Network\TLS\Extra.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\TLS\Extra.o )
+In-place registering tls-1.2.17...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Installing library in
+C:\Users\magocoal\AppData\Roaming\stack\snapshots\x86_64-windows\nightly-2015-06-16\7.10.2\lib\x86_64-windows-ghc-7.10.2\tls-1.2.17-2Q2M5Ai4lihEoz9BaCmQVH
+Registering tls-1.2.17...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset

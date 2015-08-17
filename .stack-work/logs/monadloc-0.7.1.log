@@ -1,0 +1,45 @@
+Configuring monadloc-0.7.1...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Building monadloc-0.7.1...
+Preprocessing library monadloc-0.7.1...
+
+Control\Monad\Loc.hs:6:14: Warning:
+    -XOverlappingInstances is deprecated: instead use per-instance pragmas OVERLAPPING/OVERLAPPABLE/OVERLAPS
+[1 of 3] Compiling Control.Monad.Loc ( Control\Monad\Loc.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Control\Monad\Loc.o )
+[2 of 3] Compiling Control.Monad.Loc.TH ( Control\Monad\Loc\TH.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Control\Monad\Loc\TH.o )
+[3 of 3] Compiling Control.Monad.Loc.Transformers ( Control\Monad\Loc\Transformers.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Control\Monad\Loc\Transformers.o )
+
+Control\Monad\Loc\Transformers.hs:11:1: Warning:
+    Module ‘Control.Monad.Trans.Error’ is deprecated:
+      Use Control.Monad.Trans.Except instead
+
+Control\Monad\Loc\Transformers.hs:20:1: Warning:
+    The import of ‘Data.Monoid’ is redundant
+      except perhaps to import instances from ‘Data.Monoid’
+    To import instances alone, use: import Data.Monoid()
+
+Control\Monad\Loc\Transformers.hs:25:11: Warning:
+    In the use of type constructor or class ‘Error’
+    (imported from Control.Monad.Trans.Error):
+    Deprecated: "Use Control.Monad.Trans.Except instead"
+
+Control\Monad\Loc\Transformers.hs:25:45: Warning:
+    In the use of type constructor or class ‘ErrorT’
+    (imported from Control.Monad.Trans.Error):
+    Deprecated: "Use Control.Monad.Trans.Except instead"
+
+Control\Monad\Loc\Transformers.hs:26:15: Warning:
+    In the use of data constructor ‘ErrorT’
+    (imported from Control.Monad.Trans.Error):
+    Deprecated: "Use Control.Monad.Trans.Except instead"
+
+Control\Monad\Loc\Transformers.hs:26:36: Warning:
+    In the use of ‘runErrorT’
+    (imported from Control.Monad.Trans.Error):
+    Deprecated: "Use Control.Monad.Trans.Except instead"
+In-place registering monadloc-0.7.1...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Installing library in
+C:\Users\magocoal\OneDrive\Haskell\devel\MFlow\.stack-work\install\x86_64-windows\nightly-2015-06-16\7.10.2\lib\x86_64-windows-ghc-7.10.2\monadloc-0.7.1-4YUrX0OZ2dVIJdAQmS9Y20
+Registering monadloc-0.7.1...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset

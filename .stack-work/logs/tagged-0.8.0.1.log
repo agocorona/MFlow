@@ -1,0 +1,29 @@
+Configuring tagged-0.8.0.1...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Building tagged-0.8.0.1...
+Preprocessing library tagged-0.8.0.1...
+[1 of 2] Compiling Data.Proxy.TH    ( src\Data\Proxy\TH.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Proxy\TH.o )
+[2 of 2] Compiling Data.Tagged      ( src\Data\Tagged.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Tagged.o )
+
+src\Data\Tagged.hs:9:14: Warning:
+    ‘Data.Tagged’ is marked as Trustworthy but has been inferred as safe!
+
+src\Data\Tagged.hs:41:1: Warning:
+    The import of ‘Applicative, <$>’
+    from module ‘Control.Applicative’ is redundant
+
+src\Data\Tagged.hs:46:1: Warning:
+    The import of ‘Data.Traversable’ is redundant
+      except perhaps to import instances from ‘Data.Traversable’
+    To import instances alone, use: import Data.Traversable()
+
+src\Data\Tagged.hs:52:1: Warning:
+    The import of ‘Data.Monoid’ is redundant
+      except perhaps to import instances from ‘Data.Monoid’
+    To import instances alone, use: import Data.Monoid()
+In-place registering tagged-0.8.0.1...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Installing library in
+C:\Users\magocoal\AppData\Roaming\stack\snapshots\x86_64-windows\nightly-2015-06-16\7.10.2\lib\x86_64-windows-ghc-7.10.2\tagged-0.8.0.1-IipN3o2AmmsFW76m6sI00r
+Registering tagged-0.8.0.1...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset

@@ -1,0 +1,44 @@
+Configuring primitive-0.6...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Building primitive-0.6...
+Preprocessing library primitive-0.6...
+[ 1 of 10] Compiling Data.Primitive.Internal.Compat ( Data\Primitive\Internal\Compat.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Primitive\Internal\Compat.o )
+[ 2 of 10] Compiling Data.Primitive.MachDeps ( Data\Primitive\MachDeps.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Primitive\MachDeps.o )
+[ 3 of 10] Compiling Data.Primitive.Internal.Operations ( Data\Primitive\Internal\Operations.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Primitive\Internal\Operations.o )
+[ 4 of 10] Compiling Control.Monad.Primitive ( Control\Monad\Primitive.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Control\Monad\Primitive.o )
+
+Control\Monad\Primitive.hs:34:1: Warning:
+    The import of ‘Data.Monoid’ is redundant
+      except perhaps to import instances from ‘Data.Monoid’
+    To import instances alone, use: import Data.Monoid()
+
+Control\Monad\Primitive.hs:39:1: Warning:
+    Module ‘Control.Monad.Trans.Error’ is deprecated:
+      Use Control.Monad.Trans.Except instead
+
+Control\Monad\Primitive.hs:98:11: Warning:
+    In the use of type constructor or class ‘Error’
+    (imported from Control.Monad.Trans.Error):
+    Deprecated: "Use Control.Monad.Trans.Except instead"
+
+Control\Monad\Primitive.hs:98:47: Warning:
+    In the use of type constructor or class ‘ErrorT’
+    (imported from Control.Monad.Trans.Error):
+    Deprecated: "Use Control.Monad.Trans.Except instead"
+
+Control\Monad\Primitive.hs:99:19: Warning:
+    In the use of type constructor or class ‘ErrorT’
+    (imported from Control.Monad.Trans.Error):
+    Deprecated: "Use Control.Monad.Trans.Except instead"
+[ 5 of 10] Compiling Data.Primitive.Types ( Data\Primitive\Types.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Primitive\Types.o )
+[ 6 of 10] Compiling Data.Primitive.Array ( Data\Primitive\Array.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Primitive\Array.o )
+[ 7 of 10] Compiling Data.Primitive.ByteArray ( Data\Primitive\ByteArray.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Primitive\ByteArray.o )
+[ 8 of 10] Compiling Data.Primitive.Addr ( Data\Primitive\Addr.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Primitive\Addr.o )
+[ 9 of 10] Compiling Data.Primitive   ( Data\Primitive.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Primitive.o )
+[10 of 10] Compiling Data.Primitive.MutVar ( Data\Primitive\MutVar.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Primitive\MutVar.o )
+In-place registering primitive-0.6...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Installing library in
+C:\Users\magocoal\AppData\Roaming\stack\snapshots\x86_64-windows\nightly-2015-06-16\7.10.2\lib\x86_64-windows-ghc-7.10.2\primitive-0.6-3d4UsQu7pJCEtlsxN3gLjk
+Registering primitive-0.6...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset

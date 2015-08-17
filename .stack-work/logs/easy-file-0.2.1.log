@@ -1,0 +1,24 @@
+Configuring easy-file-0.2.1...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Building easy-file-0.2.1...
+Preprocessing library easy-file-0.2.1...
+[1 of 4] Compiling System.EasyFile.Missing ( System\EasyFile\Missing.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\System\EasyFile\Missing.o )
+
+System\EasyFile\Missing.hs:7:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+[2 of 4] Compiling System.EasyFile.Directory ( System\EasyFile\Directory.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\System\EasyFile\Directory.o )
+
+System\EasyFile\Directory.hs:37:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+[3 of 4] Compiling System.EasyFile.FilePath ( System\EasyFile\FilePath.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\System\EasyFile\FilePath.o )
+[4 of 4] Compiling System.EasyFile  ( System\EasyFile.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\System\EasyFile.o )
+In-place registering easy-file-0.2.1...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Installing library in
+C:\Users\magocoal\AppData\Roaming\stack\snapshots\x86_64-windows\nightly-2015-06-16\7.10.2\lib\x86_64-windows-ghc-7.10.2\easy-file-0.2.1-BHtB5Eu1SnECEa4biqJKXR
+Registering easy-file-0.2.1...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset

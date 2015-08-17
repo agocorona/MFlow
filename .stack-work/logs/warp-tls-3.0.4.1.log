@@ -1,0 +1,16 @@
+Configuring warp-tls-3.0.4.1...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Building warp-tls-3.0.4.1...
+Preprocessing library warp-tls-3.0.4.1...
+[1 of 1] Compiling Network.Wai.Handler.WarpTLS ( Network\Wai\Handler\WarpTLS.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\Wai\Handler\WarpTLS.o )
+
+Network\Wai\Handler\WarpTLS.hs:43:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+In-place registering warp-tls-3.0.4.1...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Installing library in
+C:\Users\magocoal\AppData\Roaming\stack\snapshots\x86_64-windows\nightly-2015-06-16\7.10.2\lib\x86_64-windows-ghc-7.10.2\warp-tls-3.0.4.1-7sdEpXpT8Tw4agmCX6Uddd
+Registering warp-tls-3.0.4.1...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset

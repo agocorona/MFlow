@@ -1,0 +1,41 @@
+Configuring clientsession-0.9.1.1...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Building clientsession-0.9.1.1...
+Preprocessing library clientsession-0.9.1.1...
+[1 of 2] Compiling System.LookupEnv ( src\System\LookupEnv.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\System\LookupEnv.o )
+[2 of 2] Compiling Web.ClientSession ( src\Web\ClientSession.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Web\ClientSession.o )
+
+src\Web\ClientSession.hs:61:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+
+src\Web\ClientSession.hs:91:1: Warning:
+    The import of ‘Data.Tagged’ is redundant
+      except perhaps to import instances from ‘Data.Tagged’
+    To import instances alone, use: import Data.Tagged()
+
+src\Web\ClientSession.hs:95:1: Warning:
+    The import of ‘Crypto.Random’ is redundant
+      except perhaps to import instances from ‘Crypto.Random’
+    To import instances alone, use: import Crypto.Random()
+
+src\Web\ClientSession.hs:96:1: Warning:
+    The import of ‘Crypto.Types’ is redundant
+      except perhaps to import instances from ‘Crypto.Types’
+    To import instances alone, use: import Crypto.Types()
+
+src\Web\ClientSession.hs:267:37: Warning:
+    In the use of ‘A.initKey’ (imported from Crypto.Cipher.AES):
+    Deprecated: "use initAES"
+In-place registering clientsession-0.9.1.1...
+Preprocessing executable 'clientsession-generate' for clientsession-0.9.1.1...
+[1 of 1] Compiling Main             ( bin\generate.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\clientsession-generate\clientsession-generate-tmp\Main.o )
+Linking .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\clientsession-generate\clientsession-generate.exe ...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Installing library in
+C:\Users\magocoal\AppData\Roaming\stack\snapshots\x86_64-windows\nightly-2015-06-16\7.10.2\lib\x86_64-windows-ghc-7.10.2\clientsession-0.9.1.1-3SgTOI0UcjJ2N294xbjMFE
+Installing executable(s) in
+C:\Users\magocoal\AppData\Roaming\stack\snapshots\x86_64-windows\nightly-2015-06-16\7.10.2\bin
+Registering clientsession-0.9.1.1...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset

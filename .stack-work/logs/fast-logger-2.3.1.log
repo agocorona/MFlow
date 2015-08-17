@@ -1,0 +1,26 @@
+Configuring fast-logger-2.3.1...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Building fast-logger-2.3.1...
+Preprocessing library fast-logger-2.3.1...
+[1 of 6] Compiling System.Log.FastLogger.LogStr ( System\Log\FastLogger\LogStr.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\System\Log\FastLogger\LogStr.o )
+
+System\Log\FastLogger\LogStr.hs:20:1: Warning:
+    The import of ‘Data.Monoid’ is redundant
+      except perhaps to import instances from ‘Data.Monoid’
+    To import instances alone, use: import Data.Monoid()
+[2 of 6] Compiling System.Log.FastLogger.IORef ( System\Log\FastLogger\IORef.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\System\Log\FastLogger\IORef.o )
+[3 of 6] Compiling System.Log.FastLogger.IO ( System\Log\FastLogger\IO.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\System\Log\FastLogger\IO.o )
+[4 of 6] Compiling System.Log.FastLogger.Logger ( System\Log\FastLogger\Logger.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\System\Log\FastLogger\Logger.o )
+[5 of 6] Compiling System.Log.FastLogger.File ( System\Log\FastLogger\File.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\System\Log\FastLogger\File.o )
+[6 of 6] Compiling System.Log.FastLogger ( System\Log\FastLogger.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\System\Log\FastLogger.o )
+
+System\Log\FastLogger.hs:31:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+In-place registering fast-logger-2.3.1...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Installing library in
+C:\Users\magocoal\AppData\Roaming\stack\snapshots\x86_64-windows\nightly-2015-06-16\7.10.2\lib\x86_64-windows-ghc-7.10.2\fast-logger-2.3.1-G3BHzbSVld67OuEa8V8bCY
+Registering fast-logger-2.3.1...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset

@@ -1,0 +1,41 @@
+Configuring blaze-builder-0.4.0.1...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Building blaze-builder-0.4.0.1...
+Preprocessing library blaze-builder-0.4.0.1...
+
+Blaze\ByteString\Builder\HTTP.hs:1:63: Warning:
+    -XMonoPatBinds is deprecated: Experimental feature now removed; has no effect
+
+Blaze\ByteString\Builder\Internal\Write.hs:1:33: Warning:
+    -XMonoPatBinds is deprecated: Experimental feature now removed; has no effect
+[ 1 of 10] Compiling Blaze.ByteString.Builder.Internal.Write ( Blaze\ByteString\Builder\Internal\Write.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Blaze\ByteString\Builder\Internal\Write.o )
+
+Blaze\ByteString\Builder\Internal\Write.hs:52:1: Warning:
+    The import of ‘Data.Monoid’ is redundant
+      except perhaps to import instances from ‘Data.Monoid’
+    To import instances alone, use: import Data.Monoid()
+[ 2 of 10] Compiling Blaze.ByteString.Builder.Compat.Write ( Blaze\ByteString\Builder\Compat\Write.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Blaze\ByteString\Builder\Compat\Write.o )
+
+Blaze\ByteString\Builder\Compat\Write.hs:19:1: Warning:
+    The import of ‘Foreign’ is redundant
+      except perhaps to import instances from ‘Foreign’
+    To import instances alone, use: import Foreign()
+[ 3 of 10] Compiling Blaze.ByteString.Builder.Char.Utf8 ( Blaze\ByteString\Builder\Char\Utf8.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Blaze\ByteString\Builder\Char\Utf8.o )
+[ 4 of 10] Compiling Blaze.ByteString.Builder.Char8 ( Blaze\ByteString\Builder\Char8.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Blaze\ByteString\Builder\Char8.o )
+[ 5 of 10] Compiling Blaze.ByteString.Builder.Html.Utf8 ( Blaze\ByteString\Builder\Html\Utf8.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Blaze\ByteString\Builder\Html\Utf8.o )
+[ 6 of 10] Compiling Blaze.ByteString.Builder.ByteString ( Blaze\ByteString\Builder\ByteString.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Blaze\ByteString\Builder\ByteString.o )
+[ 7 of 10] Compiling Blaze.ByteString.Builder.HTTP ( Blaze\ByteString\Builder\HTTP.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Blaze\ByteString\Builder\HTTP.o )
+
+Blaze\ByteString\Builder\HTTP.hs:33:1: Warning:
+    The import of ‘Data.Monoid’ is redundant
+      except perhaps to import instances from ‘Data.Monoid’
+    To import instances alone, use: import Data.Monoid()
+[ 8 of 10] Compiling Blaze.ByteString.Builder.Word ( Blaze\ByteString\Builder\Word.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Blaze\ByteString\Builder\Word.o )
+[ 9 of 10] Compiling Blaze.ByteString.Builder.Int ( Blaze\ByteString\Builder\Int.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Blaze\ByteString\Builder\Int.o )
+[10 of 10] Compiling Blaze.ByteString.Builder ( Blaze\ByteString\Builder.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Blaze\ByteString\Builder.o )
+In-place registering blaze-builder-0.4.0.1...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Installing library in
+C:\Users\magocoal\AppData\Roaming\stack\snapshots\x86_64-windows\nightly-2015-06-16\7.10.2\lib\x86_64-windows-ghc-7.10.2\blaze-builder-0.4.0.1-6FEL8GbgSBLAAUSNnOi2MQ
+Registering blaze-builder-0.4.0.1...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset

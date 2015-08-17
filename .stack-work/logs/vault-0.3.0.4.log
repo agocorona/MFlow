@@ -1,0 +1,40 @@
+Configuring vault-0.3.0.4...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Building vault-0.3.0.4...
+Preprocessing library vault-0.3.0.4...
+[1 of 5] Compiling Data.Unique.Really ( src\Data\Unique\Really.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Unique\Really.o )
+
+src\Data\Unique\Really.hs:6:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+[2 of 5] Compiling Data.Vault.ST.Strict ( src\Data\Vault\ST\Strict.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Vault\ST\Strict.o )
+
+src\Data\Vault\ST\ST.hs:11:1: Warning:
+    The import of ‘Data.Monoid’ is redundant
+      except perhaps to import instances from ‘Data.Monoid’
+    To import instances alone, use: import Data.Monoid()
+
+src\Data\Vault\ST\ST.hs:13:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+[3 of 5] Compiling Data.Vault.Strict ( src\Data\Vault\Strict.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Vault\Strict.o )
+[4 of 5] Compiling Data.Vault.ST.Lazy ( src\Data\Vault\ST\Lazy.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Vault\ST\Lazy.o )
+
+src\Data\Vault\ST\ST.hs:11:1: Warning:
+    The import of ‘Data.Monoid’ is redundant
+      except perhaps to import instances from ‘Data.Monoid’
+    To import instances alone, use: import Data.Monoid()
+
+src\Data\Vault\ST\ST.hs:13:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+[5 of 5] Compiling Data.Vault.Lazy  ( src\Data\Vault\Lazy.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Vault\Lazy.o )
+In-place registering vault-0.3.0.4...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Installing library in
+C:\Users\magocoal\AppData\Roaming\stack\snapshots\x86_64-windows\nightly-2015-06-16\7.10.2\lib\x86_64-windows-ghc-7.10.2\vault-0.3.0.4-9JQ2PuTozkW71tIXciKAV1
+Registering vault-0.3.0.4...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset

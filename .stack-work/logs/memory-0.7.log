@@ -1,0 +1,58 @@
+Configuring memory-0.7...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Building memory-0.7...
+Preprocessing library memory-0.7...
+[ 1 of 28] Compiling Data.Memory.MemMap.Windows ( Data\Memory\MemMap\Windows.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Memory\MemMap\Windows.o )
+[ 2 of 28] Compiling Data.Memory.Internal.DeepSeq ( Data\Memory\Internal\DeepSeq.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Memory\Internal\DeepSeq.o )
+[ 3 of 28] Compiling Data.Memory.Internal.CompatPrim64 ( Data\Memory\Internal\CompatPrim64.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Memory\Internal\CompatPrim64.o )
+[ 4 of 28] Compiling Data.Memory.Internal.CompatPrim ( Data\Memory\Internal\CompatPrim.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Memory\Internal\CompatPrim.o )
+[ 5 of 28] Compiling Data.Memory.Internal.Scrubber ( Data\Memory\Internal\Scrubber.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Memory\Internal\Scrubber.o )
+[ 6 of 28] Compiling Data.Memory.ExtendedWords ( Data\Memory\ExtendedWords.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Memory\ExtendedWords.o )
+[ 7 of 28] Compiling Data.Memory.Internal.Imports ( Data\Memory\Internal\Imports.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Memory\Internal\Imports.o )
+[ 8 of 28] Compiling Data.Memory.PtrMethods ( Data\Memory\PtrMethods.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Memory\PtrMethods.o )
+[ 9 of 28] Compiling Data.Memory.Internal.Compat ( Data\Memory\Internal\Compat.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Memory\Internal\Compat.o )
+[10 of 28] Compiling Data.Memory.Encoding.Base16 ( Data\Memory\Encoding\Base16.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Memory\Encoding\Base16.o )
+[11 of 28] Compiling Data.Memory.Encoding.Base32 ( Data\Memory\Encoding\Base32.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Memory\Encoding\Base32.o )
+[12 of 28] Compiling Data.Memory.Encoding.Base64 ( Data\Memory\Encoding\Base64.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Memory\Encoding\Base64.o )
+[13 of 28] Compiling Data.Memory.Endian ( Data\Memory\Endian.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Memory\Endian.o )
+[14 of 28] Compiling Data.Memory.Hash.SipHash ( Data\Memory\Hash\SipHash.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Memory\Hash\SipHash.o )
+[15 of 28] Compiling Data.Memory.Hash.FNV ( Data\Memory\Hash\FNV.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Memory\Hash\FNV.o )
+[16 of 28] Compiling Data.ByteArray.Types ( Data\ByteArray\Types.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\ByteArray\Types.o )
+
+Data\ByteArray\Types.hs:15:1: Warning:
+    The import of ‘Data.Monoid’ is redundant
+      except perhaps to import instances from ‘Data.Monoid’
+    To import instances alone, use: import Data.Monoid()
+[17 of 28] Compiling Data.ByteArray.Bytes ( Data\ByteArray\Bytes.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\ByteArray\Bytes.o )
+
+Data\ByteArray\Bytes.hs:20:1: Warning:
+    The import of ‘Data.Monoid’ is redundant
+      except perhaps to import instances from ‘Data.Monoid’
+    To import instances alone, use: import Data.Monoid()
+[18 of 28] Compiling Data.ByteArray.ScrubbedBytes ( Data\ByteArray\ScrubbedBytes.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\ByteArray\ScrubbedBytes.o )
+
+Data\ByteArray\ScrubbedBytes.hs:19:1: Warning:
+    The import of ‘Data.Monoid’ is redundant
+      except perhaps to import instances from ‘Data.Monoid’
+    To import instances alone, use: import Data.Monoid()
+[19 of 28] Compiling Data.ByteArray.MemView ( Data\ByteArray\MemView.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\ByteArray\MemView.o )
+[20 of 28] Compiling Data.ByteArray.Pack.Internal ( Data\ByteArray\Pack\Internal.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\ByteArray\Pack\Internal.o )
+
+Data\ByteArray\Pack\Internal.hs:20:1: Warning:
+    The import of ‘Data.Memory.Internal.Imports’ is redundant
+      except perhaps to import instances from ‘Data.Memory.Internal.Imports’
+    To import instances alone, use: import Data.Memory.Internal.Imports()
+[21 of 28] Compiling Data.ByteArray.Methods ( Data\ByteArray\Methods.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\ByteArray\Methods.o )
+[22 of 28] Compiling Data.ByteArray.View ( Data\ByteArray\View.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\ByteArray\View.o )
+[23 of 28] Compiling Data.ByteArray.Encoding ( Data\ByteArray\Encoding.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\ByteArray\Encoding.o )
+[24 of 28] Compiling Data.ByteArray.Mapping ( Data\ByteArray\Mapping.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\ByteArray\Mapping.o )
+[25 of 28] Compiling Data.ByteArray.Parse ( Data\ByteArray\Parse.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\ByteArray\Parse.o )
+[26 of 28] Compiling Data.ByteArray.Hash ( Data\ByteArray\Hash.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\ByteArray\Hash.o )
+[27 of 28] Compiling Data.ByteArray   ( Data\ByteArray.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\ByteArray.o )
+[28 of 28] Compiling Data.ByteArray.Pack ( Data\ByteArray\Pack.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\ByteArray\Pack.o )
+In-place registering memory-0.7...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Installing library in
+C:\Users\magocoal\AppData\Roaming\stack\snapshots\x86_64-windows\nightly-2015-06-16\7.10.2\lib\x86_64-windows-ghc-7.10.2\memory-0.7-ByKf2PUnWbr6V2Z5gsXbfn
+Registering memory-0.7...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset

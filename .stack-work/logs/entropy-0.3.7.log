@@ -1,0 +1,34 @@
+Configuring entropy-0.3.7...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Result of RDRAND Test: True
+Building entropy-0.3.7...
+Preprocessing library entropy-0.3.7...
+[1 of 2] Compiling System.EntropyWindows ( System\EntropyWindows.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\System\EntropyWindows.o )
+
+System\EntropyWindows.hs:80:1: Warning:
+    the 'stdcall' calling convention is unsupported on this platform,
+    treating as ccall
+    When checking declaration:
+      foreign import stdcall unsafe "static CryptAcquireContextA" c_cryptAcquireCtx
+        :: Ptr Word32 -> CString -> CString -> Word32 -> Word32 -> IO Int32
+
+System\EntropyWindows.hs:82:1: Warning:
+    the 'stdcall' calling convention is unsupported on this platform,
+    treating as ccall
+    When checking declaration:
+      foreign import stdcall unsafe "static CryptGenRandom" c_cryptGenRandom
+        :: Word32 -> Word32 -> Ptr Word8 -> IO Int32
+
+System\EntropyWindows.hs:84:1: Warning:
+    the 'stdcall' calling convention is unsupported on this platform,
+    treating as ccall
+    When checking declaration:
+      foreign import stdcall unsafe "static CryptReleaseContext" c_cryptReleaseCtx
+        :: Word32 -> Word32 -> IO Int32
+[2 of 2] Compiling System.Entropy   ( System\Entropy.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\System\Entropy.o )
+In-place registering entropy-0.3.7...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Installing library in
+C:\Users\magocoal\AppData\Roaming\stack\snapshots\x86_64-windows\nightly-2015-06-16\7.10.2\lib\x86_64-windows-ghc-7.10.2\entropy-0.3.7-0OBbAjXxF9sEi7a46zi2Mr
+Registering entropy-0.3.7...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset

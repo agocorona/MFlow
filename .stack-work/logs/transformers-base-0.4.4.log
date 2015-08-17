@@ -1,0 +1,21 @@
+Configuring transformers-base-0.4.4...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Building transformers-base-0.4.4...
+Preprocessing library transformers-base-0.4.4...
+[1 of 1] Compiling Control.Monad.Base ( src\Control\Monad\Base.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Control\Monad\Base.o )
+
+src\Control\Monad\Base.hs:22:1: Warning:
+    The import of ‘Data.Monoid’ is redundant
+      except perhaps to import instances from ‘Data.Monoid’
+    To import instances alone, use: import Data.Monoid()
+
+src\Control\Monad\Base.hs:24:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+In-place registering transformers-base-0.4.4...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Installing library in
+C:\Users\magocoal\AppData\Roaming\stack\snapshots\x86_64-windows\nightly-2015-06-16\7.10.2\lib\x86_64-windows-ghc-7.10.2\transformers-base-0.4.4-88TAFm21vtn2NrYUppy50c
+Registering transformers-base-0.4.4...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset

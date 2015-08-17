@@ -1,0 +1,16 @@
+Configuring asn1-parse-0.9.1...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Building asn1-parse-0.9.1...
+Preprocessing library asn1-parse-0.9.1...
+[1 of 1] Compiling Data.ASN1.Parse  ( Data\ASN1\Parse.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\ASN1\Parse.o )
+
+Data\ASN1\Parse.hs:31:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+In-place registering asn1-parse-0.9.1...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Installing library in
+C:\Users\magocoal\AppData\Roaming\stack\snapshots\x86_64-windows\nightly-2015-06-16\7.10.2\lib\x86_64-windows-ghc-7.10.2\asn1-parse-0.9.1-KMthiTVwXJsAZRUHjDttFj
+Registering asn1-parse-0.9.1...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset

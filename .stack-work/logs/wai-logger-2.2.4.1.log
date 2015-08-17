@@ -1,0 +1,20 @@
+Configuring wai-logger-2.2.4.1...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Building wai-logger-2.2.4.1...
+Preprocessing library wai-logger-2.2.4.1...
+[1 of 5] Compiling Network.Wai.Logger.IP ( Network\Wai\Logger\IP.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\Wai\Logger\IP.o )
+[2 of 5] Compiling Network.Wai.Logger.IORef ( Network\Wai\Logger\IORef.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\Wai\Logger\IORef.o )
+[3 of 5] Compiling Network.Wai.Logger.Date ( Network\Wai\Logger\Date.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\Wai\Logger\Date.o )
+[4 of 5] Compiling Network.Wai.Logger.Apache ( Network\Wai\Logger\Apache.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\Wai\Logger\Apache.o )
+[5 of 5] Compiling Network.Wai.Logger ( Network\Wai\Logger.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Network\Wai\Logger.o )
+
+Network\Wai\Logger.hs:52:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+In-place registering wai-logger-2.2.4.1...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Installing library in
+C:\Users\magocoal\AppData\Roaming\stack\snapshots\x86_64-windows\nightly-2015-06-16\7.10.2\lib\x86_64-windows-ghc-7.10.2\wai-logger-2.2.4.1-D9hsncJODNG71lqIYECjse
+Registering wai-logger-2.2.4.1...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset

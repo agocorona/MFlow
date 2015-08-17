@@ -1,0 +1,105 @@
+Configuring binary-0.7.3.0...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Building binary-0.7.3.0...
+Preprocessing library binary-0.7.3.0...
+[1 of 9] Compiling Data.Binary.Builder.Base ( src\Data\Binary\Builder\Base.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Binary\Builder\Base.o )
+
+src\Data\Binary\Builder\Base.hs:67:1: Warning:
+    The import of ‘Data.Monoid’ is redundant
+      except perhaps to import instances from ‘Data.Monoid’
+    To import instances alone, use: import Data.Monoid()
+
+src\Data\Binary\Builder\Base.hs:192:37: Warning:
+    In the use of ‘inlinePerformIO’
+    (imported from Data.ByteString.Internal):
+    Deprecated: "If you think you know what you are doing, use 'unsafePerformIO'. If you are sure you know what you are doing, use 'unsafeDupablePerformIO'. If you enjoy sharing an address space with a malevolent agent of chaos, try 'accursedUnutterablePerformIO'."
+[2 of 9] Compiling Data.Binary.Builder.Internal ( src\Data\Binary\Builder\Internal.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Binary\Builder\Internal.o )
+
+src\Data\Binary\Builder\Internal.hs:3:14: Warning:
+    ‘Data.Binary.Builder.Internal’ is marked as Trustworthy but has been inferred as safe!
+[3 of 9] Compiling Data.Binary.Get.Internal ( src\Data\Binary\Get\Internal.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Binary\Get\Internal.o )
+
+src\Data\Binary\Get\Internal.hs:402:21: Warning:
+    In the use of ‘B.inlinePerformIO’
+    (imported from Data.ByteString.Internal):
+    Deprecated: "If you think you know what you are doing, use 'unsafePerformIO'. If you are sure you know what you are doing, use 'unsafeDupablePerformIO'. If you enjoy sharing an address space with a malevolent agent of chaos, try 'accursedUnutterablePerformIO'."
+
+src\Data\Binary\Get\Internal.hs:369:1: Warning:
+    Rule "<$> to <*>" may never fire because ‘<$>’ might inline first
+    Probable fix: add an INLINE[n] or NOINLINE[n] pragma on ‘<$>’
+[4 of 9] Compiling Data.Binary.Builder ( src\Data\Binary\Builder.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Binary\Builder.o )
+[5 of 9] Compiling Data.Binary.Get  ( src\Data\Binary\Get.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Binary\Get.o )
+
+src\Data\Binary\Get.hs:206:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+
+src\Data\Binary\Get.hs:434:1: Warning:
+    Rule "getWord8/readN" may never fire
+      because ‘getWord8’ might inline first
+    Probable fix: add an INLINE[n] or NOINLINE[n] pragma on ‘getWord8’
+
+src\Data\Binary\Get.hs:435:1: Warning:
+    Rule "getWord16be/readN" may never fire
+      because ‘getWord16be’ might inline first
+    Probable fix: add an INLINE[n] or NOINLINE[n] pragma on ‘getWord16be’
+
+src\Data\Binary\Get.hs:436:1: Warning:
+    Rule "getWord16le/readN" may never fire
+      because ‘getWord16le’ might inline first
+    Probable fix: add an INLINE[n] or NOINLINE[n] pragma on ‘getWord16le’
+
+src\Data\Binary\Get.hs:437:1: Warning:
+    Rule "getWord32be/readN" may never fire
+      because ‘getWord32be’ might inline first
+    Probable fix: add an INLINE[n] or NOINLINE[n] pragma on ‘getWord32be’
+
+src\Data\Binary\Get.hs:438:1: Warning:
+    Rule "getWord32le/readN" may never fire
+      because ‘getWord32le’ might inline first
+    Probable fix: add an INLINE[n] or NOINLINE[n] pragma on ‘getWord32le’
+
+src\Data\Binary\Get.hs:439:1: Warning:
+    Rule "getWord64be/readN" may never fire
+      because ‘getWord64be’ might inline first
+    Probable fix: add an INLINE[n] or NOINLINE[n] pragma on ‘getWord64be’
+
+src\Data\Binary\Get.hs:440:1: Warning:
+    Rule "getWord64le/readN" may never fire
+      because ‘getWord64le’ might inline first
+    Probable fix: add an INLINE[n] or NOINLINE[n] pragma on ‘getWord64le’
+[6 of 9] Compiling Data.Binary.Put  ( src\Data\Binary\Put.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Binary\Put.o )
+
+src\Data\Binary\Put.hs:3:14: Warning:
+    ‘Data.Binary.Put’ is marked as Trustworthy but has been inferred as safe!
+
+src\Data\Binary\Put.hs:56:1: Warning:
+    The import of ‘Data.Monoid’ is redundant
+      except perhaps to import instances from ‘Data.Monoid’
+    To import instances alone, use: import Data.Monoid()
+
+src\Data\Binary\Put.hs:64:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+[7 of 9] Compiling Data.Binary.Class ( src\Data\Binary\Class.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Binary\Class.o )
+
+src\Data\Binary\Class.hs:3:14: Warning:
+    ‘Data.Binary.Class’ is marked as Trustworthy but has been inferred as safe!
+[8 of 9] Compiling Data.Binary.Generic ( src\Data\Binary\Generic.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Binary\Generic.o )
+
+src\Data\Binary\Generic.hs:2:26: Warning:
+    ‘Data.Binary.Generic’ is marked as Trustworthy but has been inferred as safe!
+
+src\Data\Binary\Generic.hs:22:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+[9 of 9] Compiling Data.Binary      ( src\Data\Binary.hs, .stack-work\dist\x86_64-windows\Cabal-1.22.4.0\build\Data\Binary.o )
+In-place registering binary-0.7.3.0...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
+Installing library in
+C:\Users\magocoal\AppData\Roaming\stack\snapshots\x86_64-windows\nightly-2015-06-16\7.10.2\lib\x86_64-windows-ghc-7.10.2\binary-0.7.3.0-I39fR6jGcXOLrHe9FzzBd4
+Registering binary-0.7.3.0...
+ghc: warning: _tzset from msvcrt is linked instead of __imp__tzset
