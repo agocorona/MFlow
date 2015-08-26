@@ -1306,7 +1306,7 @@ wlink x v=    View $ do
       let path= concat ['/':v| v <- newPath ]
       return $ FormElm (flink path v) r
 
--- Creates an absolute link. While a `wlink` path depend on the page where it is located and
+-- | Creates an absolute link. While a `wlink` path depend on the page where it is located and
 -- ever points to the code of the page that had it inserted, an absLink point to the first page
 -- in the flow that inserted it. It is useful for creating a backtracking point in combination with `retry`
 --

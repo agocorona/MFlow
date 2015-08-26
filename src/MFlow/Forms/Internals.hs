@@ -1112,9 +1112,7 @@ runFlowConf  f = do
 
 -- | Clears the environment
 clearEnv :: MonadState (MFlowState view) m =>  m ()
-clearEnv= do
-  st <- get
-  put st{ mfEnv= []}
+clearEnv= modify $ \s -> s{ mfEnv= []}
 
 
 

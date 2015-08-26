@@ -154,11 +154,11 @@ wlogin=  wform $ do
           val  <- userValidate (name,pass)
           case val of
             Just msg -> notValid msg
-            Nothing  -> login name >> (return name)
+            Nothing  -> login name >> clearEnv >> (return name)
 
    `wcallback` (\name -> ftag "b" (fromStr $ "logged as " ++ name++ " ")
                      ++> pageFlow "logout" (submitButton "logout")) -- wlink ("logout" :: String) (ftag "b" $ fromStr " logout"))
-   `wcallback`  const (logout >> wlogin)
+   `wcallback`  const (logout >> clearEnv >> wlogin)
 
 focus = [("onload","this.focus()")]
 hint s= [("placeholder",s)]
@@ -673,9 +673,9 @@ witerate w= do
               ,JScript     autoEvalForm
               ,JScript     $ timeoutscript t
               ,JScriptFile jqueryScript [installAutoEval]
-              ,JScript     setId]    
+              ,JScript     setId]
 
-     (ftag "div" <<< w') <! [("id",name)] 
+     (ftag "div" <<< w') <! [("id",name)]
 
     Just sind -> refresh $ View $ do
               FormElm _ mr <- runView w'
