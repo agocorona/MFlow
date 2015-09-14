@@ -211,7 +211,7 @@ FlowM, View(..), FormElm(..), FormInput(..)
 ,encryptedLogout, userWidget, paranoidUserWidget, encryptedUserWidget, login, paranoidLogin, encryptedLogin,
 userName,
 -- * User interaction
-ask, page, askt, clearEnv, wstateless, pageFlow,
+ask, page, askt, clearEnv, clearEnv', wstateless, pageFlow,
 -- * formLets
 -- | They usually produce the HTML form elements (depending on the FormInput instance used)
 -- It is possible to modify their attributes with the `<!` operator.
@@ -1108,7 +1108,8 @@ ask w =  do
                    ,mfPageFlow= mfPageFlow st'
                    ,mfAjax= mfAjax st'
                    ,mfData= mfData st'
-                   ,mfSomeNotValidates= False}
+                   ,mfSomeNotValidates= False
+                   ,mfPagePath= mfPagePath st'}
 
 
 -- | A synonym of ask.
@@ -1351,7 +1352,6 @@ absLink x v=    View $ do
              False ->  return Nothing                         --  !> ( "NOT MATCHED "++name++" LP= "++show  lpath)
 
       path <- liftIO $ cachedByKey (show x) 0 . return $ currentPath st ++ ('/':name)
-
       return $ FormElm (flink path v) r  -- !> name
 
 

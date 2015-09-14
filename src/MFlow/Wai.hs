@@ -61,11 +61,11 @@ import qualified Data.Text as T
 
 
 toApp :: (Request -> IO Response) -> Application
-#if MIN_VERSION_wai(3, 0, 0)
+-- #if MIN_VERSION_wai(3, 0, 0)
 toApp f req sendResponse = f req >>= sendResponse
-#else
-toApp = id
-#endif
+-- #else
+-- toApp = id
+-- #endif
 
 flow=  "flow"
 
@@ -125,7 +125,7 @@ waiMessageFlow = toApp $ \req1 -> do
                                     CB.sinkHandle h
                                     lift $ release key
                                     return fp
-#if MIN_VERSION_wai(3, 0, 0)
+-- #if MIN_VERSION_wai(3, 0, 0)
                                let backend' file info getBS = do
                                         let src = do
                                                 bs <- liftIO getBS
@@ -134,9 +134,9 @@ waiMessageFlow = toApp $ \req1 -> do
                                                     src
                                         src $$ backend file info
                                sinkRequestBody backend' rbt (requestBody req1)
-#else
-                               requestBody req1 $$ sinkRequestBody backend rbt
-#endif
+-- #else
+--                               requestBody req1 $$ sinkRequestBody backend rbt
+-- #endif
 
 --                         let fileparams= Prelude.map (\(param,FileInfo filename contentype content)
 --                                              -> (param,   SB.pack content )) files

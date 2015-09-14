@@ -154,11 +154,11 @@ wlogin=  wform $ do
           val  <- userValidate (name,pass)
           case val of
             Just msg -> notValid msg
-            Nothing  -> login name >> clearEnv >> (return name)
+            Nothing  -> login name >> clearEnv' >> (return name)
 
    `wcallback` (\name -> ftag "b" (fromStr $ "logged as " ++ name++ " ")
                      ++> pageFlow "logout" (submitButton "logout")) -- wlink ("logout" :: String) (ftag "b" $ fromStr " logout"))
-   `wcallback`  const (logout >> clearEnv >> wlogin)
+   `wcallback`  const (logout >> clearEnv' >> wlogin)
 
 focus = [("onload","this.focus()")]
 hint s= [("placeholder",s)]

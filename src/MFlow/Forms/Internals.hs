@@ -1114,7 +1114,9 @@ runFlowConf  f = do
 clearEnv :: MonadState (MFlowState view) m =>  m ()
 clearEnv= modify $ \s -> s{ mfEnv= []}
 
-
+-- | clear the request paramenters and the rest path.
+clearEnv' :: MonadState (MFlowState view) m =>  m ()
+clearEnv'= modify $ \s -> s{ mfEnv= [], mfPath=[], mfPagePath=[""]}
 
 instance (FormInput v,Serialize a)
    => Serialize (a,MFlowState v) where
