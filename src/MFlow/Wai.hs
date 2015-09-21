@@ -125,7 +125,8 @@ waiMessageFlow = toApp $ \req1 -> do
                                     CB.sinkHandle h
                                     lift $ release key
                                     return fp
--- #if MIN_VERSION_wai(3, 0, 0)
+---- #if MIN_VERSION_wai(3, 0, 0)
+
                                let backend' file info getBS = do
                                         let src = do
                                                 bs <- liftIO getBS
@@ -134,15 +135,16 @@ waiMessageFlow = toApp $ \req1 -> do
                                                     src
                                         src $$ backend file info
                                sinkRequestBody backend' rbt (requestBody req1)
--- #else
---                               requestBody req1 $$ sinkRequestBody backend rbt
--- #endif
 
---                         let fileparams= Prelude.map (\(param,FileInfo filename contentype content)
---                                              -> (param,   SB.pack content )) files
---                         let fileparams= Prelude.map (\(param,fileinfo)
---                                              -> (param,  fileinfo )) files
---                         return $ fileparams++ params
+---- #else
+----                               requestBody req1 $$ sinkRequestBody backend rbt
+---- #endif
+
+----                         let fileparams= Prelude.map (\(param,FileInfo filename contentype content)
+----                                              -> (param,   SB.pack content )) files
+----                         let fileparams= Prelude.map (\(param,fileinfo)
+----                                              -> (param,  fileinfo )) files
+----                         return $ fileparams++ params
      let filesp= Prelude.map (\(param,FileInfo filename contentype tempfile)
                                               -> (mk param,  fromString $ show(filename,contentype,tempfile) )) files
 --     let filesp= Prelude.map (\(a,b) -> ( mk a, fromString $ show b)) files

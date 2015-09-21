@@ -80,7 +80,7 @@ splitCookies cookies  = f cookies []
 
 ----------------------------
 
---readEnv :: Parser [(String,String)]
+readEnv :: Parsec String () [(String,String)]
 readEnv = (do
           n <-  urlEncoded
           string "="
@@ -95,13 +95,13 @@ urlEncoded
          )
 
 
---extra :: Parser Char
+extra :: Parsec String () Char
 extra = satisfy (`Prelude.elem` ("!*'(),/\"" ::String))
 --
---safe :: Parser Char
+safe :: Parsec String () Char
 safe = satisfy (`Prelude.elem` ("$-_." :: String))
 ----
---hexadecimal :: Parser HexString
+hexadecimal :: ParsecT String u Identity Char
 hexadecimal = do d1 <- hexDigit
                  d2 <- hexDigit
                  return .chr $ toInt d1* 16 + toInt d2
