@@ -1105,16 +1105,11 @@ runFlowConf  f = do
   evalStateT (runSup . runFlowM $   f )  mFlowState0{mfToken=t} >>= return . fromFailBack   -- >> return ()
 
 
--- | Run a transient Flow from the IO monad.
---runNav :: String -> FlowM Html IO () -> IO ()
---runNav ident f= exec1 ident $ runFlowOnce (transientNav f) undefined
-
-
 -- | Clears the environment
 clearEnv :: MonadState (MFlowState view) m =>  m ()
 clearEnv= modify $ \s -> s{ mfEnv= []}
 
--- | clear the request paramenters and the rest path.
+-- | clear the request paramters and the rest path.
 clearEnv' :: MonadState (MFlowState view) m =>  m ()
 clearEnv'= modify $ \s -> s{ mfEnv= [], mfPath=[], mfPagePath=[""]}
 

@@ -1,5 +1,5 @@
 name: MFlow
-version: 0.4.5.13
+version: 0.4.6.0
 cabal-version: >=1.8
 build-type: Simple
 license: BSD3
@@ -188,7 +188,7 @@ library
     buildable: True
     hs-source-dirs: src .
     other-modules:  MFlow.Wai.Response
-
+    build-tools: cpphs
 
 --executable demos-blaze
 --    build-depends: MFlow , RefSerialize , TCache ,

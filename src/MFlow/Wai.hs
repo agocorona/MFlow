@@ -1,5 +1,4 @@
 {-# LANGUAGE   UndecidableInstances
-             , CPP
              , TypeSynonymInstances
              , MultiParamTypeClasses
              , DeriveDataTypeable
